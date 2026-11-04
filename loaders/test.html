@@ -2,7 +2,7 @@
 <div id="s2s-test"></div>
 <script>
 (function () {
-  var url = "https://SITE-NAME.netlify.app/sections/test.html";
+  var url = "https://s2sfit-sections.netlify.app/sections/test.html";
   var box = document.getElementById("s2s-test");
   fetch(url + "?v=" + Date.now(), { cache: "no-store" })
     .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
