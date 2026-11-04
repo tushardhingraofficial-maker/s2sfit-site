@@ -1,0 +1,70 @@
+<!-- S2S Transformation Portal loader. Paste this ONCE into a HighLevel "Custom JS/HTML" element. Never edit it again. -->
+<div id="s2s-portal"></div>
+<script>
+(function () {
+  var URL_ = "https://s2sfit-sections.netlify.app/sections/portal.html";
+  var box = document.getElementById("s2s-portal");
+
+  fetch(URL_ + "?v=" + Date.now(), { cache: "no-store" })
+    .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
+    .then(function (html) {
+      var doc = new DOMParser().parseFromString(html, "text/html");
+
+      // Keep attributes from the file's <html> tag (e.g. data-theme, lang) - the CSS depends on them.
+      Array.prototype.forEach.call(doc.documentElement.attributes, function (a) {
+        document.documentElement.setAttribute(a.name, a.value);
+      });
+
+      // Pull every <script> out (in order), then insert the rest of <head> and <body>.
+      var scripts = Array.prototype.slice.call(doc.querySelectorAll("script"));
+      scripts.forEach(function (s) { s.parentNode.removeChild(s); });
+      Array.prototype.slice.call(doc.head.childNodes).forEach(function (n) {
+        if (n.nodeName === "TITLE" || n.nodeName === "META") return; // HighLevel page settings own these
+        box.appendChild(document.importNode(n, true));
+      });
+      Array.prototype.slice.call(doc.body.childNodes).forEach(function (n) {
+        box.appendChild(document.importNode(n, true));
+      });
+
+      // The host page has already finished loading, so "load"/"DOMContentLoaded" listeners
+      // added by the portal would never fire. Run them straight away instead.
+      var origAdd = window.addEventListener, origDocAdd = document.addEventListener;
+      function wrap(orig, target) {
+        return function (type, fn, opts) {
+          if ((type === "load" || type === "DOMContentLoaded") && typeof fn === "function") {
+            setTimeout(function () { try { fn.call(target, new Event(type)); } catch (e) { console.error(e); } }, 0);
+            return;
+          }
+          return orig.call(this, type, fn, opts);
+        };
+      }
+      window.addEventListener = wrap(origAdd, window);
+      document.addEventListener = wrap(origDocAdd, document);
+
+      // Run scripts one at a time, waiting for external libraries (Supabase, jsPDF) to load first.
+      var i = 0;
+      (function next() {
+        if (i >= scripts.length) {
+          setTimeout(function () { window.addEventListener = origAdd; document.addEventListener = origDocAdd; }, 0);
+          return;
+        }
+        var old = scripts[i++], s = document.createElement("script");
+        Array.prototype.forEach.call(old.attributes, function (a) { s.setAttribute(a.name, a.value); });
+        if (old.src) {
+          s.async = false;
+          s.onload = next;
+          s.onerror = function () { console.error("S2S portal: failed to load", old.src); next(); };
+          box.appendChild(s);
+        } else {
+          s.text = old.textContent;
+          box.appendChild(s);
+          next();
+        }
+      })();
+    })
+    .catch(function (e) {
+      console.error("S2S portal failed to load:", e);
+      box.innerHTML = '<p style="padding:40px;text-align:center;font-family:sans-serif">Portal is loading slowly. Please refresh the page.</p>';
+    });
+})();
+</script>
