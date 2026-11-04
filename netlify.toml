@@ -1,0 +1,4 @@
+# Netlify reads this automatically - no settings to type in the dashboard.
+[build]
+  publish = "highlevel"
+  command = ""

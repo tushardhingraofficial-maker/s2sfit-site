@@ -1,0 +1,4 @@
+# Let HighLevel pages load these files, and never serve an old copy.
+/*
+  Access-Control-Allow-Origin: *
+  Cache-Control: no-cache, must-revalidate
