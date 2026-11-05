@@ -6592,7 +6592,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04pp';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04pq';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -11033,10 +11033,9 @@ function wkoFocusHTML(en,ei,noNav){
     '<div class="wko-set-flds">'+
       (aerobic
         ? cardFld(s,si,'dur','min','MIN')+cardFld(s,si,'dist','km','KM')+cardFld(s,si,'cal','kcal','CAL')+cardFld(s,si,'hr','bpm','AVG HR')
-        : '<label class="wko-set-fld"><input type="number" inputmode="decimal" min="0" step="'+rstep+'" value="'+esc(s.reps)+'" placeholder="'+esc((s.target&&s.target.reps)||'0')+'" onchange="wkoSet('+ei+','+si+',\'reps\',this.value)"><span>'+rpl+'</span></label>'+
-          '<label class="wko-set-fld"><input type="number" inputmode="decimal" min="0" step="0.5" value="'+esc(s.weight)+'" placeholder="'+esc((s.target&&s.target.weight)||'0')+'" onchange="wkoSet('+ei+','+si+',\'weight\',this.value)"><span>kg</span></label>'+
-          '<label class="wko-set-fld"><input inputmode="decimal" value="'+esc(s.rir||'')+'" placeholder="'+esc((s.target&&s.target.rir)||'–')+'" onchange="wkoSet('+ei+','+si+',\'rir\',this.value)"><span>'+effLbl+'</span></label>'+
-          '<div class="wko-set-fld"><input inputmode="numeric" value="'+esc(s.rest||'')+'" placeholder="'+esc((s.target&&s.target.rest)||'sec')+'" onchange="wkoSet('+ei+','+si+',\'rest\',this.value)"><button class="wko-rest-cap" title="Start rest timer" onclick="wkoStartRest('+ei+','+si+')">REST ▶</button></div>')+
+        : '<label class="wko-set-fld"><input type="number" inputmode="decimal" min="0" step="0.5" value="'+esc(s.weight)+'" placeholder="'+esc((s.target&&s.target.weight)||'0')+'" onchange="wkoSet('+ei+','+si+',\'weight\',this.value)"><span>kg</span></label>'+
+          '<label class="wko-set-fld"><input type="number" inputmode="decimal" min="0" step="'+rstep+'" value="'+esc(s.reps)+'" placeholder="'+esc((s.target&&s.target.reps)||'0')+'" onchange="wkoSet('+ei+','+si+',\'reps\',this.value)"><span>'+rpl+'</span></label>'+
+          '<label class="wko-set-fld"><input inputmode="decimal" value="'+esc(s.rir||'')+'" placeholder="'+esc((s.target&&s.target.rir)||'–')+'" onchange="wkoSet('+ei+','+si+',\'rir\',this.value)"><span>'+effLbl+'</span></label>')+
       extra.map(c=>'<label class="wko-set-fld"><input value="'+esc(s[c.key]||'')+'" placeholder="'+esc((s.target&&s.target[c.key])||'–')+'" onchange="wkoSet('+ei+','+si+',\''+c.key+'\',this.value)"><span>'+esc((c.label||c.key).split(/[ (]/)[0])+'</span></label>').join('')+
     '</div>'+
     '<button class="wko-set-done'+(s.done?' on':'')+'" title="Mark done'+(aerobic?'':' — starts rest timer')+'" onclick="wkoToggleDone('+ei+','+si+')">'+(s.done?'✓':'○')+'</button>'+
@@ -11069,7 +11068,7 @@ function wkoLoadClientCols(){try{const raw=localStorage.getItem('s2s_wkocols_'+(
 function wkoSaveClientCols(){try{localStorage.setItem('s2s_wkocols_'+((SESSION&&SESSION.id)||''),JSON.stringify(WKO_CLIENT_COLS));}catch(e){}}
 function wkoAddClientCol(){const name=(prompt('Add a tracking column (e.g. Calories, Incline, Band, Distance):','')||'').trim();if(!name)return;WKO_CLIENT_COLS.push({key:'cc_'+uid(),label:name,client:true});wkoSaveClientCols();renderWorkout();}
 function wkoDelClientCol(key){if(!confirm('Remove this column? Values already logged stay in past workouts.'))return;WKO_CLIENT_COLS=(WKO_CLIENT_COLS||[]).filter(c=>c.key!==key);wkoSaveClientCols();renderWorkout();}
-function wkoExtraCols(){const admin=(WKO_COLS||[]).filter(c=>c.key!=='rir'&&c.key!=='rest');return admin.concat(WKO_CLIENT_COLS||[]);}
+function wkoExtraCols(){const admin=(WKO_COLS||[]).filter(c=>c.key!=='rir'&&c.key!=='rest'&&c.key!=='tempo');return admin.concat(WKO_CLIENT_COLS||[]);}
 /* ---- reps↔time, RIR↔RPE toggles ---- */
 function wkoToggleRepType(ei){const en=WKO.entries[ei];if(!en)return;en.repType=(en.repType==='time')?'reps':'time';renderWorkout();}
 function wkoToggleEffort(ei){const en=WKO.entries[ei];if(!en)return;en.effort=(en.effort==='rpe')?'rir':'rpe';renderWorkout();}
