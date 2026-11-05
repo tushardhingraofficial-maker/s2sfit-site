@@ -137,6 +137,9 @@ html,body{max-width:100%}
 #wrap,#admin,#login{overflow-x:clip}                                          /* clip (not hidden) so it never becomes a scroll root → keeps window scroll, topbar-hide & pull-to-refresh intact */
 #portal,#wrap,#admin,#login .box,section,.card,.card-body,.modal{max-width:100%;min-width:0}
 .card,.card-body,.modal-body{overflow-wrap:anywhere}                          /* long words/urls wrap instead of overflowing */
+/* STANDING RULE: macro/total/summary lines must WRAP (never nowrap-overflow past the frame) */
+.meal,.jmeal,.jrs-card,.jrs-row{overflow-wrap:anywhere;min-width:0}
+.mtot,.jrs-m,.jn-m,.jrs-stat em,.meal-pct{white-space:normal;overflow-wrap:anywhere}
 img,svg,canvas,video,input,select,textarea{max-width:100%}
 .field input,.field select,.field textarea{width:100%}                         /* every form control fills its field (so it can't exceed it) */
 .row>.field{flex:1 1 140px}                                                   /* fields share the row evenly instead of forcing fixed widths that overflow */
@@ -221,7 +224,7 @@ img,svg,canvas,video,input,select,textarea{max-width:100%}
 .meal-head{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--card2);flex-wrap:wrap;border-radius:11px 11px 0 0}
 .meal-head .mname{font-family:var(--disp);font-weight:800;font-size:15px;text-transform:uppercase;letter-spacing:.02em}
 .meal-head .mtime{font-family:var(--mono);font-size:11px;color:var(--muted)}
-.meal-head .mtot{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+.meal-head .mtot{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:normal;overflow-wrap:anywhere;text-align:right}
 /* crisp ingredient list + expandable macros */
 .meal-items{list-style:none;margin:0;padding:6px 6px 4px}
 .meal-items .mi{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:9px 10px;border-radius:8px}
@@ -6463,7 +6466,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04pf';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04pg';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -6501,6 +6504,7 @@ const KV_OK={};
 async function kvLoad(key,fallback){try{const r=await DB.kvLoad(key);KV_OK[key]=r.ok;return r.ok?(r.value!=null?r.value:fallback):fallback;}catch(e){KV_OK[key]=false;return fallback;}}
 function kvGuard(key){if(KV_OK[key]===false){try{toast('Couldn\'t load your saved data — give it a second and try again (nothing was overwritten).',true);}catch(e){}return false;}return true;}
 const round=(n,d=0)=>{const f=10**d;return Math.round((Number(n)||0)*f)/f;};
+const fmtMac=(n)=>String(Math.round((Number(n)||0)*100)/100);  /* macros: at most 2 decimals, no trailing zeros / float noise */
 const uid=()=>'x'+Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
 function todayISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function addDaysISO(iso,n){const d=new Date(iso+'T00:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -9127,12 +9131,12 @@ function flexMealCard(m,pool){
   return '<div class="meal flex-meal"><div class="meal-head" style="background:rgba(74,158,232,.12)">'+
     '<span class="mname">'+esc(m.name||'Flexible meal')+'</span>'+(m.time?'<span class="mtime">'+esc(m.time)+'</span>':'')+
     '<span class="pill" style="background:rgba(74,158,232,.2);color:var(--prot);border-color:rgba(74,158,232,.4)">Flexible</span>'+
-    '<span class="mtot">up to '+pool.p+'P · '+pool.c+'C · '+pool.f+'F · '+pool.cal+' kcal</span></div>'+
+    '<span class="mtot">up to '+fmtMac(pool.p)+'P · '+fmtMac(pool.c)+'C · '+fmtMac(pool.f)+'F · '+lcNum(pool.cal)+' kcal</span></div>'+
     '<div style="padding:12px">'+
-      '<div class="macro-grid"><div class="macro p"><div class="k">Protein left</div><div class="v tnum">'+pool.p+'<small> g</small></div></div>'+
-      '<div class="macro c"><div class="k">Carbs left</div><div class="v tnum">'+pool.c+'<small> g</small></div></div>'+
-      '<div class="macro f"><div class="k">Fat left</div><div class="v tnum">'+pool.f+'<small> g</small></div></div>'+
-      '<div class="macro k"><div class="k">Calories left</div><div class="v tnum">'+pool.cal+'<small> kcal</small></div></div></div>'+
+      '<div class="macro-grid"><div class="macro p"><div class="k">Protein left</div><div class="v tnum">'+fmtMac(pool.p)+'<small> g</small></div></div>'+
+      '<div class="macro c"><div class="k">Carbs left</div><div class="v tnum">'+fmtMac(pool.c)+'<small> g</small></div></div>'+
+      '<div class="macro f"><div class="k">Fat left</div><div class="v tnum">'+fmtMac(pool.f)+'<small> g</small></div></div>'+
+      '<div class="macro k"><div class="k">Calories left</div><div class="v tnum">'+lcNum(pool.cal)+'<small> kcal</small></div></div></div>'+
       '<p class="small" style="margin-top:10px;line-height:1.55">'+(m.flexNote?esc(m.flexNote):'Eat this meal freely — food out, home-cooked, whatever you fancy — as long as you stay within the macros above (what’s left of your daily pool after your other meals).')+'</p>'+
       ((m.items||[]).length?('<div class="uline" style="margin:12px 0 6px">Suggested foods for this meal</div>'+mealItemsTableHTML(m)+'<p class="small" style="margin-top:4px;color:var(--muted)">These are your coach’s suggestions — follow them as-is, or swap freely as long as you stay within the macros left above.</p>'):'')+
       '<div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:10px"><div class="uline" style="margin-bottom:6px">How to track it</div>'+
@@ -12683,7 +12687,7 @@ function cheatMyLogListHTML(ch){
         (s.photo?'<img class="cheat-logthumb" src="'+esc(s.photo)+'">':'<div class="cheat-logthumb ph">🍔</div>')+
         '<div class="cheat-loginfo"><div class="cheat-logtop"><b>'+esc(s.name||'Cheat meal')+'</b><span class="cheat-logpts '+(sc<0?'neg':'')+'">'+(sc>=0?'+':'')+sc+' pts</span></div>'+
           '<div class="small" style="color:var(--muted)">'+esc(fmtDate(d))+' · '+lcNum(s.cal||0)+' kcal'+(s.lo?(' · range '+lcNum(s.lo)+'–'+lcNum(s.hi)):'')+(b?' <span class="cheat-bandtag '+b+'">'+cheatBandLabel(b)+'</span>':'')+'</div>'+
-          (Array.isArray(s.items)&&s.items.length?'<details class="cheat-logreco"><summary>🧾 Breakdown ('+s.items.length+' items, estimates)</summary><div>'+s.items.map(function(it){return esc(it.name||'')+(it.qty?' <span style="color:var(--muted)">('+esc(it.qty)+')</span>':'')+' — <b>'+lcNum(it.cal||0)+'</b> kcal · P'+(+it.p||0)+' C'+(+it.c||0)+' F'+(+it.f||0);}).join('<br>')+'</div></details>':'')+
+          (Array.isArray(s.items)&&s.items.length?'<details class="cheat-logreco"><summary>🧾 Breakdown ('+s.items.length+' items, estimates)</summary><div>'+s.items.map(function(it){return esc(it.name||'')+(it.qty?' <span style="color:var(--muted)">('+esc(it.qty)+')</span>':'')+' — <b>'+lcNum(it.cal||0)+'</b> kcal · P'+fmtMac(+it.p||0)+' C'+fmtMac(+it.c||0)+' F'+fmtMac(+it.f||0);}).join('<br>')+'</div></details>':'')+
           (s.reco?'<details class="cheat-logreco"><summary>💡 Coach tip</summary><div>'+esc(s.reco)+'</div></details>':'')+
           '<div class="cheat-logshare"><button class="cf-share" onclick="cheatCueCardMeal(\''+ch.id+'\',\''+(SESSION&&SESSION.id)+'\',\''+d+'\')" title="Download / share this meal as an image">🖼 Share card</button></div>'+
         '</div>'+
@@ -14261,10 +14265,10 @@ function jmealCardHTML(e){
   const n=(e.nutrition&&typeof e.nutrition==='object')?e.nutrition:null;const ph=jrPhotos(e);
   const items=(n&&Array.isArray(n.items))?n.items.filter(function(it){return it&&(it.name||it.cal);}):[];
   const sugg=(n&&Array.isArray(n.suggestions))?n.suggestions.filter(Boolean):[];
-  const macro=n?('<span style="margin-left:auto;font-weight:700;font-size:12.5px;color:var(--text)">'+(+n.p||0)+'P · '+(+n.c||0)+'C · '+(+n.f||0)+'F · '+lcNum(+n.cal||0)+'k</span>'):'';
+  const macro=n?('<span style="margin-left:auto;font-weight:700;font-size:12.5px;color:var(--text)">'+fmtMac(+n.p||0)+'P · '+fmtMac(+n.c||0)+'C · '+fmtMac(+n.f||0)+'F · '+lcNum(+n.cal||0)+'k</span>'):'';
   return '<div class="jmeal"><div class="jmeal-head"><span class="jmeal-tag">📸 journaled'+(n?' · estimate':'')+'</span>'+(e.time?'<span class="jmeal-time">'+esc(e.time)+'</span>':'')+macro+'<button class="icon-x" style="font-size:17px;'+(macro?'margin-left:8px':'margin-left:auto')+'" onclick="jrDel(\''+e.id+'\')" title="Delete">×</button></div>'+
     '<div class="jmeal-body">'+(ph.length?'<a href="'+esc(ph[0])+'" target="_blank" rel="noopener"><img class="jmeal-photo" src="'+esc(ph[0])+'"></a>':'')+
-      '<div style="flex:1;min-width:0">'+(n?'<div class="jr-nutri-macros"><span class="jn-cal">🔥 '+lcNum(+n.cal||0)+' kcal</span><span class="jn-m p">P '+(+n.p||0)+'g</span><span class="jn-m c">C '+(+n.c||0)+'g</span><span class="jn-m f">F '+(+n.f||0)+'g</span></div>':'<span class="small" style="color:var(--muted)">No estimate — delete &amp; re-journal with an estimate to count it.</span>')+
+      '<div style="flex:1;min-width:0">'+(n?'<div class="jr-nutri-macros"><span class="jn-cal">🔥 '+lcNum(+n.cal||0)+' kcal</span><span class="jn-m p">P '+fmtMac(+n.p||0)+'g</span><span class="jn-m c">C '+fmtMac(+n.c||0)+'g</span><span class="jn-m f">F '+fmtMac(+n.f||0)+'g</span></div>':'<span class="small" style="color:var(--muted)">No estimate — delete &amp; re-journal with an estimate to count it.</span>')+
         (e.description?'<div class="small" style="color:var(--muted);font-style:italic;margin-top:5px">“'+esc(e.description)+'”</div>':'')+
         (items.length?'<details class="jr-nutri-items" style="margin-top:6px"><summary>🧾 What\'s in it ('+items.length+', estimates)</summary><div>'+items.map(function(it){return esc(it.name||'')+(it.qty?' <span style="color:var(--muted)">('+esc(it.qty)+')</span>':'')+' — <b>'+lcNum(+it.cal||0)+'</b> kcal · P'+(+it.p||0)+' C'+(+it.c||0)+' F'+(+it.f||0);}).join('<br>')+'</div></details>':'')+
         (n&&n.reco?'<div class="jr-nutri-tip" style="margin-top:6px">💡 '+esc(n.reco)+'</div>':'')+
@@ -15014,12 +15018,12 @@ function jrNutriSummaryHTML(journalList,logsList,opts){
   const avg={cal:Math.round(tot.cal/nDays),p:Math.round(tot.p/nDays),c:Math.round(tot.c/nDays),f:Math.round(tot.f/nDays)};
   const today=byDay[todayISO()];
   const recent=days.slice(0,opts.limit||5);
-  const rows=recent.map(function(d){return '<div class="jrs-row"><span class="jrs-d">'+esc(fmtDate(d.date))+'</span><span class="jrs-k">🔥 '+lcNum(d.cal)+'</span><span class="jrs-m">P'+d.p+' · C'+d.c+' · F'+d.f+'</span></div>';}).join('');
+  const rows=recent.map(function(d){return '<div class="jrs-row"><span class="jrs-d">'+esc(fmtDate(d.date))+'</span><span class="jrs-k">🔥 '+lcNum(d.cal)+'</span><span class="jrs-m">P'+fmtMac(d.p)+' · C'+fmtMac(d.c)+' · F'+fmtMac(d.f)+'</span></div>';}).join('');
   return '<div class="card jrs-card"><div class="card-body">'+
     '<div class="jrs-head">'+(opts.title||'🍎 Food Track / Journal — daily nutrition')+'<span style="flex:1"></span><span class="small" style="color:var(--muted)">'+nDays+' day'+(nDays===1?'':'s')+' logged</span></div>'+
     '<div class="jrs-stats">'+
-      (today?'<div class="jrs-stat today"><span>Today</span><b>'+lcNum(today.cal)+'</b><em>kcal · P'+today.p+' C'+today.c+' F'+today.f+'</em></div>':'')+
-      '<div class="jrs-stat"><span>Avg / logged day</span><b>'+lcNum(avg.cal)+'</b><em>kcal · P'+avg.p+' C'+avg.c+' F'+avg.f+'</em></div>'+
+      (today?'<div class="jrs-stat today"><span>Today</span><b>'+lcNum(today.cal)+'</b><em>kcal · P'+fmtMac(today.p)+' C'+fmtMac(today.c)+' F'+fmtMac(today.f)+'</em></div>':'')+
+      '<div class="jrs-stat"><span>Avg / logged day</span><b>'+lcNum(avg.cal)+'</b><em>kcal · P'+fmtMac(avg.p)+' C'+fmtMac(avg.c)+' F'+fmtMac(avg.f)+'</em></div>'+
     '</div>'+
     '<div class="jrs-list">'+rows+'</div>'+
     (opts.onclick?'<button class="btn-sm" style="margin-top:10px" onclick="'+opts.onclick+'">Open Food Track / Journal ›</button>':'')+
@@ -23408,7 +23412,7 @@ function edRefreshAlloc(i){
   const dt=edPlan.dayTypes[i];if(!dt)return;
   const ac=$('dt-alloc-'+i);if(ac)ac.innerHTML=dtAllocHTML(dt);
   const {pool}=dtAllocPool(dt);
-  (dt.meals||[]).forEach((m,mi)=>{if(m.flex){const el=$('dt-flexpool-'+i+'-'+mi);if(el)el.textContent=pool.p+'P · '+pool.c+'C · '+pool.f+'F · '+pool.cal+' kcal left';}});
+  (dt.meals||[]).forEach((m,mi)=>{if(m.flex){const el=$('dt-flexpool-'+i+'-'+mi);if(el)el.textContent=pool.p+'P · '+fmtMac(pool.c)+'C · '+fmtMac(pool.f)+'F · '+lcNum(pool.cal)+' kcal left';}});
 }
 function edRenderDayTypes(){
   $('ed-daytypes').innerHTML=edPlan.dayTypes.map((dt,i)=>{
@@ -23436,7 +23440,7 @@ function edRenderDayTypes(){
         '<button class="btn-sm btn-danger" onclick="edMealRm('+i+','+mi+')">Remove</button></div>'+
         '<div class="field" style="margin:6px 0 0"><label class="lab">📝 Coach note for this meal <span class="small" style="text-transform:none;font-weight:400">(clients see it under the meal)</span></label><input value="'+esc(m.note||'')+'" placeholder="e.g. Have this within 2 hours of training" onchange="edMealSet('+i+','+mi+',\'note\',this.value)"></div>'+
         (dayTot.cal>0?'<div style="padding:3px 2px 0">'+mealPctChips(tot,dayTot)+'</div>':'')+
-        (m.flex?'<div style="background:rgba(74,158,232,.12);border:1px solid rgba(74,158,232,.4);border-radius:10px;padding:8px 12px;margin:8px 0 0"><span class="lab" style="color:var(--prot)">Remaining flexible pool</span><div style="font-family:var(--disp);font-weight:800;font-size:16px;color:var(--prot)" id="dt-flexpool-'+i+'-'+mi+'">'+pool.p+'P · '+pool.c+'C · '+pool.f+'F · '+pool.cal+' kcal left</div></div>'+
+        (m.flex?'<div style="background:rgba(74,158,232,.12);border:1px solid rgba(74,158,232,.4);border-radius:10px;padding:8px 12px;margin:8px 0 0"><span class="lab" style="color:var(--prot)">Remaining flexible pool</span><div style="font-family:var(--disp);font-weight:800;font-size:16px;color:var(--prot)" id="dt-flexpool-'+i+'-'+mi+'">'+fmtMac(pool.p)+'P · '+fmtMac(pool.c)+'C · '+fmtMac(pool.f)+'F · '+lcNum(pool.cal)+' kcal left</div></div>'+
           '<div class="field" style="margin:8px 0 0"><label class="lab">Flexible-meal instruction (shown to the client)</label><input value="'+esc(m.flexNote||'')+'" placeholder="e.g. Eat out or cook freely — just stay within the macros left" onchange="edMealSet('+i+','+mi+',\'flexNote\',this.value)"></div><p class="small" style="margin:6px 0 0">The client sees this remaining pool (day target − the fixed meals) and logs what they eat in Log &amp; Compliance. Any foods you add below are optional suggestions and are <b>not</b> counted.</p>':'')+
         '<div class="meal-prep"><div class="mp-h">🧂 Prep ingredients — oil, curry, condiments (counted in the totals)</div>'+
           '<div class="tbl-scroll"><table class="itbl"><thead><tr><th>Prep item</th><th>Qty</th><th style="text-align:left">Unit</th><th>P</th><th>C</th><th>F</th><th>kcal</th><th></th></tr></thead><tbody>'+(prepRows||'<tr><td colspan="8" class="empty" style="padding:8px">No prep ingredients</td></tr>')+'</tbody></table></div>'+
