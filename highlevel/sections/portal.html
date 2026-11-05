@@ -163,7 +163,7 @@ img,svg,canvas,video,input,select,textarea{max-width:100%}
   #view-dashboard:not(.hidden) .dash-card{animation:s2sFadeUp .38s cubic-bezier(.22,.9,.3,1) both}
   .dash-grid>*:nth-child(1){animation-delay:.03s}.dash-grid>*:nth-child(2){animation-delay:.07s}.dash-grid>*:nth-child(3){animation-delay:.11s}.dash-grid>*:nth-child(4){animation-delay:.15s}.dash-grid>*:nth-child(5){animation-delay:.19s}.dash-grid>*:nth-child(6){animation-delay:.23s}.dash-grid>*:nth-child(n+7){animation-delay:.26s}
   /* Progress overlays fade in when you switch tabs (host persists, so it won't re-flash on data saves) */
-  #weight-host:not(.hidden),#comp-host:not(.hidden),#photos-host:not(.hidden),#perf-host:not(.hidden),#meas-host:not(.hidden),#custom-host:not(.hidden){animation:s2sFade .26s ease both}
+  #overview-host:not(.hidden),#weight-host:not(.hidden),#comp-host:not(.hidden),#photos-host:not(.hidden),#perf-host:not(.hidden),#meas-host:not(.hidden),#custom-host:not(.hidden){animation:s2sFade .26s ease both}
   /* Tactile button press across the app */
   .btn,.btn-sm,.btn-primary,.btn-xxs,.btn-xs,.dash-card{transition:transform .12s ease,box-shadow .18s ease,background .16s ease,filter .16s ease,border-color .16s ease}
   .btn:active,.btn-sm:active,.btn-primary:active,.btn-xxs:active,.btn-xs:active,.dash-card:active{transform:translateY(1px) scale(.985)}
@@ -2572,10 +2572,46 @@ svg.ic{width:22px;height:22px;display:inline-block;vertical-align:middle;flex:no
 body.gm-has-switch #climb-frame{top:var(--gm-h,48px);height:calc(100dvh - 74px - var(--gm-h,48px) - env(safe-area-inset-bottom))}
 #custom-host{position:fixed;left:0;right:0;top:0;bottom:calc(74px + env(safe-area-inset-bottom));overflow-y:auto;z-index:1100;background:var(--ink);padding:16px}
 body.gm-has-switch #custom-host{top:var(--gm-h,48px)}
-#weight-host,#comp-host,#assess-host,#photos-host,#perf-host,#meas-host{position:fixed;left:0;right:0;top:var(--gm-h,48px);bottom:calc(74px + env(safe-area-inset-bottom));overflow-y:auto;z-index:1100;background:radial-gradient(1200px 400px at 50% -120px,rgba(232,23,13,.06),transparent 70%),var(--ink);padding:20px clamp(14px,4vw,36px) 32px}
-#weight-host.hidden,#comp-host.hidden,#assess-host.hidden,#photos-host.hidden,#perf-host.hidden,#meas-host.hidden{display:none}
+#overview-host,#weight-host,#comp-host,#assess-host,#photos-host,#perf-host,#meas-host{position:fixed;left:0;right:0;top:var(--gm-h,48px);bottom:calc(74px + env(safe-area-inset-bottom));overflow-y:auto;z-index:1100;background:radial-gradient(1200px 400px at 50% -120px,rgba(232,23,13,.06),transparent 70%),var(--ink);padding:20px clamp(14px,4vw,36px) 32px}
+#overview-host.hidden,#weight-host.hidden,#comp-host.hidden,#assess-host.hidden,#photos-host.hidden,#perf-host.hidden,#meas-host.hidden{display:none}
 /* centre every progress-section card in a readable column on wide screens */
-#weight-host>*,#comp-host>*,#assess-host>*,#photos-host>*,#perf-host>*,#meas-host>*,#custom-host>*{max-width:900px;margin-left:auto;margin-right:auto}
+#overview-host>*,#weight-host>*,#comp-host>*,#assess-host>*,#photos-host>*,#perf-host>*,#meas-host>*,#custom-host>*{max-width:900px;margin-left:auto;margin-right:auto}
+/* ══ Progress "Overview" landing ══ */
+.ov-card{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 1px 2px rgba(16,24,40,.04);margin:0 0 14px;padding:16px}
+.ov-hero-top{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.ov-bigw{font-family:var(--disp);font-weight:900;font-size:44px;line-height:.85}
+.ov-bigw small{font-size:16px;font-weight:700;color:var(--muted)}
+.ov-delta{font-weight:800;font-size:13px;padding:4px 10px;border-radius:999px;margin-bottom:7px}
+.ov-delta.good{background:rgba(21,163,74,.14);color:var(--good)} .ov-delta.bad{background:rgba(232,23,13,.12);color:var(--red)} .ov-delta.flat{background:var(--card2);color:var(--muted)}
+.ov-spark{margin-left:auto;margin-bottom:2px}
+.ov-goal{margin-top:16px}
+.ov-goal-l{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;font-weight:700;margin-bottom:7px}
+.ov-goal-l .s{color:var(--muted)} .ov-goal-l .g{color:var(--red)}
+.ov-gtrack{position:relative;height:12px;border-radius:999px;background:var(--card2)}
+.ov-gfill{height:100%;border-radius:999px;background:linear-gradient(90deg,#15A34A,#3bbf63);max-width:100%}
+.ov-gnow{position:absolute;top:-5px;width:4px;height:22px;border-radius:3px;background:var(--text)}
+.ov-gcap{margin-top:9px;text-align:center;font-size:13px;font-weight:700}
+.ov-gcap b{color:var(--good)}
+.ov-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:0 0 14px}
+.ov-stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px 14px}
+.ov-stat .sic{font-size:16px} .ov-stat .sl{font-size:10.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.03em;margin-top:5px}
+.ov-stat .sv{font-family:var(--disp);font-weight:800;font-size:22px;line-height:1;margin-top:3px}
+.ov-stat .sd{font-size:11.5px;font-weight:700;margin-top:4px}
+.ov-good{color:var(--good)} .ov-bad{color:var(--red)} .ov-neu{color:var(--muted)}
+.ov-uline{font-family:var(--disp);text-transform:uppercase;letter-spacing:.4px;font-size:15px;font-weight:800;margin:0 0 10px}
+.ov-comp{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ov-cbox{text-align:center}
+.ov-ring{position:relative;width:84px;height:84px;margin:0 auto}
+.ov-ring .cc{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:900;font-size:21px}
+.ov-cl{font-size:11px;color:var(--muted);font-weight:600;margin-top:7px} .ov-cd{font-size:11px;font-weight:700;margin-top:2px}
+.ov-photos{display:flex;gap:9px}
+.ov-ph{flex:1;aspect-ratio:3/4;border-radius:11px;background:var(--card2);display:grid;place-items:center;color:var(--muted);font-size:11px;text-align:center;border:1px solid var(--border);overflow:hidden;background-size:cover;background-position:center;text-decoration:none}
+.ov-row2{display:flex;gap:12px;align-items:center}
+.ov-thumb{width:58px;height:58px;border-radius:12px;flex:none;display:grid;place-items:center;font-size:23px;background:var(--card2);border:1px solid var(--border)}
+.ov-mini-h{font-weight:800;font-size:14px} .ov-mini-s{font-size:12px;color:var(--muted);line-height:1.5}
+.ov-btn{display:inline-block;border:none;border-radius:10px;padding:10px 14px;font-weight:700;font-size:13px;cursor:pointer;font-family:var(--sans)}
+.ov-btn.primary{background:var(--red);color:#fff} .ov-btn.ghost{background:var(--card2);color:var(--text)}
+@media(max-width:380px){.ov-bigw{font-size:38px}.ov-ring{width:76px;height:76px}}
 /* shared responsive form grid for progress inputs — equal columns, never overlapping */
 .pg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end;margin:2px 0}
 .pg-grid .field{margin:0;max-width:none;min-width:0}   /* min-width:0 lets native date/number inputs shrink inside the grid cell instead of overflowing into the next column */
@@ -4504,7 +4540,8 @@ img,svg,canvas,video{max-width:100%}
       <!-- Goals & Milestones is the built-in S2S Climb (CLIMB_HTML → iframe srcdoc). Full-screen for the
            client (view-only except check-ins); progress saves to dp_plans.milestones.climb. -->
       <div id="gm-switch" class="gm-switch hidden">
-        <button id="gm-tab-weight" class="gm-tab active" onclick="gmBranch('weight')"><span class="gm-ic" data-gmic="weight"></span><span class="gm-lbl">Weight</span></button>
+        <button id="gm-tab-overview" class="gm-tab active" onclick="gmBranch('overview')"><span class="gm-ic" data-gmic="trend"></span><span class="gm-lbl">Overview</span></button>
+        <button id="gm-tab-weight" class="gm-tab" onclick="gmBranch('weight')"><span class="gm-ic" data-gmic="weight"></span><span class="gm-lbl">Weight</span></button>
         <button id="gm-tab-comp" class="gm-tab" onclick="gmBranch('comp')"><span class="gm-ic" data-gmic="composition"></span><span class="gm-lbl">Composition</span></button>
         <button id="gm-tab-photos" class="gm-tab" onclick="gmBranch('photos')"><span class="gm-ic" data-gmic="history"></span><span class="gm-lbl">Photos</span></button>
         <button id="gm-tab-perf" class="gm-tab" onclick="gmBranch('perf')"><span class="gm-ic" data-gmic="trend"></span><span class="gm-lbl">Performance</span></button>
@@ -4514,6 +4551,7 @@ img,svg,canvas,video{max-width:100%}
         <button id="gm-tab-climb" class="gm-tab hidden" onclick="gmBranch('climb')"><span class="gm-ic" data-gmic="climb"></span>7-Levels Climb</button>
       </div>
       <iframe id="climb-frame" title="Progress Tracking — your climb" style="display:none"></iframe>
+      <div id="overview-host" class="hidden"></div>
       <div id="custom-host" class="hidden"></div>
       <div id="weight-host" class="hidden"></div>
       <div id="comp-host" class="hidden"></div>
@@ -6628,7 +6666,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04pv';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04pw';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -19248,7 +19286,7 @@ function gmSetup(){
   if(sw)sw.classList.remove('hidden');
   gmFillTabIcons();
   const tk=$('gm-tab-custom');if(tk)tk.classList.toggle('hidden',!hasCustom);
-  if((GM_BRANCH==='custom'&&!hasCustom)||GM_BRANCH==='climb'||GM_BRANCH==='assess'||!GM_BRANCH)GM_BRANCH='weight';   // Climb hidden for now → default to Weight
+  if((GM_BRANCH==='custom'&&!hasCustom)||GM_BRANCH==='climb'||GM_BRANCH==='assess'||!GM_BRANCH)GM_BRANCH='overview';   // Climb hidden for now → land on the Overview
   gmBranch(GM_BRANCH);
   gmSyncHeight();
   gmBindScroll();
@@ -19260,10 +19298,11 @@ function gmBranch(which){
   GM_BRANCH=which;
   try{navStateSave();}catch(e){}
   if(which==='assess')which='climb';   // Fitness assessment tab removed
-  const f=$('climb-frame'),host=$('custom-host'),comp=$('comp-host'),wt=$('weight-host'),ph=$('photos-host'),pf=$('perf-host'),ms=$('meas-host'),hl=$('health-host');
-  const tabs={climb:'gm-tab-climb',custom:'gm-tab-custom',weight:'gm-tab-weight',comp:'gm-tab-comp',photos:'gm-tab-photos',perf:'gm-tab-perf',meas:'gm-tab-meas',health:'gm-tab-health'};
+  const f=$('climb-frame'),host=$('custom-host'),comp=$('comp-host'),wt=$('weight-host'),ph=$('photos-host'),pf=$('perf-host'),ms=$('meas-host'),hl=$('health-host'),ov=$('overview-host');
+  const tabs={overview:'gm-tab-overview',climb:'gm-tab-climb',custom:'gm-tab-custom',weight:'gm-tab-weight',comp:'gm-tab-comp',photos:'gm-tab-photos',perf:'gm-tab-perf',meas:'gm-tab-meas',health:'gm-tab-health'};
   Object.keys(tabs).forEach(k=>{const b=$(tabs[k]);if(b)b.classList.toggle('active',k===which);});
   if(f)f.style.display=(which==='climb')?'':'none';
+  if(ov)ov.classList.toggle('hidden',which!=='overview');
   if(host)host.classList.toggle('hidden',which!=='custom');
   if(wt)wt.classList.toggle('hidden',which!=='weight');
   if(comp)comp.classList.toggle('hidden',which!=='comp');
@@ -19271,7 +19310,8 @@ function gmBranch(which){
   if(pf)pf.classList.toggle('hidden',which!=='perf');
   if(ms)ms.classList.toggle('hidden',which!=='meas');
   if(hl)hl.classList.toggle('hidden',which!=='health');
-  if(which==='custom'){renderCustomTrack();}
+  if(which==='overview'){try{renderOverviewProgress();}catch(e){}}
+  else if(which==='custom'){renderCustomTrack();}
   else if(which==='weight'){try{renderWeightTracker();}catch(e){}}
   else if(which==='comp'){try{renderComposition();}catch(e){}}
   else if(which==='photos'){try{renderProgressPhotos();}catch(e){}}
@@ -19280,6 +19320,97 @@ function gmBranch(which){
   else if(which==='health'){try{renderHealth();}catch(e){}}
   else {initClimbFrame();}
   gmSyncHeight();
+}
+
+/* ═══════════ PROGRESS "OVERVIEW" landing — journey hero + stat cards + composition + photos + log nudge ═══════════ */
+function pgWeighStreak(sorted){const set={};(sorted||[]).forEach(function(e){set[String(e.date||'').slice(0,10)]=1;});let n=0;for(let i=0;i<400;i++){const d=addDaysISO(todayISO(),-i);if(set[d])n++;else if(i>0)break;}return n;}
+function renderOverviewProgress(){
+  const host=$('overview-host');if(!host)return;
+  const pr=PLAN.profile||{};
+  const ws=weightSorted();
+  const latest=ws.length?ws[ws.length-1]:null, first=ws.length?ws[0]:null;
+  const cur=latest?+latest.value:(parseKg(pr.weight)||null);
+  const unit=(latest&&latest.unit)||'kg';
+  const startW=(parseKg(pr.startWeight)||null)!=null&&parseKg(pr.startWeight)>0?parseKg(pr.startWeight):(first?+first.value:null);
+  const goalW=parseKg(pr.goalWeight)>0?parseKg(pr.goalWeight):null;
+  if(cur==null){
+    host.innerHTML='<div class="ov-card" style="text-align:center"><div style="font-size:34px">⚖️</div><div class="ov-uline" style="margin-top:8px">Start your progress</div><p class="small" style="color:var(--muted);max-width:360px;margin:0 auto 14px">Log your first weigh-in to see your journey, goal progress and wins right here.</p><button class="ov-btn primary" onclick="gmBranch(\'weight\')">＋ Log your weight</button></div>';
+    gmSyncHeight();return;
+  }
+  const lossGoal=(goalW!=null&&startW!=null)?(goalW<startW):true;
+  const goodCls=function(d){return d==null?'ov-neu':((d<0)===lossGoal?(d===0?'ov-neu':'ov-good'):(d===0?'ov-neu':'ov-bad'));};
+  const arr=function(d,u){return d==null?'':(d<0?'▼ '+Math.abs(d):d>0?'▲ '+d:'– 0')+(u?' '+u:'');};
+  const sinceStart=(startW!=null)?round(cur-startW,1):null;
+  const weekAgo=addDaysISO(todayISO(),-7);
+  const prevArr=ws.filter(function(e){return String(e.date||'').slice(0,10)<=weekAgo;});
+  const weekRef=prevArr.length?+prevArr[prevArr.length-1].value:(startW!=null?startW:null);
+  const weekDelta=(weekRef!=null)?round(cur-weekRef,1):null;
+  // goal progress bar
+  let pct=null,remain=null;
+  if(startW!=null&&goalW!=null&&startW!==goalW){const total=Math.abs(startW-goalW),done=lossGoal?(startW-cur):(cur-startW);pct=Math.max(0,Math.min(100,Math.round(done/total*100)));remain=round(Math.abs(cur-goalW),1);}
+  // sparkline
+  const spk=ws.slice(-12).map(function(e){return +e.value;}).filter(function(v){return !isNaN(v);});
+  let spark='';
+  if(spk.length>=2){const mn=Math.min.apply(null,spk),mx=Math.max.apply(null,spk),rng=(mx-mn)||1,W=118,H=40;
+    const pp=spk.map(function(v,i){const x=(i/(spk.length-1))*(W-6)+3;const y=H-4-((v-mn)/rng)*(H-8);return x.toFixed(1)+','+y.toFixed(1);});
+    const col=((lossGoal?(spk[spk.length-1]<=spk[0]):(spk[spk.length-1]>=spk[0])))?'var(--good)':'var(--red)';
+    const le=pp[pp.length-1].split(',');
+    spark='<svg class="ov-spark" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'"><polyline points="'+pp.join(' ')+'" fill="none" stroke="'+col+'" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="'+le[0]+'" cy="'+le[1]+'" r="3.2" fill="'+col+'"/></svg>';
+  }
+  // HERO
+  let h='<div class="ov-card"><div class="ov-hero-top">'+
+    '<div class="ov-bigw">'+round(cur,1)+'<small> '+esc(unit)+'</small></div>'+
+    (sinceStart!=null?'<div class="ov-delta '+(goodCls(sinceStart)==='ov-good'?'good':goodCls(sinceStart)==='ov-bad'?'bad':'flat')+'">'+arr(sinceStart,unit)+'</div>':'')+
+    spark+'</div>'+
+    '<div class="sub" style="margin-top:4px">'+(startW!=null?'Down from '+round(startW,1)+' '+esc(unit)+' when you started':'Keep logging to track your trend')+(weekDelta!=null?' · <b style="color:var(--text)">'+arr(weekDelta,'')+'</b> this week':'')+'</div>';
+  if(pct!=null){h+='<div class="ov-goal"><div class="ov-goal-l"><span class="s">Start '+round(startW,1)+'</span><span>Now '+round(cur,1)+'</span><span class="g">🎯 Goal '+round(goalW,1)+'</span></div>'+
+    '<div class="ov-gtrack"><div class="ov-gfill" style="width:'+pct+'%"></div><div class="ov-gnow" style="left:'+pct+'%"></div></div>'+
+    '<div class="ov-gcap"><b>'+pct+'% to goal</b> — '+remain+' '+esc(unit)+' to go</div></div>';}
+  else if(goalW==null){h+='<div class="ov-gcap" style="margin-top:12px;font-weight:600;color:var(--muted)">Ask your coach to set a goal weight to track your progress bar.</div>';}
+  h+='</div>';
+  // STAT CARDS
+  const ms=measSorted();const mL=ms.length?ms[ms.length-1]:null,mF=ms.length?ms[0]:null;
+  const wv=function(o){if(!o||!o.values)return null;const v=o.values;return (v.waist!=null&&v.waist!=='')?+v.waist:((v.waistMin!=null&&v.waistMin!=='')?+v.waistMin:null);};
+  const waistNow=wv(mL),waistFirst=wv(mF),waistD=(waistNow!=null&&waistFirst!=null)?round(waistNow-waistFirst,1):null;
+  const streak=pgWeighStreak(ws),loggedToday=ws.some(function(e){return String(e.date||'').slice(0,10)===todayISO();});
+  h+='<div class="ov-stats">'+
+    '<div class="ov-stat"><div class="sic">⚖️</div><div class="sl">Weight</div><div class="sv">'+round(cur,1)+' '+esc(unit)+'</div><div class="sd '+goodCls(weekDelta)+'">'+(weekDelta!=null?arr(weekDelta,'')+' this week':'—')+'</div></div>'+
+    '<div class="ov-stat"><div class="sic">📏</div><div class="sl">Waist</div><div class="sv">'+(waistNow!=null?waistNow+' cm':'—')+'</div><div class="sd '+(waistD==null?'ov-neu':(waistD<0?'ov-good':waistD>0?'ov-bad':'ov-neu'))+'">'+(waistD!=null?arr(waistD,'')+' since start':'add in Measurements')+'</div></div>'+
+    '<div class="ov-stat"><div class="sic">🔥</div><div class="sl">Weigh-in streak</div><div class="sv">'+streak+' day'+(streak===1?'':'s')+'</div><div class="sd ov-neu">'+(loggedToday?'logged today ✓':'not logged today')+'</div></div>'+
+    '<div class="ov-stat"><div class="sic">💪</div><div class="sl">Workouts</div><div class="sv" id="ov-workouts">—</div><div class="sd ov-neu">this month</div></div>'+
+  '</div>';
+  // COMPOSITION
+  const ct=compTestsSorted();const cL=ct.length?ct[ct.length-1]:null,cF=ct.length?ct[0]:null;
+  const musc=(cL&&cL.muscle!=null&&cL.muscle!=='')?+cL.muscle:null,fatp=(cL&&cL.fat!=null&&cL.fat!=='')?+cL.fat:null;
+  if(musc!=null||fatp!=null){const C=226.19;
+    const dMus=(cL&&cF&&cL.muscle!=null&&cF.muscle!=null&&cF.muscle!=='')?round(cL.muscle-cF.muscle,1):null;
+    const dFat=(cL&&cF&&cL.fat!=null&&cF.fat!=null&&cF.fat!=='')?round(cL.fat-cF.fat,1):null;
+    const ring=function(val,col){const off=C*(1-Math.max(0,Math.min(1,(val||0)/100)));return '<div class="ov-ring"><svg width="84" height="84" viewBox="0 0 84 84"><circle cx="42" cy="42" r="36" fill="none" stroke="var(--card2)" stroke-width="9"/><circle cx="42" cy="42" r="36" fill="none" stroke="'+col+'" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 42 42)"/></svg><div class="cc">'+(val!=null?val+'%':'—')+'</div></div>';};
+    h+='<div class="ov-card"><div class="ov-uline">Body composition</div><div class="ov-comp">'+
+      '<div class="ov-cbox">'+ring(musc,'var(--prot)')+'<div class="ov-cl">Muscle</div><div class="ov-cd '+(dMus==null?'ov-neu':dMus>0?'ov-good':dMus<0?'ov-bad':'ov-neu')+'">'+(dMus!=null?arr(dMus,'')+'%':'latest')+'</div></div>'+
+      '<div class="ov-cbox">'+ring(fatp,'var(--fat)')+'<div class="ov-cl">Body fat</div><div class="ov-cd '+(dFat==null?'ov-neu':dFat<0?'ov-good':dFat>0?'ov-bad':'ov-neu')+'">'+(dFat!=null?arr(dFat,'')+'%':'latest')+'</div></div>'+
+    '</div></div>';}
+  // PHOTOS
+  const ps=ppSorted();const lastP=ps.length?ps[ps.length-1]:null;
+  const lastDate=lastP?String(lastP.date||'').slice(0,10):null;
+  const daysSince=lastDate?Math.round((new Date(todayISO()+'T00:00:00')-new Date(lastDate+'T00:00:00'))/86400000):null;
+  const tile=function(url,lbl){return url?'<a class="ov-ph" href="'+esc(url)+'" target="_blank" rel="noopener" style="background-image:url('+esc(url).replace(/\)/g,'%29')+')"></a>':'<div class="ov-ph">'+lbl+'</div>';};
+  let pNudge;
+  if(!lastP)pNudge='Add your first 3-way set to track visual change — and earn reward points.';
+  else if(daysSince!=null&&daysSince>=28)pNudge='Your next 3-way set is <b style="color:var(--gold)">due now</b> — earn reward points.';
+  else pNudge='Next 3-way set in <b style="color:var(--text)">'+Math.max(0,28-(daysSince||0))+' days</b>.';
+  h+='<div class="ov-card"><div style="display:flex;align-items:center;margin-bottom:10px"><span class="ov-uline" style="margin:0">Progress photos</span><span class="sub" style="margin-left:auto">'+(lastDate?'Latest · '+fmtDate(lastDate):'none yet')+'</span></div>'+
+    '<div class="ov-photos">'+tile(lastP&&lastP.front,'Front')+tile(lastP&&lastP.side,'Side')+tile(lastP&&lastP.back,'Back')+'<button class="ov-ph" style="cursor:pointer" onclick="gmBranch(\'photos\')">＋ New<br>set</button></div>'+
+    '<div class="sub" style="margin-top:9px">'+pNudge+'</div></div>';
+  // LOG NUDGE
+  h+='<div class="ov-card"><div class="ov-row2"><div class="ov-thumb">⚖️</div>'+
+    '<div style="flex:1"><div class="ov-mini-h">'+(loggedToday?'Nice — today’s weigh-in is in ✓':'Log today’s weigh-in')+'</div>'+
+    '<div class="ov-mini-s">'+(streak>1?'You’re on a '+streak+'-day streak. ':'')+'Weigh in daily — <b style="color:var(--gold)">+10 pts</b> each day.</div></div></div>'+
+    '<div style="display:flex;gap:9px;margin-top:12px"><button class="ov-btn primary" style="flex:1" onclick="gmBranch(\'weight\')">＋ Log weight</button><button class="ov-btn ghost" style="flex:1" onclick="gmBranch(\'meas\')">＋ Measurements</button></div></div>';
+  host.innerHTML=h;
+  gmSyncHeight();
+  // async: workouts this month
+  try{DB.listWorkoutLogs(SESSION.id).then(function(logs){const m=todayISO().slice(0,7);const n=(logs||[]).filter(function(w){return String(w.date||'').slice(0,7)===m;}).length;const el=$('ov-workouts');if(el)el.textContent=n;}).catch(function(){});}catch(e){}
 }
 
 /* ===== Body-weight tracker (client; canonical milestones.weightLog, syncs everywhere) ===== */
