@@ -2894,6 +2894,75 @@ body.gm-has-switch #custom-host{top:var(--gm-h,48px)}
 .t2-dwk{font-size:10.5px;margin-top:4px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .t2-badge{font-size:10px;margin-top:3px;font-weight:800}
 .t2-card{border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;background:var(--card)}
+/* ===== Premium workout home (renderTrainingV2) ===== */
+.tw-hero{position:relative;border-radius:22px;padding:20px 18px;overflow:hidden;color:#fff;background:linear-gradient(145deg,#1b1f27 0%,#2a1113 60%,#3a0f0c 100%);box-shadow:0 18px 40px -20px rgba(16,24,40,.55);margin-bottom:6px}
+.tw-hero::after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(232,23,13,.4),transparent 70%)}
+.tw-kick{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:#ffb3ad;font-weight:800;position:relative;z-index:2}
+.tw-name{font-family:var(--disp);font-weight:900;font-size:26px;line-height:1.02;margin:5px 0 2px;text-transform:uppercase;letter-spacing:.01em;position:relative;z-index:2}
+.tw-focus{font-size:13px;color:#d6dae2;font-weight:600;position:relative;z-index:2}
+.tw-chips{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 0;position:relative;z-index:2}
+.tw-chip{font-size:11px;font-weight:700;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);padding:4px 9px;border-radius:20px}
+.tw-row{display:flex;align-items:center;gap:14px;margin-top:16px;position:relative;z-index:2}
+.tw-stats{display:flex;gap:16px;flex:1;min-width:0}
+.tw-stat b{font-family:var(--disp);font-weight:900;font-size:20px;display:block;line-height:1}
+.tw-stat span{font-size:10px;color:#aab2bf;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.tw-ring{flex:none}
+.tw-cta{display:block;width:100%;margin-top:16px;background:linear-gradient(135deg,var(--red),#ff5a3c);color:#fff;border:none;font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.03em;font-size:15px;padding:14px;border-radius:15px;box-shadow:0 10px 26px -8px rgba(232,23,13,.7);position:relative;z-index:2;cursor:pointer}
+.tw-rest{border-radius:22px;padding:24px 18px;color:#fff;background:linear-gradient(145deg,#1b1f27,#242a35);margin-bottom:6px;text-align:center}
+.tw-rest h2{font-family:var(--disp);font-weight:900;font-size:22px;text-transform:uppercase;margin:8px 0 4px}
+.tw-rest p{font-size:13px;color:#aab2bf;margin:0}
+.tw-sec-h{font-family:var(--disp);font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:18px 4px 8px;display:flex;align-items:center;gap:7px}
+.tw-exli{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 8px 20px -18px rgba(16,24,40,.3)}
+.tw-exrow{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border)}
+.tw-exrow:last-child{border-bottom:none}
+.tw-exn{width:30px;height:30px;border-radius:9px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:900;font-size:14px;color:var(--muted);flex:none}
+.tw-exrow.ss .tw-exn{background:rgba(47,127,209,.14);color:var(--prot)}
+.tw-exmeta{flex:1;min-width:0}
+.tw-exmeta b{font-size:14.5px;font-weight:700;display:block;line-height:1.15;overflow-wrap:anywhere}
+.tw-exmeta span{font-size:12px;color:var(--muted);font-weight:600}
+.tw-ss-tag{font-size:9.5px;font-weight:800;color:var(--prot);text-transform:uppercase;letter-spacing:.05em}
+.tw-extar{font-family:var(--disp);font-weight:800;font-size:13px;text-align:right;line-height:1.2;flex:none}
+.tw-extar small{display:block;font-size:10.5px;color:var(--muted);font-weight:700}
+.tw-wk{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:14px;margin-top:14px;box-shadow:0 8px 20px -18px rgba(16,24,40,.3)}
+.tw-wk-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.tw-flame{font-size:15px;font-weight:800;font-family:var(--disp);display:flex;align-items:center;gap:5px;flex:none}
+.tw-wk-prog{flex:1;min-width:0}
+.tw-wk-prog .lbl{font-size:11px;color:var(--muted);font-weight:700;display:flex;justify-content:space-between;margin-bottom:4px;gap:8px}
+.tw-wk-bar{height:7px;border-radius:5px;background:var(--card2);overflow:hidden}
+.tw-wk-bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--good),#3ed47e)}
+.tw-wknav{display:flex;align-items:center;gap:8px;margin:0 2px 10px}
+.tw-wknav b{flex:1;text-align:center;font-size:13px}
+.tw-wk-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.tw-d{text-align:center;border-radius:12px;padding:8px 2px 7px;background:var(--card2);border:1px solid transparent;position:relative;cursor:default}
+.tw-d.clk{cursor:pointer}
+.tw-d .dow{font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase}
+.tw-d .dn{font-family:var(--disp);font-weight:900;font-size:15px;margin:1px 0}
+.tw-d .dwk{font-size:9px;color:var(--muted);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.1}
+.tw-d .dot{width:6px;height:6px;border-radius:50%;margin:3px auto 0;background:var(--border)}
+.tw-d.done{background:rgba(21,163,74,.1);border-color:rgba(21,163,74,.3)}
+.tw-d.done .dot{background:var(--good)}.tw-d.done .dn{color:var(--good)}
+.tw-d.today{background:var(--card);border-color:var(--red);box-shadow:0 0 0 3px rgba(232,23,13,.12)}
+.tw-d.today .dot{background:var(--red)}
+.tw-d.missed{background:rgba(232,23,13,.06);border-color:rgba(232,23,13,.2)}
+.tw-d.missed .dot{background:var(--red)}
+.tw-d.rest .dn{color:var(--muted);opacity:.5}
+.tw-d .chk{position:absolute;top:-5px;right:-3px;width:16px;height:16px;border-radius:50%;background:var(--good);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:900}
+/* ===== Workout finish summary (celebration) ===== */
+.wko-sm-back{position:fixed;inset:0;z-index:1400;background:rgba(10,14,20,.55);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:18px;animation:wkoSmIn .25s ease}
+@keyframes wkoSmIn{from{opacity:0}to{opacity:1}}
+.wko-sm{width:100%;max-width:400px;background:linear-gradient(160deg,#16351f,#0f2416);border-radius:24px;padding:24px 20px;color:#fff;text-align:center;position:relative;overflow:hidden;box-shadow:0 24px 60px -24px rgba(0,0,0,.7);animation:wkoSmPop .3s cubic-bezier(.2,.8,.3,1.2)}
+@keyframes wkoSmPop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.wko-sm::after{content:"";position:absolute;left:-30px;top:-30px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(62,212,126,.4),transparent 70%)}
+.wko-sm .big{font-size:42px;position:relative}
+.wko-sm h3{font-family:var(--disp);font-weight:900;font-size:25px;text-transform:uppercase;margin:4px 0 2px;position:relative}
+.wko-sm .sub{font-size:13px;color:#b9e7c8;font-weight:600;position:relative}
+.wko-sm-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:18px;position:relative;z-index:2}
+.wko-sm-stat{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:13px 10px}
+.wko-sm-stat b{font-family:var(--disp);font-weight:900;font-size:22px;display:block;line-height:1}
+.wko-sm-stat span{font-size:10px;color:#9fc6ad;text-transform:uppercase;letter-spacing:.04em;font-weight:700}
+.wko-sm-pr{margin-top:14px;background:rgba(245,200,66,.16);border:1px solid rgba(245,200,66,.4);color:#ffd766;border-radius:14px;padding:10px 13px;font-weight:800;font-size:12.5px;position:relative;z-index:2;line-height:1.4}
+.wko-sm-cta{display:block;width:100%;margin-top:18px;background:linear-gradient(135deg,var(--red),#ff5a3c);color:#fff;border:none;font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.03em;font-size:15px;padding:14px;border-radius:15px;position:relative;z-index:2;cursor:pointer}
+.wko-sm-back-btn{display:block;width:100%;margin-top:9px;background:none;border:none;color:#9fc6ad;font-weight:700;font-size:13px;cursor:pointer;position:relative;z-index:2}
 .wd2-progress{height:8px;border-radius:5px;background:var(--card2);border:1px solid var(--border);overflow:hidden;margin-bottom:12px}
 .wd2-progress i{display:block;height:100%;background:var(--good);transition:width .2s}
 .wd2-sech{font-family:var(--disp);font-weight:800;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px}
@@ -6523,7 +6592,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04po';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04pp';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -11239,7 +11308,34 @@ function wkoHistoryCardioRender(ei,host,en){
     '<div class="small" style="color:var(--muted);margin:6px 0 0">Pace = duration ÷ distance (min/km) — lower is faster. Each setup (treadmill, bike, rower…) keeps its own history.</div>'+
     '<div class="uline" style="margin:14px 0 6px">Your setups'+(keys.length>1?' <span class="small" style="text-transform:none;font-weight:400;color:var(--muted)">— swipe sideways ↔</span>':'')+'</div><div class="wk-setup-row">'+panels+'</div>';
 }
-async function wkoFinish(){
+/* historical best est-1RM for an exercise, EXCLUDING the session being edited */
+function wkoExHistBest(en){let best=0;(WKO_HISTORY||[]).forEach(w=>{if(WKO.editId&&w.id===WKO.editId)return;(w.entries||[]).forEach(e=>{if((en.exId&&e.exId===en.exId)||(e.name===en.name)){(e.sets||[]).forEach(s=>{const v=est1RM(s.weight,s.reps);if(v>best)best=v;});}});});return best;}
+/* Finish → premium celebration summary (volume · sets · duration · streak · PRs); Save commits it. */
+function wkoFinish(){
+  if(!WKO)return;const ex=document.getElementById('wko-summary');if(ex)ex.remove();
+  const t=wkoTotals();
+  const durSec=WKO_START?Math.floor((Date.now()-WKO_START)/1000):0;
+  const mm=Math.floor(durSec/60),ssx=durSec%60;const durStr=(durSec>=3600?Math.floor(durSec/3600)+':'+String(Math.floor(durSec%3600/60)).padStart(2,'0'):mm+':'+String(ssx).padStart(2,'0'));
+  const prs=[];WKO.entries.forEach(en=>{const tb=Math.round(wkoEntryBest1RM(en));if(tb>0){const hb=Math.round(wkoExHistBest(en));if(tb>hb)prs.push({name:en.name,e:tb});}});
+  let streak=0;try{const c=t2c().calendar,done=WD2_DONE||new Set();for(let k=0;k<180;k++){const iso=addDaysISO(WKO.date,-k);if(!(c[iso]||[]).length)continue;if((iso===WKO.date)||done.has(iso))streak++;else break;}}catch(e){}
+  const exN=WKO.entries.length;
+  let prHtml='';if(prs.length)prHtml='<div class="wko-sm-pr">🏆 '+prs.length+' new personal record'+(prs.length>1?'s':'')+' — '+prs.slice(0,3).map(p=>esc(p.name)+' '+p.e+' kg').join(' · ')+(prs.length>3?' +'+(prs.length-3)+' more':'')+'</div>';
+  const streakTxt=streak>1?(streak+' 🔥'):'✓';
+  const o=document.createElement('div');o.id='wko-summary';o.className='wko-sm-back';
+  o.innerHTML='<div class="wko-sm"><div class="big">🎉</div><h3>Workout complete</h3>'+
+    '<div class="sub">'+esc(WKO.day_name||'Session')+' · '+exN+' exercise'+(exN===1?'':'s')+' · great work</div>'+
+    '<div class="wko-sm-grid">'+
+      '<div class="wko-sm-stat"><b>'+lcNum(t.vol)+'</b><span>kg total volume</span></div>'+
+      '<div class="wko-sm-stat"><b>'+t.sets+'</b><span>sets done</span></div>'+
+      '<div class="wko-sm-stat"><b>'+durStr+'</b><span>duration</span></div>'+
+      '<div class="wko-sm-stat"><b>'+streakTxt+'</b><span>'+(streak>1?'day streak':'logged')+'</span></div>'+
+    '</div>'+prHtml+
+    '<button class="wko-sm-cta" onclick="wkoCommit()">Save &amp; finish</button>'+
+    '<button class="wko-sm-back-btn" onclick="(function(){var o=document.getElementById(\'wko-summary\');if(o)o.remove();})()">‹ Back</button></div>';
+  document.body.appendChild(o);
+}
+async function wkoCommit(){
+  if(!WKO)return;const ov=document.getElementById('wko-summary');if(ov)ov.remove();
   const t=wkoTotals();
   const summary={totalSets:t.sets,totalReps:t.reps,volume:t.vol,exercises:WKO.entries.map(en=>{const es=wkoEntryStats(en);return {name:en.name,brand:en.brand||'',equipment:en.equipment||'',est1rm:Math.round(wkoEntryBest1RM(en)),vol:es.vol,sets:es.sets,reps:es.reps,aerobic:es.aerobic};}).filter(x=>x.est1rm>0||x.vol>0||x.aerobic)};
   const durationSec=WKO_START?Math.floor((Date.now()-WKO_START)/1000):0;
@@ -15956,32 +16052,83 @@ async function msPhoto(gi,which,input){const f=input.files[0];if(!f)return;try{c
 /* ═══════════ CLIENT · Training v2 (calendar view + rebuilt runner) ═══════════ */
 function t2c(){const v=(PLAN&&PLAN.training&&PLAN.training.v2)||{};return {active:!!v.active,workouts:Array.isArray(v.workouts)?v.workouts:[],calendar:(v.calendar&&typeof v.calendar==='object')?v.calendar:{}};}
 function t2cWorkout(id){return t2c().workouts.find(w=>w.id===id)||null;}
-let WD2_DONE=null, WD2=null, WD2_TIMER=null, WD2_WEEK=0;
+let WD2_DONE=null, WD2=null, WD2_TIMER=null, WD2_WEEK=0, TW_RELIB=false;
 async function wd2LoadDone(){try{const logs=await DB.listWorkoutLogs(SESSION.id);WD2_DONE=new Set((logs||[]).map(l=>String(l.date||'').slice(0,10)));}catch(e){WD2_DONE=new Set();}try{renderTrainingV2();}catch(e){}}
 function wd2WeekNav(d){const cfg=(PLAN&&PLAN.training&&PLAN.training.v2)||{};const n=WD2_WEEK+d;if(n<0&&cfg.showPast===false)return;if(n>0&&cfg.showNext===false)return;WD2_WEEK=n;renderTrainingV2();}
+function twExTarget(e){
+  const sets=wdExSets(e);const first=sets[0]||{};
+  const track=(e.track&&e.track.length)?e.track:['reps','weight'];
+  const timeMode=track.indexOf('time')>-1&&track.indexOf('reps')<0;
+  const uni=sets.length&&sets.every(s=>String(s.reps||'')===String(first.reps||'')&&String(s.weight||'')===String(first.weight||'')&&String(s.time||'')===String(first.time||''));
+  if(timeMode){const t=first.time||'';return {main:sets.length+' × '+(t?(t+'s'):'—'),sub:first.distance?(first.distance+'m'):''};}
+  if(uni){const reps=first.reps||'',wt=first.weight||'';if(reps||wt)return {main:sets.length+' × '+(reps||'—'),sub:wt?('@ '+wt+' kg'):''};}
+  return {main:sets.length+(sets.length===1?' set':' sets'),sub:'per-set'};
+}
 function renderTrainingV2(){
   const host=$('training-host');if(!host)return;
-  try{loadExLib();}catch(e){}
+  try{loadExLib().then(()=>{try{if(($('training-host'))&&PLAN&&PLAN.training&&PLAN.training.v2&&PLAN.training.v2.active&&!TW_RELIB){TW_RELIB=true;renderTrainingV2();}}catch(e){}});}catch(e){}
   if(WD2_DONE===null){wd2LoadDone();}
   const done=WD2_DONE||new Set();
   const cfg=(PLAN&&PLAN.training&&PLAN.training.v2)||{};const showPast=cfg.showPast!==false,showNext=cfg.showNext!==false;
   if(!showPast&&WD2_WEEK<0)WD2_WEEK=0;if(!showNext&&WD2_WEEK>0)WD2_WEEK=0;
   const c=t2c().calendar,today=todayISO();
-  const todayLbl=new Date(today+'T00:00:00').toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'});
+  const dObj=new Date(today+'T00:00:00');
+  const kick=dObj.toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'});
   const todayW=c[today]||[];
-  let hero='<div class="t2-hero"><div class="funit">'+esc(todayLbl)+'</div><h2>Today’s training</h2>';
-  if(todayW.length){hero+=todayW.map(id=>{const w=t2cWorkout(id);const nx=w?((w.sections||[]).reduce((a,s)=>a+((s.exercises||[]).length),0)):0;const dn=done.has(today);return '<div class="t2-card" style="margin:10px 0 0"><div style="display:flex;align-items:center;gap:10px"><div style="flex:1;min-width:0"><div style="font-weight:800;font-size:16px">'+esc((w&&w.name)||'Workout')+'</div><div class="funit">'+nx+' exercises'+(w&&w.focus?(' · '+esc(w.focus)):'')+'</div></div><button class="btn-sm solid" style="flex:none" onclick="startWorkoutV2(\''+today+'\',\''+id+'\')">'+(dn?'↻ Log again':'▶ Start')+'</button></div></div>';}).join('');}
-  else hero+='<p class="small" style="margin:8px 0 0;color:var(--muted)">Rest day — nothing scheduled. Enjoy the recovery. 💤</p>';
-  hero+='</div>';
+  // current-week completion (hero ring)
+  const curMon=wdMonday(today);let wkPlan=0,wkDoneN=0;
+  for(let i=0;i<7;i++){const iso=addDaysISO(curMon,i);if((c[iso]||[]).length){wkPlan++;if(done.has(iso))wkDoneN++;}}
+  // streak: consecutive completed scheduled sessions up to today (today pending doesn't break it)
+  let streak=0;for(let k=0;k<180;k++){const iso=addDaysISO(today,-k);if(!(c[iso]||[]).length)continue;if(done.has(iso))streak++;else{if(iso===today)continue;break;}}
+
+  let h='';
+  if(todayW.length){
+    h+=todayW.map(id=>{
+      const w=t2cWorkout(id);if(!w)return '';
+      const dn=done.has(today);
+      let exCount=0,setCount=0;const flat=[];
+      (w.sections||[]).forEach(s=>(s.exercises||[]).forEach(e=>{flat.push(e);exCount++;setCount+=wdExSets(e).length;}));
+      const mins=Math.max(10,Math.round(setCount*2.6));
+      const musc=[];flat.forEach(e=>{const lib=e.exId?exById(e.exId):null;const bp=lib&&lib.bodyPart;if(bp&&musc.indexOf(bp)<0)musc.push(bp);});
+      const circ=163.4,dash=Math.max(0,Math.min(circ,circ*(wkPlan?wkDoneN/wkPlan:0)));
+      let hero='<div class="tw-hero"><div class="tw-kick">'+esc(kick)+(w.focus?(' · '+esc(w.focus)):'')+'</div>';
+      hero+='<div class="tw-name">'+esc(w.name||'Workout')+'</div>';
+      if(musc.length)hero+='<div class="tw-focus">'+esc(musc.slice(0,4).join(' · '))+'</div>';
+      hero+='<div class="tw-chips"><span class="tw-chip">💪 Strength</span><span class="tw-chip">⚡ '+exCount+' exercises</span>'+(dn?'<span class="tw-chip">✓ Completed today</span>':'')+'</div>';
+      hero+='<div class="tw-row"><div class="tw-stats">'+
+        '<div class="tw-stat"><b>'+exCount+'</b><span>Exercises</span></div>'+
+        '<div class="tw-stat"><b>'+setCount+'</b><span>Sets</span></div>'+
+        '<div class="tw-stat"><b>~'+mins+'</b><span>Minutes</span></div></div>'+
+        '<svg class="tw-ring" width="64" height="64" viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="7"/><circle cx="32" cy="32" r="26" fill="none" stroke="#3ed47e" stroke-width="7" stroke-linecap="round" stroke-dasharray="'+dash.toFixed(1)+' '+circ+'" transform="rotate(-90 32 32)"/><text x="32" y="30" text-anchor="middle" font-size="15" font-weight="900" fill="#fff" font-family="Archivo">'+wkDoneN+'/'+wkPlan+'</text><text x="32" y="43" text-anchor="middle" font-size="8" fill="#aab2bf" font-family="Inter">week</text></svg>';
+      hero+='</div>';
+      hero+='<button class="tw-cta" onclick="startWorkoutV2(\''+today+'\',\''+id+'\')">'+(dn?'↻ Log again':'▶ Start workout')+'</button></div>';
+      let li='',idx=0;
+      (w.sections||[]).forEach(s=>{const exs=s.exercises||[];exs.forEach((e,i)=>{idx++;const ss=e.linkNext||(i>0&&exs[i-1].linkNext);const lib=e.exId?exById(e.exId):null;const t=twExTarget(e);
+        const sub=ss?'<span class="tw-ss-tag">⛓ Superset</span>':esc(((lib&&lib.bodyPart)||s.name||'')+(lib&&lib.equipment?(' · '+lib.equipment):''));
+        li+='<div class="tw-exrow'+(ss?' ss':'')+'"><span class="tw-exn">'+idx+'</span><div class="tw-exmeta"><b>'+esc(e.name||'Exercise')+'</b><span>'+sub+'</span></div><div class="tw-extar">'+esc(t.main)+(t.sub?'<small>'+esc(t.sub)+'</small>':'')+'</div></div>';});});
+      let block=hero;
+      if(li)block+='<div class="tw-sec-h">📋 '+(todayW.length>1?esc(w.name):'Today’s session')+'</div><div class="tw-exli">'+li+'</div>';
+      return block;
+    }).join('');
+  } else {
+    h+='<div class="tw-rest"><div style="font-size:40px">💤</div><h2>Rest day</h2><p>Nothing scheduled today — recover well. Growth happens between sessions.</p></div>';
+  }
+
+  // weekly rhythm (browsed week)
   const ws=wdMonday(addDaysISO(today,WD2_WEEK*7)),we=addDaysISO(ws,6);
   const label=(WD2_WEEK===0?'This week':WD2_WEEK===1?'Next week':WD2_WEEK===-1?'Last week':(fmtDate(ws)+' – '+fmtDate(we)));
   const canPrev=showPast||WD2_WEEK>0,canNext=showNext||WD2_WEEK<0;
-  let wk='<div class="t2-weeknav"><button class="btn-xxs"'+(canPrev?'':' disabled style="opacity:.4"')+' onclick="wd2WeekNav(-1)">‹</button><b style="flex:1;text-align:center">'+esc(label)+' <span class="funit">'+esc(fmtDate(ws)+' – '+fmtDate(we))+'</span></b><button class="btn-xxs"'+(canNext?'':' disabled style="opacity:.4"')+' onclick="wd2WeekNav(1)">›</button></div>';
-  wk+='<div class="t2-strip">';
+  let bPlan=0,bDone=0;for(let i=0;i<7;i++){const iso=addDaysISO(ws,i);if((c[iso]||[]).length){bPlan++;if(done.has(iso))bDone++;}}
+  let wk='<div class="tw-wk">';
+  wk+='<div class="tw-wknav"><button class="btn-xxs"'+(canPrev?'':' disabled style="opacity:.4"')+' onclick="wd2WeekNav(-1)">‹</button><b>'+esc(label)+'</b><button class="btn-xxs"'+(canNext?'':' disabled style="opacity:.4"')+' onclick="wd2WeekNav(1)">›</button></div>';
+  wk+='<div class="tw-wk-top"><div class="tw-flame">🔥 '+streak+'</div><div class="tw-wk-prog"><div class="lbl"><span>'+(WD2_WEEK<0?'Sessions done':WD2_WEEK>0?'Planned':'Sessions done')+'</span><span>'+bDone+' of '+bPlan+'</span></div><div class="tw-wk-bar"><i style="width:'+(bPlan?Math.round(bDone/bPlan*100):0)+'%"></i></div></div></div>';
+  wk+='<div class="tw-wk-strip">';
   for(let i=0;i<7;i++){const iso=addDaysISO(ws,i),w2=c[iso]||[],isT=(iso===today),dn=done.has(iso),missed=(iso<today)&&w2.length&&!dn;const d=new Date(iso+'T00:00:00');
-    wk+='<div class="t2-day'+(isT?' today':'')+'"'+(w2.length?(' style="cursor:pointer" onclick="startWorkoutV2(\''+iso+'\',\''+w2[0]+'\')"'):'')+'><div class="t2-dow">'+d.toLocaleDateString(undefined,{weekday:'short'})+'</div><div class="t2-dnum">'+d.getDate()+'</div><div class="t2-dwk">'+(w2.length?esc((t2cWorkout(w2[0])||{}).name||'Workout'):'<span style="color:var(--muted)">Rest</span>')+'</div>'+(dn?'<div class="t2-badge" style="color:var(--good)">✓ done</div>':(missed?'<div class="t2-badge" style="color:var(--red)">missed</div>':(isT&&w2.length?'<div class="t2-badge" style="color:var(--prot)">today</div>':'')))+'</div>';}
-  wk+='</div>';
-  host.innerHTML=hero+wk;
+    const cls=['tw-d'];if(dn)cls.push('done');else if(isT&&w2.length)cls.push('today');else if(missed)cls.push('missed');else if(!w2.length)cls.push('rest');if(w2.length)cls.push('clk');
+    const nm=w2.length?esc((t2cWorkout(w2[0])||{}).name||'Workout'):'Rest';
+    wk+='<div class="'+cls.join(' ')+'"'+(w2.length?(' onclick="startWorkoutV2(\''+iso+'\',\''+w2[0]+'\')"'):'')+'>'+(dn?'<div class="chk">✓</div>':'')+'<div class="dow">'+d.toLocaleDateString(undefined,{weekday:'short'})+'</div><div class="dn">'+d.getDate()+'</div><div class="dwk">'+nm+'</div><div class="dot"></div></div>';}
+  wk+='</div></div>';
+  host.innerHTML=h+wk;
 }
 /* ---- rebuilt runner ---- */
 /* Restore the previous focus-view runner for v2 workouts: adapt a v2 workout into WKO + per-set targets, then run the legacy runner. */
