@@ -2020,6 +2020,9 @@ body{overflow-x:hidden}
 .meal-head .mrow-kc span{display:block;font-size:10.5px;color:var(--muted);white-space:nowrap}
 .meal-head .mrow-photo{font-size:13px;margin-left:4px;opacity:.8}
 .meal-add-choose.flash{box-shadow:0 0 0 2px var(--red);border-radius:13px;transition:box-shadow .35s}
+details.meal-add-choose>summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:var(--red);font-weight:800;font-size:13px;padding:5px 2px;-webkit-tap-highlight-color:transparent}
+details.meal-add-choose>summary::-webkit-details-marker{display:none}
+details.meal-add-choose[open]>summary{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:9px}
 .alloc{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 12px;padding:10px 12px;border:1px dashed var(--line-strong);border-radius:10px;background:var(--card2)}
 .alloc-cell{display:flex;flex-direction:column;gap:1px;min-width:90px}
 .alloc-cell .al-k{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;font-family:var(--disp)}
@@ -6519,7 +6522,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04pk';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04pl';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -14382,7 +14385,7 @@ function foodAddTrack(){try{const s=$('log-sections');if(s)s.scrollIntoView({beh
 /* reveal / collapse one meal's "add ingredients" columns (the chooser shows the two options first) */
 function mealShowTrack(key){const w=$('logaddwrap-'+key),c=$('mealchoose-'+key);if(w)w.style.display='';if(c)c.style.display='none';const inp=$('logadd-'+key);if(inp)setTimeout(function(){try{inp.focus();}catch(e){}},80);}
 function mealHideTrack(key){const w=$('logaddwrap-'+key),c=$('mealchoose-'+key);if(w)w.style.display='none';if(c)c.style.display='';const m=$('logac-'+key);if(m)m.classList.remove('open');}
-function foodAddOpen(){try{const s=$('log-sections');if(s)s.scrollIntoView({behavior:'smooth',block:'start'});const first=document.querySelector('#log-sections .meal-add-choose');if(first){first.classList.add('flash');setTimeout(function(){try{first.classList.remove('flash');}catch(e){}},1200);}}catch(e){}}
+function foodAddOpen(){try{const s=$('log-sections');if(s)s.scrollIntoView({behavior:'smooth',block:'start'});const first=document.querySelector('#log-sections .meal-add-choose');if(first){try{first.open=true;}catch(e){}first.classList.add('flash');setTimeout(function(){try{first.classList.remove('flash');}catch(e){}},1200);}}catch(e){}}
 function foodAddJournal(mealName,focus){
   const cap=$('jr-capture');if(!cap)return;
   JR_PHOTOS=[];JR_NUTRI=null;
@@ -14464,14 +14467,14 @@ function renderLogMeal(key,name,time,planned,rows,jrs){
   const jmealsHTML=jrs.length?('<div class="meal-jmeals">'+jrs.map(jmealCardHTML).join('')+'</div>'):'';
   return '<div class="meal"><div class="meal-head">'+_mring+'<span class="mname">'+esc(name)+'</span>'+(jlt.cal?'<span class="mrow-photo" title="includes a photo estimate">📸</span>':'')+(time?'<span class="mtime">'+esc(time)+'</span>':'')+_mkc+'</div>'+
     tableHTML+jmealsHTML+
-    '<div class="meal-add-choose" id="mealchoose-'+key+'">'+
-      '<div class="mac-label">Add to '+esc(name)+'</div>'+
+    '<details class="meal-add-choose" id="mealchoose-'+key+'">'+
+      '<summary class="mac-summary">＋ Add to '+esc(name)+'</summary>'+
       '<div class="mac-btns">'+
         '<button type="button" class="mac-opt track" onclick="mealShowTrack(\''+key+'\')"><span class="mac-ic">🔍</span><span class="mac-tx"><b>Search</b><small>exact macros</small></span></button>'+
         '<button type="button" class="mac-opt journal" onclick="foodAddJournal(\''+nameJs+'\',\'photo\')"><span class="mac-ic">📷</span><span class="mac-tx"><b>Snap</b><small>photo estimate</small></span></button>'+
         '<button type="button" class="mac-opt journal" onclick="foodAddJournal(\''+nameJs+'\',\'desc\')"><span class="mac-ic">✍️</span><span class="mac-tx"><b>Describe</b><small>AI estimate</small></span></button>'+
       '</div>'+
-    '</div>'+
+    '</details>'+
     '<div class="logadd" id="logaddwrap-'+key+'" style="display:none">'+
       '<div class="ac" style="flex:1 1 100%;min-width:170px"><input id="logadd-'+key+'" type="text" placeholder="🔍 Search a food / ingredient for '+esc(name)+'…" oninput="logAcInput(\''+key+'\')" onfocus="logAcInput(\''+key+'\')" autocomplete="off"><div class="ac-menu" id="logac-'+key+'"></div></div>'+
       '<div style="display:flex;align-items:center;gap:7px;flex:none;flex-wrap:wrap"><span class="uline">Qty</span><input id="logqty-'+key+'" type="number" min="0" step="any" value="1" style="width:64px" title="Quantity" oninput="logUnitChange(\''+key+'\')"><select id="logunit-'+key+'" class="u-unit" title="Unit — change it and the calories auto-calculate" onchange="logUnitChange(\''+key+'\')"><option value="">unit</option></select><span class="funit log-umac" id="logmac-'+key+'"></span></div>'+
