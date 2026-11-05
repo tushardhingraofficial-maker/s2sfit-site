@@ -6497,7 +6497,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04pi';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04pj';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -8206,7 +8206,15 @@ async function renderDashboard(){
     else if(sectionLive('nutrition')&&!(dayLog&&((dayLog.items||[]).length))){focus={t:'Log your first meal',s:'Stay on top of today’s macros',c:'Log food →',a:"setSection('nutrition')"};}
     else {focus={t:'You’re all caught up',s:'Nice work today — keep the streak going 🔥',c:null,a:null};}
     const mfocus=$('dm-focus');if(mfocus&&focus)mfocus.innerHTML='<div class="focus-card"'+(focus.a?' onclick="'+focus.a+'"':'')+'><div class="focus-inner"><div class="focus-kick">Your focus today</div><div class="focus-title">'+esc(focus.t)+'</div><div class="focus-sub">'+esc(focus.s)+'</div>'+(focus.c?'<button class="focus-cta" onclick="event.stopPropagation();'+(focus.a||'')+'">'+esc(focus.c)+'</button>':'')+'</div></div>';
-    if(sectionLive('rewards')){rewardsCfg().then(function(cfg){try{const rd=rwClientData(PLAN);const total=+rd.total||0;const limit=+((cfg&&cfg.redeemLimit))||0;const h2=$('dm-lvl');if(!h2)return;if(limit>0){const pct=Math.min(100,Math.round(total/limit*100));const left=Math.max(0,limit-total);h2.innerHTML='<div class="lvl-card" onclick="setSection(\'rewards\')"><div class="lvl-head"><span>🏅</span>S2S Points<span class="sp"><b>'+total.toLocaleString()+'</b> / '+limit.toLocaleString()+' pts</span></div><div class="lvl-bar"><div class="lvl-fill" style="width:'+pct+'%"></div></div><div class="lvl-note">'+(total>=limit?'🎉 You can redeem a reward now — tap to claim':left.toLocaleString()+' pts to your next reward · log today’s weight for +'+rwWeightPts(cfg))+'</div></div>';}else if(total>0){h2.innerHTML='<div class="lvl-card" onclick="setSection(\'rewards\')"><div class="lvl-head"><span>🏅</span>S2S Points<span class="sp"><b>'+total.toLocaleString()+'</b> pts</span></div><div class="lvl-note" style="margin-top:0">Keep earning — log weight, food &amp; check-ins</div></div>';}}catch(_){}}).catch(function(){});}
+    if(sectionLive('rewards')){(async function(){try{
+      const cfg=await rewardsCfg();
+      // pull the live balance the same way the Rewards section does (coach may have awarded/redeemed since login)
+      try{if(SESSION){const fresh=await DB.getPlan(SESSION.id);if(fresh&&fresh.milestones){PLAN.milestones=PLAN.milestones||{goals:[]};if(Array.isArray(fresh.milestones.rewardsEarned)&&!Array.isArray(PLAN.milestones.rewardsEarned))PLAN.milestones.rewardsEarned=fresh.milestones.rewardsEarned;PLAN.milestones.rewards=rwUnionEarned(fresh.milestones.rewards);}}}catch(_){}
+      const rd=rwClientData(PLAN);const total=+rd.total||0;const limit=+((cfg&&cfg.redeemLimit))||0;const h2=$('dm-lvl');if(!h2)return;
+      if(limit>0){const pct=Math.min(100,Math.round(total/limit*100));const left=Math.max(0,limit-total);h2.innerHTML='<div class="lvl-card" onclick="setSection(\'rewards\')"><div class="lvl-head"><span>🏅</span>S2S Points<span class="sp"><b>'+total.toLocaleString()+'</b> / '+limit.toLocaleString()+' pts</span></div><div class="lvl-bar"><div class="lvl-fill" style="width:'+pct+'%"></div></div><div class="lvl-note">'+(total>=limit?'🎉 You can redeem a reward now — tap to claim':left.toLocaleString()+' pts to your next reward · log today’s weight for +'+rwWeightPts(cfg))+'</div></div>';}
+      else if(total>0){h2.innerHTML='<div class="lvl-card" onclick="setSection(\'rewards\')"><div class="lvl-head"><span>🏅</span>S2S Points<span class="sp"><b>'+total.toLocaleString()+'</b> pts</span></div><div class="lvl-note" style="margin-top:0">Keep earning — log weight, food &amp; check-ins</div></div>';}
+      else{h2.innerHTML='';}
+    }catch(_){}})();}
   }catch(e){}
   const cards=[];
   // ---- Tasks (coach-allocated) ----
