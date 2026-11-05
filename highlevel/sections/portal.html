@@ -2020,9 +2020,10 @@ body{overflow-x:hidden}
 .meal-head .mrow-kc span{display:block;font-size:10.5px;color:var(--muted);white-space:nowrap}
 .meal-head .mrow-photo{font-size:13px;margin-left:4px;opacity:.8}
 .meal-add-choose.flash{box-shadow:0 0 0 2px var(--red);border-radius:13px;transition:box-shadow .35s}
-details.meal-add-choose>summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:var(--red);font-weight:800;font-size:13px;padding:5px 2px;-webkit-tap-highlight-color:transparent}
+details.meal-add-choose>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;background:linear-gradient(135deg,var(--red),#ff5a3c);color:#fff;font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.02em;font-size:12.5px;padding:11px 14px;border-radius:13px;box-shadow:0 8px 20px -12px rgba(232,23,13,.6);-webkit-tap-highlight-color:transparent;transition:transform .08s,box-shadow .15s}
+details.meal-add-choose>summary:active{transform:scale(.99)}
 details.meal-add-choose>summary::-webkit-details-marker{display:none}
-details.meal-add-choose[open]>summary{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:9px}
+details.meal-add-choose[open]>summary{background:none;color:var(--muted);box-shadow:none;font-family:var(--sans);font-size:11px;letter-spacing:.05em;justify-content:flex-start;padding:0 2px;margin-bottom:9px}
 .alloc{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 12px;padding:10px 12px;border:1px dashed var(--line-strong);border-radius:10px;background:var(--card2)}
 .alloc-cell{display:flex;flex-direction:column;gap:1px;min-width:90px}
 .alloc-cell .al-k{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;font-family:var(--disp)}
@@ -6522,7 +6523,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04pl';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04pm';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
