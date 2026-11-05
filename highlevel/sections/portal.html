@@ -6523,7 +6523,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04pn';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04po';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -18470,7 +18470,7 @@ function chatBubble(m,mine,showSender,cont){
   const sender=senderLbl?'<div class="chat-sender">'+esc(senderLbl)+'</div>':'';
   const reply=(m.media&&m.media.reply)?('<div class="chat-quote"><b>'+esc(m.media.reply.sender||'')+'</b>'+esc(String(m.media.reply.text||'').slice(0,140))+'</div>'):'';
   const rx=(typeof chatRxHTML==='function')?chatRxHTML(m.id):'';
-  const th=(typeof CHAT_TH!=='undefined'&&CHAT_TH[m.id])?('<button class="chat-th-ind" onclick="chatOpenMsgThread(\''+esc(m.id)+'\')">'+svgIcon('chat')+' '+CHAT_TH[m.id]+' repl'+(CHAT_TH[m.id]===1?'y':'ies')+'</button>'):'';
+  const th='';   // threaded replies removed — quote-reply only
   const more='<button class="chat-more" onclick="chatMsgMenu(this.closest(\'.chat-msg\').getAttribute(\'data-mid\'))" aria-label="Message options">'+svgIcon('more')+'</button>';
   return '<div class="chat-msg '+(mine?'me':'them')+(cont?' cont':'')+'" data-mid="'+esc(m.id)+'">'+more+sender+'<div class="chat-bubble">'+reply+(body||'&nbsp;')+'</div>'+rx+th+'<div class="chat-time">'+esc(chatMsgTime(m.created_at))+chatReceipt(m,mine)+'</div></div>';}
 /* ---- chat media: attach (image/audio/video) + voice record ---- */
@@ -18748,7 +18748,6 @@ async function chatLoadMeta(msgs,ctx,bodyEl){
   CHAT_RX={};CHAT_TH={};CHAT_PIN=null;
   const meActor=ctx.admin?'admin':'client';
   try{const lo={postType:'msgrx'};if(ctx.admin)lo.clientId=ctx.cid;const ls=await DB.listLikes(lo);(ls||[]).forEach(function(l){const p=String(l.post_key).split('|'),mid=p[0],emo=p[1]||'❤️';CHAT_RX[mid]=CHAT_RX[mid]||{};const r=CHAT_RX[mid][emo]=CHAT_RX[mid][emo]||{count:0,mine:false};r.count++;if(l.actor===meActor)r.mine=true;});}catch(e){}
-  try{const co={postType:'msgth'};if(ctx.admin)co.clientId=ctx.cid;const cs=await DB.listComments(co);(cs||[]).forEach(function(c){CHAT_TH[c.post_key]=(CHAT_TH[c.post_key]||0)+1;});}catch(e){}
   try{const po={postType:'chatpin',postKey:ctx.threadKey};if(ctx.admin)po.clientId=ctx.cid;const ps=await DB.listComments(po);if(ps&&ps.length){const last=ps[ps.length-1];let v={};try{v=JSON.parse(last.text||'{}');}catch(e){}if(v&&v.mid&&!v.cleared)CHAT_PIN=Object.assign({},v,{_pinId:last.id});}}catch(e){}
   if(bodyEl){bodyEl._metasig=metasig;bodyEl._metaat=Date.now();}
 }
@@ -18788,7 +18787,6 @@ function chatMsgMenu(mid){const m=CHAT_MSGS[mid];if(!m)return;const ctx=chatCtx(
   const back=document.createElement('div');back.id='chat-menu-back';back.className='chat-menu-back';
   const rx=!ctx.grp?('<div class="cm-rx">'+CHAT_RX_EMOJIS.map(function(e){return '<button onclick="chatMenuClose();chatReact(\''+mid+'\',\''+e+'\')">'+e+'</button>';}).join('')+'</div>'):'';
   let items='<button class="cm-i" onclick="chatMenuClose();chatReplyTo(\''+mid+'\')">'+svgIcon('send')+' Reply</button>';
-  if(!ctx.grp)items+='<button class="cm-i" onclick="chatMenuClose();chatOpenMsgThread(\''+mid+'\')">'+svgIcon('chat')+' Reply in thread</button>';
   items+='<button class="cm-i" onclick="chatMenuClose();chatCopyMsg(\''+mid+'\')">'+svgIcon('clip')+' Copy text</button>';
   if(ctx.admin&&!ctx.grp){items+='<button class="cm-i adm" onclick="chatMenuClose();chatMsgToTask(\''+mid+'\')">'+svgIcon('mytasks')+' Create task</button>';
     items+='<button class="cm-i adm" onclick="chatMenuClose();chatPinMsg(\''+mid+'\')">'+svgIcon('flag')+' Pin message</button>';}
@@ -18818,27 +18816,7 @@ async function chatPinMsg(mid){const ctx=chatCtx();const m=CHAT_MSGS[mid];if(!m|
   try{await DB.addComment({post_type:'chatpin',post_key:ctx.threadKey,text:JSON.stringify(rec),client_id:ctx.cid});CHAT_PIN=rec;toast('Pinned');const b=$(ctx.body);if(b)b.dataset.sig='';ctx.render();}catch(e){toast('Could not pin',true);}
 }
 async function chatUnpin(){const ctx=chatCtx();if(!ctx.admin)return;try{await DB.addComment({post_type:'chatpin',post_key:ctx.threadKey,text:JSON.stringify({cleared:true}),client_id:ctx.cid});}catch(e){}CHAT_PIN=null;const b=$(ctx.body);if(b)b.dataset.sig='';ctx.render();}
-async function chatOpenMsgThread(mid){const ctx=chatCtx();if(ctx.grp){toast('Threads are available in 1:1 chats',true);return;}const m=CHAT_MSGS[mid];if(!m)return;
-  const old=document.getElementById('chat-thp');if(old)old.remove();
-  const p=document.createElement('div');p.id='chat-thp';p.className='chat-thp';p.setAttribute('data-mid',mid);
-  p.innerHTML='<div class="chat-thp-h"><button class="icon-x" style="font-size:22px" onclick="chatCloseMsgThread()" aria-label="Back">‹</button><div style="font-weight:800;font-size:16px">Thread</div></div>'+
-    '<div class="chat-thp-src"><b>'+esc(chatSenderName(m))+'</b>'+esc(String(m.text||chatMediaLabel(m.media)||'Attachment').slice(0,400))+'</div>'+
-    '<div class="chat-thp-list" id="chatth-list"><div class="empty" style="padding:16px">Loading…</div></div>'+
-    '<div class="chat-thp-cmp"><input id="chatth-input" placeholder="Reply in thread…" onkeydown="if(event.key===\'Enter\'){event.preventDefault();chatThreadReplySend(\''+mid+'\')}"><button class="btn-sm solid" onclick="chatThreadReplySend(\''+mid+'\')">Send</button></div>';
-  document.body.appendChild(p);chatThreadRender(mid);setTimeout(function(){try{$('chatth-input').focus();}catch(e){}},150);
-}
-function chatCloseMsgThread(){const ov=document.getElementById('chat-thp');if(ov)ov.remove();}
-async function chatThreadRender(mid){const host=$('chatth-list');if(!host)return;const ctx=chatCtx();
-  let cs=[];try{const o={postType:'msgth',postKey:mid};if(ctx.admin)o.clientId=ctx.cid;cs=await DB.listComments(o);}catch(e){}
-  CHAT_TH[mid]=cs.length;
-  host.innerHTML=cs.length?cs.map(function(c){return '<div class="chat-thp-c"><div><span class="who">'+esc(c.author_name||(c.author==='admin'?'Coach':'Client'))+'</span><span class="when">'+esc(chatMsgTime(c.created_at))+'</span></div><div style="font-size:14px;margin-top:2px;line-height:1.4">'+chatLinkify(c.text||'')+'</div></div>';}).join(''):'<div class="empty" style="padding:16px">No replies yet — start the thread.</div>';
-  host.scrollTop=host.scrollHeight;
-}
-async function chatThreadReplySend(mid){const te=$('chatth-input');const t=(te&&te.value||'').trim();if(!t)return;const ctx=chatCtx();te.value='';
-  try{await DB.addComment(Object.assign({post_type:'msgth',post_key:mid,text:t},ctx.admin?{client_id:ctx.cid}:{}));}catch(e){toast('Could not send',true);}
-  await chatThreadRender(mid);
-  try{const b=$(ctx.body);if(b)b.dataset.sig='';ctx.render();}catch(e){}
-}
+/* Threaded replies ("Reply in thread") removed — chat uses inline quote-reply only. */
 function chatAvatar(name,grp){const n=String(name||'?').trim();const L=grp?'':((n.charAt(0)||'?').toUpperCase());let h=0;for(let i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))%360;return '<div class="ct-av" style="background:hsl('+h+',42%,47%)">'+(grp?svgIcon('people'):esc(L||'?'))+'</div>';}
 /* live refresh: while a thread is open & the tab is visible, re-pull every ~6s so reactions / thread replies / new
    messages from the other side appear without a manual refresh. Self-stops when the chat closes. The smart renderer
@@ -24737,18 +24715,33 @@ function wdDelSection(sid){const w=wdWorkout(WD_CUR);if(!w)return;if((w.sections
 function wdSecSet(sid,f,v){const s=wdSecById(sid);if(s){s[f]=v;wdSave(true);}}
 function wdFocusSec(sid){WD_SEC=sid;wdRenderDesigner($('wd-host'));}
 function wdEx(sid,eid){const s=wdSecById(sid);return s?(s.exercises||[]).find(e=>e.id===eid):null;}
-function wdAddFromLib(exId){const s=wdSecById(WD_SEC)||wdSecs()[wdSecs().length-1];if(!s){toast('Add a section first',true);return;}const e=exById(exId);s.exercises=s.exercises||[];s.exercises.push({id:uid(),exId:exId,name:(e&&e.name)||'Exercise',track:WD_DEFAULT_TRACK.slice(),scheme:{sets:'3'},alts:[],linkNext:false,notes:''});wdSave(true);wdRenderDesigner($('wd-host'));}
-function wdAddBlank(){const s=wdSecById(WD_SEC)||wdSecs()[wdSecs().length-1];if(!s){toast('Add a section first',true);return;}s.exercises=s.exercises||[];s.exercises.push({id:uid(),exId:'',name:'',track:WD_DEFAULT_TRACK.slice(),scheme:{sets:'3'},alts:[],linkNext:false,notes:''});wdSave(true);wdRenderDesigner($('wd-host'));}
+function wdAddFromLib(exId){wdFlush();const s=wdSecById(WD_SEC)||wdSecs()[wdSecs().length-1];if(!s){toast('Add a section first',true);return;}const e=exById(exId);s.exercises=s.exercises||[];s.exercises.push({id:uid(),exId:exId,name:(e&&e.name)||'Exercise',track:WD_DEFAULT_TRACK.slice(),scheme:{sets:'3'},alts:[],linkNext:false,notes:''});wdSave(true);wdRenderDesigner($('wd-host'));}
+function wdAddBlank(){wdFlush();const s=wdSecById(WD_SEC)||wdSecs()[wdSecs().length-1];if(!s){toast('Add a section first',true);return;}s.exercises=s.exercises||[];s.exercises.push({id:uid(),exId:'',name:'',track:WD_DEFAULT_TRACK.slice(),scheme:{sets:'3'},alts:[],linkNext:false,notes:''});wdSave(true);wdRenderDesigner($('wd-host'));}
 function wdExSet(sid,eid,f,v){const e=wdEx(sid,eid);if(!e)return;e[f]=v;wdSave(true);}
 function wdExScheme(sid,eid,k,v){const e=wdEx(sid,eid);if(!e)return;e.scheme=e.scheme||{};e.scheme[k]=v;wdSave(true);}
 /* per-set targets: each exercise has sets:[{<var>:value}] so reps/weight/etc can differ per set */
 function wdExSets(e){if(Array.isArray(e.sets)&&e.sets.length)return e.sets;const n=Math.max(1,Math.min(20,parseInt(e.scheme&&e.scheme.sets)||3));const base={};((e.track&&e.track.length)?e.track:WD_DEFAULT_TRACK).forEach(v=>{base[v]=(e.scheme&&e.scheme[v]!=null&&e.scheme[v]!=='')?e.scheme[v]:'';});e.sets=Array.from({length:n},()=>Object.assign({},base));return e.sets;}
 function wdSetVal(sid,eid,si,v,val){const e=wdEx(sid,eid);if(!e)return;const sets=wdExSets(e);if(sets[si]){sets[si][v]=val;wdSave(true);}}
-function wdAddSetRow(sid,eid){const e=wdEx(sid,eid);if(!e)return;const sets=wdExSets(e);sets.push(Object.assign({},sets[sets.length-1]||{}));wdSave(true);wdRenderDesigner($('wd-host'));}
-function wdDelSetRow(sid,eid,si){const e=wdEx(sid,eid);if(!e)return;const sets=wdExSets(e);if(sets.length<=1)return;sets.splice(si,1);wdSave(true);wdRenderDesigner($('wd-host'));}
-function wdToggleVar(sid,eid,v){const e=wdEx(sid,eid);if(!e)return;e.track=Array.isArray(e.track)?e.track:[];if(e.track.includes(v))e.track=e.track.filter(x=>x!==v);else e.track.push(v);wdSave(true);wdRenderDesigner($('wd-host'));}
-function wdDelEx(sid,eid){const s=wdSecById(sid);if(!s)return;s.exercises=(s.exercises||[]).filter(e=>e.id!==eid);wdSave(true);wdRenderDesigner($('wd-host'));}
-function wdMoveEx(sid,eid,dir){const s=wdSecById(sid);if(!s)return;const arr=s.exercises||[];const i=arr.findIndex(e=>e.id===eid);const j=i+dir;if(i<0||j<0||j>=arr.length)return;const tmp=arr[i];arr[i]=arr[j];arr[j]=tmp;wdSave(true);wdRenderDesigner($('wd-host'));}
+/* Safety net: before any designer re-render, commit EVERY live set / name / note input into the model by
+   parsing the handler out of its oninput attr. Stops a just-typed (but not-yet-committed) value from being
+   lost when a re-render rebuilds the grid — and makes "＋ set" copy the REAL last-set values, not stale ones. */
+function wdFlush(){
+  try{
+    document.querySelectorAll('.wd-setgrid input').forEach(function(inp){
+      var m=(inp.getAttribute('oninput')||'').match(/wdSetVal\(['"]([^'"]+)['"],['"]([^'"]+)['"],(\d+),['"]([^'"]+)['"]/);
+      if(!m)return;var e=wdEx(m[1],m[2]);if(!e)return;var sets=wdExSets(e);if(sets[+m[3]])sets[+m[3]][m[4]]=inp.value;
+    });
+    document.querySelectorAll('.wd-ex-name,.wd-note').forEach(function(inp){
+      var m=(inp.getAttribute('oninput')||'').match(/wdExSet\(['"]([^'"]+)['"],['"]([^'"]+)['"],['"]([^'"]+)['"]/);
+      if(!m)return;var e=wdEx(m[1],m[2]);if(e)e[m[3]]=inp.value;
+    });
+  }catch(_){}
+}
+function wdAddSetRow(sid,eid){wdFlush();const e=wdEx(sid,eid);if(!e)return;const sets=wdExSets(e);sets.push(Object.assign({},sets[sets.length-1]||{}));wdSave(true);wdRenderDesigner($('wd-host'));}
+function wdDelSetRow(sid,eid,si){wdFlush();const e=wdEx(sid,eid);if(!e)return;const sets=wdExSets(e);if(sets.length<=1)return;sets.splice(si,1);wdSave(true);wdRenderDesigner($('wd-host'));}
+function wdToggleVar(sid,eid,v){wdFlush();const e=wdEx(sid,eid);if(!e)return;e.track=Array.isArray(e.track)?e.track:[];if(e.track.includes(v))e.track=e.track.filter(x=>x!==v);else e.track.push(v);wdSave(true);wdRenderDesigner($('wd-host'));}
+function wdDelEx(sid,eid){wdFlush();const s=wdSecById(sid);if(!s)return;s.exercises=(s.exercises||[]).filter(e=>e.id!==eid);wdSave(true);wdRenderDesigner($('wd-host'));}
+function wdMoveEx(sid,eid,dir){wdFlush();const s=wdSecById(sid);if(!s)return;const arr=s.exercises||[];const i=arr.findIndex(e=>e.id===eid);const j=i+dir;if(i<0||j<0||j>=arr.length)return;const tmp=arr[i];arr[i]=arr[j];arr[j]=tmp;wdSave(true);wdRenderDesigner($('wd-host'));}
 function wdToggleLink(sid,eid){const e=wdEx(sid,eid);if(!e)return;e.linkNext=!e.linkNext;wdSave(true);wdRenderDesigner($('wd-host'));}
 function wdAddAlt(sid,eid){const e=wdEx(sid,eid);if(!e)return;const name=prompt('Alternative exercise name:');if(!name||!name.trim())return;e.alts=Array.isArray(e.alts)?e.alts:[];e.alts.push(name.trim());wdSave(true);wdRenderDesigner($('wd-host'));}
 function wdDelAlt(sid,eid,i){const e=wdEx(sid,eid);if(!e||!e.alts)return;e.alts.splice(i,1);wdSave(true);wdRenderDesigner($('wd-host'));}
