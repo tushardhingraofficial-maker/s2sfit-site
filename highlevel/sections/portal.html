@@ -1849,6 +1849,14 @@ body{overflow-x:hidden}
 .lc-standings[open]>summary::after{transform:rotate(180deg)}
 .lc-standings>summary:hover{background:var(--card2)}
 .lc-standings .lc-groups,.lc-standings .lc-daily{padding:0 12px 12px}
+/* "log today" action card — shares the hero's brand energy so the challenge reads as one system */
+.lc-card.lc-cta{position:relative;border-color:transparent;overflow:hidden;box-shadow:0 8px 22px -12px rgba(232,23,13,.45)}
+.lc-card.lc-cta::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--brand),#ff5a3c);z-index:1}
+.lc-cta .lc-cta-ic{flex:none;width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;background:linear-gradient(135deg,var(--brand),#b1120b);box-shadow:0 5px 14px -5px rgba(232,23,13,.6)}
+.lc-cta .lc-cta-ic svg{width:24px;height:24px}
+.lc-cta .lc-cta-t{font-family:var(--disp);font-weight:900;font-size:18px;line-height:1.05}
+.lc-cta .btn-sm.solid{background:linear-gradient(90deg,var(--brand),#ff5a3c);border:none;color:#fff;box-shadow:0 4px 14px rgba(232,23,13,.3);border-radius:999px;padding:9px 16px}
+.lc-cta .btn-sm{border-radius:999px}
 /* enrollment card + fitness questions */
 .cvol-enr{border:1px solid var(--brand);border-radius:14px;background:linear-gradient(180deg,rgba(232,23,13,.08),var(--card2));padding:16px 15px;margin:0 0 12px}
 .cvol-enr-h{font-family:var(--disp);font-weight:900;font-size:19px;margin:0 0 3px}
@@ -5238,7 +5246,8 @@ img,svg,canvas,video{max-width:100%}
         <div class="card" data-edtab="goals" style="padding:8px;overflow:hidden">
           <p class="small" style="margin:2px 6px 8px;color:var(--muted)">This is exactly what the client sees in <b>Progress Tracking</b> — and you can add or edit their metrics here. Everything syncs both ways.</p>
           <div class="gm-switch" style="position:static;box-shadow:none;border:0;background:transparent;backdrop-filter:none;padding:2px">
-            <button id="ed-gm-tab-weight" class="gm-tab active" onclick="edGoalsBranch('weight')"><span class="gm-ic">⚖️</span><span class="gm-lbl">Weight</span></button>
+            <button id="ed-gm-tab-overview" class="gm-tab active" onclick="edGoalsBranch('overview')"><span class="gm-ic">📊</span><span class="gm-lbl">Overview</span></button>
+            <button id="ed-gm-tab-weight" class="gm-tab" onclick="edGoalsBranch('weight')"><span class="gm-ic">⚖️</span><span class="gm-lbl">Weight</span></button>
             <button id="ed-gm-tab-comp" class="gm-tab" onclick="edGoalsBranch('comp')"><span class="gm-ic">🧬</span><span class="gm-lbl">Composition</span></button>
             <button id="ed-gm-tab-photos" class="gm-tab" onclick="edGoalsBranch('photos')"><span class="gm-ic">📸</span><span class="gm-lbl">Photos</span></button>
             <button id="ed-gm-tab-perf" class="gm-tab" onclick="edGoalsBranch('perf')"><span class="gm-ic">📈</span><span class="gm-lbl">Performance</span></button>
@@ -5246,6 +5255,10 @@ img,svg,canvas,video{max-width:100%}
             <button id="ed-gm-tab-custom" class="gm-tab" onclick="edGoalsBranch('custom')"><span class="gm-ic">🎯</span><span class="gm-lbl">Custom Goals</span></button>
             <button id="ed-gm-tab-climb" class="gm-tab" onclick="edGoalsBranch('climb')"><span class="gm-ic">🧗</span><span class="gm-lbl">7-Levels</span></button>
           </div>
+        </div>
+
+        <div class="card" data-edtab="goals" data-gmbranch="overview" style="background:transparent;border:0;box-shadow:none;padding:2px">
+          <div id="ed-overview-host"></div>
         </div>
 
         <div class="card" id="ed-goals-climb-card" data-edtab="goals" data-gmbranch="climb" style="padding:0;overflow:hidden">
@@ -6697,7 +6710,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04py';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04pz';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -12706,9 +12719,9 @@ function cvolClientBanner(ch){
   const inIt=(ch.groups||[]).some(g=>(g.members||[]).some(m=>m.id===cid)); if(!inIt&&!ADMIN_OK)return '';
   const cd=lcCountdown(ch); const done=cvolMyEntryToday(ch); const raw=cvolScoreMode(ch)==='raw'; const uw=raw?'kg':'pts';
   const liveNow=cd.state==='live';
-  let h='<div class="card lc-card" style="border-color:var(--brand)"><div class="card-body">'+
-    '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div style="font-size:26px">'+svgIcon('training')+'</div>'+
-    '<div style="flex:1;min-width:150px"><div style="font-family:var(--disp);font-weight:900;font-size:17px">Today’s challenge workout</div>'+
+  let h='<div class="card lc-card lc-cta"><div class="card-body">'+
+    '<div style="display:flex;align-items:center;gap:11px;flex-wrap:wrap"><div class="lc-cta-ic">'+svgIcon('training')+'</div>'+
+    '<div style="flex:1;min-width:150px"><div class="lc-cta-t">Today’s challenge workout</div>'+
     '<div class="small" style="color:var(--muted)">'+(done?('✅ Done today — '+lcNum(done.vp)+' '+uw+(done.sess?' · '+esc(done.sess.exName):'')):(liveNow?'1 exercise · 3 sets of 10–20 reps · logs to your team':(cd.state==='upcoming'?'Starts '+(ch.startDate?fmtDate(ch.startDate):'soon'):'Challenge ended')))+'</div></div>'+
     ((liveNow&&!done)?('<button class="btn-sm solid" style="flex:none" onclick="cvolStart(\''+ch.id+'\')">▶ Start</button>'):(done?'<span class="pill good" style="flex:none">✓ Logged</span>':''))+
     '</div>'+cvolMyLogListHTML(ch)+cvolGuideHTML(false)+cvolHowHTML(raw)+'</div></div>';
@@ -13026,9 +13039,9 @@ function cheatClientBanner(ch,myId){
     :(done?'<span class="pill good" style="flex:none">✓ Logged</span>'
     :(upcoming?'<button class="btn-sm" style="flex:none" onclick="cheatStart(\''+ch.id+'\')">🧪 Practice run</button>':''));
   const planBtn=(liveNow||upcoming)?'<button class="btn-sm" style="flex:none" onclick="cheatPlanOpen(\''+ch.id+'\')">🔮 Plan a meal</button>':'';
-  return '<div class="card lc-card" style="border-color:var(--brand)"><div class="card-body">'+
-    '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div style="font-size:26px">🍔</div>'+
-    '<div style="flex:1;min-width:150px"><div style="font-family:var(--disp);font-weight:900;font-size:17px">Today’s cheat meal</div>'+
+  return '<div class="card lc-card lc-cta"><div class="card-body">'+
+    '<div style="display:flex;align-items:center;gap:11px;flex-wrap:wrap"><div class="lc-cta-ic">🍔</div>'+
+    '<div style="flex:1;min-width:150px"><div class="lc-cta-t">Today’s cheat meal</div>'+
     '<div class="small" style="color:var(--muted)">'+sub+'</div></div>'+btn+planBtn+
     '</div>'+'<div style="margin-top:16px">'+cheatMyLogListHTML(ch)+cheatTrialListHTML(ch)+cheatGuideHTML(false)+cheatHowHTML()+'</div>'+'</div></div>';
 }
@@ -13394,10 +13407,12 @@ function cheatStandingsHTML(c){const parts=cheatParticipants(c);const unit=c.uni
   if(!parts.length){h+='<div class="small" style="color:var(--muted)">No participants yet.</div></div></div>';return h;}
   const leadTotal=parts[0].total,sumTotal=parts.reduce((s,p)=>s+p.total,0),avgTotal=Math.round(sumTotal/parts.length);
   const hasPrize=!!(+c.rewardWinner||+c.rewardRunnerUp||+c.rewardThird||+c.rewardParticipation);
+  h+=cheatPodiumHTML(parts,null,unit);
+  h+='<details class="lc-standings" open style="margin-top:4px"><summary>🏆 Full standings — tap to collapse</summary><div style="padding:4px 8px 8px">';
   h+='<div class="tbl-scroll"><table class="lc-adm-tbl lc-adm-cheat"><thead><tr><th>#</th><th>Participant</th><th class="tnum">'+esc(unit)+'</th><th class="tnum">vs #1</th><th class="tnum">vs avg</th><th class="tnum">In‑range</th><th class="tnum">Avg/day</th><th class="tnum">Best</th><th class="tnum">Days</th>'+(hasPrize?'<th class="tnum">Prize</th>':'')+'</tr></thead><tbody>'+
     parts.map(p=>{const gap=leadTotal-p.total,vsAvg=p.total-avgTotal,prize=hasPrize?cheatPrizeAt(c,p.rank,p.total):0;
       return '<tr'+(p.rank===1&&p.total>0?' class="lead"':'')+'><td>'+cheatMedal(p)+'</td><td><button class="lc-name-btn" onclick="lcOpenMemberStats(\''+p.id+'\')">'+esc(p.name)+' 📊</button></td><td class="tnum">'+lcNum(p.total)+'</td><td class="tnum">'+(p.rank===1?'—':'−'+lcNum(gap))+'</td><td class="tnum" style="color:'+(vsAvg>=0?'var(--good)':'var(--red)')+'">'+(vsAvg>=0?'+':'')+lcNum(vsAvg)+'</td><td class="tnum">'+(p.inRate!=null?p.inRate+'%':'—')+'</td><td class="tnum">'+lcNum(p.avg)+'</td><td class="tnum">'+lcNum(p.best)+'</td><td class="tnum">'+p.days+'</td>'+(hasPrize?'<td class="tnum"><b>+'+lcNum(prize)+'</b></td>':'')+'</tr>';}).join('')+
-    '</tbody></table></div>'+(hasPrize?'<div class="small" style="color:var(--muted);margin-top:6px">🏅 Prize = reward points this position would earn if the challenge ended now (rank bonus + participation).</div>':'')+'</div></div>';return h;}
+    '</tbody></table></div>'+(hasPrize?'<div class="small" style="color:var(--muted);margin-top:6px">🏅 Prize = reward points this position would earn if the challenge ended now (rank bonus + participation).</div>':'')+'</div></details></div></div>';return h;}
 function cheatEnsureGroup(c){c.groups=c.groups||[];if(!c.groups.length)c.groups.push({id:'participants',name:'Participants',emoji:'👤',members:[]});return c.groups[0];}
 function cheatAddParticipant(){const c=lcCur();if(!c)return;const sel=$('cheat-addpart');const cid=sel&&sel.value;if(!cid)return;const cl=(LC_CLIENTS||[]).find(x=>x.id===cid);if(!cl)return;const g=cheatEnsureGroup(c);if(!g.members.some(m=>m.id===cid))g.members.push({id:cid,name:cl.name||cl.email});lcTouch(c);lcRenderEditor();}
 function cheatDelParticipant(cid){const c=lcCur();if(!c)return;(c.groups||[]).forEach(g=>{g.members=(g.members||[]).filter(m=>m.id!==cid);});lcTouch(c);lcRenderEditor();}
@@ -13823,10 +13838,13 @@ function lcAdminStandingsHTML(c){
   const mvp=(+c.rewardMotm>0)?lcMvpOverall(groups):null;const mvpId=mvp?mvp.id:null;
   const todayKey=todayISO();const showToday=(lcCountdown(c).state==='live')&&todayKey>=(c.startDate||'0')&&todayKey<=(c.endDate||'9999');
   const zeroToday=m=>showToday&&!m.pending&&lcEntryFinal(((c.entries||{})[m.id]||{})[todayKey])<=0;
+  const podium=groups.length>=2?('<div style="margin:0 0 6px">'+lcPodiumHTML(groups.slice(0,3),null)+'</div>'):'';
   return '<div class="card" style="margin:12px 0 10px"><div class="card-body">'+
     '<div class="uline" style="margin:0 0 8px;display:flex;align-items:center;flex-wrap:wrap;gap:6px">📊 Live leaderboard &amp; contribution '+(c.scoreBy==='average'?'<span class="small" style="text-transform:none;font-weight:400;color:var(--muted)">— ranked by avg/member</span>':'<span class="small" style="text-transform:none;font-weight:400;color:var(--muted)">— ranked by team total</span>')+
       '<span class="sp" style="flex:1"></span><button class="btn-sm" style="flex:none" onclick="lcCueCardOverall(\''+c.id+'\')">🖼 Overall card</button></div>'+
     (mvp?'<div class="lc-mvp-line" style="margin:0 0 10px">⭐ MVP → <b>'+esc(mvp.name||'')+'</b> · '+esc(mvp.emoji||'')+' '+esc(mvp.team||'')+' ('+lcNum(mvp.total)+' '+esc(unit)+') — gets +'+lcNum(c.rewardMotm)+' pts</div>':'')+
+    podium+
+    '<details class="lc-standings" open style="margin-top:4px"><summary>📊 Full standings &amp; contribution — tap to collapse</summary><div style="padding:4px 6px 8px">'+
     groups.map((g,i)=>'<div class="lc-adm-grp'+(i===0?' lead':'')+'"><div class="lc-adm-gh" style="display:flex;align-items:center;flex-wrap:wrap;gap:6px">'+(medals[i]||('#'+(i+1)))+' '+esc(g.emoji||'')+' <b>'+esc(g.name||'Team')+'</b> — '+lcNum(g.score)+' '+esc(unit)+' · avg '+lcNum(g.avg)+'/member · '+g.members.length+' 🏃'+((g.bestDay&&g.bestDay.value>0)?' · 🔝 best day '+lcNum(g.bestDay.value)+(g.bestDay.date?' ('+esc(lcColDate(g.bestDay.date))+')':''):'')+(g.bonus>0?' · 🚀 +'+lcNum(g.bonus)+' booster':'')+
       '<span class="sp" style="flex:1"></span><button class="btn-sm" style="flex:none" onclick="lcWarnZeros(\''+g.id+'\')" title="Download / share a reminder for members with 0 '+esc(unit)+'">⚠ Warn zeros</button> <button class="btn-sm" style="flex:none" onclick="lcCueCardGroup(\''+c.id+'\',\''+g.id+'\')" title="Download / share this team\'s cue card image">🖼 Cue card</button></div>'+
       (g.members.length?'<table class="lc-adm-tbl"><thead><tr><th>#</th><th>Member</th><th class="tnum">'+esc(unit)+'</th><th class="tnum">Avg/day</th><th class="tnum">Best day</th><th class="tnum">Penalty</th><th class="tnum">Contribution %</th></tr></thead><tbody>'+
@@ -13834,7 +13852,7 @@ function lcAdminStandingsHTML(c){
         '</tbody></table>':'<div class="small" style="color:var(--muted);padding:4px 0">No members yet</div>')+
     '</div>').join('')+
     lcDailyTableHTML(c,groups)+
-    '<div class="small" style="color:var(--muted);margin-top:8px">Contribution % = each member’s share of their team’s total. MVP = the single highest scorer across all teams. Use ⚠ / 🖼 to share reminders &amp; cue cards to your groups.</div>'+
+    '<div class="small" style="color:var(--muted);margin-top:8px">Contribution % = each member’s share of their team’s total. MVP = the single highest scorer across all teams. Use ⚠ / 🖼 to share reminders &amp; cue cards to your groups.</div></div></details>'+
     '</div></div>';
 }
 /* mark a member pending (different timezone — hasn't logged yet); shows ⏳ next to their name */
@@ -24886,14 +24904,15 @@ function edCalSyncFromInput(){const v=($('ed-remind-date')||{}).value||'';edPlan
 
 /* ═══════════ ADMIN EDITOR · tabs + per-client section visibility ═══════════ */
 let ED_TAB='client';
-let ED_GM_BRANCH='weight';
+let ED_GM_BRANCH='overview';
 function edGoalsBranch(which){
-  const valid=['weight','comp','photos','perf','meas','custom','climb'];
-  ED_GM_BRANCH=valid.indexOf(which)>=0?which:'weight';
+  const valid=['overview','weight','comp','photos','perf','meas','custom','climb'];
+  ED_GM_BRANCH=valid.indexOf(which)>=0?which:'overview';
   document.querySelectorAll('#admin-editor [data-gmbranch]').forEach(el=>{el.style.display=(el.getAttribute('data-gmbranch')===ED_GM_BRANCH)?'':'none';});
-  const tabs={weight:'ed-gm-tab-weight',comp:'ed-gm-tab-comp',photos:'ed-gm-tab-photos',perf:'ed-gm-tab-perf',meas:'ed-gm-tab-meas',custom:'ed-gm-tab-custom',climb:'ed-gm-tab-climb'};
+  const tabs={overview:'ed-gm-tab-overview',weight:'ed-gm-tab-weight',comp:'ed-gm-tab-comp',photos:'ed-gm-tab-photos',perf:'ed-gm-tab-perf',meas:'ed-gm-tab-meas',custom:'ed-gm-tab-custom',climb:'ed-gm-tab-climb'};
   Object.keys(tabs).forEach(k=>{const b=$(tabs[k]);if(b)b.classList.toggle('active',k===ED_GM_BRANCH);});
-  if(ED_GM_BRANCH==='weight'){try{edRenderWeightAdmin();}catch(e){}}
+  if(ED_GM_BRANCH==='overview'){try{edRenderOverviewAdmin();}catch(e){}}
+  else if(ED_GM_BRANCH==='weight'){try{edRenderWeightAdmin();}catch(e){}}
   else if(ED_GM_BRANCH==='comp'){try{edRenderCompAdmin();}catch(e){}}
   else if(ED_GM_BRANCH==='photos'){try{edRenderPhotosAdmin();}catch(e){}}
   else if(ED_GM_BRANCH==='perf'){try{edRenderPerfAdmin();}catch(e){}}
@@ -25396,6 +25415,84 @@ function edRenderWeightAdmin(){
   else h+=s.slice().reverse().map(e=>'<div class="wt-row"><span class="wd">'+esc(fmtDate(e.date))+(e.time?' <span class="funit">'+esc(e.time)+'</span>':'')+'</span><span class="wv">'+round(e.value,1)+' kg</span>'+(e.by==='coach'?'<span class="pill muted">coach</span>':'<span class="pill">client</span>')+(e.note?'<span class="small" style="color:var(--muted);flex:1;min-width:90px">'+esc(e.note)+'</span>':'<span style="flex:1"></span>')+'<button class="icon-x" style="font-size:16px" onclick="edWeightDel(\''+e.id+'\')">×</button></div>').join('');
   h+='</div>';
   host.innerHTML=h;
+}
+/* ── Coach-side Progress OVERVIEW — the same at-a-glance card the client sees, read from edPlan ── */
+function edRenderOverviewAdmin(){
+  const host=$('ed-overview-host');if(!host||!edPlan)return;
+  const pr=edPlan.profile||{};
+  const ws=weightSorted(edPlan);
+  const latest=ws.length?ws[ws.length-1]:null, first=ws.length?ws[0]:null;
+  const cur=latest?+latest.value:(parseKg(pr.weight)||null);
+  const unit=(latest&&latest.unit)||'kg';
+  const name=(edClient&&(edClient.name||edClient.email))||'This client';
+  const startW=(parseKg(pr.startWeight)||null)!=null&&parseKg(pr.startWeight)>0?parseKg(pr.startWeight):(first?+first.value:null);
+  const goalW=parseKg(pr.goalWeight)>0?parseKg(pr.goalWeight):null;
+  if(cur==null){
+    host.innerHTML='<div class="ov-card" style="text-align:center"><div style="font-size:34px">⚖️</div><div class="ov-uline" style="margin-top:8px">No progress data yet</div><p class="small" style="color:var(--muted);max-width:360px;margin:0 auto 14px">Once '+esc(name)+' logs a weigh-in (or you add one), their journey, goal progress and wins show up here.</p><button class="ov-btn primary" onclick="edGoalsBranch(\'weight\')">＋ Log a weigh-in</button></div>';
+    return;
+  }
+  const lossGoal=(goalW!=null&&startW!=null)?(goalW<startW):true;
+  const goodCls=function(d){return d==null?'ov-neu':((d<0)===lossGoal?(d===0?'ov-neu':'ov-good'):(d===0?'ov-neu':'ov-bad'));};
+  const arr=function(d,u){return d==null?'':(d<0?'▼ '+Math.abs(d):d>0?'▲ '+d:'– 0')+(u?' '+u:'');};
+  const sinceStart=(startW!=null)?round(cur-startW,1):null;
+  const weekAgo=addDaysISO(todayISO(),-7);
+  const prevArr=ws.filter(function(e){return String(e.date||'').slice(0,10)<=weekAgo;});
+  const weekRef=prevArr.length?+prevArr[prevArr.length-1].value:(startW!=null?startW:null);
+  const weekDelta=(weekRef!=null)?round(cur-weekRef,1):null;
+  let pct=null,remain=null;
+  if(startW!=null&&goalW!=null&&startW!==goalW){const total=Math.abs(startW-goalW),done=lossGoal?(startW-cur):(cur-startW);pct=Math.max(0,Math.min(100,Math.round(done/total*100)));remain=round(Math.abs(cur-goalW),1);}
+  const spk=ws.slice(-12).map(function(e){return +e.value;}).filter(function(v){return !isNaN(v);});
+  let spark='';
+  if(spk.length>=2){const mn=Math.min.apply(null,spk),mx=Math.max.apply(null,spk),rng=(mx-mn)||1,W=118,H=40;
+    const pp=spk.map(function(v,i){const x=(i/(spk.length-1))*(W-6)+3;const y=H-4-((v-mn)/rng)*(H-8);return x.toFixed(1)+','+y.toFixed(1);});
+    const col=((lossGoal?(spk[spk.length-1]<=spk[0]):(spk[spk.length-1]>=spk[0])))?'var(--good)':'var(--red)';
+    const le=pp[pp.length-1].split(',');
+    spark='<svg class="ov-spark" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'"><polyline points="'+pp.join(' ')+'" fill="none" stroke="'+col+'" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="'+le[0]+'" cy="'+le[1]+'" r="3.2" fill="'+col+'"/></svg>';
+  }
+  let h='<p class="small" style="color:var(--muted);margin:0 0 10px">This is '+esc(name)+'’s Progress <b>Overview</b> — exactly what they see. Read-only; use the tabs above to add or edit any metric.</p>';
+  // HERO
+  h+='<div class="ov-card"><div class="ov-hero-top">'+
+    '<div class="ov-bigw">'+round(cur,1)+'<small> '+esc(unit)+'</small></div>'+
+    (sinceStart!=null?'<div class="ov-delta '+(goodCls(sinceStart)==='ov-good'?'good':goodCls(sinceStart)==='ov-bad'?'bad':'flat')+'">'+arr(sinceStart,unit)+'</div>':'')+
+    spark+'</div>'+
+    '<div class="sub" style="margin-top:4px">'+(startW!=null?'Down from '+round(startW,1)+' '+esc(unit)+' at the start':'Keep logging to track the trend')+(weekDelta!=null?' · <b style="color:var(--text)">'+arr(weekDelta,'')+'</b> this week':'')+'</div>';
+  if(pct!=null){h+='<div class="ov-goal"><div class="ov-goal-l"><span class="s">Start '+round(startW,1)+'</span><span>Now '+round(cur,1)+'</span><span class="g">🎯 Goal '+round(goalW,1)+'</span></div>'+
+    '<div class="ov-gtrack"><div class="ov-gfill" style="width:'+pct+'%"></div><div class="ov-gnow" style="left:'+pct+'%"></div></div>'+
+    '<div class="ov-gcap"><b>'+pct+'% to goal</b> — '+remain+' '+esc(unit)+' to go</div></div>';}
+  else if(goalW==null){h+='<div class="ov-gcap" style="margin-top:12px;font-weight:600;color:var(--muted)">Set a goal weight in the profile to track a progress bar here.</div>';}
+  h+='</div>';
+  // STAT CARDS
+  const ms=edMeasSorted();const mL=ms.length?ms[ms.length-1]:null,mF=ms.length?ms[0]:null;
+  const wv=function(o){if(!o||!o.values)return null;const v=o.values;return (v.waist!=null&&v.waist!=='')?+v.waist:((v.waistMin!=null&&v.waistMin!=='')?+v.waistMin:null);};
+  const waistNow=wv(mL),waistFirst=wv(mF),waistD=(waistNow!=null&&waistFirst!=null)?round(waistNow-waistFirst,1):null;
+  const streak=pgWeighStreak(ws),loggedToday=ws.some(function(e){return String(e.date||'').slice(0,10)===todayISO();});
+  h+='<div class="ov-stats">'+
+    '<div class="ov-stat"><div class="sic">⚖️</div><div class="sl">Weight</div><div class="sv">'+round(cur,1)+' '+esc(unit)+'</div><div class="sd '+goodCls(weekDelta)+'">'+(weekDelta!=null?arr(weekDelta,'')+' this week':'—')+'</div></div>'+
+    '<div class="ov-stat"><div class="sic">📏</div><div class="sl">Waist</div><div class="sv">'+(waistNow!=null?waistNow+' cm':'—')+'</div><div class="sd '+(waistD==null?'ov-neu':(waistD<0?'ov-good':waistD>0?'ov-bad':'ov-neu'))+'">'+(waistD!=null?arr(waistD,'')+' since start':'add in Measure')+'</div></div>'+
+    '<div class="ov-stat"><div class="sic">🔥</div><div class="sl">Weigh-in streak</div><div class="sv">'+streak+' day'+(streak===1?'':'s')+'</div><div class="sd ov-neu">'+(loggedToday?'logged today ✓':'not logged today')+'</div></div>'+
+    '<div class="ov-stat"><div class="sic">💪</div><div class="sl">Workouts</div><div class="sv" id="ed-ov-workouts">—</div><div class="sd ov-neu">this month</div></div>'+
+  '</div>';
+  // COMPOSITION
+  const ct=edCompData().tests.slice().sort(function(a,b){return ((a.date||'')<(b.date||'')?-1:1);});
+  const cL=ct.length?ct[ct.length-1]:null,cF=ct.length?ct[0]:null;
+  const musc=(cL&&cL.muscle!=null&&cL.muscle!=='')?+cL.muscle:null,fatp=(cL&&cL.fat!=null&&cL.fat!=='')?+cL.fat:null;
+  if(musc!=null||fatp!=null){const C=226.19;
+    const dMus=(cL&&cF&&cL.muscle!=null&&cF.muscle!=null&&cF.muscle!=='')?round(cL.muscle-cF.muscle,1):null;
+    const dFat=(cL&&cF&&cL.fat!=null&&cF.fat!=null&&cF.fat!=='')?round(cL.fat-cF.fat,1):null;
+    const ring=function(val,col){const off=C*(1-Math.max(0,Math.min(1,(val||0)/100)));return '<div class="ov-ring"><svg width="84" height="84" viewBox="0 0 84 84"><circle cx="42" cy="42" r="36" fill="none" stroke="var(--card2)" stroke-width="9"/><circle cx="42" cy="42" r="36" fill="none" stroke="'+col+'" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 42 42)"/></svg><div class="cc">'+(val!=null?val+'%':'—')+'</div></div>';};
+    h+='<div class="ov-card"><div class="ov-uline">Body composition</div><div class="ov-comp">'+
+      '<div class="ov-cbox">'+ring(musc,'var(--prot)')+'<div class="ov-cl">Muscle</div><div class="ov-cd '+(dMus==null?'ov-neu':dMus>0?'ov-good':dMus<0?'ov-bad':'ov-neu')+'">'+(dMus!=null?arr(dMus,'')+'%':'latest')+'</div></div>'+
+      '<div class="ov-cbox">'+ring(fatp,'var(--fat)')+'<div class="ov-cl">Body fat</div><div class="ov-cd '+(dFat==null?'ov-neu':dFat<0?'ov-good':dFat>0?'ov-bad':'ov-neu')+'">'+(dFat!=null?arr(dFat,'')+'%':'latest')+'</div></div>'+
+    '</div></div>';}
+  // PHOTOS
+  const ps=edPhotosSorted();const lastP=ps.length?ps[ps.length-1]:null;
+  const lastDate=lastP?String(lastP.date||'').slice(0,10):null;
+  const tile=function(url,lbl){return url?'<a class="ov-ph" href="'+esc(url)+'" target="_blank" rel="noopener" style="background-image:url('+esc(url).replace(/\)/g,'%29')+')"></a>':'<div class="ov-ph">'+lbl+'</div>';};
+  h+='<div class="ov-card"><div style="display:flex;align-items:center;margin-bottom:10px"><span class="ov-uline" style="margin:0">Progress photos</span><span class="sub" style="margin-left:auto">'+(lastDate?'Latest · '+fmtDate(lastDate):'none yet')+'</span></div>'+
+    '<div class="ov-photos">'+tile(lastP&&lastP.front,'Front')+tile(lastP&&lastP.side,'Side')+tile(lastP&&lastP.back,'Back')+'<button class="ov-ph" style="cursor:pointer" onclick="edGoalsBranch(\'photos\')">Open<br>photos</button></div></div>';
+  host.innerHTML=h;
+  // async: workouts this month
+  try{DB.listWorkoutLogs(edClient.id).then(function(logs){const m=todayISO().slice(0,7);const n=(logs||[]).filter(function(w){return String(w.date||'').slice(0,7)===m;}).length;const el=$('ed-ov-workouts');if(el)el.textContent=n;}).catch(function(){});}catch(e){}
 }
 let ED_COMP_UP=null;
 function edCompData(){edPlan.milestones=edPlan.milestones||{goals:[]};const c=edPlan.milestones.composition=edPlan.milestones.composition||{tests:[]};if(!Array.isArray(c.tests))c.tests=[];return c;}
