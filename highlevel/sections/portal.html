@@ -1997,6 +1997,29 @@ body{overflow-x:hidden}
 .meal-add-choose .mac-opt.journal .mac-ic{background:rgba(74,158,232,.14);color:var(--prot)}
 .meal-add-choose .mac-opt.journal:hover{background:rgba(74,158,232,.07);border-color:var(--prot)}
 @media(max-width:360px){.meal-add-choose .mac-btns{flex-direction:column}}
+/* ── Food Log redesign (Clean Diary): one summary · one add · clean meal rows ── */
+.logsum{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:15px;box-shadow:0 10px 26px -18px rgba(16,24,40,.3);margin:4px 0 12px}
+.logsum .lsum-ring{flex:none}
+.logsum text{fill:var(--text)}
+.logsum text.n{font-family:var(--disp);font-weight:900}
+.logsum text.u{fill:var(--muted);font-family:var(--sans);font-weight:700}
+.lsum-bars{flex:1;display:flex;flex-direction:column;gap:9px;min-width:0}
+.lsum-bar{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700}
+.lsum-bar .lab{width:56px;color:var(--muted)}
+.lsum-bar .tr{flex:1;height:7px;border-radius:999px;background:var(--card2);overflow:hidden}
+.lsum-bar .tr i{display:block;height:100%;border-radius:999px}
+.lsum-bar .vv{width:74px;text-align:right;color:var(--muted);font-weight:600;font-size:11px;white-space:nowrap}
+.logadd-primary{font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.02em;font-size:13.5px}
+.log-tools{margin:2px 0 10px;border:1px solid var(--border);border-radius:13px;background:var(--card2);overflow:hidden}
+.log-tools>summary{list-style:none;cursor:pointer;padding:11px 14px;font-weight:800;font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.log-tools>summary::-webkit-details-marker{display:none}
+.log-tools-body{display:flex;flex-direction:column;gap:7px;padding:0 12px 12px}
+.meal-head .mrow-ring{flex:none}
+.meal-head .mrow-kc{margin-left:auto;text-align:right;line-height:1.1}
+.meal-head .mrow-kc b{font-family:var(--disp);font-weight:900;font-size:16px;line-height:1}
+.meal-head .mrow-kc span{display:block;font-size:10.5px;color:var(--muted);white-space:nowrap}
+.meal-head .mrow-photo{font-size:13px;margin-left:4px;opacity:.8}
+.meal-add-choose.flash{box-shadow:0 0 0 2px var(--red);border-radius:13px;transition:box-shadow .35s}
 .alloc{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 12px;padding:10px 12px;border:1px dashed var(--line-strong);border-radius:10px;background:var(--card2)}
 .alloc-cell{display:flex;flex-direction:column;gap:1px;min-width:90px}
 .alloc-cell .al-k{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;font-family:var(--disp)}
@@ -4245,15 +4268,13 @@ img,svg,canvas,video{max-width:100%}
     <section id="view-log" class="hidden">
       <!-- sticky "macros left" bar — always visible while you log -->
       <div id="log-sticky"></div>
-      <div class="card"><div class="card-head"><span class="step-no">1</span><h2>Log a day</h2>
+      <div class="card"><div class="card-head"><h2>Today’s food</h2>
         <span class="pill" id="log-daytype"></span><span class="sp"></span>
         <input type="date" id="log-date" style="max-width:170px;width:auto" onchange="loadDayLog()"></div>
         <div class="card-body">
-          <div class="pool-head" style="display:flex;align-items:center;gap:10px"><div class="eyebrow">Macros left today</div><span class="pill" id="pool-status"></span></div>
-          <div id="remaining-pool" class="macro-grid" style="margin:8px 0 4px"></div>
+          <div id="log-summary"></div>
+          <button class="btn btn-primary logadd-primary" style="width:100%;margin:2px 0 12px" onclick="foodAddOpen()">🍽 Add food — search, snap or describe</button>
           <div id="day-reco"></div>
-          <p class="small" style="margin:6px 0 10px">Everything you <b>track</b> and <b>journal</b> today counts here. In each meal below you can <b>🔍 track a food</b> for exact macros, or <b>📸 journal it</b> with a photo + Smart estimate.</p>
-          <div style="margin:0 0 12px"><button class="btn-sm" style="border-color:var(--prot);color:var(--prot)" onclick="foodPlanOpen()">🔮 Plan a meal — decide before you eat</button></div>
           <!-- plan-a-meal: check a meal against today's remaining budget before eating it -->
           <div id="jr-plan" class="card" style="display:none;border-color:var(--prot);margin:4px 0 12px"><div class="card-body">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="font-family:var(--disp);font-weight:900;font-size:16px">🔮 Plan a meal</div><span class="sp" style="flex:1"></span><button class="btn-sm" onclick="foodPlanClose()">✕ Close</button></div>
@@ -4281,19 +4302,20 @@ img,svg,canvas,video{max-width:100%}
             <button id="jr-addbtn" class="btn btn-primary" style="width:100%" onclick="jrEstimateAndAdd()">✨ Estimate &amp; add meal</button>
             <button type="button" class="btn-sm" style="width:100%;margin-top:7px;background:transparent;border:0;color:var(--muted);font-weight:600" onclick="jrAnalyse()">🔍 See &amp; tweak the numbers first</button>
           </div></div>
-          <div class="logquick">
+          <details class="log-tools"><summary>⋯ More options</summary><div class="log-tools-body">
+            <button class="btn-sm" style="border-color:var(--prot);color:var(--prot)" onclick="foodPlanOpen()">🔮 Plan a meal — decide before you eat</button>
             <button class="btn-sm solid" onclick="prefillFromPlan()">➕ Add planned meals</button>
-            <button class="btn-sm" style="border-color:var(--good);color:var(--good)" onclick="openMealTemplates()">📋 My meals</button>
+            <button class="btn-sm" style="border-color:var(--good);color:var(--good)" onclick="openMealTemplates()">📋 My saved meals</button>
             <button class="btn-sm" style="border-color:var(--prot);color:var(--prot)" onclick="copyYesterday()">🗓 Copy yesterday</button>
+            <button class="btn-sm" style="border-style:dashed;border-color:var(--prot);color:var(--prot)" onclick="openIngredientReq()">🔎 Can't find a food? Find &amp; add it</button>
             <button class="btn-sm btn-danger" onclick="clearDayLog()">🗑 Clear day</button>
-          </div>
-          <div style="margin:2px 0 6px"><button class="btn-sm" style="width:100%;border-style:dashed;border-color:var(--prot);color:var(--prot)" onclick="openIngredientReq()">🔎 Can't find a food? Find &amp; add it →</button></div>
+          </div></details>
           <div id="log-sections"></div>
           <div id="day-journal"></div>
           <div id="log-comments" class="log-cmts"></div>
         </div></div>
 
-      <div class="card"><div class="card-head"><span class="step-no">2</span><h2>Today vs target</h2>
+      <div class="card" style="display:none"><div class="card-head"><span class="step-no">2</span><h2>Today vs target</h2>
         <span class="sp"></span><span class="pill" id="day-adherence"></span></div>
         <div class="card-body"><div class="ring-wrap"><div id="day-ring"></div>
           <div class="bars-day" id="day-bars" style="flex:1;min-width:230px"></div></div></div></div>
@@ -6497,7 +6519,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04pj';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04pk';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -14321,7 +14343,7 @@ function dayJournalTot(){return (DAY_JOURNAL||[]).reduce(function(a,e){const n=e
 function renderDayLog(){
   const items=DAYLOG.items||[];const tt=sumItems(items),jt=dayJournalTot();
   const tot={p:tt.p+jt.p,c:tt.c+jt.c,f:tt.f+jt.f,cal:tt.cal+jt.cal};   // tracked + journaled
-  renderRemaining(tot);
+  renderRemaining(tot);try{renderLogSummary(tot);}catch(e){}
   const mealNames=(DAY_MEALS||[]).map(m=>m.name||'Meal');
   let html='';
   (DAY_MEALS||[]).forEach((m,mi)=>{const name=m.name||'Meal';
@@ -14360,7 +14382,8 @@ function foodAddTrack(){try{const s=$('log-sections');if(s)s.scrollIntoView({beh
 /* reveal / collapse one meal's "add ingredients" columns (the chooser shows the two options first) */
 function mealShowTrack(key){const w=$('logaddwrap-'+key),c=$('mealchoose-'+key);if(w)w.style.display='';if(c)c.style.display='none';const inp=$('logadd-'+key);if(inp)setTimeout(function(){try{inp.focus();}catch(e){}},80);}
 function mealHideTrack(key){const w=$('logaddwrap-'+key),c=$('mealchoose-'+key);if(w)w.style.display='none';if(c)c.style.display='';const m=$('logac-'+key);if(m)m.classList.remove('open');}
-function foodAddJournal(mealName){
+function foodAddOpen(){try{const s=$('log-sections');if(s)s.scrollIntoView({behavior:'smooth',block:'start'});const first=document.querySelector('#log-sections .meal-add-choose');if(first){first.classList.add('flash');setTimeout(function(){try{first.classList.remove('flash');}catch(e){}},1200);}}catch(e){}}
+function foodAddJournal(mealName,focus){
   const cap=$('jr-capture');if(!cap)return;
   JR_PHOTOS=[];JR_NUTRI=null;
   const dd=$('jr-date');if(dd)dd.value=(($('log-date')&&$('log-date').value)||todayISO());
@@ -14371,7 +14394,8 @@ function foodAddJournal(mealName){
     sel.innerHTML=opts.map(function(o){return '<option value="'+esc(o)+'"'+((mealName&&o===mealName)?' selected':'')+'>'+esc(o)+'</option>';}).join('');}
   try{jrRenderNutri();}catch(e){}
   cap.style.display='';cap.scrollIntoView({behavior:'smooth',block:'start'});
-  const d2=$('jr-desc');if(d2)setTimeout(function(){try{d2.focus();}catch(e){}},320);
+  if(focus==='photo'){const pf=$('jr-photo');if(pf){try{pf.click();}catch(e){}}}
+  else{const d2=$('jr-desc');if(d2)setTimeout(function(){try{d2.focus();}catch(e){}},320);}
 }
 function foodJournalCancel(){const cap=$('jr-capture');if(cap)cap.style.display='none';JR_PHOTOS=[];JR_NUTRI=null;const pv=$('jr-preview');if(pv)pv.innerHTML='';}
 function foodLogRefresh(){try{if(NUTRI_SUB==='log'&&$('log-date'))loadDayLog();}catch(e){}}
@@ -14382,12 +14406,24 @@ async function renderLogComments(date){
   try{likes=await DB.listLikes({postType:'log',postKey:date});}catch(e){}
   host.innerHTML='<div class="cmt-cap">💬 Comments on '+esc(fmtDate(date))+'</div>'+clientCmtBlockInnerHTML('log',date,list,likes);
 }
+/* Food Log summary hero — one calorie ring + 3 macro bars (replaces the scattered pool/sticky/ring) */
+function renderLogSummary(tot){const host=$('log-summary');if(!host)return;
+  const t=DAY_TARGET||{};const tcal=calOf(t);
+  const pct=tcal>0?Math.min(100,Math.round(tot.cal/tcal*100)):0;const left=Math.round(tcal-tot.cal);const over=tot.cal>tcal+1;
+  const dash=(pct/100*326.7).toFixed(1);const ringCol=over?'#E8170D':(pct>=90?'#15A34A':'#E8170D');
+  const big=tcal>0?(over?lcNum(Math.abs(left)):lcNum(Math.max(0,left))):lcNum(Math.round(tot.cal));
+  const sub=tcal>0?(over?'kcal over':'kcal left'):'kcal';
+  const ring='<svg class="lsum-ring" width="92" height="92" viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="var(--card2)" stroke-width="12"/>'+(tcal>0?'<circle cx="60" cy="60" r="52" fill="none" stroke="'+ringCol+'" stroke-width="12" stroke-linecap="round" stroke-dasharray="'+dash+' 327" transform="rotate(-90 60 60)"/>':'')+'<text class="n" x="60" y="56" text-anchor="middle" font-size="23">'+big+'</text><text class="u" x="60" y="75" text-anchor="middle" font-size="11">'+sub+'</text></svg>';
+  function bar(l,g,tg,col){const p=tg>0?Math.min(100,Math.round(g/tg*100)):0;return '<div class="lsum-bar"><span class="lab">'+l+'</span><span class="tr"><i style="width:'+p+'%;background:'+col+'"></i></span><span class="vv">'+Math.round(g)+' / '+Math.round(tg||0)+'</span></div>';}
+  host.innerHTML='<div class="logsum">'+ring+'<div class="lsum-bars">'+bar('Protein',tot.p,t.p,'#2F7FD1')+bar('Carbs',tot.c,t.c,'#C77D08')+bar('Fat',tot.f,t.f,'#DC3B2F')+'</div></div>';
+}
 function renderRemaining(tot){
   const t=DAY_TARGET||{},tcal=calOf(t);
   const defs=[['Protein',t.p-tot.p,t.p,'g'],['Carbs',t.c-tot.c,t.c,'g'],['Fat',t.f-tot.f,t.f,'g'],['Calories',tcal-tot.cal,tcal,'kcal']];
   let over=false;
-  $('remaining-pool').innerHTML=defs.map(([lbl,left,tgt,u])=>{const o=left<-0.5;if(o)over=true;
+  const _poolHTML=defs.map(([lbl,left,tgt,u])=>{const o=left<-0.5;if(o)over=true;
     return '<div class="macro rem'+(o?' over':'')+'"><div class="k">'+lbl+' left</div><div class="v tnum">'+round(left)+'<small> '+u+'</small></div><div class="small" style="margin-top:2px">'+(o?'over target':'of '+round(tgt)+' '+u)+'</div></div>';}).join('');
+  const _rp=$('remaining-pool');if(_rp)_rp.innerHTML=_poolHTML;
   const st=$('pool-status');if(st){if(over){st.textContent='Over on some macros';st.className='pill crit';}else{st.textContent='Within target';st.className='pill good';}}
   const bar=$('log-sticky');if(bar){const cell=(lbl,cls,left,u)=>{const o=left<-0.5;return '<div class="lb-cell'+(o?' over':'')+'"><span class="lb-k">'+lbl+'</span><span class="lb-v '+cls+'">'+round(left)+(u==='kcal'?'':'')+'</span></div>';};
     bar.innerHTML='<div class="logbar"><span class="lb-title">Left today</span>'+cell('P','p',t.p-tot.p,'g')+cell('C','c',t.c-tot.c,'g')+cell('F','f',t.f-tot.f,'g')+cell('kcal','k',tcal-tot.cal,'kcal')+'</div>';}
@@ -14420,18 +14456,20 @@ function renderLogMeal(key,name,time,planned,rows,jrs){
       '<td class="mm p" data-l="Protein">'+round(mm.p)+'</td><td class="mm c" data-l="Carbs">'+round(mm.c)+'</td><td class="mm f" data-l="Fat">'+round(mm.f)+'</td><td class="tnum" data-l="Calories">'+round(mm.cal)+'</td>'+
       '<td class="rmcell"><button class="icon-x" style="font-size:18px;padding:0 4px" onclick="rmLogFood('+idx+')">×</button></td></tr>';}).join('')
     ||(jrs.length?'':'<tr><td colspan="7" class="empty" style="padding:12px">Nothing tracked for this meal.</td></tr>');
-  const loggedStr=(comb.cal||comb.p||comb.c||comb.f)?('<span class="mtot" style="color:var(--text);font-weight:700">logged '+round(comb.p)+'P · '+round(comb.c)+'C · '+round(comb.f)+'F · '+round(comb.cal)+'k'+(jlt.cal?' <span class="small" style="color:var(--prot);font-weight:600">(incl. 📸)</span>':'')+'</span>'):'';
-  const plannedStr=planned?'<span class="mtot">plan '+round(planned.p)+'P · '+round(planned.c)+'C · '+round(planned.f)+'F · '+round(planned.cal)+'k</span>':'';
+  const _mealCal=Math.round(comb.cal||0);const _mtgt=planned?Math.round(planned.cal||calOf(planned)||0):0;const _hasLog=!!(comb.cal||comb.p||comb.c||comb.f);
+  const _mpct=_mtgt>0?Math.min(100,Math.round(_mealCal/_mtgt*100)):(_hasLog?100:0);const _mover=_mtgt>0&&_mealCal>_mtgt+1;
+  const _mring='<svg class="mrow-ring" width="32" height="32" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="var(--card2)" stroke-width="5"/>'+(_hasLog?'<circle cx="18" cy="18" r="15" fill="none" stroke="'+(_mover?'#E8170D':'#15A34A')+'" stroke-width="5" stroke-linecap="round" stroke-dasharray="'+(_mpct/100*94).toFixed(1)+' 94" transform="rotate(-90 18 18)"/>':'')+'</svg>';
+  const _mkc='<div class="mrow-kc"><b'+(_hasLog?'':' style="color:var(--muted)"')+'>'+(_hasLog?_mealCal.toLocaleString():'0')+'</b>'+(_mtgt>0?'<span>of '+_mtgt.toLocaleString()+' kcal</span>':(_hasLog?'<span>kcal</span>':'<span>tap to add</span>'))+'</div>';
   const tableHTML=(rows.length)?('<div class="tbl-scroll"><table class="itbl"><thead><tr><th>Food</th><th>Qty</th><th>P</th><th>C</th><th>F</th><th>kcal</th><th></th></tr></thead><tbody>'+body+'</tbody></table></div>'):(jrs.length?'':('<div class="tbl-scroll"><table class="itbl"><tbody>'+body+'</tbody></table></div>'));
   const jmealsHTML=jrs.length?('<div class="meal-jmeals">'+jrs.map(jmealCardHTML).join('')+'</div>'):'';
-  return '<div class="meal"><div class="meal-head"><span class="mname">'+esc(name)+'</span>'+(time?'<span class="mtime">'+esc(time)+'</span>':'')+
-    '<div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:1px">'+loggedStr+plannedStr+'</div></div>'+
+  return '<div class="meal"><div class="meal-head">'+_mring+'<span class="mname">'+esc(name)+'</span>'+(jlt.cal?'<span class="mrow-photo" title="includes a photo estimate">📸</span>':'')+(time?'<span class="mtime">'+esc(time)+'</span>':'')+_mkc+'</div>'+
     tableHTML+jmealsHTML+
     '<div class="meal-add-choose" id="mealchoose-'+key+'">'+
       '<div class="mac-label">Add to '+esc(name)+'</div>'+
       '<div class="mac-btns">'+
-        '<button type="button" class="mac-opt track" onclick="mealShowTrack(\''+key+'\')"><span class="mac-ic">🔍</span><span class="mac-tx"><b>Add ingredients</b><small>search &amp; log foods</small></span></button>'+
-        '<button type="button" class="mac-opt journal" onclick="foodAddJournal(\''+nameJs+'\')"><span class="mac-ic">📸</span><span class="mac-tx"><b>Journal it</b><small>photo + estimate</small></span></button>'+
+        '<button type="button" class="mac-opt track" onclick="mealShowTrack(\''+key+'\')"><span class="mac-ic">🔍</span><span class="mac-tx"><b>Search</b><small>exact macros</small></span></button>'+
+        '<button type="button" class="mac-opt journal" onclick="foodAddJournal(\''+nameJs+'\',\'photo\')"><span class="mac-ic">📷</span><span class="mac-tx"><b>Snap</b><small>photo estimate</small></span></button>'+
+        '<button type="button" class="mac-opt journal" onclick="foodAddJournal(\''+nameJs+'\',\'desc\')"><span class="mac-ic">✍️</span><span class="mac-tx"><b>Describe</b><small>AI estimate</small></span></button>'+
       '</div>'+
     '</div>'+
     '<div class="logadd" id="logaddwrap-'+key+'" style="display:none">'+
