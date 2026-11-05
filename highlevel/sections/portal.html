@@ -4095,7 +4095,7 @@ img,svg,canvas,video{max-width:100%}
   </div>
 
   <div class="wrap">
-    <div style="margin:6px 0 16px">
+    <div id="p-header" style="margin:6px 0 16px">
       <div class="eyebrow" id="p-hello">Welcome back</div>
       <h1 id="p-title" style="font-size:26px;font-weight:800;text-transform:uppercase">Transformation Portal</h1>
     </div>
@@ -6497,7 +6497,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04ph';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04pi';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -8352,6 +8352,7 @@ function setSection(sec){
   // A section that's turned off for this client is not shown at all — send them to the first live one.
   if(!sectionLive(sec)){sec=firstLiveSection();}
   CUR_SECTION=sec;curView=sec;
+  try{const ph=$('p-header');if(ph)ph.style.display=(sec==='home')?'none':'';}catch(e){}   // Home's own hero greets by name — avoid the duplicate "Welcome back / NAME" header
   if(sec!=='chat'){try{document.body.classList.remove('chat-thread-open');CHAT_THREAD_OPEN=false;}catch(e){}}   // leaving chat restores the bottom nav
   try{navStateSave();}catch(e){}
   if(typeof syncNavActive==='function')syncNavActive();else document.querySelectorAll('[data-sec]').forEach(b=>b.classList.toggle('active',b.dataset.sec===sec));
