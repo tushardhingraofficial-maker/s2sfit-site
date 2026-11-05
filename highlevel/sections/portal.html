@@ -1834,6 +1834,21 @@ body{overflow-x:hidden}
 .lc-tabs{display:flex;gap:7px;margin:0 0 14px;position:sticky;top:0;z-index:2;background:var(--ink);padding:8px 0 10px}
 .lc-tab{flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:11px;background:var(--card2);color:var(--muted);font-weight:800;font-size:13.5px;cursor:pointer;white-space:nowrap;transition:.15s}
 .lc-tab.on{background:linear-gradient(90deg,var(--brand),#ff5a3c);color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(232,23,13,.3)}
+/* personal "my challenge" hero strip */
+.lc-me{margin:12px 0 2px}
+.lc-me-row{display:flex;gap:7px}
+.lc-me-pill{flex:1;min-width:0;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:9px 6px;text-align:center}
+.lc-me-pill .v{font-family:var(--disp);font-weight:900;font-size:19px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lc-me-pill .k{font-size:9px;text-transform:uppercase;letter-spacing:.3px;opacity:.85;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+:root[data-theme="light"] .lc-me-pill{background:var(--card2);border-color:var(--border)}
+/* collapsible full standings */
+.lc-standings{border:1px solid var(--border);border-radius:13px;background:var(--card);margin-top:12px;overflow:hidden}
+.lc-standings>summary{list-style:none;cursor:pointer;padding:13px 15px;font-weight:800;font-size:13.5px;display:flex;align-items:center;gap:8px}
+.lc-standings>summary::-webkit-details-marker{display:none}
+.lc-standings>summary::after{content:"⌄";margin-left:auto;color:var(--muted);font-size:15px;transition:transform .2s}
+.lc-standings[open]>summary::after{transform:rotate(180deg)}
+.lc-standings>summary:hover{background:var(--card2)}
+.lc-standings .lc-groups,.lc-standings .lc-daily{padding:0 12px 12px}
 /* enrollment card + fitness questions */
 .cvol-enr{border:1px solid var(--brand);border-radius:14px;background:linear-gradient(180deg,rgba(232,23,13,.08),var(--card2));padding:16px 15px;margin:0 0 12px}
 .cvol-enr-h{font-family:var(--disp);font-weight:900;font-size:19px;margin:0 0 3px}
@@ -6682,7 +6697,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04px';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04py';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -13208,7 +13223,7 @@ function cheatLeaderboardHTML(ch,myId){
     prizeLine+(ch.rewardsAwarded?'<div class="lc-prize" style="background:rgba(34,197,94,.12);color:var(--good)">🎉 Rewards paid out!</div>':'')+'</div>'+
     '<div class="cheat-lb-body">'+vtabs+(view==='feed'
       ? cheatFeedHTML(ch,myId)
-      : (cheatPodiumHTML(parts,myId,unit)+mePos+rulesBlock+'<div class="lc-groups cheat-groups"><div class="lc-groups-h">🔥 Live standings — climb the ranks<span class="sp" style="flex:1"></span><button class="cf-share" style="margin:0" onclick="cheatCueCardBoard(\''+ch.id+'\')" title="Download / share the leaderboard as an image">🖼 Share card</button></div>'+rows+'<div style="margin-top:10px;text-align:center"><button class="cf-share" onclick="cheatCueCardBoard(\''+ch.id+'\')">🖼 Share leaderboard card</button></div></div>'))+'</div>'+
+      : (cheatPodiumHTML(parts,myId,unit)+mePos+rulesBlock+'<details class="lc-standings"'+(me?'':' open')+'><summary>🔥 Live standings — climb the ranks</summary><div class="lc-groups cheat-groups" style="padding:0 12px 12px">'+rows+'<div style="margin-top:10px;text-align:center"><button class="cf-share" onclick="cheatCueCardBoard(\''+ch.id+'\')">🖼 Share leaderboard card</button></div></div></details>'))+'</div>'+
     '</div>';
 }
 /* ═══════════ cheat food TIMELINE — social feed of everyone's logged meals + likes & comments ═══════════ */
@@ -13474,6 +13489,24 @@ function cvolResyncEntries(ch){if(!ch)return;const raw=cvolScoreMode(ch)==='raw'
   Object.keys(ch.sessions||{}).forEach(function(cid){ch.entries[cid]=ch.entries[cid]||{};Object.keys(ch.sessions[cid]||{}).forEach(function(d){const s=ch.sessions[cid][d];if(s)ch.entries[cid][d]=(raw?(+s.kg||0):(+s.vp||0));});});}
 async function cvolSetScore(v){const c=lcCur();if(!c)return;c.volScore=v;c.unit=(v==='raw'?'kg':'pts');cvolResyncEntries(c);lcTouch(c);try{await lcSaveAll(true);}catch(e){}lcRenderEditor();}
 function cvolTeamKg(ch){let kg=0;Object.keys(ch.sessions||{}).forEach(function(cid){Object.keys(ch.sessions[cid]||{}).forEach(function(d){kg+=(+((ch.sessions[cid][d]||{}).kg)||0);});});return kg;}
+/* consecutive days (up to today) this member has a positive entry */
+function lcStreakDays(ch,cid){const e=(ch.entries||{})[cid]||{};const has={};Object.keys(e).forEach(function(d){if(lcEntryFinal(e[d])>0)has[String(d).slice(0,10)]=1;});let n=0;for(let i=0;i<400;i++){const d=addDaysISO(todayISO(),-i);if(has[d])n++;else if(i>0)break;}return n;}
+/* personal "my challenge" hero strip — rank / streak / my total / my team position (shown when the client is in the challenge) */
+function lcPersonalHeroHTML(ch,myId){
+  if(!myId)return '';
+  const groups=lcGroupStats(ch);let mem=null,grp=null,gi=0;
+  groups.forEach(function(g,idx){const k=g.members.findIndex(function(m){return m.id===myId;});if(k>=0){mem=g.members[k];grp=g;gi=idx;}});
+  if(!mem)return '';
+  const allM=[];groups.forEach(function(g){g.members.forEach(function(m){allM.push(m);});});allM.sort(function(a,b){return b.total-a.total;});
+  const rank=allM.findIndex(function(m){return m.id===myId;})+1;
+  const unit=ch.unit||'steps';const streak=lcStreakDays(ch,myId);const medals=['🥇','🥈','🥉'];
+  return '<div class="lc-me"><div class="lc-me-row">'+
+    '<div class="lc-me-pill"><div class="v">#'+rank+'</div><div class="k">your rank /'+allM.length+'</div></div>'+
+    '<div class="lc-me-pill"><div class="v">'+(streak>0?'🔥 '+streak:'—')+'</div><div class="k">day streak</div></div>'+
+    '<div class="lc-me-pill"><div class="v">'+lcNum(mem.total)+'</div><div class="k">your '+esc(unit)+'</div></div>'+
+    '<div class="lc-me-pill"><div class="v">'+(medals[gi]||('#'+(gi+1)))+'</div><div class="k">'+esc(grp.name||'team')+'</div></div>'+
+  '</div></div>';
+}
 function lcLeaderboardHTML(ch,myId){
   const cd=lcCountdown(ch),groups=lcGroupStats(ch),unit=ch.unit||'steps',medals=['🥇','🥈','🥉'];
   const pool=ch.rewardMode==='pool';
@@ -13535,8 +13568,12 @@ function lcLeaderboardHTML(ch,myId){
     '<div class="lc-count '+cd.state+'">'+(cd.state==='ended'?'🏁 ':cd.state==='upcoming'?'⏳ ':'⏱ ')+esc(cd.label)+'</div>'+
     (ADMIN_OK&&!ch.live?'<div class="lc-hero-sub" style="margin-top:8px;color:var(--gold,#f5c842)">👁 Draft — only you can see this (not live to clients yet)</div>':'')+
     prizeLine+mvpHero+
-    (ch.rewardsAwarded?'<div class="lc-prize" style="background:rgba(34,197,94,.12);color:var(--good)">🎉 Rewards have been paid out!</div>':'')+'</div>'+
-    banner+rulesBlock+mvpRace+podium+myStats+'<div class="lc-groups">'+(groups.length?'<div class="lc-groups-h">Full standings — all teams &amp; members<span class="sp" style="flex:1"></span><button class="lc-share-btn wide" onclick="lcCueCardOverall(\''+ch.id+'\')">🖼 Overall card</button></div>':'')+grid+'</div>'+dailyTable+'</div>';
+    (ch.rewardsAwarded?'<div class="lc-prize" style="background:rgba(34,197,94,.12);color:var(--good)">🎉 Rewards have been paid out!</div>':'')+lcPersonalHeroHTML(ch,myId)+'</div>'+
+    banner+rulesBlock+mvpRace+podium+myStats+
+    (groups.length
+      ? '<details class="lc-standings"'+(inChallenge?'':' open')+'><summary>📊 Full standings — all teams &amp; members</summary><div class="lc-groups">'+grid+'</div><div class="lc-daily">'+dailyTable+'<div style="text-align:right;margin-top:8px"><button class="lc-share-btn wide" onclick="lcCueCardOverall(\''+ch.id+'\')">🖼 Overall card</button></div></div></details>'
+      : '<div class="lc-groups">'+grid+'</div>'+dailyTable)+
+    '</div>';
 }
 /* podium for the top teams — 2nd (left) · 1st (center) · 3rd (right) */
 function lcPodiumHTML(top,myGroupId){
