@@ -194,15 +194,15 @@ img,svg,canvas,video,input,select,textarea{max-width:100%}
 #upd-banner{position:fixed;left:0;right:0;bottom:0;z-index:99990;display:none;padding:10px 12px;pointer-events:none}
 #upd-banner.show{display:block;animation:updUp .35s ease}
 @keyframes updUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
-#upd-banner .upd-in{pointer-events:auto;max-width:720px;margin:0 auto;display:flex;align-items:center;gap:12px;background:var(--card,#1a1a1a);border:1px solid var(--prot);border-left:5px solid var(--prot);border-radius:14px;padding:12px 14px;box-shadow:0 12px 44px rgba(0,0,0,.55)}
-#upd-banner .upd-ic{font-size:22px;flex:none}
+#upd-banner .upd-in{pointer-events:auto;max-width:520px;margin:0 auto;display:flex;align-items:center;gap:10px;background:var(--card,#1a1a1a);border:1px solid var(--prot);border-left:4px solid var(--prot);border-radius:12px;padding:8px 12px;box-shadow:0 10px 32px rgba(0,0,0,.4)}
+#upd-banner .upd-ic{font-size:16px;flex:none}
 #upd-banner .upd-tx{flex:1;min-width:0;font-size:13.5px;line-height:1.4}
 #upd-banner .upd-msg{display:block;color:var(--muted);font-size:12.5px;margin-top:1px}
 #upd-banner .upd-sub{color:var(--muted);font-size:11.5px;margin-top:3px}
-#upd-banner .upd-go{flex:none;border:none;border-radius:10px;background:var(--prot);color:#fff;font-weight:800;font-size:13px;padding:9px 14px;cursor:pointer;white-space:nowrap}
+#upd-banner .upd-go{flex:none;border:none;border-radius:9px;background:var(--prot);color:#fff;font-weight:800;font-size:12.5px;padding:7px 13px;cursor:pointer;white-space:nowrap}
 #upd-banner .upd-go:active{opacity:.9}
 #upd-banner .upd-x{flex:none;border:none;background:transparent;color:var(--muted);font-size:20px;cursor:pointer;padding:0 4px;line-height:1}
-@media(max-width:560px){#upd-banner .upd-in{flex-wrap:wrap}#upd-banner .upd-go{flex:1}}
+@media(max-width:560px){#upd-banner .upd-in{flex-wrap:nowrap}#upd-banner .upd-tx{font-size:13px}}
 
 .macro-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 @media(max-width:640px){.macro-grid{grid-template-columns:repeat(2,1fr)}}
@@ -6523,7 +6523,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04pm';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04pn';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -25759,8 +25759,8 @@ function updBanner(l){
   let b=document.getElementById('upd-banner');
   if(!b){b=document.createElement('div');b.id='upd-banner';document.body.appendChild(b);}
   const hint=(typeof ADMIN_OK!=='undefined'&&ADMIN_OK)?'log out and back in':'close and reopen the app';
-  b.innerHTML='<div class="upd-in"><span class="upd-ic">🎉</span><div class="upd-tx"><b>A new version is available</b>'+(l.msg?'<span class="upd-msg">'+esc(l.msg)+'</span>':'')+'<div class="upd-sub">Refresh to get the latest — or just '+hint+'.</div></div>'+
-    '<button class="upd-go" onclick="updRefresh()">🔄 Refresh now</button><button class="upd-x" onclick="updDismiss()" title="Dismiss for now">×</button></div>';
+  b.innerHTML='<div class="upd-in"><span class="upd-ic">🎉</span><span class="upd-tx"><b>Update available</b></span>'+
+    '<button class="upd-go" onclick="updRefresh()">🔄 Refresh</button><button class="upd-x" onclick="updDismiss()" title="Dismiss">×</button></div>';
   b.classList.add('show');
 }
 function updHide(){const b=document.getElementById('upd-banner');if(b)b.classList.remove('show');}
