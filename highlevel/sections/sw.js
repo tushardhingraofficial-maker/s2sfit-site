@@ -1,6 +1,6 @@
 /* S2S Transformation Portal — service worker
    Makes the portal installable and usable offline. Bump CACHE on each release. */
-const CACHE = 's2s-portal-2026-08-04pw';
+const CACHE = 's2s-portal-2026-08-04px';
 /* served as /sections/portal.html on the standalone origin; icons/manifest are absolute (Supabase bucket). */
 const SHELL = ['./portal.html'];
 const PUSH_ICON = 'https://iiaqezfiqkonajqqcrcj.supabase.co/storage/v1/object/public/app/icon-192.png';
