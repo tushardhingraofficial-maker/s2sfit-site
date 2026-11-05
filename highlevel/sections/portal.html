@@ -3678,10 +3678,11 @@ tr.tr-gr td:first-child{border-left:3px solid var(--red)}
 .wko-instr[open]>summary::after{content:'▴'}
 .wko-instr-body{padding:0 14px 12px}
 /* per-exercise tools */
-.wko-tools{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 10px}
-.wko-tool{display:inline-flex;align-items:center;gap:5px;background:var(--card2);border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--disp)}
+.wko-tools{display:flex;flex-wrap:wrap;gap:9px;margin:2px 0 12px}
+.wko-tool{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;background:var(--card2);border:1px solid var(--border);color:var(--muted);border-radius:13px;padding:0;cursor:pointer}
+.wko-tool .ic{width:21px;height:21px}
 .wko-tool:hover{border-color:var(--red);color:var(--text)}
-.wko-tool.on{background:rgba(232,23,13,.12);border-color:var(--red);color:var(--text)}
+.wko-tool.on{background:rgba(232,23,13,.12);border-color:var(--red);color:var(--red)}
 /* grid header + toggles */
 .wko-gridhead{display:flex;align-items:center;gap:8px;margin:2px 0 6px}
 .wko-toggle{background:var(--card2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:4px 9px;font-size:11px;font-weight:800;font-family:var(--disp);cursor:pointer;text-transform:uppercase;letter-spacing:.03em}
@@ -6592,7 +6593,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04pq';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04pr';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -8145,7 +8146,9 @@ const SVG_ICONS={
   person:'<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>',
   people:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/>',
   square:'<rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>',
-  health:'<path d="M3 12h4l2 6 4-14 2 8h6"/>'
+  health:'<path d="M3 12h4l2 6 4-14 2 8h6"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  link:'<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>'
 };
 function svgIcon(name,cls){const p=SVG_ICONS[name];if(!p)return '';return '<svg class="ic '+(cls||'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';}
 /* swap the bottom-nav emoji glyphs for the SVG set (once) */
@@ -10999,11 +11002,11 @@ function wkoFocusHTML(en,ei,noNav){
   const instrHTML=instr?'<details class="wko-instr"><summary>📋 How to perform</summary><div class="wko-instr-body">'+instr+'</div></details>':'';
   // per-exercise tools
   const tools='<div class="wko-tools">'+
-    '<button class="wko-tool" onclick="wkoReplace('+ei+')" title="Swap from your library">⇄ Replace</button>'+
-    '<button class="wko-tool" onclick="wkoAddCustom()" title="Add a custom exercise">＋ Custom</button>'+
-    '<button class="wko-tool" onclick="wkoHistToggle('+ei+')" title="Past performance">📈 History</button>'+
-    '<button class="wko-tool'+(en.comment?' on':'')+'" onclick="wkoComment('+ei+')" title="Add a comment for your coach">💬 Comment</button>'+
-    '<button class="wko-tool'+(en.group?' on':'')+'" onclick="wkoToggleSuperset('+ei+')" title="Superset with the next exercise">🔗 Superset</button>'+
+    '<button class="wko-tool" onclick="wkoReplace('+ei+')" title="Swap from your library" aria-label="Replace exercise">'+svgIcon('refresh')+'</button>'+
+    '<button class="wko-tool" onclick="wkoAddCustom()" title="Add a custom exercise" aria-label="Add custom exercise">'+svgIcon('plus')+'</button>'+
+    '<button class="wko-tool" onclick="wkoHistToggle('+ei+')" title="Past performance" aria-label="History">'+svgIcon('history')+'</button>'+
+    '<button class="wko-tool'+(en.comment?' on':'')+'" onclick="wkoComment('+ei+')" title="Add a comment for your coach" aria-label="Comment">'+svgIcon('chat')+'</button>'+
+    '<button class="wko-tool'+(en.group?' on':'')+'" onclick="wkoToggleSuperset('+ei+')" title="Superset with the next exercise" aria-label="Superset">'+svgIcon('link')+'</button>'+
     '</div>';
   const equips=wkoEquipFor(en);
   const equipRow='<div class="wko-brand"><span class="wko-brand-lbl">🛠 Equipment</span>'+
