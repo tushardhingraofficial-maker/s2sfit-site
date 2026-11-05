@@ -255,6 +255,43 @@ img,svg,canvas,video,input,select,textarea{max-width:100%}
 .meal-macros{margin:0 12px 14px;padding:10px 12px;background:var(--ink);border:1px solid var(--border);border-radius:10px;box-shadow:inset 0 2px 8px rgba(0,0,0,.35);animation:mealExp .16s ease}
 .meal.open{border-color:var(--line-strong)}
 @keyframes mealExp{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+/* ══ Diet "Today" live hero + check-off meals (client plan panel) ══ */
+.dp-hero-top{display:flex;align-items:center;gap:8px;margin:0 0 8px}
+.dp-dt{font-family:var(--disp);font-weight:800;font-size:15px;text-transform:uppercase;letter-spacing:.04em;display:inline-flex;align-items:center;gap:7px}
+.dp-streak{margin-left:auto;background:rgba(245,200,66,.18);color:var(--gold,#B07A0C);font-weight:700;font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid rgba(245,200,66,.35);white-space:nowrap}
+.dp-grid{display:flex;align-items:center;gap:16px}
+.dp-ring-wrap{position:relative;width:116px;height:116px;flex:none}
+.dp-ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.dp-ring-num{font-family:var(--disp);font-weight:900;font-size:29px;line-height:.9}
+.dp-ring-lab{font-size:9.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.dp-ring-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.dp-bars{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+.dp-bl{display:flex;justify-content:space-between;gap:8px;font-size:12px;font-weight:600;margin-bottom:4px}
+.dp-bl .mut{color:var(--muted);font-weight:500;white-space:nowrap}
+.dp-track{height:8px;border-radius:999px;background:var(--card2);overflow:hidden}
+.dp-fill{height:100%;border-radius:999px;transition:width .5s ease;max-width:100%}
+.dp-next{margin-top:14px;display:flex;align-items:center;gap:10px;background:var(--card2);border-radius:12px;padding:10px 12px}
+.dp-ni{width:34px;height:34px;border-radius:9px;background:rgba(74,158,232,.16);display:grid;place-items:center;font-size:17px;flex:none}
+.dp-next b{font-size:13px}
+.dp-next .sm{font-size:11.5px;color:var(--muted);overflow-wrap:anywhere}
+.dp-qa{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0 2px}
+.dp-qa button{display:flex;flex-direction:column;align-items:center;gap:5px;background:var(--card);border:1px solid var(--border);border-radius:13px;padding:11px 3px;cursor:pointer;color:var(--text);font-family:var(--sans)}
+.dp-qa button:hover{border-color:var(--line-strong)}
+.dp-qa .qi{font-size:19px;line-height:1}
+.dp-qa .ql{font-size:10.5px;font-weight:600;text-align:center;line-height:1.15}
+.dp-mhead{display:flex;align-items:baseline;gap:8px;margin:0 0 10px}
+.dp-mhead .lab{font-weight:800;font-size:13px}
+.dp-prog{margin-left:auto;font-size:12px;color:var(--muted);font-weight:600;text-align:right}
+.dp-chk{width:25px;height:25px;border-radius:50%;border:2px solid var(--line-strong);background:var(--card);flex:none;display:grid;place-items:center;color:#fff;font-size:13px;line-height:1;cursor:pointer;padding:0}
+.meal.dp-done .dp-chk{background:var(--good,#22c55e);border-color:var(--good,#22c55e)}
+.meal.dp-done{border-color:rgba(34,197,94,.45)}
+.meal.dp-done .meal-head{background:rgba(34,197,94,.09)}
+.dp-mbar{display:flex;height:5px;margin:8px 14px 2px;border-radius:999px;overflow:hidden;background:var(--card2)}
+.dp-mbar i{display:block;height:100%}
+.meal-items .mi-dot{width:8px;height:8px;border-radius:50%;flex:none;align-self:center}
+.meal-items .mi-food{flex:1}
+.dp-upnext{font-size:10px;font-weight:800;color:var(--red);background:rgba(232,23,13,.1);padding:2px 7px;border-radius:999px;letter-spacing:.04em;text-transform:uppercase;margin-left:6px}
+@media(max-width:380px){.dp-ring-wrap{width:104px;height:104px}.dp-qa .ql{font-size:9.5px}}
 /* supplements — crisp list, expandable details */
 .supp-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .supp{border:1px solid var(--border);border-radius:11px;background:var(--card);overflow:hidden}
@@ -4249,12 +4286,9 @@ img,svg,canvas,video{max-width:100%}
         <span class="sp"></span><span class="small">Tap a day to view its plan</span></div>
         <div class="card-body"><div class="week-strip" id="week-strip"></div></div></div>
 
-      <div class="card"><div class="card-head"><span class="step-no">1</span><h2>Daily macro target</h2>
-        <span class="pill" id="plan-daytype"></span><span class="sp"></span><span class="pill muted" id="plan-updated"></span></div>
-        <div class="card-body"><div class="macro-grid" id="target-grid"></div>
-          <!-- plan-a-meal: decide whether a meal fits your allocated macros before you eat it -->
-          <div style="margin:12px 0 0"><button class="btn-sm" style="border-color:var(--prot);color:var(--prot)" onclick="foodPlanOpen('dp')">🔮 Plan a meal — will it fit my macros?</button></div>
-        </div></div>
+      <div class="card"><div class="card-head"><span class="step-no">1</span><h2>Today</h2>
+        <span class="sp"></span><span class="pill muted" id="plan-updated"></span></div>
+        <div class="card-body" id="diet-today"></div></div>
       <div id="dp-plan" class="card" style="display:none;border-color:var(--prot);margin:0 0 12px"><div class="card-body">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="font-family:var(--disp);font-weight:900;font-size:16px">🔮 Plan a meal</div><span class="sp" style="flex:1"></span><button class="btn-sm" onclick="foodPlanClose()">✕ Close</button></div>
         <p class="small" style="margin:0 0 10px;color:var(--muted)">Thinking about eating something? Describe it — we'll estimate the macros and tell you whether it <b>fits what's left of today</b> against your allocated target, so you can decide before you eat. Nothing is logged until you choose to.</p>
@@ -4267,7 +4301,7 @@ img,svg,canvas,video{max-width:100%}
         <div class="card-body" id="tr-calorie-host"></div></div>
 
       <div class="card"><div class="card-head"><span class="step-no">2</span><h2>Your meals</h2>
-        <span class="sp"></span><span class="small" id="plan-mealcount"></span></div>
+        <span class="pill" id="plan-daytype"></span><span class="sp"></span><span class="small" id="plan-mealcount"></span></div>
         <div class="card-body" id="meals-host"></div></div>
 
       <div class="card hidden" id="meal-prefs-card"><div class="card-head"><span class="step-no">◈</span><h2>Your meal preferences</h2>
@@ -6593,7 +6627,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04ps';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04pt';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -8505,6 +8539,7 @@ function setNutri(sub){
   if(sub==='swap'){try{seedSwap();}catch(e){}}
   if(sub==='prep'){try{renderMealPrep();}catch(e){}try{renderMealPrepGen();}catch(e){}}
   if(sub==='log'){loadDayLog();renderTrend();}
+  if(sub==='plan'){try{dpLoadToday();}catch(e){}}   // refresh the Today ring from the latest food log
   if(sub==='recipes'){try{renderRecipes();}catch(e){}}
   window.scrollTo(0,0);
 }
@@ -8521,7 +8556,7 @@ function setView(v){
 function macroCard(k,cls,val,unit){return '<div class="macro '+cls+'"><div class="k">'+k+'</div><div class="v tnum">'+round(val)+(unit?'<small> '+unit+'</small>':'')+'</div></div>';}
 /* crisp ingredient list — food + quantity only (macros hidden until expanded) */
 function mealItemsListHTML(m){
-  const li=it=>'<li class="mi'+(ADMIN_OK?'':' mi-tap')+'"'+ingClickAttr(it,m)+'><span class="mi-food">'+esc(it.name)+(it.note?' <span class="mi-noteic" title="Coach note">📝</span>':'')+'</span><span class="mi-qty tnum">'+(+it.qty||0)+(it.units?' '+esc(it.units):'')+(ADMIN_OK?'':' <span class="mi-chev">›</span>')+'</span></li>';
+  const li=it=>'<li class="mi'+(ADMIN_OK?'':' mi-tap')+'"'+ingClickAttr(it,m)+'><span class="mi-dot" style="background:'+foodDotColor(it)+'"></span><span class="mi-food">'+esc(it.name)+(it.note?' <span class="mi-noteic" title="Coach note">📝</span>':'')+'</span><span class="mi-qty tnum">'+(+it.qty||0)+(it.units?' '+esc(it.units):'')+(ADMIN_OK?'':' <span class="mi-chev">›</span>')+'</span></li>';
   const prep=mealPrep(m),food=mealFoods(m);
   const prepHTML=prep.length?('<div class="meal-prep"><div class="mp-h">🧂 Prep ingredients (counted)</div><ul class="meal-items" style="margin:0">'+prep.map(li).join('')+'</ul></div>'):'';
   const rows=food.map(li).join('')||'<li class="mi mi-empty">No items yet</li>';
@@ -8536,14 +8571,17 @@ function mealItemsTableHTML(m){
     ||'<tr><td colspan="7" class="empty" style="padding:12px">No items</td></tr>';
   return '<div class="tbl-scroll"><table class="itbl"><thead><tr><th>Food</th><th>Qty</th><th style="text-align:left">Unit</th><th>P</th><th>C</th><th>F</th><th>kcal</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
-function mealTableHTML(meals,withTotalRow,pool){
+function mealTableHTML(meals,withTotalRow,pool,isToday){
   const dayTot=sumItems((meals||[]).flatMap(m=>m.items||[]));
   let html=(meals||[]).map(m=>{
     if(m.flex&&pool)return flexMealCard(m,pool);
-    const tot=sumItems(m.items);
-    return '<div class="meal">'+
-      '<div class="meal-head"><span class="mname">'+esc(m.name||'Meal')+'</span>'+(m.time?'<span class="mtime">'+esc(m.time)+'</span>':'')+
+    const tot=sumItems(m.items);const sp=macroSplit(tot);
+    const done=isToday&&dpMealIsDone(m.id);
+    const chk=isToday?'<button class="dp-chk" onclick="event.stopPropagation();dpToggleMeal(\''+m.id+'\')" title="Mark eaten" aria-label="Mark '+esc(m.name||'meal')+' eaten">'+(done?'✓':'')+'</button>':'';
+    return '<div class="meal'+(done?' dp-done':'')+'">'+
+      '<div class="meal-head">'+chk+'<span class="mname">'+esc(m.name||'Meal')+'</span>'+(m.time?'<span class="mtime">'+esc(m.time)+'</span>':'')+
         '<span class="mtot">'+round(tot.cal)+' kcal</span></div>'+
+      ((tot.p||tot.c||tot.f)?'<div class="dp-mbar" aria-hidden="true"><i style="width:'+sp.p.toFixed(1)+'%;background:var(--prot)"></i><i style="width:'+sp.c.toFixed(1)+'%;background:var(--carb)"></i><i style="width:'+sp.f.toFixed(1)+'%;background:var(--fat)"></i></div>':'')+
       (m.note?'<div class="meal-note">📝 '+esc(m.note)+'</div>':'')+
       (dayTot.cal>0?'<div style="padding:4px 12px 0">'+mealPctChips(tot,dayTot)+'</div>':'')+
       mealItemsListHTML(m)+
@@ -8562,6 +8600,7 @@ function renderPlan(){
   if(PLAN.updated_at)$('plan-updated').textContent='Updated '+fmtDate((PLAN.updated_at||'').slice(0,10));
   if(!selDayType||!PLAN.dayTypes.find(d=>d.id===selDayType))selDayType=dayTypeForDate(PLAN,todayISO()).id;
   renderReminder();renderProfile();renderWeekStrip();renderDayTypePlan();renderTrCalories();renderMealPrefs();renderWeeklyMeals();renderMealPrep();renderHydration();renderSupplements();renderMyIssues();renderDisclaimer();seedSwap();
+  try{dpLoadToday();}catch(e){}   // async: fill the Today ring/bars from today's food log
   try{clientChallengeShortcutInject('diet-chal-shortcut');}catch(e){}
   try{renderGrocery();}catch(e){}
   try{renderClientProgress();}catch(e){}
@@ -9281,25 +9320,87 @@ function renderWeekStrip(){
       '<span class="wd-d">'+lbl+(dow===td?' •':'')+'</span><span class="wd-dot" style="background:'+dt.color+'"></span><span class="wd-n">'+esc(dt.name)+'</span></button>';}).join('');
 }
 function selectDayType(id){selDayType=id;renderDayTypePlan();renderWeekStrip();seedSwap();}
+/* ───── Diet "Today" live hero: calorie ring + macro bars + streak + up-next + quick actions ───── */
+let DP_TODAY={date:'',tot:{p:0,c:0,f:0,cal:0},loaded:false};
+function macroSplit(t){const pc=(+t.p||0)*4,cc=(+t.c||0)*4,fc=(+t.f||0)*9,s=pc+cc+fc;if(s<=0)return{p:0,c:0,f:0};return{p:pc/s*100,c:cc/s*100,f:fc/s*100};}
+function parseMealTime(s){if(!s)return null;const m=String(s).trim().match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);if(!m)return null;let h=+m[1];const mn=+(m[2]||0),ap=(m[3]||'').toLowerCase();if(ap==='pm'&&h<12)h+=12;if(ap==='am'&&h===12)h=0;return h*60+mn;}
+function foodDotColor(it){
+  const g=(typeof ingFoodGroup==='function')?ingFoodGroup(it):'';
+  if(g==='meat'||g==='fish'||g==='egg'||g==='dairy'||g==='legume')return 'var(--prot)';
+  if(g==='grain'||g==='fruit')return 'var(--carb)';
+  if(g==='fat'||g==='nut')return 'var(--fat)';
+  if(/\bveg|salad|green|broccoli|spinach|lettuce|cucumber|tomato|capsicum|zucchini|cauliflower|cabbage|kale|beans? /.test((it.name||'').toLowerCase()))return 'var(--good)';
+  const mm=itemMacros(it),mx=Math.max(mm.p,mm.c,mm.f);if(mx<=0)return 'var(--muted)';
+  return mx===mm.p?'var(--prot)':mx===mm.c?'var(--carb)':'var(--fat)';
+}
+function dpMealDoneMap(){PLAN.milestones=PLAN.milestones||{goals:[]};if(!PLAN.milestones.mealDone||typeof PLAN.milestones.mealDone!=='object')PLAN.milestones.mealDone={};const d=todayISO();if(!PLAN.milestones.mealDone[d]||typeof PLAN.milestones.mealDone[d]!=='object')PLAN.milestones.mealDone[d]={};return PLAN.milestones.mealDone[d];}
+function dpMealIsDone(id){return !!dpMealDoneMap()[id];}
+async function dpToggleMeal(id){const m=dpMealDoneMap();if(m[id])delete m[id];else m[id]=1;
+  try{await DB.saveMilestones(SESSION.id,PLAN.milestones);}catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);}
+  try{renderDietToday();renderDayTypePlan();}catch(e){}}
+function dpStreak(){const md=(PLAN.milestones&&PLAN.milestones.mealDone)||{};let n=0;
+  for(let i=0;i<400;i++){const day=addDaysISO(todayISO(),-i);const has=md[day]&&Object.keys(md[day]).some(k=>md[day][k]);
+    if(has)n++;else if(i>0)break;}   // today empty doesn't break the streak
+  return n;}
+function renderDietToday(){
+  const host=$('diet-today');if(!host)return;
+  const todt=dayTypeForDate(PLAN,todayISO()),t=(todt&&todt.target)||{},calT=calOf(t)||0;
+  const tgt={p:+t.p||0,c:+t.c||0,f:+t.f||0,cal:calT};
+  const lg=DP_TODAY.loaded?DP_TODAY.tot:{p:0,c:0,f:0,cal:0};
+  const left=Math.max(0,Math.round(tgt.cal-lg.cal));
+  const pct=tgt.cal>0?Math.min(1,lg.cal/tgt.cal):0;
+  const C=2*Math.PI*50,off=C*(1-pct);
+  const bar=(lab,cur,tar,col)=>{const p=tar>0?Math.min(100,Math.round(cur/tar*100)):0;
+    return '<div class="dp-bar"><div class="dp-bl"><span>'+lab+'</span><span class="mut">'+Math.round(cur)+' / '+Math.round(tar)+' g</span></div><div class="dp-track"><div class="dp-fill" style="width:'+p+'%;background:'+col+'"></div></div></div>';};
+  const streak=dpStreak();
+  const meals=(todt&&todt.meals)||[];
+  const nowM=new Date().getHours()*60+new Date().getMinutes();
+  let next=null;meals.forEach(m=>{if(next||dpMealIsDone(m.id))return;const mm=parseMealTime(m.time);if(mm==null||mm>=nowM)next=m;});
+  if(!next)next=meals.find(m=>!dpMealIsDone(m.id))||null;
+  let html='<div class="dp-hero-top"><span class="dp-dt"><span style="width:9px;height:9px;border-radius:50%;background:'+((todt&&todt.color)||'var(--red)')+'"></span>Today · '+esc((todt&&todt.name)||'Plan')+'</span>'+
+    (streak>1?'<span class="dp-streak">🔥 '+streak+'-day streak</span>':'')+'</div>'+
+    '<div class="dp-grid"><div class="dp-ring-wrap"><svg width="116" height="116" viewBox="0 0 116 116">'+
+      '<circle cx="58" cy="58" r="50" fill="none" stroke="var(--card2)" stroke-width="12"/>'+
+      '<circle cx="58" cy="58" r="50" fill="none" stroke="var(--red)" stroke-width="12" stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 58 58)"/></svg>'+
+      '<div class="dp-ring-center"><div class="dp-ring-num">'+lcNum(left)+'</div><div class="dp-ring-lab">kcal left</div><div class="dp-ring-sub">'+lcNum(Math.round(lg.cal))+' / '+lcNum(Math.round(tgt.cal))+'</div></div></div>'+
+      '<div class="dp-bars">'+bar('Protein',lg.p,tgt.p,'var(--prot)')+bar('Carbs',lg.c,tgt.c,'var(--carb)')+bar('Fat',lg.f,tgt.f,'var(--fat)')+'</div></div>';
+  if(next){const nt=sumItems(next.items||[]);html+='<div class="dp-next"><div class="dp-ni">🍽</div><div style="flex:1;min-width:0"><b>Up next — '+esc(next.name||'Meal')+'</b><div class="sm">'+(next.time?esc(next.time)+' · ':'')+Math.round(nt.cal)+' kcal · '+fmtMac(nt.p)+'P · '+fmtMac(nt.c)+'C · '+fmtMac(nt.f)+'F</div></div></div>';}
+  else if(meals.length)html+='<div class="dp-next"><div class="dp-ni">✅</div><div style="flex:1"><b>All meals done for today</b><div class="sm">Nice work — see you tomorrow.</div></div></div>';
+  html+='<div class="dp-qa">'+
+    '<button onclick="setNutri(\'log\')"><span class="qi">➕</span><span class="ql">Log food</span></button>'+
+    '<button onclick="setNutri(\'swap\')"><span class="qi">🔄</span><span class="ql">Swap food</span></button>'+
+    '<button onclick="foodPlanOpen(\'dp\')"><span class="qi">🔮</span><span class="ql">Plan a meal</span></button>'+
+    '<button onclick="setNutri(\'prep\')"><span class="qi">🧑‍🍳</span><span class="ql">Meal prep</span></button></div>';
+  host.innerHTML=html;
+}
+async function dpLoadToday(){const d=todayISO();
+  try{const row=await DB.getLog(SESSION.id,d);DP_TODAY={date:d,tot:sumItems((row&&row.items)||[]),loaded:true};}
+  catch(e){DP_TODAY={date:d,tot:{p:0,c:0,f:0,cal:0},loaded:false};}
+  try{if($('diet-today'))renderDietToday();}catch(e){}
+  try{if($('meals-host'))renderDayTypePlan();}catch(e){}
+}
 function renderDayTypePlan(){
+  renderDietToday();
   const dt=dtById(PLAN,selDayType),t=dt.target||{},cal=calOf(t);
   const pill=$('plan-daytype');
-  if((PLAN.dayTypes||[]).length>1){pill.classList.remove('hidden');pill.textContent=dt.name||'';pill.style.background=hexA(dt.color,.16);pill.style.color=dt.color;}
-  else pill.classList.add('hidden');
-  $('target-grid').innerHTML=macroCard('Protein','p',t.p,'g')+macroCard('Carbs','c',t.c,'g')+macroCard('Fat','f',t.f,'g')+macroCard('Calories','k',cal,'kcal');
+  if(pill){if((PLAN.dayTypes||[]).length>1){pill.classList.remove('hidden');pill.textContent=dt.name||'';pill.style.background=hexA(dt.color,.16);pill.style.color=dt.color;}else pill.classList.add('hidden');}
   const meals=dt.meals||[];
-  $('plan-mealcount').textContent=meals.length+(meals.length===1?' meal':' meals');
-  if(!meals.length){$('meals-host').innerHTML='<div class="empty">No meals for this day type yet.</div>';return;}
-  const fixed=meals.filter(m=>!m.flex),flex=meals.filter(m=>m.flex);
+  const mc=$('plan-mealcount');if(mc)mc.textContent=meals.length+(meals.length===1?' meal':' meals');
+  const host=$('meals-host');if(!host)return;
+  if(!meals.length){host.innerHTML='<div class="empty">No meals for this day type yet.</div>';return;}
+  const isToday=(selDayType===dayTypeForDate(PLAN,todayISO()).id);
+  const fixed=meals.filter(m=>!m.flex);
   const fsum=sumItems(fixed.flatMap(m=>m.items||[]));
   const tgt={p:+t.p||0,c:+t.c||0,f:+t.f||0,cal:cal};
   const pool={p:Math.max(0,round(tgt.p-fsum.p)),c:Math.max(0,round(tgt.c-fsum.c)),f:Math.max(0,round(tgt.f-fsum.f)),cal:Math.max(0,round(tgt.cal-fsum.cal))};
-  let html=mealTableHTML(meals,false,pool);   // meals in order; flex ones rendered as pool cards
-  // day total (target vs planned fixed)
-  html+='<div class="meal" style="border-color:var(--red)"><div class="meal-head" style="background:rgba(232,23,13,.08)"><span class="mname">Day target</span>'+
+  let html='';
+  if(isToday){const done=meals.filter(m=>dpMealIsDone(m.id)).length;const lg=DP_TODAY.loaded?DP_TODAY.tot:null;
+    html+='<div class="dp-mhead"><span class="lab">Today’s progress</span><span class="dp-prog">'+done+' of '+meals.length+' done'+(lg?' · '+lcNum(Math.round(lg.cal))+' / '+lcNum(Math.round(cal))+' kcal':'')+'</span></div>';}
+  html+=mealTableHTML(meals,false,pool,isToday);   // flex meals render as pool cards; check-off only on today
+  html+='<div class="meal" style="border-color:var(--red);margin-top:4px"><div class="meal-head" style="background:rgba(232,23,13,.08)"><span class="mname">Day target</span>'+
     '<span class="mtot">'+round(tgt.p)+'P · '+round(tgt.c)+'C · '+round(tgt.f)+'F · '+round(tgt.cal)+' kcal</span></div></div>';
-  $('meals-host').innerHTML=html;
-  if(PLAN.notes)$('meals-host').innerHTML+='<p class="small" style="margin-top:6px"><b style="color:var(--text)">Coach notes:</b> '+esc(PLAN.notes)+'</p>';
+  host.innerHTML=html;
+  if(PLAN.notes)host.innerHTML+='<p class="small" style="margin-top:6px"><b style="color:var(--text)">Coach notes:</b> '+esc(PLAN.notes)+'</p>';
 }
 function flexMealCard(m,pool){
   return '<div class="meal flex-meal"><div class="meal-head" style="background:rgba(74,158,232,.12)">'+
@@ -14626,7 +14727,8 @@ async function copyYesterday(){const prev=addDaysISO($('log-date').value||todayI
 async function persistLog(action){
   DAYLOG.updated_at=new Date().toISOString();
   try{await DB.saveLog(DAYLOG);await DB.addAudit({client_id:SESSION.id,actor:SESSION.email,action,detail:DAYLOG.log_date});renderDayLog();toast('Saved');
-    if((DAYLOG.log_date||todayISO())===todayISO()){try{await rwSyncFoodReward('logc');}catch(_){}}   // reward meal logging (today only; shared cap with Food Journal)
+    if((DAYLOG.log_date||todayISO())===todayISO()){try{await rwSyncFoodReward('logc');}catch(_){}
+      try{DP_TODAY={date:todayISO(),tot:sumItems(DAYLOG.items||[]),loaded:true};if($('diet-today'))renderDietToday();}catch(_){}}   // keep the Diet-plan Today ring in sync with logging
   }
   catch(e){console.error(e);toast('Save failed',true);}
 }
@@ -16593,7 +16695,7 @@ const TOURS={
  ],
  nutrition:[
   {sel:'#nutri-nav',title:'Nutrition views',text:'Switch between your Diet Plan, Food Tracking, and Food Journal here.'},
-  {sel:'#target-grid',title:'Daily targets',text:'Your protein, carbs, fat and calorie goals for the selected day.'},
+  {sel:'#diet-today',title:'Today at a glance',text:'Your calories left and protein/carbs/fat progress for today, updating as you log food.'},
   {sel:'#week-strip',title:'Day types',text:'If your plan cycles days, tap a day to see its specific macros and meals.'},
   {sel:'#meals-host',title:'Your meals',text:'Each meal with its foods and macros. Flexible meals show the macros you can still spend.'}
  ],
@@ -16711,7 +16813,7 @@ const FULL_TOUR=[
  {sel:'#nutri-nav',title:'Nutrition — 3 tabs',text:'Nutrition has three parts: Diet Plan (your meals), Food Tracking (track what you eat), and Food Journal (meal photos). We start on the Diet Plan.'},
  {sel:'#profile-card',title:'Your key details',text:'The stats and goal your coach set for you — current weight, goal weight, activity and more.'},
  {sel:'#week-strip',title:'Your week',text:'If your plan uses different day types (e.g. training vs rest days), tap a day here to load that day’s specific macros and meals.'},
- {sel:'#target-grid',title:'Daily macro target',text:'Your protein, carbs, fat and calorie goals for the selected day — the numbers to aim for.'},
+ {sel:'#diet-today',title:'Today at a glance',text:'Calories left and protein/carbs/fat progress for today — it fills in as you log food. Tap a meal below to check it off.'},
  {sel:'#meals-host',title:'Your meals',text:'Every meal with its foods and macros. A “flexible” meal shows the macros you can still spend on whatever you like.'},
  {sel:'[onclick="downloadDietPlanPDF()"]',title:'Download your plan (PDF)',text:'Grab a PDF of your whole diet plan to keep on your phone or print out.'},
  {sel:'#sw-anchor',title:'Food swap tool',text:'Don’t fancy a food? Pick it plus an alternative and this works out the matching portion so your macros stay on track.'},
