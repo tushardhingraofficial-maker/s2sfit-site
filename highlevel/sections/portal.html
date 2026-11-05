@@ -279,6 +279,8 @@ img,svg,canvas,video,input,select,textarea{max-width:100%}
 .dp-qa button:hover{border-color:var(--line-strong)}
 .dp-qa .qi{font-size:19px;line-height:1}
 .dp-qa .ql{font-size:10.5px;font-weight:600;text-align:center;line-height:1.15}
+.dp-qa3{grid-template-columns:repeat(3,1fr)}
+.dp-tools-h{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:14px 0 7px}
 .dp-mhead{display:flex;align-items:baseline;gap:8px;margin:0 0 10px}
 .dp-mhead .lab{font-weight:800;font-size:13px}
 .dp-prog{margin-left:auto;font-size:12px;color:var(--muted);font-weight:600;text-align:right}
@@ -4260,9 +4262,7 @@ img,svg,canvas,video{max-width:100%}
       <button class="subtab active" data-nutri="plan" onclick="setNutri('plan')">Diet Plan</button>
       <!-- Food Swap + Meal Prep tabs removed — reached via the quick-action buttons in the Diet Plan (setNutri still serves #view-swap/#view-prep) -->
       <button class="subtab" data-nutri="log" onclick="setNutri('log')">Food Track / Journal</button>
-      <button class="subtab" data-nutri="findfood" onclick="setNutri('findfood')">Find Food</button>
-      <button class="subtab" data-nutri="breakdown" onclick="setNutri('breakdown')">Recipe Breakdown</button>
-      <button class="subtab" data-nutri="cookyield" onclick="setNutri('cookyield')">Cooked Yield</button>
+      <!-- Find Food / Recipe Breakdown / Cooked Yield moved to the Diet Plan "Food tools" buttons (setNutri still serves #view-foods) -->
       <button class="subtab" data-nutri="recipes" onclick="setNutri('recipes')">Recipes</button>
     </div>
 
@@ -4450,6 +4450,7 @@ img,svg,canvas,video{max-width:100%}
 
     <!-- ---- FOOD TOOLS VIEW (find food · break down recipe · cooked yield) ---- -->
     <section id="view-foods" class="hidden">
+      <div style="margin:0 0 12px"><button class="btn-sm" onclick="setNutri('plan')">← Diet Plan</button></div>
       <div class="card"><div class="card-body"><div id="food-tools-slot"></div></div></div>
     </section>
 
@@ -6627,7 +6628,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04pu';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04pv';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -9371,6 +9372,10 @@ function renderDietToday(){
     '<button onclick="setNutri(\'swap\')"><span class="qi">🔄</span><span class="ql">Swap food</span></button>'+
     '<button onclick="foodPlanOpen(\'dp\')"><span class="qi">🔮</span><span class="ql">Plan a meal</span></button>'+
     '<button onclick="setNutri(\'prep\')"><span class="qi">🧑‍🍳</span><span class="ql">Meal prep</span></button></div>';
+  html+='<div class="dp-tools-h">Food tools</div><div class="dp-qa dp-qa3">'+
+    '<button onclick="setNutri(\'findfood\')"><span class="qi">🔍</span><span class="ql">Find food</span></button>'+
+    '<button onclick="setNutri(\'breakdown\')"><span class="qi">🧾</span><span class="ql">Recipe breakdown</span></button>'+
+    '<button onclick="setNutri(\'cookyield\')"><span class="qi">⚖️</span><span class="ql">Cooked yield</span></button></div>';
   host.innerHTML=html;
 }
 async function dpLoadToday(){const d=todayISO();
