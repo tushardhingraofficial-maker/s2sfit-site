@@ -1324,6 +1324,37 @@ body{overflow-x:hidden}
 .dash-wt{display:inline-flex;align-items:baseline;gap:6px;margin-top:10px;padding:6px 12px;border:1px solid var(--border);border-radius:999px;background:var(--card);cursor:pointer}
 .dash-wt b{font-family:var(--disp);font-size:18px}
 .dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(248px,1fr));gap:13px}
+/* ── Home premium top (Direction B: focus & momentum) ── */
+.dash-hero2{display:flex;align-items:flex-end;gap:12px;margin:2px 2px 14px}
+.dh2-kick{font-family:var(--disp);font-weight:700;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.dh2-name{font-family:var(--disp);font-weight:900;font-size:26px;text-transform:uppercase;line-height:1.02;letter-spacing:.01em;overflow-wrap:anywhere}
+.dh2-date{font-size:12px;color:var(--muted);margin-top:4px}
+.dh2-wt{flex:none;text-align:right;cursor:pointer}
+.dh2-wtn{display:flex;align-items:baseline;gap:4px;justify-content:flex-end}
+.dh2-wtn b{font-family:var(--disp);font-weight:900;font-size:28px;line-height:1}
+.dh2-wtn span{font-size:11px;color:var(--muted);font-weight:700}
+.dh2-delta{font-size:11px;font-weight:800;margin-top:1px;white-space:nowrap}
+.dash-mom-wrap>div:empty{display:none}
+.mom-strip{display:flex;gap:10px;margin:0 2px 14px}
+.mom-tile{flex:1;min-width:0;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px 6px;text-align:center;box-shadow:0 8px 20px -16px rgba(16,24,40,.4)}
+.mom-tile .ic{font-size:19px;line-height:1}
+.mom-tile .v{font-family:var(--disp);font-weight:900;font-size:21px;margin-top:3px;line-height:1}
+.mom-tile .v small{font-size:13px;color:var(--muted);font-weight:800}
+.mom-tile .k{font-size:10px;color:var(--muted);font-weight:800;letter-spacing:.03em;text-transform:uppercase;margin-top:4px;overflow-wrap:anywhere}
+.lvl-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:13px 15px;margin:0 2px 14px;box-shadow:0 8px 20px -16px rgba(16,24,40,.4);cursor:pointer}
+.lvl-head{display:flex;align-items:center;gap:8px;margin-bottom:9px;font-size:13px;font-weight:800}
+.lvl-head .sp{margin-left:auto;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
+.lvl-head .sp b{color:var(--text)}
+.lvl-bar{height:10px;border-radius:999px;background:var(--card2);overflow:hidden}
+.lvl-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#C77D08,#F2B33C);transition:width .5s}
+.lvl-note{font-size:11px;color:var(--muted);margin-top:7px;overflow-wrap:anywhere}
+.lvl-note b{color:var(--text)}
+.focus-card{border-radius:18px;overflow:hidden;margin:0 2px 14px;box-shadow:0 14px 30px -18px rgba(232,23,13,.7);cursor:pointer}
+.focus-inner{background:linear-gradient(135deg,var(--red),#ff5a3c);padding:16px}
+.focus-kick{font-family:var(--disp);font-weight:700;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.85)}
+.focus-title{font-family:var(--disp);font-weight:900;font-size:20px;color:#fff;margin:4px 0 2px;text-transform:uppercase;line-height:1.12;overflow-wrap:anywhere}
+.focus-sub{font-size:12.5px;color:rgba(255,255,255,.92);overflow-wrap:anywhere}
+.focus-cta{display:block;width:100%;text-align:center;background:#fff;color:var(--red);font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.03em;font-size:13px;border:none;border-radius:13px;padding:12px;margin-top:12px;cursor:pointer}
 .dash-card{position:relative;border:1px solid var(--border);border-radius:16px;background:linear-gradient(160deg,var(--accent-weak,rgba(255,255,255,.015)),transparent 70%),var(--card);padding:15px 15px 13px;display:flex;flex-direction:column;gap:9px;cursor:pointer;overflow:hidden;transition:border-color .15s,transform .1s,box-shadow .15s}
 .dash-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(to bottom,var(--accent,var(--red)),var(--accent-deep,var(--accent,var(--red))));opacity:.95}
 .dash-card:hover{border-color:var(--accent,var(--red));transform:translateY(-2px);box-shadow:0 8px 24px -14px var(--accent,rgba(232,23,13,.6))}
@@ -6466,7 +6497,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04pg';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04ph';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -8106,6 +8137,7 @@ function dashCard(o){
 }
 function dStat(k,v){return '<div class="dc-stat"><div class="k">'+k+'</div><div class="v">'+v+'</div></div>';}
 function dMac(l,g,tg,color){const pct=tg>0?Math.min(100,Math.round(g/tg*100)):0;return '<div class="dc-mac"><span class="ml">'+l+'</span><span class="mbar"><i style="width:'+pct+'%;background:'+color+'"></i></span><span class="mv">'+Math.round(g)+' / '+Math.round(tg)+' g</span></div>';}
+function dashSpark(vals,w,h,color){if(!vals||vals.length<2)return '';var mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals),rng=(mx-mn)||1,n=vals.length;var pts=vals.map(function(v,i){var x=(i/(n-1))*w;var y=h-4-((v-mn)/rng)*(h-8);return x.toFixed(1)+','+y.toFixed(1);}).join(' ');var ly=(h-4-((vals[n-1]-mn)/rng)*(h-8)).toFixed(1);return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" style="display:block;margin:2px 0 0 auto"><polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="'+w+'" cy="'+ly+'" r="3" fill="'+color+'"/></svg>';}
 async function dashJournalQuick(){
   const inp=$('dash-jr');const desc=(inp&&inp.value||'').trim();if(!desc){toast('Type what you ate first',true);return;}
   toast('✨ Estimating & adding…');
@@ -8128,10 +8160,24 @@ async function renderDashboard(){
   const first=((SESSION&&(SESSION.name||''))||'').trim().split(/\s+/)[0]||'there';
   const hr=new Date().getHours();const greet=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
   const dstr=new Date(today+'T00:00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
-  let lw=null,wprev=null;try{const ws=weightSorted();lw=ws[ws.length-1]||null;wprev=ws.length>1?ws[ws.length-2]:null;}catch(e){}
-  let wtTrend='';if(lw&&wprev){const d=round(+lw.value-+wprev.value,1);wtTrend=' <span style="font-size:12px;color:'+(d<0?'var(--good)':d>0?'var(--red)':'var(--muted)')+'">'+(d<0?'▼ '+d:d>0?'▲ +'+d:'–')+' kg</span>';}
-  const wtChip=sectionLive('goals')?('<div class="dash-wt" onclick="event.stopPropagation();setSection(\'goals\');setTimeout(function(){try{gmBranch(\'weight\')}catch(e){}},60)">'+svgIcon('weight')+' '+(lw?('<b>'+round(lw.value,1)+' kg</b>'+wtTrend+' <span class="dc-sub">'+esc(fmtDate(lw.date))+'</span>'):'<b>Log your weight</b>')+'</div>'):'';
-  host.innerHTML='<div class="dash-hero"><div class="dash-hello">'+greet+', '+esc(first)+' 👋</div><div class="dash-date">'+esc(dstr)+' · let’s make today count</div>'+wtChip+'</div><div class="dash-grid" id="dash-grid"><div class="empty">Loading your day…</div></div>';
+  let lw=null;try{const ws0=weightSorted();lw=ws0[ws0.length-1]||null;}catch(e){}
+  const wToday=!!(lw&&String(lw.date||'').slice(0,10)===today);
+  let wtHero='';
+  if(sectionLive('goals')){
+    if(lw){
+      const ws=weightSorted();const vals=ws.slice(-12).map(e=>+e.value).filter(v=>!isNaN(v));
+      const cut=addDaysISO(today,-30);const win=ws.filter(e=>String(e.date||'').slice(0,10)>=cut);const base=(win[0]||ws[0]);
+      let md=null;if(base&&base!==lw)md=round(+lw.value-+base.value,1);
+      const spk=dashSpark(vals,96,30,(md!=null&&md>0)?'var(--red)':'var(--good)');
+      const dlt=(md!=null)?('<div class="dh2-delta" style="color:'+(md<0?'var(--good)':md>0?'var(--red)':'var(--muted)')+'">'+(md<0?'▼ '+Math.abs(md):md>0?'▲ '+md:'–')+' kg this month</div>'):'';
+      wtHero='<div class="dh2-wt" onclick="setSection(\'goals\');setTimeout(function(){try{gmBranch(\'weight\')}catch(e){}},60)"><div class="dh2-wtn"><b>'+round(lw.value,1)+'</b><span>kg</span></div>'+spk+dlt+'</div>';
+    } else {
+      wtHero='<div class="dh2-wt" onclick="setSection(\'goals\');setTimeout(function(){try{gmBranch(\'weight\')}catch(e){}},60)"><div class="dh2-wtn"><b style="font-size:16px">Log weight ›</b></div></div>';
+    }
+  }
+  host.innerHTML='<div class="dash-hero2"><div style="flex:1;min-width:0"><div class="dh2-kick">'+greet+'</div><div class="dh2-name">'+esc(first)+'</div><div class="dh2-date">'+esc(dstr)+'</div></div>'+wtHero+'</div>'+
+    '<div id="dash-momentum" class="dash-mom-wrap"><div id="dm-strip"></div><div id="dm-lvl"></div><div id="dm-focus"></div></div>'+
+    '<div class="dash-grid" id="dash-grid"><div class="empty">Loading your day…</div></div>';
   // async data
   let dayLog=null,wlogs=[],journal=[];
   let tasks=[];
@@ -8141,6 +8187,27 @@ async function renderDashboard(){
     (sectionLive('nutrition')?DB.listJournal(SESSION.id).catch(()=>[]):Promise.resolve([])),
     (sectionLive('mytasks')?DB.listAssignments(SESSION.id).catch(()=>[]):Promise.resolve([]))
   ]);}catch(e){}
+  // ── Direction B premium top: momentum tiles · S2S Points · focus-of-the-day ──
+  try{
+    const actDates=new Set();try{weightSorted().forEach(function(e){actDates.add(String(e.date||'').slice(0,10));});}catch(_){}
+    (wlogs||[]).forEach(function(l){actDates.add(String(l.date||'').slice(0,10));});
+    (journal||[]).forEach(function(e){actDates.add(String(e.date||'').slice(0,10));});
+    if(dayLog&&((dayLog.items||[]).length))actDates.add(today);
+    let streak=0;{let d=actDates.has(today)?today:addDaysISO(today,-1);while(actDates.has(d)){streak++;d=addDaysISO(d,-1);}}
+    const momTiles=[{ic:'🔥',v:String(streak),k:'Day streak'}];
+    if(sectionLive('training')){const dd=new Set((wlogs||[]).map(function(l){return String(l.date||'').slice(0,10);}));const tcx=t2c();let sW=0,dW=0;for(let i=0;i<7;i++){const iso=addDaysISO(wkStart,i);if((((tcx.calendar||{})[iso])||[]).length)sW++;if(dd.has(iso)&&inWeek(iso))dW++;}momTiles.push({ic:'🏋️',v:dW+(sW?'<small>/'+sW+'</small>':''),k:'This week'});}
+    if(sectionLive('nutrition')){const dt=dayTypeForDate(PLAN,today);const tg=(dt&&dt.target)||{};const tc2=calOf(tg);const tt=sumItems((dayLog&&dayLog.items)||[]);(journal||[]).forEach(function(e){if(e&&e.nutrition&&String(e.date||'').slice(0,10)===today)tt.cal+=+e.nutrition.cal||0;});if(tc2>0)momTiles.push({ic:'🍎',v:Math.min(100,Math.round(tt.cal/tc2*100))+'<small>%</small>',k:'Macros'});}
+    if(momTiles.length<3&&sectionLive('habits')){try{const s=hbDashSummary();if(s.hasAny)momTiles.push({ic:'✅',v:(s.total?s.pct+'<small>%</small>':String(s.active)),k:'Habits'});}catch(_){}}
+    if(momTiles.length<3&&sectionLive('sleep')){try{const lg=(sleepData().logs||[]);const l7=lg.filter(function(l){return l.date>=addDaysISO(today,-6);});momTiles.push({ic:'😴',v:l7.length+'<small>/7</small>',k:'Sleep'});}catch(_){}}
+    const mstrip=$('dm-strip');if(mstrip)mstrip.innerHTML=momTiles.length?('<div class="mom-strip">'+momTiles.slice(0,3).map(function(t){return '<div class="mom-tile"><div class="ic">'+t.ic+'</div><div class="v">'+t.v+'</div><div class="k">'+t.k+'</div></div>';}).join('')+'</div>'):'';
+    let focus=null;const openT=(tasks||[]).filter(function(t){return t.status!=='done';});const nxt=openT.slice().sort(function(a,b){return ((a.due_date||'9999')<(b.due_date||'9999')?-1:1);})[0];
+    if(sectionLive('mytasks')&&nxt){const due=nxt.due_date?(nxt.due_date<today?'Overdue':nxt.due_date===today?'Due today':'Due '+fmtDate(nxt.due_date)):'';focus={t:(nxt.title||'Task'),s:(due?due+' · ':'')+'from your coach',c:'Start →',a:"setSection('mytasks')"};}
+    else if(sectionLive('goals')&&!wToday){focus={t:'Log today’s weight',s:'10 seconds · keeps your trend moving',c:'Log weight →',a:"setSection('goals');setTimeout(function(){try{gmBranch('weight')}catch(e){}},60)"};}
+    else if(sectionLive('nutrition')&&!(dayLog&&((dayLog.items||[]).length))){focus={t:'Log your first meal',s:'Stay on top of today’s macros',c:'Log food →',a:"setSection('nutrition')"};}
+    else {focus={t:'You’re all caught up',s:'Nice work today — keep the streak going 🔥',c:null,a:null};}
+    const mfocus=$('dm-focus');if(mfocus&&focus)mfocus.innerHTML='<div class="focus-card"'+(focus.a?' onclick="'+focus.a+'"':'')+'><div class="focus-inner"><div class="focus-kick">Your focus today</div><div class="focus-title">'+esc(focus.t)+'</div><div class="focus-sub">'+esc(focus.s)+'</div>'+(focus.c?'<button class="focus-cta" onclick="event.stopPropagation();'+(focus.a||'')+'">'+esc(focus.c)+'</button>':'')+'</div></div>';
+    if(sectionLive('rewards')){rewardsCfg().then(function(cfg){try{const rd=rwClientData(PLAN);const total=+rd.total||0;const limit=+((cfg&&cfg.redeemLimit))||0;const h2=$('dm-lvl');if(!h2)return;if(limit>0){const pct=Math.min(100,Math.round(total/limit*100));const left=Math.max(0,limit-total);h2.innerHTML='<div class="lvl-card" onclick="setSection(\'rewards\')"><div class="lvl-head"><span>🏅</span>S2S Points<span class="sp"><b>'+total.toLocaleString()+'</b> / '+limit.toLocaleString()+' pts</span></div><div class="lvl-bar"><div class="lvl-fill" style="width:'+pct+'%"></div></div><div class="lvl-note">'+(total>=limit?'🎉 You can redeem a reward now — tap to claim':left.toLocaleString()+' pts to your next reward · log today’s weight for +'+rwWeightPts(cfg))+'</div></div>';}else if(total>0){h2.innerHTML='<div class="lvl-card" onclick="setSection(\'rewards\')"><div class="lvl-head"><span>🏅</span>S2S Points<span class="sp"><b>'+total.toLocaleString()+'</b> pts</span></div><div class="lvl-note" style="margin-top:0">Keep earning — log weight, food &amp; check-ins</div></div>';}}catch(_){}}).catch(function(){});}
+  }catch(e){}
   const cards=[];
   // ---- Tasks (coach-allocated) ----
   if(sectionLive('mytasks')){
