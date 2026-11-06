@@ -3046,8 +3046,8 @@ body.gm-has-switch #custom-host{top:var(--gm-h,48px)}
 .tw-wk-bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--good),#3ed47e)}
 .tw-wknav{display:flex;align-items:center;gap:8px;margin:0 2px 10px}
 .tw-wknav b{flex:1;text-align:center;font-size:13px}
-.tw-wk-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-.tw-d{text-align:center;border-radius:12px;padding:8px 2px 7px;background:var(--card2);border:1px solid transparent;position:relative;cursor:default}
+.tw-wk-strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.tw-d{text-align:center;border-radius:12px;padding:8px 2px 7px;background:var(--card2);border:1px solid transparent;position:relative;cursor:default;min-width:0}
 .tw-d.clk{cursor:pointer}
 .tw-d .dow{font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase}
 .tw-d .dn{font-family:var(--disp);font-weight:900;font-size:15px;margin:1px 0}
@@ -6710,7 +6710,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04qa';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04qb';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
