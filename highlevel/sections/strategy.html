@@ -1,0 +1,1195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Before Your Strategy Call · S2S Fit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<!--
+  S2S Fit · Strategy Call page (VSL + guide + 7-Level assessment)
+  ---------------------------------------------------------------
+  GOHIGHLEVEL: add a Custom Code / HTML element to a full-width funnel page and paste
+  EVERYTHING from the <link> tags above down to the end of the </script> below
+  (or the whole file). All styles are scoped to #s2sv so they won't clash with GHL.
+
+  Send the page from your booking automation with the contact's details on the link:
+     https://YOUR-GHL-PAGE-URL?name={{contact.first_name}}&email={{contact.email}}&phone={{contact.phone}}
+  That lets the portal show who opened the page, how much of the video they watched
+  and whether they downloaded the guide, even before they do the assessment.
+
+  Fill in the three settings in S2SV_CONFIG (bottom of the file): VIDEO_URL, PDF_URL, CALL_INFO.
+-->
+<style>
+#s2sv{--red:#E8170D;--red2:#ff3b2f;--bg:#0f0f10;--s1:#171718;--s2:#1f1f21;--line:#2c2c2f;--tx:#f3f1ee;--mu:#a7a39d;--fa:#6f6b66;--ok:#3ecf72;--r:14px;
+  font-family:'Barlow',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--tx);line-height:1.55;font-size:16px;-webkit-font-smoothing:antialiased;min-height:100vh}
+#s2sv *{box-sizing:border-box;margin:0;padding:0}
+#s2sv a{color:inherit}
+#s2sv .wrap{max-width:980px;margin:0 auto;padding:0 18px}
+#s2sv .cond{font-family:'Barlow Condensed','Barlow',sans-serif;letter-spacing:.01em}
+#s2sv .eyebrow{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--red2)}
+#s2sv h1{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:clamp(34px,6vw,58px);line-height:1.02;letter-spacing:-.005em}
+#s2sv h2{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:clamp(28px,4.4vw,40px);line-height:1.05}
+#s2sv h3{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:22px;line-height:1.15}
+#s2sv p.lead{color:var(--mu);font-size:18px;max-width:640px}
+#s2sv .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:var(--red);color:#fff;border:0;border-radius:11px;padding:15px 24px;font:700 16px 'Barlow',sans-serif;letter-spacing:.02em;cursor:pointer;text-decoration:none;transition:transform .15s,background .15s}
+#s2sv .btn:hover{background:var(--red2);transform:translateY(-1px)}
+#s2sv .btn.ghost{background:transparent;border:1.5px solid var(--line);color:var(--tx)}
+#s2sv .btn.ghost:hover{border-color:var(--mu);background:transparent}
+#s2sv .btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}
+#s2sv section{padding:56px 0}
+#s2sv .card{background:var(--s1);border:1px solid var(--line);border-radius:var(--r)}
+/* top */
+#s2sv .top{border-bottom:1px solid var(--line);background:rgba(15,15,16,.92);position:sticky;top:0;z-index:20;backdrop-filter:blur(8px)}
+#s2sv .top .wrap{display:flex;align-items:center;gap:14px;height:60px}
+#s2sv .logo{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;letter-spacing:.02em}
+#s2sv .logo b{color:var(--red)}
+#s2sv .top .sp{flex:1}
+#s2sv .top .booked{font-size:13px;color:var(--ok);font-weight:600;display:flex;align-items:center;gap:6px}
+/* hero */
+#s2sv .hero{padding:46px 0 18px}
+#s2sv .hero h1 span{color:var(--red)}
+#s2sv .hero p.lead{margin-top:14px}
+#s2sv .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:28px}
+#s2sv .step .rw{display:block;font:800 13px 'Barlow Condensed',sans-serif;letter-spacing:.04em;color:#ffb487;margin-top:3px}
+#s2sv .step.done .rw{color:var(--ok)}
+#s2sv .step{display:flex;gap:12px;align-items:center;padding:14px 16px;background:var(--s1);border:1px solid var(--line);border-radius:12px;cursor:pointer;text-decoration:none;transition:border-color .15s}
+#s2sv .step:hover{border-color:#47474b}
+#s2sv .step .n{flex:none;width:34px;height:34px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font:800 16px 'Barlow Condensed',sans-serif;color:var(--mu)}
+#s2sv .step.done .n{background:var(--ok);border-color:var(--ok);color:#06210f}
+#s2sv .step .t{font-weight:700;font-size:15px;line-height:1.2}
+#s2sv .step .s{font-size:12.5px;color:var(--mu)}
+/* video */
+#s2sv .vid{position:relative;aspect-ratio:16/9;border-radius:var(--r);overflow:hidden;background:#000;border:1px solid var(--line);box-shadow:0 30px 80px -30px rgba(232,23,13,.35)}
+#s2sv .vid iframe,#s2sv .vid video{position:absolute;inset:0;width:100%;height:100%;border:0}
+#s2sv .vid .ph{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:20px;background:radial-gradient(circle at 50% 40%,#2a1210,#0b0b0c 70%)}
+#s2sv .vid .ph .play{width:78px;height:78px;border-radius:50%;background:var(--red);display:grid;place-items:center;margin:0 auto 14px}
+#s2sv .vbar{display:flex;align-items:center;gap:12px;margin-top:12px;font-size:13px;color:var(--mu)}
+#s2sv .vbar .track{flex:1;height:5px;background:var(--s2);border-radius:5px;overflow:hidden}
+#s2sv .vbar .track i{display:block;height:100%;width:0;background:var(--red);transition:width .4s}
+#s2sv .chapters{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+#s2sv .chapters span{font-size:12.5px;color:var(--mu);border:1px solid var(--line);border-radius:30px;padding:5px 11px}
+/* key ideas */
+#s2sv .ideas{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:26px}
+#s2sv .idea{padding:22px}
+#s2sv .idea .big{font:800 46px/1 'Barlow Condensed',sans-serif;color:var(--red)}
+#s2sv .idea h3{margin:8px 0 6px}
+#s2sv .idea p{color:var(--mu);font-size:14.5px}
+/* phases journey */
+#s2sv .phx{margin-top:36px}
+#s2sv .phx-flow{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}
+@media(max-width:720px){#s2sv .phx-flow{grid-template-columns:1fr}}
+#s2sv .phx-c{position:relative;background:var(--s1);border:1px solid var(--line);border-radius:var(--r);padding:22px 20px;overflow:hidden;transition:transform .15s,border-color .15s}
+#s2sv .phx-c:hover{transform:translateY(-3px);border-color:#47474b}
+#s2sv .phx-c::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--pc)}
+#s2sv .phx-n{font:800 13px 'Barlow Condensed',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--pc)}
+#s2sv .phx-c h3{margin:7px 0 3px}
+#s2sv .phx-dur{display:inline-block;font-size:11.5px;font-weight:700;color:var(--mu);border:1px solid var(--line);border-radius:30px;padding:3px 10px;margin:4px 0 11px}
+#s2sv .phx-c>p{color:var(--mu);font-size:14px;line-height:1.5}
+#s2sv .phx-c ul{list-style:none;margin-top:11px;display:grid;gap:7px}
+#s2sv .phx-c li{font-size:13.5px;color:var(--tx);display:flex;gap:8px;line-height:1.35}
+#s2sv .phx-c li::before{content:"✓";color:var(--pc);font-weight:800;flex:none}
+/* guide */
+#s2sv .guide{display:grid;grid-template-columns:260px 1fr;gap:34px;align-items:center;padding:30px}
+#s2sv .cover{aspect-ratio:210/297;border-radius:8px;background:#fff;color:#1a1a1a;padding:20px 18px;position:relative;overflow:hidden;box-shadow:0 24px 60px -20px rgba(0,0,0,.7);transform:rotate(-2deg)}
+#s2sv .cover::after{content:"";position:absolute;top:0;right:0;width:55%;height:30%;background:radial-gradient(circle,#23395d 0 1.4px,transparent 1.6px) 0 0/9px 9px;opacity:.25}
+#s2sv .cover .ln{width:46px;height:3px;background:#23395d;margin-bottom:10px}
+#s2sv .cover .k{font-size:7.5px;letter-spacing:.14em;color:#8a8a8a;font-weight:700;text-transform:uppercase}
+#s2sv .cover .tt{font:800 25px/1.02 'Barlow',sans-serif;margin:10px 0 8px;letter-spacing:-.01em}
+#s2sv .cover .sb{font-size:9px;color:#8a8a8a;line-height:1.35}
+#s2sv .cover .bars{position:absolute;left:18px;right:18px;bottom:18px;display:grid;gap:5px}
+#s2sv .cover .bars i{display:block;height:9px;border-radius:2px}
+#s2sv .inside{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;margin:16px 0 22px}
+#s2sv .inside div{display:flex;gap:9px;font-size:14.5px;color:#dcd8d2}
+#s2sv .inside div::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--red);margin-top:8px}
+/* online first */
+#s2sv .wk{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center;padding:28px}
+#s2sv .grid168{display:grid;grid-template-columns:repeat(24,1fr);gap:3px;width:min(430px,62vw)}
+#s2sv .grid168 i{aspect-ratio:1;border-radius:2px;background:#2a2a2d}
+#s2sv .grid168 i.sl{background:#2f3550}#s2sv .grid168 i.me{background:#2e6b0e}#s2sv .grid168 i.pt{background:var(--red)}
+#s2sv .wk .num{font:800 54px/1 'Barlow Condensed',sans-serif}
+#s2sv .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:12.5px;color:var(--mu)}
+#s2sv .legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px;background:var(--c)}
+/* assessment */
+#s2sv .assess{padding:0;overflow:hidden}
+#s2sv .ahead{padding:22px 26px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+#s2sv .ahead .pb{flex:1 1 200px;height:6px;background:var(--s2);border-radius:6px;overflow:hidden}
+#s2sv .ahead .pb i{display:block;height:100%;width:0;background:var(--red);transition:width .35s}
+#s2sv .ahead .pc{font-size:13px;color:var(--mu);min-width:70px;text-align:right}
+#s2sv .abody{padding:26px}
+#s2sv .modes{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+#s2sv .mode{text-align:left;background:var(--s2);border:1.5px solid var(--line);border-radius:12px;padding:20px;cursor:pointer;color:var(--tx);font:inherit;transition:border-color .15s,transform .15s}
+#s2sv .mode:hover{border-color:var(--red);transform:translateY(-2px)}
+#s2sv .mode .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--red2);margin-bottom:6px}
+#s2sv .mode h3{margin-bottom:6px}
+#s2sv .mode p{font-size:14px;color:var(--mu)}
+#s2sv .fg{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+#s2sv .fg .full{grid-column:1/-1}
+#s2sv label.f{display:block;font-size:13px;font-weight:600;color:#d5d1cb;margin-bottom:6px}
+#s2sv label.f small{color:var(--fa);font-weight:500}
+#s2sv input[type=text],#s2sv input[type=email],#s2sv input[type=tel],#s2sv input[type=number],#s2sv select,#s2sv textarea{width:100%;background:var(--s2);border:1.5px solid var(--line);border-radius:10px;color:var(--tx);font:500 16px 'Barlow',sans-serif;padding:12px 13px;outline:none;transition:border-color .15s}
+#s2sv input:focus,#s2sv select:focus,#s2sv textarea:focus{border-color:var(--red)}
+#s2sv textarea{min-height:76px;resize:vertical}
+#s2sv .chips{display:flex;flex-wrap:wrap;gap:8px}
+#s2sv .chip{background:var(--s2);border:1.5px solid var(--line);border-radius:30px;padding:9px 14px;font:600 14px 'Barlow',sans-serif;color:var(--tx);cursor:pointer;transition:all .15s}
+#s2sv .chip.on{background:rgba(232,23,13,.14);border-color:var(--red);color:#fff}
+#s2sv .scale{display:grid;grid-template-columns:repeat(10,1fr);gap:6px}
+#s2sv .scale .chip{padding:9px 0;text-align:center;border-radius:9px}
+#s2sv .q h3{font-size:26px;margin:4px 0 6px}
+#s2sv .q .how{color:var(--mu);font-size:14.5px;margin-bottom:16px}
+#s2sv .opts{display:grid;gap:9px}
+#s2sv .opt{display:flex;gap:14px;align-items:flex-start;text-align:left;background:var(--s2);border:1.5px solid var(--line);border-radius:11px;padding:13px 15px;cursor:pointer;color:var(--tx);font:500 15px/1.45 'Barlow',sans-serif;transition:border-color .15s,background .15s}
+#s2sv .opt:hover{border-color:#4a4a4e}
+#s2sv .opt .lv{flex:none;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font:800 15px 'Barlow Condensed',sans-serif;color:#fff;background:var(--c)}
+#s2sv .opt.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 16%,var(--s2))}
+#s2sv details.nums{margin-top:16px;background:var(--s2);border:1px dashed var(--line);border-radius:11px;padding:12px 15px}
+#s2sv details.nums summary{cursor:pointer;font-weight:600;font-size:14px;color:#d5d1cb}
+#s2sv details.nums .fg{margin-top:12px;grid-template-columns:repeat(3,1fr)}
+#s2sv .nav{display:flex;justify-content:space-between;gap:10px;margin-top:22px}
+#s2sv .err{color:#ff7a70;font-size:13.5px;margin-top:10px;min-height:1em}
+#s2sv .note{font-size:12.5px;color:var(--fa)}
+/* result */
+#s2sv .res{text-align:center}
+#s2sv .badge{width:120px;height:120px;border-radius:26px;margin:6px auto 14px;display:grid;place-items:center;background:var(--c);box-shadow:0 18px 50px -14px var(--c)}
+#s2sv .badge b{font:800 64px/1 'Barlow Condensed',sans-serif;color:#fff}
+#s2sv .res .lname{font:800 34px/1.05 'Barlow Condensed',sans-serif}
+#s2sv .res .ltag{color:var(--mu);margin-top:4px}
+#s2sv .res .cheer{max-width:560px;margin:14px auto 0;color:#dcd8d2}
+#s2sv .rmeta{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin:18px 0}
+#s2sv .rmeta span{background:var(--s2);border:1px solid var(--line);border-radius:30px;padding:7px 14px;font-size:13.5px}
+#s2sv .bars{max-width:560px;margin:8px auto 0;text-align:left;display:grid;gap:10px}
+#s2sv .bar .bl{display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px}
+#s2sv .bar .bl em{font-style:normal;color:var(--mu);font-size:12.5px}
+#s2sv .bar .bt{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+#s2sv .bar .bt i{height:9px;border-radius:2px;background:#2a2a2d}
+#s2sv .sent{display:inline-flex;align-items:center;gap:8px;margin-top:20px;font-weight:600;font-size:14.5px}
+#s2sv .sent.ok{color:var(--ok)}#s2sv .sent.bad{color:#ff7a70}
+/* faq */
+#s2sv .faq{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:22px}
+#s2sv .faq details{background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:15px 17px}
+#s2sv .faq summary{cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between;gap:10px}
+#s2sv .faq summary::after{content:"+";color:var(--red2);font-size:20px;line-height:1}
+#s2sv .faq details[open] summary::after{content:"–"}
+#s2sv .faq p{color:var(--mu);font-size:14.5px;margin-top:8px}
+#s2sv footer{border-top:1px solid var(--line);padding:30px 0 40px;color:var(--fa);font-size:13px}
+#s2sv footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+#s2sv .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(30px);opacity:0;background:#fff;color:#111;padding:11px 18px;border-radius:10px;font-weight:600;font-size:14px;transition:all .3s;z-index:50;pointer-events:none}
+#s2sv .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#s2sv .fit-ok{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+#s2sv .fit-ok span{color:var(--mu);font-size:14px}
+#s2sv .fit-ok.done .btn{background:var(--ok);color:#06210f;cursor:default;transform:none}
+#s2sv .fit-ok.done span{color:#9fe3b9;font-weight:600}
+/* bank + segmented progress */
+#s2sv .vt-bank{display:flex;align-items:baseline;gap:10px;margin:-4px 0 12px}
+#s2sv .vt-bank b{font:800 44px/1 'Barlow Condensed',sans-serif;color:#ffd27a;text-shadow:0 0 26px rgba(255,176,32,.45);transition:transform .25s}
+#s2sv .vt-bank b.pop{transform:scale(1.18)}
+#s2sv .vt-bank span{color:var(--mu);font-weight:600}
+#s2sv .voucher.open .vt-bank b{color:#6fe39b;text-shadow:0 0 26px rgba(62,207,114,.45)}
+#s2sv .vt-seg{display:flex;gap:4px;margin:16px 0 12px}
+#s2sv .vt-seg i{height:12px;border-radius:4px;background:rgba(255,255,255,.09);position:relative;overflow:hidden;min-width:14px}
+#s2sv .vt-seg i::after{content:"";position:absolute;inset:0;transform:scaleX(0);transform-origin:left;background:linear-gradient(90deg,#E8170D,#ffb020);transition:transform .7s cubic-bezier(.2,.8,.2,1)}
+#s2sv .vt-seg i.on::after{transform:scaleX(1)}
+#s2sv .vt-seg i.call.on::after{background:linear-gradient(90deg,#1fae5b,#3ecf72)}
+#s2sv .vt-ck em.rw{color:#ffb487;font-weight:700}
+#s2sv .vt-ck.ok em.rw{color:var(--ok)}
+#s2sv .plus{position:fixed;left:50%;top:38%;transform:translate(-50%,0);z-index:70;pointer-events:none;font:800 64px/1 'Barlow Condensed',sans-serif;color:#ffd27a;text-shadow:0 6px 30px rgba(0,0,0,.7),0 0 40px rgba(255,176,32,.6);animation:svPlus 1.5s ease-out forwards}
+@keyframes svPlus{0%{opacity:0;transform:translate(-50%,30px) scale(.7)}18%{opacity:1;transform:translate(-50%,0) scale(1.1)}70%{opacity:1}100%{opacity:0;transform:translate(-50%,-90px) scale(1)}}
+#s2sv input[type=datetime-local]{width:100%;background:var(--s2);border:1.5px solid var(--line);border-radius:10px;color:var(--tx);font:500 16px 'Barlow',sans-serif;padding:12px 13px;outline:none;color-scheme:dark}
+#s2sv input[type=datetime-local]:focus{border-color:var(--red)}
+/* locked / hidden steps */
+#s2sv section.sv-hid{display:none}
+#s2sv section.sv-locked{position:relative;max-height:470px;overflow:hidden;-webkit-mask:linear-gradient(#000 55%,transparent);mask:linear-gradient(#000 55%,transparent)}
+#s2sv section.sv-locked>.wrap{filter:blur(13px) saturate(.6);opacity:.5;pointer-events:none;user-select:none}
+#s2sv .lockov{position:absolute;left:0;right:0;top:70px;z-index:5;display:flex;justify-content:center;padding:0 18px}
+#s2sv .lockov>div{max-width:440px;width:100%;text-align:center;background:rgba(20,20,21,.92);border:1.5px solid rgba(255,106,26,.5);border-radius:18px;padding:26px 24px;box-shadow:0 30px 80px -20px rgba(0,0,0,.9),0 0 50px -18px rgba(232,23,13,.7)}
+#s2sv .lockov .lk{font-size:40px;line-height:1;animation:svWig 2.8s ease-in-out infinite;display:inline-block}
+@keyframes svWig{0%,86%,100%{transform:rotate(0)}89%{transform:rotate(-12deg)}92%{transform:rotate(11deg)}95%{transform:rotate(-7deg)}98%{transform:rotate(4deg)}}
+#s2sv .lockov h3{font-size:26px;margin:10px 0 6px}
+#s2sv .lockov p{color:var(--mu);font-size:15px}
+#s2sv .lockov .btn{margin-top:16px}
+#s2sv section.sv-reveal>.wrap{animation:svReveal .9s ease-out}
+@keyframes svReveal{from{filter:blur(13px);opacity:.4;transform:translateY(14px)}to{filter:none;opacity:1;transform:none}}
+#s2sv .step.lk{cursor:default;opacity:.75}
+#s2sv .step.lk .t{color:var(--mu);letter-spacing:.04em}
+#s2sv .vt-ck.lk span{color:#8d827a;font-style:italic}
+/* 2 hours vs 168 */
+#s2sv .cmp{margin-top:20px;padding:24px 26px;display:grid;gap:20px}
+#s2sv .cmp-row{display:grid;grid-template-columns:190px 1fr 130px;gap:18px;align-items:center}
+#s2sv .cmp-l b{display:block;font:800 20px/1.1 'Barlow Condensed',sans-serif}
+#s2sv .cmp-l span{font-size:13px;color:var(--mu)}
+#s2sv .cmp-bar{position:relative;height:44px;border-radius:10px;background:#242426;overflow:hidden;border:1px solid var(--line)}
+#s2sv .cmp-bar i{position:absolute;left:0;top:0;bottom:0;min-width:7px;border-radius:9px}
+#s2sv .cmp-bar i.pt{background:var(--red);box-shadow:0 0 14px rgba(232,23,13,.9)}
+#s2sv .cmp-bar i.on{background:linear-gradient(90deg,#1fae5b,#3ecf72)}
+#s2sv .cmp-bar em{position:absolute;inset:0;display:grid;place-items:center;font-style:normal;font-weight:600;font-size:14px;color:var(--fa);letter-spacing:.02em}
+#s2sv .cmp-bar em.in{color:#06210f;font-weight:700}
+#s2sv .cmp-n{font:800 44px/1 'Barlow Condensed',sans-serif;text-align:right;white-space:nowrap}
+#s2sv .cmp-n small{font:600 12px 'Barlow',sans-serif;color:var(--mu);display:block;margin-top:2px}
+#s2sv .cmp-n.bad{color:var(--red)}#s2sv .cmp-n.good{color:var(--ok)}
+#s2sv .hrs{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+#s2sv .hr{padding:18px}
+#s2sv .hr .ic,#s2sv .idea .ic{font-size:26px;line-height:1}
+#s2sv .hr .big{font:800 40px/1 'Barlow Condensed',sans-serif;margin-top:8px}
+#s2sv .hr b{display:block;font-size:15px}
+#s2sv .hr p{color:var(--mu);font-size:13.5px;margin-top:6px}
+#s2sv .rule{display:flex;gap:14px;align-items:flex-start;margin-top:18px;padding:16px 20px;border-radius:12px;background:rgba(62,207,114,.08);border:1px solid rgba(62,207,114,.35);font-size:16px;color:#dcd8d2}
+#s2sv .rule span{flex:none;width:28px;height:28px;border-radius:50%;background:var(--ok);color:#06210f;display:grid;place-items:center;font-weight:800}
+#s2sv .rule b{color:#fff}
+/* what we are / are not */
+#s2sv .fit{margin-top:22px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--s1)}
+#s2sv .fit-h,#s2sv .fit-r{display:grid;grid-template-columns:150px 1fr 1fr}
+#s2sv .fit-h span{padding:12px 18px;font:800 15px 'Barlow Condensed',sans-serif;letter-spacing:.12em;text-transform:uppercase}
+#s2sv .fit-h .no{color:#ff7a70;background:rgba(232,23,13,.1)}#s2sv .fit-h .yes{color:#6fe39b;background:rgba(62,207,114,.1)}
+#s2sv .fit-r{border-top:1px solid var(--line)}
+#s2sv .fit-k{padding:18px;font:800 19px/1.15 'Barlow Condensed',sans-serif;display:flex;flex-direction:column;gap:6px}
+#s2sv .fit-k b{font-size:13px;color:var(--fa);letter-spacing:.1em}
+#s2sv .fit-c{padding:18px;font-size:15px;line-height:1.5}
+#s2sv .fit-c.no{color:#cfc9c2;background:rgba(232,23,13,.045);border-left:1px solid var(--line)}
+#s2sv .fit-c.yes{color:#f3f1ee;background:rgba(62,207,114,.05);border-left:1px solid var(--line);font-weight:500}
+#s2sv .fit-c em{display:none;font-style:normal;font:800 12px 'Barlow Condensed',sans-serif;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px}
+#s2sv .fit-c.no em{color:#ff7a70}#s2sv .fit-c.yes em{color:#6fe39b}
+#s2sv .fit-end{margin-top:18px;padding:18px 20px;border-left:3px solid var(--red);background:var(--s1);border-radius:0 12px 12px 0;color:#dcd8d2;font-size:16px}
+#s2sv .fit-end b{color:#fff}
+/* voucher */
+#s2sv .vpill{display:inline-flex;align-items:center;gap:8px;text-decoration:none;background:linear-gradient(90deg,#E8170D,#ff6a1a);color:#fff;font-weight:700;font-size:14px;padding:8px 14px;border-radius:30px;box-shadow:0 6px 20px -6px rgba(232,23,13,.7);animation:svPulse 2.4s ease-in-out infinite}
+#s2sv .vpill.done{background:linear-gradient(90deg,#1fae5b,#3ecf72);animation:none}
+@keyframes svPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+#s2sv .voucher{position:relative;display:grid;grid-template-columns:200px 1fr;margin-top:26px;border-radius:18px;overflow:hidden;background:linear-gradient(135deg,#2a0d0a,#170a09 55%,#1d1208);border:1.5px solid rgba(255,106,26,.45);box-shadow:0 30px 80px -30px rgba(232,23,13,.55)}
+#s2sv .voucher::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 15% 20%,rgba(255,140,40,.18),transparent 45%);pointer-events:none}
+#s2sv .vt-left{position:relative;background:linear-gradient(160deg,#E8170D,#ff6a1a);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:22px 10px;color:#fff;text-align:center}
+#s2sv .vt-left::after{content:"";position:absolute;right:-9px;top:0;bottom:0;width:18px;background:radial-gradient(circle at 9px 9px,#170a09 7px,transparent 7.5px) 0 0/18px 22px repeat-y}
+#s2sv .vt-amt{font:800 72px/0.9 'Barlow Condensed',sans-serif;letter-spacing:-.02em;text-shadow:0 4px 18px rgba(0,0,0,.25)}
+#s2sv .vt-lbl{font:800 17px 'Barlow Condensed',sans-serif;letter-spacing:.32em;margin-top:6px}
+#s2sv .vt-sub{font-size:12px;opacity:.9;margin-top:6px}
+#s2sv .vt-mid{position:relative;padding:22px 26px 22px 30px}
+#s2sv .vt-mid h3{font-size:28px;margin:4px 0 12px}
+#s2sv .vt-checks{display:grid;gap:8px}
+#s2sv .vt-ck{display:flex;align-items:center;gap:11px;font-weight:600;text-decoration:none;color:#e9e5df}
+#s2sv .vt-ck i{flex:none;width:24px;height:24px;border-radius:50%;border:2px solid #5a4a42;display:grid;place-items:center;font-style:normal;font-size:13px;color:transparent;transition:all .3s}
+#s2sv .vt-ck.ok i{background:var(--ok);border-color:var(--ok);color:#06210f}
+#s2sv .vt-ck.ok span{color:#9fe3b9;text-decoration:line-through;text-decoration-color:rgba(159,227,185,.5)}
+#s2sv .vt-ck em{font-style:normal;color:var(--mu);font-weight:500;font-size:13px;margin-left:auto}
+#s2sv .vt-bar{height:8px;background:rgba(255,255,255,.08);border-radius:8px;overflow:hidden;margin:16px 0 12px}
+#s2sv .vt-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#E8170D,#ffb020);transition:width .6s}
+#s2sv .vt-code{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#s2sv .vt-code b{font:800 26px 'Barlow Condensed',sans-serif;letter-spacing:.12em;padding:8px 16px;border:2px dashed rgba(255,176,32,.6);border-radius:10px;color:#ffd27a;filter:blur(5px);user-select:none;transition:filter .6s}
+#s2sv .voucher.open .vt-code b{filter:none;user-select:all}
+#s2sv .vt-terms{font-size:12px;color:var(--fa);margin-top:10px}
+/* new-members-only gate */
+html.sv-gated,html.sv-gated body{overflow:hidden}
+#s2sv .gate{position:fixed;inset:0;z-index:2000;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px 16px;overflow-y:auto}
+#s2sv .gate[hidden]{display:none}
+#s2sv .gbox{width:100%;max-width:520px;background:var(--s1);border:1px solid var(--line);border-radius:18px;padding:30px 28px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+#s2sv .gbox h2{font-size:clamp(26px,5vw,32px);margin-top:8px}
+#s2sv .gbox p{color:var(--mu);margin-top:12px;font-size:16px}
+#s2sv .gbox p b{color:var(--tx)}
+#s2sv .gbox a{color:var(--red2);font-weight:600}
+#s2sv .gbtns{display:grid;gap:10px;margin-top:22px}
+#s2sv .gbtns .btn{width:100%}
+#s2sv .gico{font-size:38px;margin-top:16px}
+#s2sv .vt-new{display:inline-block;margin-top:12px;padding:5px 11px;border-radius:30px;background:rgba(255,210,122,.12);border:1px solid rgba(255,210,122,.45);color:#ffd27a;font-size:12.5px;font-weight:700}
+#s2sv .newonly{display:flex;gap:12px;align-items:flex-start;max-width:720px;margin-top:18px;padding:13px 16px;border-radius:12px;background:rgba(255,210,122,.08);border:1px solid rgba(255,210,122,.4);color:var(--tx);font-size:15px;line-height:1.5}
+#s2sv .newonly b{color:#ffd27a}
+#s2sv .newonly .ni{flex:none;width:26px;height:26px;border-radius:50%;background:#ffd27a;color:#201400;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;margin-top:1px}
+#s2sv .vt-lock{position:absolute;top:16px;right:18px;font-size:30px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
+#s2sv .voucher.open{border-color:rgba(62,207,114,.6);box-shadow:0 30px 90px -25px rgba(62,207,114,.45)}
+#s2sv .voucher.open .vt-left{background:linear-gradient(160deg,#1fae5b,#3ecf72)}
+#s2sv .goal{display:inline-flex;align-items:center;gap:6px;background:rgba(255,106,26,.12);border:1px solid rgba(255,106,26,.4);color:#ffb487;border-radius:30px;padding:4px 11px;font-size:12.5px;font-weight:700;margin-left:8px;vertical-align:middle;letter-spacing:.02em;text-transform:none}
+#s2sv .conf{position:fixed;top:-12px;width:10px;height:14px;z-index:60;pointer-events:none;animation:svFall linear forwards}
+@keyframes svFall{to{transform:translateY(110vh) rotate(720deg);opacity:.9}}
+#s2sv .nosk{font-size:13px;color:var(--mu);margin-top:8px}
+@media (max-width:1080px){#s2sv .steps{grid-template-columns:1fr 1fr 1fr}}
+@media (max-width:760px){
+  #s2sv .cmp{padding:18px}
+  #s2sv .cmp-row{grid-template-columns:1fr auto;gap:8px 12px}
+  #s2sv .cmp-bar{grid-column:1/-1;grid-row:2}
+  #s2sv .cmp-n{font-size:34px}
+  #s2sv .hrs{grid-template-columns:1fr 1fr}
+  #s2sv .fit-h{display:none}
+  #s2sv .fit-r{grid-template-columns:1fr}
+  #s2sv .fit-k{flex-direction:row;align-items:baseline;gap:10px;padding:16px 16px 6px}
+  #s2sv .fit-c{padding:12px 16px;border-left:0 !important}
+  #s2sv .fit-c em{display:block}
+  #s2sv .voucher{grid-template-columns:1fr}
+  #s2sv .vt-left{padding:18px;flex-direction:row;gap:14px}
+  #s2sv .vt-left::after{display:none}
+  #s2sv .vt-amt{font-size:56px}
+  #s2sv .vt-mid{padding:20px}
+  #s2sv .vt-mid h3{font-size:23px;padding-right:36px}
+  #s2sv .vpill{font-size:13px;padding:7px 12px}
+  #s2sv section{padding:42px 0}
+  #s2sv .steps,#s2sv .ideas,#s2sv .modes,#s2sv .faq{grid-template-columns:1fr}
+  #s2sv .fit-ok .btn{width:100%}
+  #s2sv .vt-bank b{font-size:36px}
+  #s2sv .guide{grid-template-columns:1fr;padding:22px;gap:24px}
+  #s2sv .cover{width:200px;margin:0 auto}
+  #s2sv .inside{grid-template-columns:1fr}
+  #s2sv .wk{grid-template-columns:1fr;padding:20px}
+  #s2sv .grid168{width:100%}
+  #s2sv .fg,#s2sv details.nums .fg{grid-template-columns:1fr 1fr}
+  #s2sv .abody{padding:20px}
+  #s2sv .top .booked{display:none}
+  #s2sv .goal{display:flex;width:max-content;margin:6px 0 0}
+}
+/* results step + hidden admin */
+#s2sv .pf-h{display:flex;align-items:center;justify-content:space-between;margin:24px 0 10px}
+#s2sv .pf-ar{display:flex;gap:8px}
+#s2sv .pf-ar button{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--s2);color:var(--tx);font-size:22px;line-height:1;cursor:pointer}
+#s2sv .pf-ar button:hover{border-color:var(--red);color:#fff}
+#s2sv .pf-row{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+#s2sv .pf-row::-webkit-scrollbar{display:none}
+#s2sv .pf-card{flex:0 0 min(82%,330px);scroll-snap-align:start;background:var(--s1);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+#s2sv .pf-v{position:relative;aspect-ratio:16/9;background:#000;display:block;width:100%;border:0;padding:0;cursor:pointer}
+#s2sv .pf-v img,#s2sv .pf-v>video{width:100%;height:100%;object-fit:cover;display:block}
+#s2sv .pf-v img{opacity:.82}
+#s2sv .pf-v iframe,#s2sv .pf-v video[controls]{position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:contain}
+#s2sv .pf-v .pl{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:58px;height:58px;border-radius:50%;background:var(--red);color:#fff;font-size:21px;display:flex;align-items:center;justify-content:center;padding-left:4px}
+#s2sv .pf-b{padding:12px 14px 14px}
+#s2sv .pf-b b{display:block;font-size:15.5px}
+#s2sv .pf-b small{display:block;color:var(--red2);font-weight:700;font-size:12px;letter-spacing:.04em;margin-top:1px}
+#s2sv .pf-b p{color:var(--mu);font-size:13.5px;line-height:1.4;margin-top:7px}
+#s2sv .pf-tx{flex-basis:min(70%,260px)}
+#s2sv .pf-tx img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;background:#000}
+#s2sv .pf-ok{margin-top:20px;text-align:center}
+#s2sv .pf-ok .btn[disabled]{background:var(--s2);color:var(--mu);cursor:not-allowed;transform:none;box-shadow:none}
+#s2sv .pf-note{color:var(--mu);font-size:13.5px;margin-top:9px}
+#s2sv .pf-small{color:var(--fa);font-size:12px;text-align:center;margin-top:12px}
+#pa{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.72);display:none;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto}
+#pa.on{display:flex}
+#pa .box{width:100%;max-width:720px;background:#171718;color:#f3f1ee;border:1px solid #2c2c2f;border-radius:14px;overflow:hidden}
+#pa .hd{display:flex;align-items:center;gap:10px;padding:15px 18px;border-bottom:1px solid #2c2c2f}
+#pa .hd h3{font:800 21px 'Barlow Condensed',Arial,sans-serif;flex:1;margin:0}
+#pa .x{background:none;border:0;color:#a7a39d;font-size:24px;cursor:pointer;line-height:1}
+#pa .tabs{display:flex;flex-wrap:wrap;gap:6px;padding:12px 18px 0}
+#pa .tabs button{background:#1f1f21;border:1px solid #2c2c2f;color:#a7a39d;border-radius:30px;padding:8px 14px;font:600 13.5px 'Barlow',Arial,sans-serif;cursor:pointer}
+#pa .tabs button.on{background:#E8170D;border-color:#E8170D;color:#fff}
+#pa .bd{padding:14px 18px 18px}
+#pa .row{display:flex;align-items:center;gap:12px;padding:9px;background:#1f1f21;border:1px solid #2c2c2f;border-radius:10px;margin-bottom:8px}
+#pa .row img,#pa .row .ph{width:76px;height:50px;object-fit:cover;border-radius:6px;background:#000;flex:none;display:flex;align-items:center;justify-content:center;color:#a7a39d;font-size:18px}
+#pa .row .i{flex:1;min-width:0}
+#pa .row b{display:block;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pa .row small{display:block;color:#a7a39d;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pa .ic{width:32px;height:32px;flex:none;border-radius:8px;border:1px solid #2c2c2f;background:#171718;color:#f3f1ee;cursor:pointer;font-size:14px}
+#pa .ic:disabled{opacity:.3;cursor:default}
+#pa .ic.del{color:#ff6b62}
+#pa .ic.del.sure{width:auto;padding:0 10px;background:#E8170D;border-color:#E8170D;color:#fff;font-weight:700;font-size:12.5px}
+#pa .add{border:1px dashed #47474b;border-radius:10px;padding:14px;margin-top:14px}
+#pa .add h4{font:700 16px 'Barlow',Arial,sans-serif;margin:0 0 10px}
+#pa .gr{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+#pa .full{grid-column:1/-1}
+#pa input[type=text],#pa input[type=password]{width:100%;box-sizing:border-box;background:#0f0f10;border:1px solid #2c2c2f;border-radius:8px;color:#f3f1ee;padding:10px 11px;font:16px 'Barlow',Arial,sans-serif}
+#pa label{display:block;font-size:12.5px;color:#a7a39d;margin-bottom:4px}
+#pa .btnp{background:#E8170D;color:#fff;border:0;border-radius:9px;padding:11px 16px;font:700 14.5px 'Barlow',Arial,sans-serif;cursor:pointer}
+#pa .btnp:disabled{opacity:.45;cursor:default}
+#pa .btng,#pa label.btng{background:#1f1f21;color:#f3f1ee;border:1px solid #2c2c2f;border-radius:9px;padding:11px 16px;font:600 14.5px 'Barlow',Arial,sans-serif;cursor:pointer;display:inline-block;margin:0}
+#pa #pa-fn{color:#a7a39d;font-size:13px;margin-left:6px}
+#pa .or{color:#6f6b66;font-size:12.5px;text-align:center;margin:2px 0}
+#pa .msg{font-size:13.5px;margin-top:9px;min-height:18px}
+#pa .ft{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:13px 18px;border-top:1px solid #2c2c2f;background:#111112}
+#pa .ft span{flex:1;min-width:180px;color:#a7a39d;font-size:13px}
+@media(max-width:560px){#pa .gr{grid-template-columns:1fr}#pa .row img,#pa .row .ph{width:58px;height:42px}}
+</style>
+
+<div id="s2sv" data-version="2026-11-15a">
+  <div class="gate" id="sv-gate" role="dialog" aria-modal="true" aria-labelledby="sv-gh"><div class="gbox">
+    <div class="logo">S2S <b>FIT</b></div>
+    <div id="sv-gq">
+      <div class="eyebrow" style="margin-top:18px">One quick question first</div>
+      <h2 id="sv-gh">Are you a current or past S2S Fit client?</h2>
+      <p>This page and its <b>$500 voucher</b> are for people joining S2S Fit for the first time.</p>
+      <div class="gbtns"><button class="btn" id="sv-gnew">No, I'm new to S2S Fit</button><button class="btn ghost" id="sv-gold">Yes, I am or have been a client</button></div>
+    </div>
+    <div id="sv-gno" hidden>
+      <div class="gico">💛</div>
+      <h2>It's so good to see you again</h2>
+      <p>Thank you for trusting us with your journey. Once you're part of the S2S Fit family, you stay part of it.</p>
+      <p>We have to be honest with you though: this page and the $500 voucher are set aside for people joining us for the very first time, so this particular offer isn't one we can give you. We're sorry about that, and we know it might be disappointing.</p>
+      <p>What we <b>can</b> do is help you get back on track, whatever has happened since we last worked together. Life gets busy and plans slip. There's no judgement here. Just send us a message at <a href="mailto:support@s2sfit.com">support@s2sfit.com</a> or <a href="tel:+61485016661">+61 485 016 661</a> and your coach will personally reach out to talk about what's right for you now.</p>
+      <p style="color:var(--tx);font-weight:600">We'd love to have you back.</p>    </div>
+  </div></div>
+  <div class="top"><div class="wrap">
+    <div class="logo">S2S <b>FIT</b></div><span class="sp"></span>
+    <span class="booked" style="margin-right:12px">✓ Call booked</span><a class="vpill" href="#sv-voucher" id="sv-vpill">🎁 <span id="sv-vpilltxt">$0 of $500 banked</span></a>
+  </div></div>
+
+  <div class="hero"><div class="wrap">
+    <div class="eyebrow" id="sv-hi">Before your call</div>
+    <h1>3 quick steps + your call = <span id="sv-h1amt">$500 off.</span></h1>
+    <p class="lead"><b style="color:#fff">Every step you finish banks part of your <span class="sv-amt">$500</span></b> and reveals the next one. Then join your strategy call, and your coach unlocks the full amount, live.</p>
+    <div class="newonly" role="note"><span class="ni">★</span><div><b>New members only.</b> This voucher is for people joining S2S Fit for the first time. It isn't available to current clients, or to anyone who has been enrolled with S2S Fit before.</div></div>
+    <div class="steps" id="sv-steps">
+    </div>
+    <div class="voucher" id="sv-voucher">
+      <div class="vt-left"><div class="vt-amt" id="sv-vamt">$500</div><div><div class="vt-lbl">VOUCHER</div><div class="vt-sub">towards your coaching</div></div></div>
+      <div class="vt-mid">
+        <span class="vt-lock" id="sv-vlock">🔒</span>
+        <div class="eyebrow" id="sv-veb">Your reward for coming prepared</div>
+        <h3 id="sv-vh">Bank $500 in 3 steps + your call</h3>
+        <div class="vt-bank"><b id="sv-vbank">$0</b><span>of <span class="sv-amt">$500</span> banked</span></div>
+        <div class="vt-checks" id="sv-checks">
+        </div>
+        <div class="vt-seg" id="sv-vseg"></div>
+        <div class="vt-code"><b id="sv-vcode">S2S500-XXXX</b><span id="sv-vcact" style="color:var(--mu);font-size:13.5px">Your code is revealed on your call</span></div>
+        <div class="vt-new">★ New members only · not for current or past S2S Fit clients</div>
+        <div class="vt-terms" id="sv-vterms"></div>
+      </div>
+    </div>
+  </div></div>
+
+  <section id="sv-video" style="padding-top:28px"><div class="wrap">
+    <div class="eyebrow">Step 1 · Watch this first <span class="goal">🎁 <span class="sv-share" data-k="video">+$50</span></span></div>
+    <h2 style="margin:6px 0 18px">Meet your coach, and how S2S works</h2>
+    <div class="vid" id="sv-vid"></div>
+    <div class="vbar"><span id="sv-vtxt">Not started</span><span class="track"><i id="sv-vfill"></i></span></div>
+    <p class="nosk">Watch it all the way through to bank this step. If you come back later through the link we sent you, it picks up where you left off.</p>
+  </div></section>
+
+  <section id="sv-proof" data-lock="proof" style="padding-top:20px"><div class="wrap">
+    <div class="eyebrow">Step 2 · See the results <span class="goal">🎁 <span class="sv-share" data-k="proof">+$100</span></span></div>
+    <h2 style="margin:6px 0 6px">People like you, <span style="color:var(--red)">in their own words</span></h2>
+    <p class="lead" style="font-size:16.5px">Busy people who had tried before. Press play on any story, then swipe through their before and afters.</p>
+    <div id="pf-vids-w"><div class="pf-h"><h3>Client stories</h3><span class="pf-ar"><button data-go="pf-vids" data-d="-1" aria-label="Previous stories">‹</button><button data-go="pf-vids" data-d="1" aria-label="More stories">›</button></span></div>
+    <div class="pf-row" id="pf-vids"></div></div>
+    <div id="pf-tx-w"><div class="pf-h"><h3>Before &amp; after</h3><span class="pf-ar"><button data-go="pf-tx" data-d="-1" aria-label="Previous photos">‹</button><button data-go="pf-tx" data-d="1" aria-label="More photos">›</button></span></div>
+    <div class="pf-row" id="pf-tx"></div></div>
+    <div class="pf-ok"><button class="btn" id="pf-done" disabled>Play one story to continue</button><div class="pf-note" id="pf-note"></div></div>
+    <p class="pf-small">Individual results. Results vary from person to person and are not guaranteed.</p>
+  </div></section>
+
+  <section id="sv-assess" data-lock="assess" style="padding-top:20px"><div class="wrap">
+    <div class="eyebrow">Step 3 · Your S2S 7-Level assessment <span class="goal">🎁 <span class="sv-share" data-k="assess">+$100</span></span></div>
+    <h2 style="margin:6px 0 6px">Where are you starting from?</h2>
+    <p class="lead" style="font-size:16.5px">Your answers go straight to your coach, so we don't spend the call working out your starting point. Be honest: there's no wrong level, and Level 1 is where most journeys begin.</p>
+    <div class="card assess" style="margin-top:20px">
+      <div class="ahead"><h3 id="sv-atitle" style="font-size:19px">Choose your assessment</h3><span class="pb"><i id="sv-apb"></i></span><span class="pc" id="sv-apc"></span></div>
+      <div class="abody" id="sv-abody"></div>
+    </div>
+  </div></section>
+
+  <section id="sv-fit" style="padding-top:10px"><div class="wrap">
+    <div class="eyebrow">Worth reading before your call</div>
+    <h2 style="margin:6px 0 6px">What we are. <span style="color:var(--red)">And what we're not.</span></h2>
+    <p class="lead" style="font-size:16.5px">We'd rather be honest now than waste your time on a call. Here's exactly what you're signing up for.</p>
+    <div class="fit">
+      <div class="fit-h"><span></span><span class="no">✕ We are not</span><span class="yes">✓ We are</span></div>
+      <div class="fit-r"><div class="fit-k"><b>1</b>Attention</div><div class="fit-c no"><em>We are not</em>A PDF and a "see you in 7 days". If you want a coach who hands you a plan and forgets you, sorry, we're not the one for you.</div><div class="fit-c yes"><em>We are</em>In your corner all week, not once a week. Frequent check-ins and check-in calls, private messages whenever you need us, group chats, community calls, events and challenges. You get the attention you truly deserve.</div></div>
+      <div class="fit-r"><div class="fit-k"><b>2</b>Effort</div><div class="fit-c no"><em>We are not</em>A "just cover the basics" service. We can't put in less effort. If you only want a few things ticked off, sorry, we're not for you.</div><div class="fit-c yes"><em>We are</em>All in. Training, nutrition, habits, mindset, tracking and accountability, all covered, all week long.</div></div>
+      <div class="fit-r"><div class="fit-k"><b>3</b>Accountability</div><div class="fit-c no"><em>We are not</em>A coach who lets you go quiet. If you want to disappear for three weeks and have nobody notice, we're the wrong fit.</div><div class="fit-c yes"><em>We are</em>The people who notice. Miss a check-in and you'll hear from us. Not to tell you off, but because we actually care whether you turn up.</div></div>
+      <div class="fit-r"><div class="fit-k"><b>4</b>Results</div><div class="fit-c no"><em>We are not</em>A quick fix, a crash diet or a 30-day challenge. We won't promise you a number on the scale by a date.</div><div class="fit-c yes"><em>We are</em>Here for a result you keep. That's why every program runs in planned phases, and why we care more about where you are in a year than in a fortnight.</div></div>
+      <div class="fit-r"><div class="fit-k"><b>5</b>Your journey</div><div class="fit-c no"><em>We are not</em>A coach who only shows up when things are going well.</div><div class="fit-c yes"><em>We are</em>There in the bad weeks too. Travel, illness, a slip, a stressful month: that's when we lean in, not when we leave.</div></div>
+      <div class="fit-r"><div class="fit-k"><b>6</b>Your part</div><div class="fit-c no"><em>We are not</em>Magic. We can't want it more than you do.</div><div class="fit-c yes"><em>We are</em>A team that matches your effort. Show up, check in and be honest with us, and we'll give you everything we've got.</div></div>
+    </div>
+    <div class="fit-end">If that sounds like too much attention, we're probably not for you, and that's okay. If it sounds like exactly what's been missing, <b>we can't wait to meet you on the call.</b></div>
+  </div></section>
+
+  <section id="sv-why" style="padding-top:10px"><div class="wrap">
+    <div class="eyebrow">Why online coaching comes first</div>
+    <h2 style="margin:6px 0 6px">A trainer sees 2 hours of your week. <span style="color:var(--red)">Your results are made in the other 166.</span></h2>
+    <p class="lead" style="font-size:16.5px">There are 168 hours in a week. Here's how much of it each option actually covers.</p>
+
+    <div class="card cmp">
+      <div class="cmp-row">
+        <div class="cmp-l"><b>Personal training only</b><span>2 sessions a week</span></div>
+        <div class="cmp-bar"><i class="pt" style="width:1.2%"></i><em>166 hours on your own</em></div>
+        <div class="cmp-n bad">2 <small>of 168 hrs</small></div>
+      </div>
+      <div class="cmp-row">
+        <div class="cmp-l"><b>S2S Online Coaching</b><span>every client is on this</span></div>
+        <div class="cmp-bar"><i class="on" style="width:100%"></i><em class="in">Every hour covered</em></div>
+        <div class="cmp-n good">168 <small>of 168 hrs</small></div>
+      </div>
+    </div>
+
+    <h3 style="margin:26px 0 12px">What happens in those 166 hours, and who's there for it</h3>
+    <div class="hrs">
+      <div class="card hr"><div class="ic">🍽️</div><div class="big">21</div><b>meals a week</b><p>Planned in your live nutrition tool, logged and reviewed by your coach.</p></div>
+      <div class="card hr"><div class="ic">👟</div><div class="big">7</div><b>days of movement</b><p>Daily step targets, streaks and community challenges.</p></div>
+      <div class="card hr"><div class="ic">😴</div><div class="big">7</div><b>nights of sleep</b><p>Sleep, stress and recovery habits, one focus at a time.</p></div>
+      <div class="card hr"><div class="ic">💬</div><div class="big">7</div><b>days your coach is there</b><p>Frequent check-ins, private messages, group chats and calls. Not one message a week.</p></div>
+    </div>
+
+    <div class="rule"><span>✓</span><div><b>So the Online Coaching Program is the program.</b> If you also need hands-on help in the gym, we add in-person sessions <b>on top of it</b>. Never instead of it.</div></div>
+
+    <div class="ideas">
+      <div class="card idea"><div class="ic">📱</div><h3>Your own platform</h3><p>The S2S Transformation Portal: a live nutrition tool (not a PDF), meal logging, a food journal, challenges and progress graphs. Workouts in Everfit.</p></div>
+      <div class="card idea"><div class="ic">🔄</div><h3>Support all week, not once a week</h3><p>We don't do one check-in and disappear. Your coach is in touch through the week and updates your plan whenever it needs it: shifts, travel, festivals, a sore knee.</p></div>
+      <div class="card idea"><div class="ic">📈</div><h3>Phases, not guesswork</h3><p>Foundation, then Strength, then the phase built for your goal: recomposition, a shred or hypertrophy. About 6 to 8 weeks each. No trial and error.</p></div>
+    </div>
+
+    <div class="phx">
+      <div class="eyebrow">Your journey, in phases</div>
+      <h2 style="margin:6px 0 6px">You don't get random workouts. <span style="color:var(--red)">You climb in planned phases.</span></h2>
+      <p class="lead" style="font-size:16.5px">Each phase builds on the one before — about 6 to 8 weeks each — so progress compounds instead of stalling.</p>
+
+      <div class="phx-flow">
+        <div class="phx-c" style="--pc:#E8170D">
+          <div class="phx-n">Phase 1</div>
+          <h3>Foundation</h3>
+          <div class="phx-dur">≈ 6–8 weeks</div>
+          <p>Build the base most people skip. We lock in form, consistency and the daily habits everything else stands on.</p>
+          <ul>
+            <li>Movement &amp; technique that keep you injury-free</li>
+            <li>A nutrition rhythm you can actually live with</li>
+            <li>Training that becomes non-negotiable</li>
+          </ul>
+        </div>
+        <div class="phx-c" style="--pc:#f0a63c">
+          <div class="phx-n">Phase 2</div>
+          <h3>Strength</h3>
+          <div class="phx-dur">≈ 6–8 weeks</div>
+          <p>Now we add load. Progressive overload and real structure turn that base into capability — your engine for the goal phase.</p>
+          <ul>
+            <li>Get measurably stronger, week on week</li>
+            <li>Heavier work, more structure, smarter recovery</li>
+            <li>The muscle &amp; work capacity your goal needs</li>
+          </ul>
+        </div>
+        <div class="phx-c" style="--pc:#3ecf72">
+          <div class="phx-n">Phase 3</div>
+          <h3>Your Goal Phase</h3>
+          <div class="phx-dur">≈ 6–8 weeks</div>
+          <p>Built around your goal: recomposition, a shred, or hypertrophy. This is where the visible change lands — on a base that holds.</p>
+          <ul>
+            <li>Recomp, shred or hypertrophy — your call with your coach</li>
+            <li>The transformation people actually notice</li>
+            <li>Results you keep, because the foundation is real</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rule"><span>✓</span><div><b>Where you start depends on your level</b> — that's exactly what the assessment above is for. Most journeys begin at Foundation, and that's where results that last are built.</div></div>
+    </div>
+  </div></section>
+
+  <section id="sv-guide" style="padding-top:20px"><div class="wrap">
+    <div class="eyebrow">Optional · if you want more detail</div>
+    <div class="card guide" style="margin-top:14px">
+      <div class="cover"><div class="ln"></div><div class="k">S2S Fit · before your call</div><div class="tt">Your Fitness Strategy Call</div><div class="sb">How we work, the platform you'll use, why online coaching comes first, and what to ask.</div>
+        <div class="bars"><i style="background:#c0392b;width:40%"></i><i style="background:#2e6b0e;width:60%"></i><i style="background:#1558a0;width:75%"></i><i style="background:#3a3287;width:90%"></i></div></div>
+      <div>
+        <h2>Download the 8-page guide</h2>
+        <p style="color:var(--mu);margin-top:8px">Everything in the video, with one picture per page that explains it, and a <b style="color:#fff">prep page</b> to fill in before the call.</p>
+        <div class="inside">
+          <div>The 5 blockers, and what fixes each one</div><div>Your call, minute by minute</div>
+          <div>How your coach works with you</div><div>Inside the Transformation Portal</div>
+          <div>Why online coaching comes first</div><div>How we work, in phases</div>
+          <div>Straight answers to common questions</div><div>Questions to ask + your prep page</div>
+        </div>
+        <a class="btn" id="sv-pdf" href="#" target="_blank" rel="noopener">⬇ Download the guide (PDF)</a>
+      </div>
+    </div>
+  </div></section>
+
+  <section style="padding-top:10px"><div class="wrap">
+    <div class="eyebrow">Quick answers</div>
+    <h2 style="margin:6px 0 0">The questions we hear most</h2>
+    <div class="faq">
+      <details><summary>How much does it cost?</summary><p>Online coaching is the core of every plan, and in-person sessions are priced as add-ons. We go through the exact investment on the call once we know what you need. There are flexible payment options.</p></details>
+      <details><summary>Can I just book PT sessions?</summary><p>Not on their own. Your plan, tracking and coaching all live in the online program, so every client is on it. Sessions are added on top if you need them.</p></details>
+      <details><summary>Is it just a PDF plan?</summary><p>No. Your nutrition plan lives in our own Transformation Portal, with live macros, swaps, logging and a food journal. Workouts are in Everfit. Gym, home or both.</p></details>
+      <details><summary>How fast will I see results?</summary><p>Everyone is different, so we never promise a number. Energy and sleep often improve first; measurements take longer. That's why we track trends, phase by phase.</p></details>
+      <details><summary>I have an injury or a health condition.</summary><p>Tell us on the call. Everyone completes a health check, and some people need their doctor's OK first. We work alongside your doctor, never instead.</p></details>
+      <details><summary>I've trained with S2S Fit before. Can I use the voucher?</summary><p>No, sorry. The voucher is only for new members joining S2S Fit for the first time. It isn't available to current clients or to anyone who has been enrolled with us before. If you're coming back, we'd still love to talk: book the call and we'll go through your options.</p></details>
+      <details><summary>Can my partner join the call?</summary><p>Yes, and they're welcome to join the program too. You each get your own plan and keep each other accountable.</p></details>
+    </div>
+  </div></section>
+
+  <footer><div class="wrap">
+    <div><b style="color:var(--tx)">S2S Fit</b> · Sedentary to Splendid · <span id="sv-callinfo">Your Google Meet link is in your booking email.</span></div>
+    <div>s2sfit.com · support@s2sfit.com · +61485016661</div>
+    <div style="width:100%">The assessment gives an estimate based on your own answers. It isn't a medical assessment. Results vary from person to person and are not guaranteed.</div>
+  </div></footer>
+  <div class="toast" id="sv-toast"></div>
+  <div id="pa" role="dialog" aria-modal="true" aria-label="Page admin"><div class="box" id="pa-box"></div></div>
+</div>
+
+<script>
+var S2SV_CONFIG = {
+  VIDEO_URL: '',        // leave blank: upload the video in the portal (Strategy leads → Page settings). Or paste an .mp4 / YouTube / Vimeo link to override.
+  PDF_URL:   '',        // leave blank: upload the guide in the portal. Or paste a link to override.
+  VOUCHER_AMOUNT: 500,  // overridden by the portal setting
+  VOUCHER_TERMS: 'New members only: not available to current clients or anyone previously enrolled with S2S Fit. Valid towards your S2S Online Coaching Program when you enrol within 7 days of your strategy call. One per person. Not redeemable for cash.',
+  CALL_INFO: 'Your Google Meet link is in your booking email.',
+  API_URL:   'https://iiaqezfiqkonajqqcrcj.supabase.co/functions/v1/strategy-page',   // its own small edge function
+  ANON_KEY:  'sb_publishable_sNBfL6rf0cJwO2Sh8GSZqA_3hkEGkax'
+};
+(function(){
+'use strict';
+var C=S2SV_CONFIG, $=function(id){return document.getElementById(id);}, LS='s2sv.v1';
+var esc=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
+/* Do NOT persist anything to the browser: always start blank, and clear any
+   previously-saved bucket so old details never reappear on reopen.
+   (Per-visit state still lives in memory; the server still tracks voucher progress by email.) */
+var st={};try{localStorage.removeItem(LS);}catch(e){}
+function save(){}
+/* ---------- new members only: ask before showing the page ---------- */
+function gateOpen(){var g=$('sv-gate');if(!g||g.hidden)return;g.hidden=true;document.documentElement.classList.remove('sv-gated');}
+(function(){var g=$('sv-gate');if(!g)return;document.documentElement.classList.add('sv-gated');
+  function show(id){['sv-gq','sv-gno'].forEach(function(x){$(x).hidden=x!==id;});var b=$(id).querySelector('button,a');if(b)b.focus();}
+  $('sv-gnew').onclick=gateOpen;
+  $('sv-gold').onclick=function(){show('sv-gno');};
+  show('sv-gq');
+})();
+function toast(m){var t=$('sv-toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(function(){t.classList.remove('show');},2600);}
+
+/* ---------- who is this? (GHL merge fields on the link) ---------- */
+var qs=new URLSearchParams(location.search);
+var pName=(qs.get('name')||qs.get('first_name')||'').trim(), pEmail=(qs.get('email')||'').trim().toLowerCase(), pPhone=(qs.get('phone')||'').trim();
+if(/\{\{/.test(pName))pName='';if(/\{\{/.test(pEmail)||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(pEmail))pEmail='';if(/\{\{/.test(pPhone))pPhone='';
+st.id=st.id||{};if(pName)st.id.name=pName;if(pEmail)st.id.email=pEmail;if(pPhone)st.id.phone=pPhone;st.prog=st.prog||{};save();
+if(st.id.name)$('sv-hi').textContent='Hi '+st.id.name.split(' ')[0]+' · before your call';
+if(C.CALL_INFO)$('sv-callinfo').textContent=C.CALL_INFO;
+
+function api(action,payload){
+  return fetch(C.API_URL,{method:'POST',headers:{'Content-Type':'application/json','apikey':C.ANON_KEY,'Authorization':'Bearer '+C.ANON_KEY},
+    body:JSON.stringify(Object.assign({action:action},payload||{}))}).then(function(r){return r.json().then(function(j){if(!r.ok||j.error)throw new Error(j.error||('Error '+r.status));return j.data;});});
+}
+function track(type,extra){
+  if(!st.id.email)return Promise.resolve(null);
+  return api('leadEvent',Object.assign({email:st.id.email,name:st.id.name||'',phone:st.id.phone||'',type:type},extra||{}))
+    .then(function(d){if(d&&d.progress)restore(d.progress);if(d&&d.voucher)setVoucher(d.voucher);return d;}).catch(function(){return null;});
+}
+track('visit');
+/* anonymous funnel tracking: one row per visitor, one timestamp per step (no email needed) */
+function vidOf(email){var h1=5381,h2=52711,i,c;for(i=0;i<email.length;i++){c=email.charCodeAt(i);h1=((h1*33)^c)>>>0;h2=((h2*31)+c)>>>0;}return 'e'+h1.toString(36)+h2.toString(36);}
+if(st.id.email)st.vid=vidOf(st.id.email);
+if(!st.vid){st.vid=(Date.now().toString(36)+Math.random().toString(36).slice(2,10)).replace(/[^a-z0-9]/g,'').slice(0,20);}
+st.fx=st.fx||{};save();
+var NOTRACK=qs.get('notrack')==='1'||!!st.notrack;if(qs.get('notrack')==='1'){st.notrack=1;save();}
+function fx(step){if(NOTRACK||st.fx[step])return;st.fx[step]=1;save();
+  var mf=st.vidOld||'';st.vidOld='';
+  api('pageEvent',{vid:st.vid,step:step,mergeFrom:mf,email:st.id.email||'',device:(window.innerWidth<760?'mobile':'desktop'),src:(qs.get('utm_source')||qs.get('src')||'').slice(0,40)}).catch(function(){delete st.fx[step];save();});}
+fx('visit');
+
+/* ---------- steps: order, reward share, names ---------- */
+var NOVIDEO=false, VFULL=98, lockInit=false, lockPrev={}, bankPrev=null;
+var STEPS=[
+ {k:'video', sec:'sv-video', w:20,t:'Watch the video',s:'How we work · about 3 min',c:'Watch the video all the way through',need:'Watch the video all the way through'},
+ {k:'proof', sec:'sv-proof', w:20,t:'See the results',s:'Client stories + before & afters',c:'Watch a client story and see the results',need:'Press play on a client story'},
+ {k:'assess',sec:'sv-assess',w:20,t:'Find your S2S level',s:'5 or 15 min · goes to your coach',c:'Complete your 7-Level assessment',need:'Finish your assessment'}];
+var TOTAL=STEPS.length+1;                       /* + the call */
+function stepIdx(k){for(var i=0;i<STEPS.length;i++)if(STEPS[i].k===k)return i;return -1;}
+function stepDone(k){var p=st.prog;return k==='video'?(NOVIDEO||(p.video||0)>=VFULL):k==='proof'?!!p.proof:!!p.assess;}
+function stepOpen(k){var i=stepIdx(k);for(var j=0;j<i;j++)if(!stepDone(STEPS[j].k))return false;return true;}   /* strictly in order */
+/* each step banks a share of the voucher; the call is the biggest slice */
+function shares(){var o={},sum=0;STEPS.forEach(function(x){var a=Math.round(VAMT*x.w/100/5)*5;o[x.k]=a;sum+=a;});o.call=Math.max(0,VAMT-sum);return o;}
+function paintSteps(){paintLocks();paintVoucher();pfPaint();}
+/* ---------- suspense: each step is hidden until the one before it is done ---------- */
+function paintLocks(){
+  var root=$('s2sv'),SH=shares();
+  root.querySelectorAll('section[data-lock]').forEach(function(sec){
+    var k=sec.getAttribute('data-lock'),i=stepIdx(k),n=i+1,prev=STEPS[i-1],open=stepOpen(k),next=!open&&stepOpen(prev.k);
+    sec.classList.toggle('sv-locked',next);sec.classList.toggle('sv-hid',!open&&!next);
+    var w=sec.querySelector('.wrap');if(w){if(open)w.removeAttribute('inert');else w.setAttribute('inert','');}
+    var ov=sec.querySelector('.lockov');
+    if(next){if(!ov){ov=document.createElement('div');ov.className='lockov';sec.appendChild(ov);}
+      ov.innerHTML='<div><span class="lk">🔒</span><div class="eyebrow" style="margin-top:10px">Step '+n+' of '+TOTAL+' · locked</div><h3>+$'+SH[k]+' is waiting for you here</h3><p>'+prev.need+' to reveal step '+n+'.</p><a class="btn" href="#'+prev.sec+'">Take me to step '+(n-1)+' ↑</a></div>';}
+    else if(ov)ov.remove();
+    if(lockInit&&open&&lockPrev[k]===false){sec.classList.add('sv-reveal');setTimeout(function(){sec.classList.remove('sv-reveal');},1000);
+      if(prev.k!=='assess')setTimeout(function(){sec.scrollIntoView({behavior:'smooth',block:'start'});},900);}
+    lockPrev[k]=open;
+  });
+  root.querySelectorAll('section[data-with]').forEach(function(sec){sec.classList.toggle('sv-hid',!stepOpen(sec.getAttribute('data-with')));});
+  lockInit=true;
+}
+/* ---------- the voucher bank ---------- */
+var VAMT=C.VOUCHER_AMOUNT||500, vReq=false;
+function vDone(){var d={},v=st.voucher||{};STEPS.forEach(function(x){d[x.k]=stepOpen(x.k)&&stepDone(x.k)&&!(x.k==='video'&&NOVIDEO);});d.call=!!v.active;return d;}
+function countTo(el,to){var from=+(el.getAttribute('data-v')||0),t0=null;el.setAttribute('data-v',to);if(from===to){el.textContent='$'+to;return;}
+  el.classList.add('pop');setTimeout(function(){el.classList.remove('pop');},320);
+  function f(ts){if(+el.getAttribute('data-v')!==to)return;if(!t0)t0=ts;var p=Math.min(1,(ts-t0)/700);el.textContent='$'+Math.round(from+(to-from)*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(f);}requestAnimationFrame(f);
+  setTimeout(function(){if(+el.getAttribute('data-v')===to)el.textContent='$'+to;},900);}   /* always land on the true total */
+function paintVoucher(){
+  var d=vDone(),SH=shares(),V=st.voucher||{},open=!!(V.code&&V.active),reserved=!!(V.code&&!V.active);
+  var nOn=0,bank=0;STEPS.forEach(function(x){if(d[x.k]){nOn++;bank+=SH[x.k];}});if(d.call)bank=VAMT;
+  var n=nOn+(d.call?1:0), allOn=nOn===STEPS.length, nextStep=null;STEPS.forEach(function(x){if(!nextStep&&!d[x.k])nextStep=x;});
+  /* top tiles */
+  $('sv-steps').innerHTML=STEPS.map(function(x,i){var op=stepOpen(x.k),dn=d[x.k];
+    return '<a class="step'+(dn?' done':'')+(op?'':' lk')+'"'+(op?' href="#'+x.sec+'"':'')+'><span class="n">'+(dn?'✓':(i+1))+'</span><span><span class="t">'+(op?esc(x.t):'Locked 🔒')+'</span><br><span class="s">'+(op?esc(x.s):'Revealed after step '+i)+'</span><span class="rw">'+(dn?'$'+SH[x.k]+' banked':'+$'+SH[x.k])+'</span></span></a>';}).join('');
+  /* checklist with the reward for each step */
+  $('sv-checks').innerHTML=STEPS.map(function(x,i){var op=stepOpen(x.k),dn=d[x.k],extra=(x.k==='video'&&!dn&&(st.prog.video||0)>0)?' · '+(st.prog.video||0)+'%':'';
+    return '<a class="vt-ck'+(dn?' ok':'')+(op?'':' lk')+'"'+(op?' href="#'+x.sec+'"':'')+'><i>✓</i><span>'+(op?esc(x.c):'Step '+(i+1)+' · revealed after step '+i+' 🔒')+'</span><em class="rw">+$'+SH[x.k]+extra+'</em></a>';}).join('')+
+    '<div class="vt-ck'+(d.call?' ok':'')+'"><i>✓</i><span>Join your Fitness Strategy Call: your coach unlocks it live</span><em class="rw">+$'+SH.call+'</em></div>';
+  $('sv-vseg').innerHTML=STEPS.map(function(x){return '<i class="'+(d[x.k]?'on':'')+'" style="flex:'+SH[x.k]+'" title="+$'+SH[x.k]+'"></i>';}).join('')+'<i class="call'+(d.call?' on':'')+'" style="flex:'+SH.call+'" title="+$'+SH.call+' on your call"></i>';
+  document.querySelectorAll('#s2sv .sv-share').forEach(function(e){var k=e.getAttribute('data-k');e.textContent=d[k]?('$'+SH[k]+' banked ✓'):('+$'+SH[k]);});
+  countTo($('sv-vbank'),bank);
+  $('sv-vamt').textContent='$'+VAMT;$('sv-h1amt').textContent='$'+VAMT+' off.';
+  $('sv-vterms').textContent=C.VOUCHER_TERMS||'';
+  document.querySelectorAll('#s2sv .sv-amt').forEach(function(e){e.textContent='$'+VAMT;});
+  var pill=$('sv-vpill');pill.classList.toggle('done',open);
+  $('sv-vpilltxt').textContent=open?('$'+VAMT+' unlocked!'):('$'+bank+' of $'+VAMT+' banked');
+  $('sv-voucher').classList.toggle('open',open);
+  $('sv-vlock').textContent=open?'🎉':reserved?'🔐':'🔒';
+  $('sv-vcode').textContent=open?V.code:('S2S'+VAMT+'-XXXX');
+  if(open){
+    $('sv-veb').textContent='Unlocked · well done';
+    $('sv-vh').textContent='Your $'+V.amount+' voucher is unlocked';
+    $('sv-vcact').innerHTML='<button class="btn" id="sv-vcopy" style="padding:10px 16px;font-size:14px">Copy code</button> <span style="color:#9fe3b9;font-size:13.5px">Saved to your file. Use it when you enrol.</span>';
+    var cp=$('sv-vcopy');if(cp)cp.onclick=function(){try{navigator.clipboard.writeText(V.code);toast('Code copied');}catch(e){}};
+  }else if(reserved){
+    $('sv-veb').textContent=STEPS.length+' of '+TOTAL+' done · reserved for you';
+    $('sv-vh').textContent='$'+bank+' banked. Your call unlocks all $'+VAMT+'.';
+    $('sv-vcact').innerHTML='<span style="color:#ffd27a;font-weight:600">Final step: join your strategy call. Your coach adds the last $'+SH.call+' and unlocks your code, live.</span>';
+  }else{
+    $('sv-veb').textContent=nOn?('Step '+nOn+' of '+TOTAL+' done · keep going'):'Your reward for coming prepared';
+    $('sv-vh').textContent=nOn===0?('Bank $'+VAMT+' in '+STEPS.length+' steps + your call'):allOn?'Reserving your voucher…':('Next step banks +$'+SH[nextStep.k]);
+    if(allOn){
+      $('sv-vcact').textContent=vReq?'Reserving…':'';
+      if(!vReq&&st.id.email){vReq=true;track('sync').then(function(r){vReq=false;if(!(r&&r.voucher)){$('sv-vcact').innerHTML='Almost there. <button class="btn ghost" id="sv-vretry" style="padding:7px 12px;font-size:13px">Reserve now</button>';var b=$('sv-vretry');if(b)b.onclick=function(){paintVoucher();};}});}
+    }else $('sv-vcact').textContent='Finish every step and join your call to claim it';
+  }
+  /* celebrate each newly banked step */
+  if(bankPrev!==null&&bank>bankPrev&&!open){var gain=bank-bankPrev;plusPop('+$'+gain);toast('💰 +$'+gain+' banked · $'+bank+' of $'+VAMT);confetti(36);}
+  bankPrev=bank;
+}
+var restored=false, vResume=null;
+function restore(p){
+  if(!p)return;var pr=st.prog,ch=false,pv=Math.min(100,+p.video||0);
+  if(pv>(pr.video||0)){[25,50,75,90,100].forEach(function(m){if(pv>=m)sentMarks[m]=1;});pr.video=pv;vMax=pv;ch=true;}
+  if(p.proof&&!pr.proof){pr.proof=1;ch=true;}
+  if(p.assess&&!pr.assess){pr.assess=1;ch=true;}
+  if(p.pdf&&!pr.pdf){pr.pdf=1;ch=true;}
+  if(pv>0||p.proof||p.assess)gateOpen();   /* they already said "I'm new" on an earlier visit */
+  if(!ch)return;
+  /* these steps were already counted on an earlier visit: don't send them to the funnel again */
+  if(pv>0)st.fx.video_start=1;if(pv>=25)st.fx.video_25=1;if(pv>=50)st.fx.video_50=1;if(pv>=75)st.fx.video_75=1;if(pv>=98)st.fx.video_done=1;
+  if(pr.proof){st.fx.proof_start=1;st.fx.proof_done=1;}if(pr.assess){st.fx.assess_start=1;st.fx.assess_intake=1;st.fx.assess_done=1;}if(pr.pdf)st.fx.pdf_done=1;
+  lockInit=false;lockPrev={};bankPrev=null;          /* repaint quietly */
+  $('sv-vfill').style.width=vMax+'%';$('sv-vtxt').textContent=vMax>=98?'Watched ✓':vMax>0?('Watched '+vMax+'%'):'Not started';
+  paintSteps();
+  if(vResume)vResume();
+  if(!A.result&&(steps()[A.step]||'mode')==='mode')render();
+  if(!restored){restored=true;
+    var d=vDone(),SH=shares(),bank=0,nxt=null;STEPS.forEach(function(x){if(d[x.k])bank+=SH[x.k];else if(!nxt)nxt=x;});
+    toast('👋 Welcome back. $'+bank+' of $'+VAMT+' banked so far.');
+    if(nxt&&window.scrollY<250&&bank>0)setTimeout(function(){var el=$(nxt.sec);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},1400);}
+}
+function plusPop(txt){var e=document.createElement('div');e.className='plus';e.textContent=txt;$('s2sv').appendChild(e);setTimeout(function(){e.remove();},1600);}
+function setVoucher(v){var was=st.voucher||{};st.voucher=v;save();paintVoucher();fx(v.active?'unlocked':'reserved');
+  if(v.active&&!st.vConfA){st.vConfA=1;save();confetti();toast('🎉 $'+v.amount+' voucher unlocked!');}
+  else if(!v.active&&!was.code&&!st.vConfR){st.vConfR=1;save();confetti();toast('🔐 Reserved! Your call unlocks all $'+v.amount+'.');}
+  if(!was.code||(v.active&&!was.active))setTimeout(function(){var el=$('sv-voucher');if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},400);}
+function confetti(nn){var cols=['#E8170D','#ffb020','#3ecf72','#ffffff','#ff6a1a','#4A9EE8'],root=$('s2sv');
+  for(var i=0;i<(nn||120);i++){var c=document.createElement('i');c.className='conf';c.style.left=(Math.random()*100)+'vw';c.style.background=cols[i%cols.length];
+    c.style.animationDuration=(2.2+Math.random()*2.2)+'s';c.style.animationDelay=(Math.random()*.6)+'s';c.style.borderRadius=Math.random()>.5?'50%':'2px';root.appendChild(c);
+    setTimeout(function(x){return function(){x.remove();};}(c),5200);}}
+paintSteps();
+
+/* ---------- video ---------- */
+var vMax=st.prog.video||0, sentMarks={};
+function vProgress(pct){
+  pct=Math.max(0,Math.min(100,Math.round(pct)));
+  if(pct>vMax){vMax=pct;st.prog.video=vMax;save();}
+  $('sv-vfill').style.width=vMax+'%';
+  $('sv-vtxt').textContent=vMax>=98?'Watched ✓':vMax>0?('Watched '+vMax+'%'):'Not started';
+  [25,50,75,90,100].forEach(function(m){if(vMax>=(m===100?98:m)&&!sentMarks[m]){sentMarks[m]=1;track('video',{pct:m});}});
+  if(vMax>0)fx('video_start');if(vMax>=25)fx('video_25');if(vMax>=50)fx('video_50');if(vMax>=75)fx('video_75');if(vMax>=98)fx('video_done');
+  paintSteps();
+}
+[25,50,75,90,100].forEach(function(m){if(vMax>=(m===100?98:m))sentMarks[m]=1;});
+vProgress(vMax);
+function initVideo(){
+  var host=$('sv-vid'), u=(C.VIDEO_URL||'').trim(), maxT=+st.prog.vmaxT||0;
+  function seen(t,d){if(t>maxT){maxT=t;st.prog.vmaxT=maxT;save();}if(d)vProgress(maxT/d*100);}
+  function nag(){toast('No skipping ahead. Watch it through to tick this step.');}
+  if(!u){host.innerHTML='<div class="ph"><div><div class="play"><svg width="30" height="30" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></div><div class="cond" style="font-size:24px;font-weight:700">Your video is on its way</div><div style="color:var(--mu);font-size:14px;margin-top:4px">Check back shortly. Your next step unlocks once the video has been watched.</div></div></div>';return;}
+  var yt=u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/), vm=u.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if(yt){
+    host.innerHTML='<div id="sv-yt"></div>';
+    var tag=document.createElement('script');tag.src='https://www.youtube.com/iframe_api';document.head.appendChild(tag);
+    var prev=window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady=function(){if(prev)try{prev();}catch(e){}
+      var pl=new YT.Player('sv-yt',{videoId:yt[1],playerVars:{rel:0,modestbranding:1,playsinline:1},events:{onStateChange:function(ev){
+        if(ev.data===1){clearInterval(pl._t);pl._t=setInterval(function(){var d=pl.getDuration(),t=pl.getCurrentTime();if(d&&(st.prog.video||0)/100*d>maxT)maxT=(st.prog.video||0)/100*d;if(t>maxT+3){pl.seekTo(maxT,true);nag();return;}seen(t,d);},1000);}
+        else{clearInterval(pl._t);if(ev.data===0&&maxT>=pl.getDuration()-3)vProgress(100);}
+      }}});};
+  }else if(vm){
+    host.innerHTML='<iframe id="sv-vm" src="https://player.vimeo.com/video/'+vm[1]+'?title=0&byline=0&portrait=0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>';
+    var s=document.createElement('script');s.src='https://player.vimeo.com/api/player.js';s.onload=function(){var p=new Vimeo.Player($('sv-vm'));p.on('timeupdate',function(d){if(d.seconds>maxT+3){p.setCurrentTime(maxT);nag();return;}seen(d.seconds,d.duration);});p.on('ended',function(){if(maxT>=0)vProgress(100);});};document.head.appendChild(s);
+  }else{
+    host.innerHTML='<video controls playsinline preload="metadata" controlsList="nodownload noplaybackrate" disablepictureinpicture src="'+esc(u)+'"></video>';
+    var v=host.querySelector('video');
+    vResume=function(){if(!v.duration)return;var pc=st.prog.video||0,t=pc>=98?v.duration:pc/100*v.duration;if(t>maxT){maxT=t;if(t>5&&t<v.duration-3){try{v.currentTime=t;}catch(e){}}}};
+    v.addEventListener('loadedmetadata',function(){vResume();if(maxT>5&&maxT<v.duration-3){v.currentTime=maxT;}});
+    if(v.readyState>=1)vResume();
+    v.addEventListener('timeupdate',function(){if(!v.seeking&&v.currentTime<=maxT+1.5)seen(v.currentTime,v.duration);});
+    v.addEventListener('seeking',function(){if(v.currentTime>maxT+1.5){v.currentTime=maxT;nag();}});
+    v.addEventListener('ratechange',function(){if(v.playbackRate>2)v.playbackRate=2;});
+    v.addEventListener('ended',function(){if(maxT>=v.duration-2)vProgress(100);});
+  }
+}
+
+/* ---------- 168-hour grid ---------- */
+(function(){var h='';for(var d=0;d<7;d++)for(var x=0;x<24;x++){var c='';if(x>=23||x<7)c='sl';if(x===8||x===13||x===19)c='me';if((d===0||d===3)&&x===18)c='pt';h+='<i class="'+c+'"></i>';}var g=$('sv-grid');if(g)g.innerHTML=h;})();
+
+/* ---------- guide download ---------- */
+function initPdf(){var a=$('sv-pdf');
+  if(C.PDF_URL){a.href=C.PDF_URL;a.setAttribute('target','_blank');a.setAttribute('download','S2S_Fit_Strategy_Call_Guide.pdf');}else{a.removeAttribute('target');}
+  a.onclick=function(e){
+    if(!C.PDF_URL){e.preventDefault();toast('The guide link is being set up. Check back soon.');return;}
+    if(!stepOpen('pdf')){e.preventDefault();return;}
+    st.prog.pdf=st.prog.pdf||new Date().toISOString();save();paintSteps();track('pdf');fx('pdf_done');
+  };
+}
+/* ---------- step 2: client results (carousels + hidden admin, Ctrl+Shift+E) ---------- */
+var PF={videos:[
+  {id:'tOWpWY51KrA',name:'Subhash Mani',tag:'Client story'},
+  {id:'poqAg6PttjQ',name:'Mario Gamma',tag:'Fat loss · Health markers',quote:'“In 12 weeks my cholesterol was back to normal and I\'d lost over 9 kg.”'},
+  {id:'tESvhnUmOwU',name:'Pratibha Kapoor',tag:'Fat loss · Blood sugar',quote:'“I lost 11 kg, improved my blood sugar markers, and feel stronger than I have in years.”'},
+  {id:'a-wu-ZDOWWc',name:'Yasar',tag:'Client story'},
+  {id:'foEypff9eMQ',name:'Troy Andrews',tag:'Body recomposition',quote:'“Put on 4 kg of lean muscle while dropping body fat.”'}],tx:[]};
+var pfPlayed=false;
+function pfThumb(v){return v.id?'<img src="https://img.youtube.com/vi/'+esc(v.id)+'/hqdefault.jpg" alt="" loading="lazy">':'<video src="'+esc(v.url)+'#t=0.5" preload="metadata" muted playsinline></video>';}
+function pfDraw(){
+  $('pf-vids').innerHTML=PF.videos.map(function(v,i){return '<div class="pf-card"><button class="pf-v" data-i="'+i+'" aria-label="Play '+esc(v.name)+'">'+pfThumb(v)+'<span class="pl">▶</span></button><div class="pf-b"><b>'+esc(v.name)+'</b><small>'+esc(v.tag||'')+'</small>'+(v.quote?'<p>'+esc(v.quote)+'</p>':'')+'</div></div>';}).join('');
+  $('pf-tx').innerHTML=PF.tx.map(function(t){return '<div class="pf-card pf-tx"><img src="'+esc(t.img)+'" alt="'+esc(t.tag)+' before and after" loading="lazy"><div class="pf-b"><b>'+esc(t.tag)+'</b><p style="margin-top:3px">'+esc(t.desc||'')+'</p></div></div>';}).join('');
+  $('pf-vids-w').style.display=PF.videos.length?'':'none';$('pf-tx-w').style.display=PF.tx.length?'':'none';
+  pfPaint();
+}
+function pfPaint(){if(!PF)return;   /* an early paint can run before the lists below are set up */
+  var b=$('pf-done'),n=$('pf-note'),amt=shares().proof;
+  if(st.prog.proof){b.disabled=true;b.textContent='✓ $'+amt+' banked';n.textContent='Your assessment is unlocked below.';}
+  else if(pfPlayed||!PF.videos.length){b.disabled=false;b.textContent='✓ Bank +$'+amt+' and continue';n.textContent='Keep watching as long as you like. Step 3 is next.';}
+  else{b.disabled=true;b.textContent='Play one story to continue';n.textContent='Press play on any client story to bank +$'+amt+'.';}
+}
+$('sv-proof').addEventListener('click',function(e){
+  var g=e.target.closest('[data-go]');
+  if(g){var r=$(g.getAttribute('data-go'));r.scrollBy({left:(+g.getAttribute('data-d'))*(r.firstElementChild?r.firstElementChild.offsetWidth+14:300),behavior:'smooth'});return;}
+  var b=e.target.closest('.pf-v');if(!b||b.querySelector('iframe,video[controls]'))return;
+  /* only one story plays at a time */
+  $('pf-vids').querySelectorAll('.pf-v').forEach(function(o){if(o!==b&&o.querySelector('iframe,video[controls]'))o.innerHTML=pfThumb(PF.videos[+o.getAttribute('data-i')])+'<span class="pl">▶</span>';});
+  var v=PF.videos[+b.getAttribute('data-i')];
+  b.innerHTML=v.id?'<iframe src="https://www.youtube-nocookie.com/embed/'+esc(v.id)+'?autoplay=1&rel=0&modestbranding=1&playsinline=1" allow="autoplay;encrypted-media;fullscreen" allowfullscreen title="'+esc(v.name)+'"></iframe>':'<video src="'+esc(v.url)+'" controls autoplay playsinline></video>';
+  fx('proof_start');if(!pfPlayed){pfPlayed=true;pfPaint();}
+});
+$('pf-done').onclick=function(){if(st.prog.proof||!stepOpen('proof'))return;st.prog.proof=new Date().toISOString();save();paintSteps();track('proof');fx('proof_done');};
+
+/* hidden admin: signs in with the portal owner password. The password is only sent to super-api; the session token stays in memory. */
+(function(){
+  var SUPER=C.API_URL.replace(/strategy-page$/,'super-api'),tok=null,tab='v',W=null,dirty=false,busy=false,msg='',msgErr=false;
+  function post(url,b){return fetch(url,{method:'POST',headers:{'Content-Type':'application/json','apikey':C.ANON_KEY,'Authorization':'Bearer '+C.ANON_KEY},body:JSON.stringify(b)}).then(function(r){return r.json().then(function(j){if(!r.ok||j.error)throw new Error(j.error||('Error '+r.status));return j.data;});});}
+  function open(){$('pa').classList.add('on');draw();}
+  function close(){$('pa').classList.remove('on');}
+  function say(t,err){msg=t;msgErr=!!err;var m=$('pa-msg');if(m){m.textContent=t;m.style.color=err?'#ff6b62':'#3ecf72';}}
+  document.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(e.key==='E'||e.key==='e')){e.preventDefault();open();}else if(e.key==='Escape'&&$('pa').classList.contains('on'))close();},true);
+  function load(){   /* always edit the latest saved lists; refuse to edit if they can't be read, so a failed load can't publish over them */
+    W=null;draw();
+    return post(C.API_URL,{action:'strategyPageConfig'}).then(function(d){var p=d&&d.proof;W={videos:(p&&p.videos||PF.videos).slice(),tx:(p&&p.tx||PF.tx).slice()};dirty=false;msg='';draw();})
+      .catch(function(e){msg='Could not load the current lists: '+e.message+'. Close this and try again.';msgErr=true;draw();});
+  }
+  function draw(){
+    var box=$('pa-box');
+    if(!tok){box.innerHTML='<div class="hd"><h3>🔒 Page admin</h3><button class="x" id="pa-x" aria-label="Close">×</button></div><form class="bd" id="pa-form"><label for="pa-pw">Transformation Portal owner password</label><input type="password" id="pa-pw" autocomplete="current-password"><div style="margin-top:12px"><button class="btnp" type="submit" id="pa-in">Sign in</button></div><div class="msg" id="pa-msg"></div></form>';
+      $('pa-x').onclick=close;$('pa-pw').focus();
+      $('pa-form').onsubmit=function(e){e.preventDefault();var p=$('pa-pw').value;if(!p)return;$('pa-in').disabled=true;
+        post(SUPER,{action:'adminLogin',password:p}).then(function(d){tok=d.token;load();}).catch(function(er){$('pa-in').disabled=false;say(er.message,true);});};
+      return;}
+    if(!W){box.innerHTML='<div class="hd"><h3>Results section admin</h3><button class="x" id="pa-x" aria-label="Close">×</button></div><div class="bd"><div class="msg" style="color:'+(msgErr?'#ff6b62':'#a7a39d')+'">'+esc(msg||'Loading…')+'</div></div>';$('pa-x').onclick=close;return;}
+    var L=tab==='v'?W.videos:W.tx;
+    var rows=L.map(function(x,i){var th=tab==='v'?(x.id?'<img src="https://img.youtube.com/vi/'+esc(x.id)+'/hqdefault.jpg" alt="">':'<span class="ph">▶</span>'):'<img src="'+esc(x.img)+'" alt="">';
+      return '<div class="row">'+th+'<div class="i"><b>'+esc(tab==='v'?x.name:x.tag)+'</b><small>'+esc(tab==='v'?((x.id?'YouTube':'Uploaded video')+(x.tag?' · '+x.tag:'')):(x.desc||''))+'</small></div><button class="ic" data-up="'+i+'" aria-label="Move up"'+(i?'':' disabled')+'>↑</button><button class="ic" data-dn="'+i+'" aria-label="Move down"'+(i<L.length-1?'':' disabled')+'>↓</button><button class="ic del" data-del="'+i+'" aria-label="Delete">🗑</button></div>';}).join('');
+    var add=tab==='v'
+     ?'<div class="add"><h4>Add a client video</h4><div class="gr"><div><label for="pa-n">Client name</label><input type="text" id="pa-n"></div><div><label for="pa-t">Label</label><input type="text" id="pa-t" placeholder="Fat loss · Blood sugar"></div><div class="full"><label for="pa-q">Quote (optional)</label><input type="text" id="pa-q"></div><div class="full"><label class="btng" for="pa-f">⬆ Choose a video (MP4/MOV)</label><input type="file" id="pa-f" accept="video/*" hidden><span id="pa-fn"></span></div><div class="full or">or</div><div class="full"><label for="pa-y">Paste a YouTube link</label><input type="text" id="pa-y" placeholder="https://youtu.be/..."></div><div class="full"><button class="btnp" id="pa-add">Add to carousel</button></div></div></div>'
+     :'<div class="add"><h4>Add a before &amp; after</h4><div class="gr"><div><label for="pa-n">Label</label><input type="text" id="pa-n" placeholder="Fat loss"></div><div><label for="pa-t">Short description</label><input type="text" id="pa-t" placeholder="12 weeks structured training"></div><div class="full"><label class="btng" for="pa-f">⬆ Choose an image</label><input type="file" id="pa-f" accept="image/*" hidden><span id="pa-fn"></span></div><div class="full"><button class="btnp" id="pa-add">Add to carousel</button></div></div></div>';
+    box.innerHTML='<div class="hd"><h3>Results section admin</h3><button class="x" id="pa-x" aria-label="Close">×</button></div><div class="tabs"><button data-tab="v" class="'+(tab==='v'?'on':'')+'">🎬 Client videos ('+W.videos.length+')</button><button data-tab="t" class="'+(tab==='t'?'on':'')+'">🖼 Before &amp; after ('+W.tx.length+')</button></div><div class="bd">'+(rows||'<div class="msg" style="color:#a7a39d">Nothing here yet.</div>')+add+'<div class="msg" id="pa-msg" style="color:'+(msgErr?'#ff6b62':'#3ecf72')+'">'+esc(msg)+'</div></div><div class="ft"><span>'+(dirty?'Unpublished changes. Visitors still see the old version.':'Everything is published.')+'</span><button class="btng" id="pa-out">Sign out</button><button class="btnp" id="pa-pub"'+(dirty?'':' disabled')+'>Publish</button></div>';
+    $('pa-x').onclick=close;
+    $('pa-out').onclick=function(){if(dirty&&!confirm('Sign out and lose your unpublished changes?'))return;tok=null;W=null;dirty=false;msg='';draw();};
+    $('pa-pub').onclick=publish;
+    var f=$('pa-f');f.onchange=function(){$('pa-fn').textContent=f.files[0]?' '+f.files[0].name:'';};
+    $('pa-add').onclick=addItem;
+  }
+  function upload(file){
+    var ext=(file.name.split('.').pop()||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5);
+    return post(SUPER,{action:'climbSignUpload',token:tok,clientId:'strategy-page',key:'proof',ext:ext,contentType:file.type}).then(function(d){
+      return new Promise(function(res,rej){var x=new XMLHttpRequest();x.open('PUT',d.signedUrl);x.setRequestHeader('content-type',file.type||'application/octet-stream');x.setRequestHeader('x-upsert','true');
+        x.upload.onprogress=function(e){if(e.lengthComputable)say('Uploading… '+Math.round(e.loaded/e.total*100)+'%');};
+        x.onload=function(){x.status<300?res(d):rej(new Error('Upload failed ('+x.status+')'));};x.onerror=function(){rej(new Error('Network error during upload'));};x.send(file);});
+    });
+  }
+  function addItem(){
+    if(busy)return;var n=$('pa-n').value.trim(),t=$('pa-t').value.trim(),q=$('pa-q')?$('pa-q').value.trim():'',f=$('pa-f').files[0];
+    if(!n)return say(tab==='v'?'Add the client name first.':'Add a label first.',true);
+    function done(){dirty=true;busy=false;msg='Added. Press Publish to put it live.';msgErr=false;draw();}
+    function bad(e){busy=false;say(e.message,true);}
+    if(tab==='v'){
+      var y=($('pa-y').value.match(/(?:youtu\.be\/|v=|shorts\/|embed\/)([\w-]{11})/)||[])[1];
+      if(y){W.videos.push({id:y,name:n,tag:t,quote:q});return done();}
+      if($('pa-y').value.trim())return say('That doesn\'t look like a YouTube link.',true);
+      if(!f)return say('Choose a video or paste a YouTube link.',true);
+      if(f.size>500*1048576)return say('That video is over the 500 MB limit. Compress it, or use a YouTube link.',true);
+      busy=true;upload(f).then(function(d){W.videos.push({url:d.publicUrl,path:d.path,name:n,tag:t,quote:q});done();}).catch(bad);
+    }else{
+      if(!f)return say('Choose an image.',true);
+      busy=true;upload(f).then(function(d){W.tx.push({img:d.publicUrl,path:d.path,tag:n,desc:t});done();}).catch(bad);
+    }
+  }
+  function publish(){
+    if(busy||!W)return;busy=true;say('Publishing…');
+    post(C.API_URL,{action:'proofSave',token:tok,videos:W.videos,tx:W.tx}).then(function(v){PF.videos=v.videos;PF.tx=v.tx;W={videos:v.videos.slice(),tx:v.tx.slice()};dirty=false;busy=false;msg='Published. It is live for every visitor now.';msgErr=false;pfDraw();draw();})
+      .catch(function(e){busy=false;if(/authorised|Admin only/i.test(e.message)){tok=null;W=null;dirty=false;msg='';draw();say('Your sign-in expired. Sign in again.',true);}else say(e.message,true);});
+  }
+  $('pa').addEventListener('click',function(e){
+    if(e.target.id==='pa'){close();return;}
+    var b=e.target.closest('button');if(!b||!W)return;
+    if(b.getAttribute('data-tab')){tab=b.getAttribute('data-tab');msg='';draw();return;}
+    var L=tab==='v'?W.videos:W.tx,u=b.getAttribute('data-up'),d=b.getAttribute('data-dn'),x=b.getAttribute('data-del'),i,tmp;
+    if(u!==null){i=+u;tmp=L[i-1];L[i-1]=L[i];L[i]=tmp;}
+    else if(d!==null){i=+d;tmp=L[i+1];L[i+1]=L[i];L[i]=tmp;}
+    else if(x!==null){if(!b.classList.contains('sure')){b.classList.add('sure');b.textContent='Delete?';setTimeout(function(){if(b.isConnected){b.classList.remove('sure');b.textContent='🗑';}},3000);return;}L.splice(+x,1);}
+    else return;
+    dirty=true;msg='';draw();
+  });
+})();
+pfDraw();
+
+/* settings from the portal (video, guide, voucher); the values in S2SV_CONFIG win when filled in */
+(function(){var done=false;function go(){if(done)return;done=true;initVideo();initPdf();paintVoucher();pfPaint();}
+  setTimeout(go,4000);
+  api('strategyPageConfig').then(function(d){d=d||{};
+    if(!C.VIDEO_URL&&d.videoUrl)C.VIDEO_URL=d.videoUrl;if(!C.PDF_URL&&d.pdfUrl)C.PDF_URL=d.pdfUrl;
+    if(d.voucherAmount)VAMT=C.VOUCHER_AMOUNT=d.voucherAmount;if(d.voucherTerms)C.VOUCHER_TERMS=d.voucherTerms;
+    if(d.proof&&Array.isArray(d.proof.videos)&&Array.isArray(d.proof.tx)){PF.videos=d.proof.videos;PF.tx=d.proof.tx;pfDraw();}
+    if(d.callInfo){C.CALL_INFO=d.callInfo;$('sv-callinfo').textContent=d.callInfo;}go();}).catch(go);
+})();
+
+/* =================== THE 7-LEVEL ASSESSMENT ===================
+   Same scoring rule as the S2S Climb and the full S2S assessment:
+   your level = your LOWEST of the five gating domains. Body composition is a guide, never a gate. */
+var LV=[null,
+ {n:'S2S Sedentary',t:'Where every journey begins',c:'#C0392B',ch:'You showed up and got assessed. That is genuinely the bravest step on the whole scale, and every S2S Splendid athlete was once exactly here.'},
+ {n:'S2S Stirring',t:'Something is starting to shift',c:'#B8740F',ch:'Something is clearly shifting. You are officially in motion, and that momentum is yours to build on.'},
+ {n:'S2S Stepping',t:'Building real consistency',c:'#2E6B0E',ch:'Your consistency is paying off. You have built something solid to grow from.'},
+ {n:'S2S Striding',t:'An established athlete',c:'#0A5241',ch:'You are an established athlete now. The base you have built took real, sustained work.'},
+ {n:'S2S Strong',t:'Training with intention',c:'#1558A0',ch:'You train with real intention, and you are stronger and fitter than most people ever become.'},
+ {n:'S2S Soaring',t:'High performance',c:'#3A3287',ch:'This is elite territory: strong, fast, mobile and conditioned all at once.'},
+ {n:'S2S Splendid',t:'The destination the brand is named for',c:'#C74672',ch:'You have reached the peak of natural human fitness. This is what Sedentary to Splendid means.'}];
+var DOM={cardio:'Stamina',strength:'Strength',movement:'Everyday movement',mobility:'Mobility',conditioning:'Conditioning'};
+var GATES=['cardio','strength','movement','mobility','conditioning'];
+
+/* Quick (home) version: one honest pick per domain, written for people who don't train yet */
+var QUICK={
+ cardio:{q:'How is your stamina right now?',how:'Think about the last few weeks: walking, stairs, any running.',o:[
+  'Walking 400 m or one or two flights of stairs leaves me needing a rest',
+  'I can walk 2 km (about 20 min) or do 10 minutes of light exercise without stopping',
+  'I can jog 5 km in 30–35 min, or exercise at a moderate pace for 20–25 min',
+  'I can run 5 km in under 28 min, or push through a hard 20-minute workout',
+  'I can run 5 km in under 24 min, or hold a hard effort for 30 min',
+  '5 km in under 22 min or 10 km in under 50 min; 45+ minutes at high intensity',
+  '5 km in under 19 min or 10 km in under 44 min, at an elite level']},
+ strength:{q:'Try a set of push-ups now. What is true for you?',how:'Full push-ups, or on your knees. Count honest reps with your chest close to the floor.',o:[
+  'Push-ups are a real struggle, even on my knees',
+  'I can do 5–10 push-ups on my knees',
+  'I can do 10–15 full push-ups (and maybe a couple of pull-ups)',
+  'I can do 25 full push-ups, or 8+ pull-ups, or squat my bodyweight in the gym',
+  'I can do 15+ pull-ups, or squat 1.25× my bodyweight, or bench my bodyweight',
+  '20+ pull-ups or weighted pull-ups; squat 1.5× my bodyweight',
+  'Squat 1.75× and deadlift 2.5× my bodyweight; 25+ pull-ups']},
+ movement:{q:'Stand up from a chair 10 times without your hands, then hold a plank',how:'Use a normal dining chair, arms crossed. Then a forearm plank for as long as you can with good form.',o:[
+  'Getting up from a chair without my hands is hard; plank under 15 seconds',
+  'I can do 10 chair stands without hands; plank 15–20 s; balance on one leg 5–10 s',
+  'Plank 30–40 s; I can do split squats or step-ups holding light weights',
+  'Plank 45–60 s; I can do an assisted pistol squat or a 50 cm box jump',
+  'Plank 60 s or more; unassisted pistol squats; Nordic curls',
+  'Shrimp squats, an L-sit of 10 s or more, explosive single-leg jumps',
+  'Gymnastics level: planche, muscle-ups, handstand push-ups']},
+ mobility:{q:'Fold forward with straight legs, then squat as deep as you can',how:'Feet hip-width apart, knees straight for the fold. For the squat, keep your heels down if you can.',o:[
+  'I reach about my knees, and a deep squat is close to impossible',
+  'I reach mid-shin, and I squat to parallel with my heels lifting a little',
+  'My fingers touch the floor, and I can squat almost all the way down',
+  'I can do a full-depth squat with my arms overhead; my hips feel free',
+  'Overhead squat with a light barbell; full upper-back rotation',
+  'Loaded overhead squats; full active flexibility in my hips and upper back',
+  'Full pancake and loaded overhead squats: elite flexibility']},
+ conditioning:{q:'Carrying, kettlebells and rope work',how:'If you have never tried these, that is completely normal. Pick the first option.',o:[
+  'Little or no experience; carrying heavy shopping breaks my posture quickly',
+  'I can carry 15–20 kg in each hand for about 20 m (heavy shopping bags)',
+  '16 kg kettlebell swings ×20; I can carry 25 kg per hand for 40 m',
+  '24 kg kettlebell swings ×20; 45 seconds on battle ropes',
+  '24 kg kettlebell snatches ×10 a side; a rope climb without legs',
+  '32 kg kettlebell snatches; atlas stones; loaded sled sprints',
+  'Full strongman: yoke carry, log press, atlas stones']}
+};
+/* Full version: the S2S benchmark matrix, word for word, plus optional numbers that check the pick */
+var FULL={
+ cardio:['Walking 400m needs a rest; 1–2 flights of stairs leave you breathless; resting HR above 90 bpm','Walk 2km in ~18–22 min; light continuous exercise for 10 min; resting HR 75–90 bpm','Run/jog 5km in 30–35 min; moderate exercise 20–25 min; resting HR 65–75 bpm, faster recovery','Run 5km under 28 min; sustain a hard 20-min workout; resting HR 60–70 bpm; above-average aerobic fitness','Run 5km under 24 min; hard 30-min effort; resting HR under 60 bpm; VO2 max above average','5km under 22 min or 10km under 50 min; high intensity 45+ min; VO2 max well above average','5km under 19 min or 10km under 44 min; high intensity 60+ min without breaking down; elite VO2 max'],
+ strength:['Push-ups a real challenge; can\'t squat with good form; can\'t yet pull own bodyweight','5–10 knee push-ups; light goblet squat with guidance; learning the deadlift; inverted rows within reach','10–15 full push-ups; squat ½ bodyweight; deadlift ~75% BW; 2–4 pull-ups; reasonable bench','Squat bodyweight; deadlift 1.25× BW; bench 75% BW; 8+ pull-ups; 25 full push-ups','Squat 1.25× BW; deadlift 1.5–1.75× BW; bench bodyweight; 15+ pull-ups; overhead press 75% BW','Squat 1.5× BW; deadlift 2× BW; bench 1.25× BW; 20+ pull-ups, weighted +10–20kg','Squat 1.75×+ BW; deadlift 2.5×+ BW; bench 1.5× BW; 25+ pull-ups, weighted +20–30kg'],
+ movement:['Hard to rise from a chair without arms; one-leg balance unstable; floor get-up takes real effort','10 chair stands without hands; reverse lunge (hands on thighs ok); balance 5–10s; plank 15–20s','Bulgarian split squat (light); 40cm box step-up with weight; single-leg RDL 8–12kg; plank 30–40s','Assisted pistol squat; single-leg RDL 20kg; 50cm box jump; loaded lateral lunge; plank 45–60s','Unassisted pistol squat 3+; Nordic curls; single-arm KB overhead press; 60cm box jump; plank 60s+','Shrimp squats; L-sit 10s+; explosive single-leg squat jumps; multi-directional plyometrics','Full planche; muscle-ups for reps; handstand push-ups; gymnastics-level movement strength'],
+ mobility:['Can only reach toward the knees; deep squat near impossible; hips and upper back very tight','Forward fold to mid-shin; squat to parallel (heels slightly raised); hips starting to open','Fingers touch the floor in a forward fold; near full-depth squat; PVC pipe overhead while squatting','Overhead squat bodyweight; full-depth squat; decent thoracic rotation; hips move well under load','Overhead squat with light barbell; full thoracic rotation; deep, controlled hips in all directions','Loaded overhead barbell squat; full active flexibility; exceptional hips and thoracic spine','Full pancake; loaded overhead squat; elite active flexibility in every plane under meaningful load'],
+ conditioning:['Little/no exposure to kettlebells, carries or ropes; lifting and walking with weight breaks form fast','Carry 15–20kg per hand for 20m; light kettlebell deadlift; battle ropes for 20s','16kg KB swing ×20; carry 25kg per hand 40m; TRX rows in routine; light sled push 20m','24kg KB swing ×20; clean a 30kg sandbag; battle ropes 45s; moderately loaded sled push','Snatch 24kg KB ×10/side; 50kg sandbag to shoulder; tyre flip; unassisted rope climb','Snatch 32kg KB; atlas stones; weighted rope climb; loaded sled sprint; regular yoke carry','Complex 32kg KB snatch combos; full strongman (yoke carry, log press, atlas stones); heavy controlled carries']
+};
+var FIELDS={
+ cardio:[['walk2k','2 km walk time','min'],['fivek','5 km run time','min'],['rhr','Resting heart rate','bpm']],
+ strength:[['pushups','Push-ups (max)','reps'],['pullups','Pull-ups (max)','reps'],['squat','Back squat 1RM','kg'],['deadlift','Deadlift 1RM','kg'],['bench','Bench press 1RM','kg']],
+ movement:[['chairstands','Chair stands, no hands','reps'],['plank','Plank hold','sec'],['balance','One-leg balance','sec']],
+ mobility:[['sitreach','Sit-and-reach past toes (+/−)','cm']],
+ conditioning:[['carry','Carry per hand (20 m+)','kg'],['kbswing','Kettlebell swing ×20','kg'],['ropes','Battle ropes','sec']]
+};
+/* number → level, identical thresholds to the full S2S assessment */
+function numLevel(k,v,bw){
+  if(v===''||v==null||isNaN(v))return null;v=+v;
+  switch(k){
+    case 'walk2k':return v<=18?3:v<=22?2:1;
+    case 'fivek':return v<19?7:v<22?6:v<24?5:v<28?4:v<35?3:2;
+    case 'rhr':return v>90?1:v>75?2:v>65?3:v>=60?4:5;
+    case 'pushups':return v>=40?6:v>=25?5:v>=15?4:v>=10?3:v>=5?2:1;
+    case 'pullups':return v>=25?7:v>=20?6:v>=15?5:v>=8?4:v>=2?3:v>=1?2:1;
+    case 'squat':if(!bw)return null;v=v/bw;return v>=1.75?7:v>=1.5?6:v>=1.25?5:v>=1?4:v>=.75?3:v>=.5?2:1;
+    case 'deadlift':if(!bw)return null;v=v/bw;return v>=2.5?7:v>=2?6:v>=1.5?5:v>=1.25?4:v>=.75?3:v>=.5?2:1;
+    case 'bench':if(!bw)return null;v=v/bw;return v>=1.5?7:v>=1.25?6:v>=1?5:v>=.75?4:v>=.5?3:1;
+    case 'chairstands':return v>=15?3:v>=10?2:1;
+    case 'plank':return v>=60?5:v>=45?4:v>=30?3:v>=15?2:1;
+    case 'balance':return v>=30?4:v>=10?3:v>=5?2:1;
+    case 'sitreach':return v>20?7:v>14?6:v>8?5:v>2?4:v>-5?3:v>-15?2:1;
+    case 'carry':return v>=40?6:v>=25?4:v>=15?2:1;
+    case 'kbswing':return v>=32?5:v>=24?4:v>=16?3:v>=12?2:1;
+    case 'ropes':return v>=45?4:v>=30?3:v>=20?2:1;
+  }return null;
+}
+function waistLevel(w,sex){if(!w)return null;if(sex==='female'){return w<68?7:w<70?6:w<72?5:w<75?4:w<80?3:w<88?2:1;}return w<76?7:w<78?6:w<80?5:w<85?4:w<90?3:w<100?2:1;}
+function bfLevel(b,sex){if(!b)return null;if(sex==='female'){return b<16?7:b<20?6:b<24?5:b<30?4:b<35?3:b<40?2:1;}return b<8?7:b<12?6:b<15?5:b<20?4:b<25?3:b<30?2:1;}
+
+var A=st.a||{mode:null,step:0,intake:{},picks:{},nums:{}};
+st.a=A;
+if(!A.intake.name&&st.id.name)A.intake.name=st.id.name;
+if(!A.intake.email&&st.id.email)A.intake.email=st.id.email;
+if(!A.intake.phone&&st.id.phone)A.intake.phone=st.id.phone;
+function steps(){return ['mode','intake','profile'].concat(GATES).concat(['result']);}
+function setHead(){
+  var s=steps(),k=s[A.step]||'mode',tot=s.length-2,i=Math.max(0,A.step-1);
+  $('sv-atitle').textContent=k==='mode'?'Choose your assessment':k==='intake'?'About you':k==='profile'?'Your life outside the gym':k==='result'?'Your result':('Domain '+(A.step-2)+' of 5 · '+DOM[k]);
+  var pct=k==='mode'?0:k==='result'?100:Math.round(i/tot*100);
+  $('sv-apb').style.width=pct+'%';$('sv-apc').textContent=k==='mode'?'':k==='result'?'Complete':(pct+'%');
+}
+var BLOCKERS=['Accountability','Knowledge','Execution','Motivation','Decision-making'];
+var GOALS=['Lose fat','Build muscle','Get fitter and stronger','Health and energy','Manage a health condition','Something else'];
+function render(){
+  setHead();save();
+  var k=steps()[A.step], b=$('sv-abody'), h='';
+  if(k==='mode'){
+    h='<p style="color:var(--mu)">Pick the one that fits. Both give you an S2S level using the same rule as our full in-gym assessment.</p>'+
+      '<div class="modes"><button class="mode" data-mode="quick"><span class="tag">Recommended · 5 minutes</span><h3>Quick at-home assessment</h3><p>Five honest questions and two simple tests you can do in your living room: push-ups, chair stands and a plank.</p></button>'+
+      '<button class="mode" data-mode="full"><span class="tag">10–15 minutes · I already train</span><h3>Full 7-Level assessment</h3><p>The S2S benchmark matrix, word for word, with your own numbers (run times, lifts, carries) to check each level.</p></button></div>'+
+      (A.result?'<p class="note" style="margin-top:14px">You finished this already ('+esc(LV[A.result.level].n)+'). Starting again replaces your answer.</p>':
+       st.prog.assess?'<p style="margin-top:14px;padding:12px 14px;border-radius:10px;background:rgba(62,207,114,.1);border:1px solid rgba(62,207,114,.4);color:#9fe3b9;font-weight:600">✓ You have already completed your assessment, and your coach has your result. Only redo it if something has changed.</p>':'');
+  }else if(k==='intake'){
+    var I=A.intake;
+    h='<div class="fg">'+
+      fi('name','First name','text',I.name)+fi('email','Email','email',I.email)+fi('phone','Mobile','tel',I.phone)+
+      '<div><label class="f">Sex <small>(sets your body-composition guide)</small></label><div class="chips" data-chips="sex" data-single="1">'+['female','male'].map(function(x){return '<button type="button" class="chip'+(I.sex===x?' on':'')+'" data-v="'+x+'">'+(x==='female'?'Female':'Male')+'</button>';}).join('')+'</div></div>'+
+      fi('age','Age','number',I.age)+fi('weight','Weight (kg)','number',I.weight)+fi('height','Height (cm)','number',I.height)+
+      fi('waist','Waist at the belly button (cm) <small>optional</small>','number',I.waist)+(A.mode==='full'?fi('bodyfat','Body fat % <small>optional</small>','number',I.bodyfat):'')+
+      '<div class="full"><label class="f">Your main goal</label><div class="chips" data-chips="goal" data-single="1">'+GOALS.map(function(x){return '<button type="button" class="chip'+(I.goal===x?' on':'')+'" data-v="'+esc(x)+'">'+esc(x)+'</button>';}).join('')+'</div></div>'+
+      '<div class="full"><label class="f">What has got in the way before? <small>pick any</small></label><div class="chips" data-chips="blockers">'+BLOCKERS.map(function(x){return '<button type="button" class="chip'+((I.blockers||[]).indexOf(x)>=0?' on':'')+'" data-v="'+x+'">'+x+'</button>';}).join('')+'</div></div>'+
+      '<div class="full"><label class="f">Your training so far</label><div class="chips" data-chips="exp" data-single="1">'+['Never really trained','On and off','Regularly, under a year','Regularly, a year or more'].map(function(x){return '<button type="button" class="chip'+(I.exp===x?' on':'')+'" data-v="'+x+'">'+x+'</button>';}).join('')+'</div></div>'+
+      '<div><label class="f">Days a week you could train</label><div class="chips" data-chips="days" data-single="1">'+['1–2','3','4','5+'].map(function(x){return '<button type="button" class="chip'+(I.days===x?' on':'')+'" data-v="'+x+'">'+x+'</button>';}).join('')+'</div></div>'+
+      '<div><label class="f">Where are you based?</label><div class="chips" data-chips="where" data-single="1">'+['Adelaide','Elsewhere in Australia','Outside Australia'].map(function(x){return '<button type="button" class="chip'+(I.where===x?' on':'')+'" data-v="'+x+'">'+x+'</button>';}).join('')+'</div></div>'+
+      '<div class="full"><label class="f">Injuries, health conditions or medications your coach should know about <small>optional</small></label><textarea id="sv-i-health">'+esc(I.health||'')+'</textarea></div>'+
+      '<div class="full"><label class="f">Why now? What has made you want to start? <small>optional</small></label><textarea id="sv-i-why">'+esc(I.why||'')+'</textarea></div>'+
+      '<div class="full"><label class="f">Who else is part of this decision? <small>so we can invite them to the call</small></label><div class="chips" data-chips="decider" data-single="1">'+["Just me","My partner","My family","Someone else"].map(function(x){return '<button type="button" class="chip'+(I.decider===x?' on':'')+'" data-v="'+esc(x)+'">'+esc(x)+'</button>';}).join('')+'</div></div>'+
+      '<div class="full"><label class="f">What is your biggest hesitation right now? <small>pick any · honest answers help us prepare</small></label><div class="chips" data-chips="hesitation">'+["The cost","Finding the time","I have tried before and it did not last","Not sure it will work for me","I need to talk it over with someone","None, I am ready"].map(function(x){return '<button type="button" class="chip'+((I.hesitation||[]).indexOf(x)>=0?' on':'')+'" data-v="'+esc(x)+'">'+esc(x)+'</button>';}).join('')+'</div></div>'+
+      '<div class="full"><label class="f">If the plan is right for you, when could you start?</label><div class="chips" data-chips="startwhen" data-single="1">'+["This week","Within 2 weeks","Within a month","Not sure yet"].map(function(x){return '<button type="button" class="chip'+(I.startwhen===x?' on':'')+'" data-v="'+esc(x)+'">'+esc(x)+'</button>';}).join('')+'</div></div>'+
+      '<div class="full"><label class="f">How ready are you to start, from 1 (just looking) to 10 (ready this week)?</label><div class="chips scale" data-chips="ready" data-single="1">'+[1,2,3,4,5,6,7,8,9,10].map(function(x){return '<button type="button" class="chip'+(+I.ready===x?' on':'')+'" data-v="'+x+'">'+x+'</button>';}).join('')+'</div></div>'+
+      '<div class="full"><label style="display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--mu);cursor:pointer"><input type="checkbox" id="sv-i-consent" style="margin-top:3px;width:18px;height:18px;accent-color:#E8170D"'+(I.consent?' checked':'')+'><span>I agree to S2S Fit using my answers, including any health details, to prepare for my strategy call and coaching. They are only seen by the S2S coaching team.</span></label></div>'+
+      '</div>';
+  }else if(k==='profile'){
+    var I=A.intake;
+    h='<p style="color:var(--mu);margin-bottom:16px">One more quick screen. This is how your coach builds a plan around <b style="color:#fff">your real life</b>, not a template. Tap what fits; skip anything you would rather not answer.</p><div class="fg">'+
+      '<div class="full"><label class="f">Relationship</label><div class="chips" data-chips="marital" data-single="1">'+["Single","In a relationship","Married","Prefer not to say"].map(function(x){return '<button type="button" class="chip'+(I.marital===x?' on':'')+'" data-v="'+esc(x)+'">'+esc(x)+'</button>';}).join('')+'</div></div>'+
+      '<div class="full"><label class="f">Kids at home</label><div class="chips" data-chips="kids" data-single="1">'+["None","1","2","3 or more"].map(function(x){return '<button type="button" class="chip'+(I.kids===x?' on':'')+'" data-v="'+esc(x)+'">'+esc(x)+'</button>';}).join('')+'</div></div>'+
+      '<div><label class="f" for="sv-i-occupation">What do you do for work?</label><input id="sv-i-occupation" type="text" placeholder="e.g. Accountant, nurse, Uber driver" value="'+esc(I.occupation||'')+'"></div>'+
+      '<div><label class="f" for="sv-i-suburb">Suburb or city</label><input id="sv-i-suburb" type="text" placeholder="e.g. Mawson Lakes" value="'+esc(I.suburb||'')+'"></div>'+
+      '<div class="full"><label class="f">Your work day looks like</label><div class="chips" data-chips="work" data-single="1">'+["Desk job","On my feet all day","Shift work","I run my own business","Student","Home duties"].map(function(x){return '<button type="button" class="chip'+(I.work===x?' on':'')+'" data-v="'+esc(x)+'">'+esc(x)+'</button>';}).join('')+'</div></div>'+
+      '<div class="full"><label class="f">How you eat</label><div class="chips" data-chips="diet" data-single="1">'+["Vegetarian","Eggetarian","Non-vegetarian","Vegan","Something else"].map(function(x){return '<button type="button" class="chip'+(I.diet===x?' on':'')+'" data-v="'+esc(x)+'">'+esc(x)+'</button>';}).join('')+'</div></div>'+
+      '<div class="full"><label class="f">What do you enjoy? <small>pick any</small></label><div class="chips" data-chips="interests">'+["Cricket","Gym","Walking or running","Yoga","Other sports","Cooking","Travel","Family time","Movies and music","Gaming"].map(function(x){return '<button type="button" class="chip'+((I.interests||[]).indexOf(x)>=0?' on':'')+'" data-v="'+esc(x)+'">'+esc(x)+'</button>';}).join('')+'</div></div>'+
+      '<div class="full"><label class="f" for="sv-i-interestsOther">Anything else you love doing? <small>optional</small></label><input id="sv-i-interestsOther" type="text" value="'+esc(I.interestsOther||'')+'"></div>'+
+      '<div class="full"><label class="f">How did you hear about S2S Fit?</label><div class="chips" data-chips="heard" data-single="1">'+["Instagram","Facebook","Google","A friend or family member","At the gym","Somewhere else"].map(function(x){return '<button type="button" class="chip'+(I.heard===x?' on':'')+'" data-v="'+esc(x)+'">'+esc(x)+'</button>';}).join('')+'</div></div>'+
+      '<div class="full"><label class="f">What could you comfortably put towards your health each week? <small>optional</small></label><div class="chips" data-chips="budget" data-single="1">'+["Under $50","$50 to $100","$100 to $150","More than $150","I would rather discuss it on the call"].map(function(x){return '<button type="button" class="chip'+(I.budget===x?' on':'')+'" data-v="'+esc(x)+'">'+esc(x)+'</button>';}).join('')+'</div></div>'+
+      '</div>';
+  }else if(k==='result'){
+    h=resultHTML();
+  }else{
+    var opts=A.mode==='full'?FULL[k]:QUICK[k].o, pick=A.picks[k];
+    h='<div class="q"><div class="eyebrow">'+esc(DOM[k])+'</div><h3>'+esc(A.mode==='full'?(DOM[k]+': pick the level that matches you'):QUICK[k].q)+'</h3>'+
+      '<p class="how">'+esc(A.mode==='full'?'Choose the highest description where every part is true for you right now.':QUICK[k].how)+'</p><div class="opts">'+
+      opts.map(function(t,i){var L=i+1;return '<button type="button" class="opt'+(pick===L?' on':'')+'" style="--c:'+LV[L].c+'" data-pick="'+L+'"><span class="lv">'+L+'</span><span>'+esc(t)+'</span></button>';}).join('')+'</div>';
+    if(A.mode==='full'){var N=A.nums[k]||{};
+      h+='<details class="nums"'+(Object.keys(N).length?' open':'')+'><summary>Add your numbers (optional, makes it more accurate)</summary><div class="fg">'+
+        FIELDS[k].map(function(f){return '<div><label class="f">'+esc(f[1])+' <small>'+f[2]+'</small></label><input type="number" step="any" data-num="'+f[0]+'" value="'+esc(N[f[0]]==null?'':N[f[0]])+'"></div>';}).join('')+'</div>'+
+        '<p class="note" style="margin-top:8px">If a number points to a lower level than your pick, we use the lower one. Every part of a level has to be true.</p></details>';}
+    h+='</div>';
+  }
+  if(k!=='mode'&&k!=='result')h+='<div class="err" id="sv-aerr"></div><div class="nav"><button class="btn ghost" id="sv-back">← Back</button><button class="btn" id="sv-next">'+(A.step===steps().length-2?'See my result →':'Next →')+'</button></div>';
+  b.innerHTML=h;wire(k);
+}
+function fi(id,label,type,val){return '<div><label class="f" for="sv-i-'+id+'">'+label+'</label><input id="sv-i-'+id+'" type="'+type+'"'+(type==='number'?' step="any" inputmode="decimal"':'')+' value="'+esc(val==null?'':val)+'"></div>';}
+function wire(k){
+  var b=$('sv-abody');
+  b.querySelectorAll('[data-mode]').forEach(function(x){x.onclick=function(){fx('assess_start');A.mode=x.getAttribute('data-mode');A.picks={};A.nums={};A.result=null;A.step=1;render();scrollA();};});
+  b.querySelectorAll('[data-chips]').forEach(function(g){var key=g.getAttribute('data-chips'),single=g.hasAttribute('data-single');
+    g.querySelectorAll('.chip').forEach(function(c){c.onclick=function(){var v=c.getAttribute('data-v');
+      if(single){A.intake[key]=v;g.querySelectorAll('.chip').forEach(function(o){o.classList.toggle('on',o===c);});}
+      else{var arr=A.intake[key]=A.intake[key]||[];var i=arr.indexOf(v);if(i>=0)arr.splice(i,1);else arr.push(v);c.classList.toggle('on',i<0);}save();};});});
+  b.querySelectorAll('[data-pick]').forEach(function(x){x.onclick=function(){A.picks[k]=+x.getAttribute('data-pick');b.querySelectorAll('[data-pick]').forEach(function(o){o.classList.toggle('on',o===x);});save();};});
+  b.querySelectorAll('[data-num]').forEach(function(x){x.oninput=function(){var N=A.nums[k]=A.nums[k]||{};if(x.value==='')delete N[x.getAttribute('data-num')];else N[x.getAttribute('data-num')]=+x.value;save();};});
+  var bk=$('sv-back'),nx=$('sv-next');
+  if(bk)bk.onclick=function(){if(k==='intake')readIntake();if(k==='profile')readProfile();A.step=Math.max(0,A.step-1);render();scrollA();};
+  if(nx)nx.onclick=function(){
+    var e=$('sv-aerr');
+    if(k==='profile'){readProfile();}
+    else if(k==='intake'){readIntake();var I=A.intake,miss=[];
+      if(!I.name)miss.push('first name');if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(I.email||''))miss.push('a valid email');if(!I.sex)miss.push('sex');if(!I.age)miss.push('age');if(!I.weight)miss.push('weight');if(!I.goal)miss.push('your main goal');if(!I.consent)miss.push('your OK to use your answers (tick box)');
+      if(miss.length){e.textContent='Please add '+miss.join(', ')+'.';return;}
+      st.id.name=I.name;st.id.email=I.email.toLowerCase();st.id.phone=I.phone||st.id.phone;
+      var nv=vidOf(st.id.email);if(nv!==st.vid){st.vidOld=st.vid;st.vid=nv;}
+      fx('assess_intake');}
+    else if(!A.picks[k]){e.textContent='Pick the option that fits you best.';return;}
+    A.step++;if(steps()[A.step]==='result')finish();render();scrollA();};
+}
+function readProfile(){var I=A.intake;['occupation','suburb','interestsOther'].forEach(function(id){var el=$('sv-i-'+id);if(el)I[id]=el.value.trim().slice(0,120);});save();}
+function readIntake(){var I=A.intake;['name','email','phone','age','weight','height','waist','bodyfat'].forEach(function(id){var el=$('sv-i-'+id);if(el)I[id]=el.value.trim();});
+  ['health','why'].forEach(function(id){var el=$('sv-i-'+id);if(el)I[id]=el.value.trim();});var cs=$('sv-i-consent');if(cs)I.consent=cs.checked;
+  ['age','weight','height','waist','bodyfat'].forEach(function(id){if(I[id]!==''&&I[id]!=null)I[id]=+I[id];else delete I[id];});save();}
+function scrollA(){var el=$('sv-assess');if(el&&el.getBoundingClientRect().top<0)el.scrollIntoView({behavior:'smooth',block:'start'});}
+function compute(){
+  var I=A.intake,bw=+I.weight||0,d={};
+  GATES.forEach(function(k){var pick=A.picks[k],N=A.nums[k]||{},nl=null,fl={};
+    Object.keys(N).forEach(function(f){var L=numLevel(f,N[f],bw);if(L){fl[f]=L;nl=nl==null?L:Math.min(nl,L);}});
+    d[k]={pick:pick,numLevel:nl,fields:fl,nums:N,level:nl!=null?Math.min(pick,nl):pick};});
+  var ls=GATES.map(function(k){return d[k].level;}),lo=Math.min.apply(null,ls),hi=Math.max.apply(null,ls);
+  var weak=GATES.filter(function(k){return d[k].level===lo;});
+  var bcW=waistLevel(+I.waist,I.sex),bcF=bfLevel(+I.bodyfat,I.sex),bc=bcF||bcW||null;
+  return {mode:A.mode,level:lo,levelName:LV[lo].n,spread:{lo:lo,hi:hi},nextUnlock:lo<7?weak[0]:null,weakest:weak,domains:d,bodycomp:{level:bc,waist:I.waist||null,bodyfat:I.bodyfat||null},completedAt:new Date().toISOString()};
+}
+function finish(){
+  A.result=compute();st.prog.assess=A.result.completedAt;save();vReq=true;paintSteps();vReq=false;fx('assess_done');
+  A.sent='sending';send();
+}
+function send(){
+  var I=A.intake;
+  api('leadAssessmentSubmit',{email:I.email,name:I.name,phone:I.phone||'',intake:I,result:A.result,progress:{video:st.prog.video||0,pdf:st.prog.pdf||null,proof:st.prog.proof||null}})
+   .then(function(d){if(d&&d.voucher)setVoucher(d.voucher);else paintVoucher();A.sent='ok';save();var s=$('sv-sent');if(s){s.className='sent ok';s.textContent='✓ Sent to your coach';}})
+   .catch(function(){A.sent='bad';save();var s=$('sv-sent');if(s){s.className='sent bad';s.innerHTML='Couldn\'t send just now. <button class="btn ghost" style="padding:7px 12px;font-size:13px" id="sv-retry">Try again</button>';var r=$('sv-retry');if(r)r.onclick=function(){s.className='sent';s.textContent='Sending…';send();};}});
+}
+function resultHTML(){
+  var R=A.result;if(!R)return '';var L=LV[R.level];
+  var bars=GATES.map(function(k){var v=R.domains[k].level;return '<div class="bar"><div class="bl"><span>'+DOM[k]+'</span><em>Level '+v+(R.weakest.indexOf(k)>=0&&R.level<7?' · your next unlock':'')+'</em></div><div class="bt">'+[1,2,3,4,5,6,7].map(function(i){return '<i style="'+(i<=v?'background:'+LV[v].c:'')+'"></i>';}).join('')+'</div></div>';}).join('');
+  if(R.bodycomp.level)bars+='<div class="bar" style="opacity:.75"><div class="bl"><span>Body composition</span><em>Level '+R.bodycomp.level+' · a guide, never a gate</em></div><div class="bt">'+[1,2,3,4,5,6,7].map(function(i){return '<i style="'+(i<=R.bodycomp.level?'background:#777':'')+'"></i>';}).join('')+'</div></div>';
+  var sent=A.sent==='ok'?'<div class="sent ok" id="sv-sent">✓ Sent to your coach</div>':A.sent==='bad'?'<div class="sent bad" id="sv-sent">Couldn\'t send.</div>':'<div class="sent" id="sv-sent">Sending to your coach…</div>';
+  return '<div class="res" style="--c:'+L.c+'"><div class="eyebrow">Your estimated S2S level</div><div class="badge"><b>'+R.level+'</b></div>'+
+    '<div class="lname">'+esc(L.n)+'</div><div class="ltag">'+esc(L.t)+'</div><p class="cheer">'+esc(L.ch)+'</p>'+
+    '<div class="rmeta"><span>Spread across domains: Level '+R.spread.lo+'–'+R.spread.hi+'</span>'+(R.nextUnlock?'<span>Next unlock: <b>'+DOM[R.nextUnlock]+'</b></span>':'')+'<span>'+(R.mode==='full'?'Full assessment':'Quick assessment')+'</span></div>'+
+    '<div class="bars">'+bars+'</div>'+
+    '<p style="color:var(--mu);font-size:14.5px;max-width:560px;margin:20px auto 0">Your level is set by your <b style="color:#fff">weakest</b> domain, so moving up always means you have become fitter all-round. On the call we\'ll confirm it and build your plan around your next unlock.</p>'+
+    sent+'<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px">'+(st.voucher&&st.voucher.code?'<a class="btn" href="#sv-voucher">🔐 Your $'+st.voucher.amount+' is reserved</a>':'<a class="btn" href="#sv-fit">Keep reading ↓</a>')+'<button class="btn ghost" id="sv-redo">Start again</button></div>'+
+    '<p class="note" style="margin-top:16px">An estimate from your own answers, not a medical assessment.</p></div>';
+}
+$('sv-abody').addEventListener('click',function(e){if(e.target&&e.target.id==='sv-redo'){A.step=0;A.result=null;A.sent=null;render();scrollA();}});
+if(A.step>0&&A.result&&A.sent!=='ok'&&steps()[A.step]==='result'){A.sent='sending';send();}
+render();
+})();
+</script>
+</body>
+</html>
