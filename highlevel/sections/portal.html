@@ -2005,6 +2005,48 @@ table.mc-mx tbody tr:last-child td,table.mc-mx tbody tr:last-child th{border-bot
 .mc-proj-ic{font-size:20px}
 .mc-proj-n{font-size:10.5px;font-weight:700;text-align:center;line-height:1.1;color:var(--text)}
 .mc-proj-tr{font-family:var(--disp);font-weight:900;font-size:18px}
+/* ── daily report (shift debrief) ── */
+.db-sec{border:1px solid var(--border);border-radius:14px;background:var(--card);padding:12px;margin:0 0 12px}
+.db-sec-h{font-weight:800;font-size:12.5px;margin:0 0 9px}
+.db-ktiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.db-ktile{background:var(--card2);border-radius:11px;padding:9px 4px;text-align:center}
+.db-ktile .v{font-family:var(--disp);font-weight:900;font-size:17px;line-height:1}
+.db-ktile .k{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin-top:3px}
+.db-calrow{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.db-cchip{font-size:11px;font-weight:800;color:var(--muted);background:var(--card2);border-radius:20px;padding:4px 10px}
+.db-cnts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px}
+.db-cnt{display:flex;flex-direction:column;gap:3px}
+.db-cnt label{font-size:11px;font-weight:700;color:var(--muted)}
+.db-cnt input{width:100%}
+.db-issform{display:flex;gap:7px;margin-bottom:7px}
+.db-issform input{flex:1;min-width:0}
+.db-iss-row{display:flex;align-items:center;gap:9px;background:var(--card2);border-radius:11px;padding:8px 10px;margin-bottom:6px}
+.db-ptsbar{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#1b1e22,#2a1f16);color:#fff;border-radius:14px;padding:12px 16px;margin-top:4px;font-weight:800}
+.db-ptsval{font-family:var(--disp);font-weight:900;font-size:28px;color:var(--gold)}
+/* ── weekend performance report deck ── */
+.pr-deck{display:flex;flex-direction:column;gap:14px}
+.pr-slide{border:1px solid var(--border);border-radius:16px;background:var(--card);padding:16px}
+.pr-cover{background:linear-gradient(140deg,#15181c,#241a1f);color:#fff;border:none}
+.pr-kick{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#ff9a90}
+.pr-title{font-family:var(--disp);font-weight:900;font-size:24px;text-transform:uppercase;line-height:1;margin:4px 0}
+.pr-headline{font-size:14px;color:#e7e3dd;margin-top:6px}
+.pr-cover-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.pr-cover-stats>div{background:rgba(255,255,255,.1);border-radius:11px;padding:9px 4px;text-align:center}
+.pr-cover-stats b{display:block;font-family:var(--disp);font-weight:900;font-size:19px}
+.pr-cover-stats span{font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;opacity:.85;font-weight:800}
+.pr-sh{font-family:var(--disp);font-weight:900;font-size:19px;text-transform:uppercase;margin-bottom:6px}
+.pr-subh{font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:10px 0 4px}
+.pr-p{font-size:13px;line-height:1.55;margin:4px 0 8px}
+.pr-list{list-style:none;padding:0;margin:0 0 6px;display:flex;flex-direction:column;gap:5px}
+.pr-list li{font-size:12.5px;line-height:1.4;padding-left:2px}
+.pr-coach-h{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.pr-coach-n{font-family:var(--disp);font-weight:900;font-size:20px;text-transform:uppercase}
+.pr-grade{margin-left:auto;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;padding:4px 11px;border-radius:20px;background:var(--card2);color:var(--text)}
+.pr-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:6px}
+.pr-m{background:var(--card2);border-radius:11px;padding:9px 4px;text-align:center}
+.pr-m b{display:block;font-family:var(--disp);font-weight:900;font-size:17px}
+.pr-m span{font-size:9px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:800}
+.pr-foot{font-size:11px;color:var(--muted);text-align:center;padding:4px 0 2px}
 /* Day-type editor: meals left, sticky target/allocated panel right */
 .dt-cols{display:flex;gap:16px;align-items:stretch}
 .dt-main{flex:1;min-width:0}
@@ -5599,6 +5641,13 @@ img,svg,canvas,video{max-width:100%}
     </div>
   </div>
 </div>
+<!-- ============ TEAM · WEEKEND PERFORMANCE REPORT (owner → head coach) ============ -->
+<div class="overlay" id="perf-week-modal">
+  <div class="modal">
+    <div class="modal-head"><div class="brand-logo admin-logo" role="img" aria-label="S2S Fit"></div><h2>📊 Weekend performance briefing</h2><span class="sp"></span><button class="icon-x" onclick="teamCloseWeekReport()">×</button></div>
+    <div class="modal-body"><div id="perf-week-host"><div class="empty">Loading…</div></div></div>
+  </div>
+</div>
 <!-- ============ ADMIN · PLAN UPDATES (training & nutrition allocations) ============ -->
 <div class="overlay" id="alloc-modal">
   <div class="modal">
@@ -6770,6 +6819,8 @@ const PUSH_URL      = 'https://iiaqezfiqkonajqqcrcj.supabase.co/functions/v1/s2s
 const VAPID_PUBLIC  = 'BFYyDtgiEsQ1cGZLNnmkt9nSYXz-fytzBWviiPw0GGD81DjANCXktL9zsf3zLhyzzjXBPUF1B54Cdns8dfr86l8';
 /* AI check-in triage edge function (coach reads/ranks every check-in; client auto-triggers on submit). */
 const TRIAGE_URL    = 'https://iiaqezfiqkonajqqcrcj.supabase.co/functions/v1/s2s-checkin-triage';
+/* AI weekly coach performance report (owner → weekend head-coach briefing). */
+const PERF_URL      = 'https://iiaqezfiqkonajqqcrcj.supabase.co/functions/v1/s2s-perf-report';
 /* Demo-only fallback admin password (used when API_URL is blank; the real one lives
    as a secret inside the Edge Function in secure mode). */
 const ADMIN_PASSWORD    = 'demo-only';   // demo mode (this device) only — the live owner password is the ADMIN_PASSWORD secret on super-api; never put it here
@@ -6781,7 +6832,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04qs';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04qt';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -23643,7 +23694,7 @@ function teamRenderShift(){const host=$('team-shift-host');if(!host)return;const
 /* ---- performance ---- */
 function teamSetPerfWho(v){TEAM_PERF_WHO=v;teamRenderPerf();}
 function teamSetPerfRange(n){TEAM_PERF_RANGE=+n;teamRenderPerf();}
-async function teamRenderPerf(){const host=$('team-perf-host');if(!host)return;const owner=teamIsOwner();const staff=await teamStaffList();
+async function teamRenderPerf(){const host=$('team-perf-host');if(!host)return;const owner=teamIsOwner();const staff=await teamStaffList();await teamEnsureCalls();
   if(!owner)TEAM_PERF_WHO=teamStaffId();else if(TEAM_PERF_WHO==null)TEAM_PERF_WHO='all';
   const from=addDaysISO(todayISO(),-(TEAM_PERF_RANGE-1));
   const whoMatch=x=>(TEAM_PERF_WHO==='all')?true:(x===TEAM_PERF_WHO);
@@ -23652,6 +23703,15 @@ async function teamRenderPerf(){const host=$('team-perf-host');if(!host)return;c
   const worked=shifts.reduce((a,s)=>a+teamShiftSeconds(s),0),tracked=logs.reduce((a,l)=>a+(l.seconds||0),0);
   const tasksDone=TEAM.events.filter(e=>{if(e.kind!=='task')return false;if(!whoMatch(e.assignee))return false;if((e.recur||'none')==='none')return e.status==='done'&&(e.doneAt||'').slice(0,10)>=from;return (e.doneDates||[]).some(d=>d>=from);}).length;
   const byCat={};logs.forEach(l=>{const c=l.category||'Uncategorised';byCat[c]=(byCat[c]||0)+(l.seconds||0);});const cats=Object.keys(byCat).sort((a,b)=>byCat[b]-byCat[a]);
+  // ── daily-report aggregates over the range (self-reported output + issues + points) + auto call KPIs ──
+  const debs=shifts.map(s=>s.debrief).filter(x=>x&&x.at);
+  const sumC=f=>debs.reduce((a,x)=>a+(+((x.counts||{})[f])||0),0);
+  const output={woCreated:sumC('woCreated'),woUpdated:sumC('woUpdated'),dietCreated:sumC('dietCreated'),dietUpdated:sumC('dietUpdated'),issuesResolved:sumC('issuesResolved')};
+  const issuesFlagged=debs.reduce((a,x)=>a+((x.issues||[]).length),0);
+  const points=debs.reduce((a,x)=>a+(+x.points||0),0);
+  let calls;const _to=todayISO();
+  if(TEAM_PERF_WHO==='all'){calls={onboarding:0,revision:0,checkin:0,normal:0,total:0};staff.forEach(s=>{const k=teamCallsFor(s.name,from,_to);['onboarding','revision','checkin','normal','total'].forEach(f=>calls[f]+=k[f]);});}
+  else calls=teamCallsFor(teamStaffNameById(TEAM_PERF_WHO),from,_to);
   let h='<div class="team-cal-head">';
   if(owner)h+='<div class="field" style="margin:0;max-width:170px"><label class="lab">Staff</label><select onchange="teamSetPerfWho(this.value)"><option value="all"'+(TEAM_PERF_WHO==='all'?' selected':'')+'>All staff</option>'+staff.map(s=>'<option value="'+esc(s.id)+'"'+(TEAM_PERF_WHO===s.id?' selected':'')+'>'+esc(s.name)+'</option>').join('')+'</select></div>';
   else h+='<b>My performance</b>';
@@ -23660,14 +23720,94 @@ async function teamRenderPerf(){const host=$('team-perf-host');if(!host)return;c
      '<div class="wko-sumtile"><div class="v">'+teamHM(tracked)+'</div><div class="k">Time on tasks</div></div>'+
      '<div class="wko-sumtile"><div class="v">'+tasksDone+'</div><div class="k">Tasks done</div></div>'+
      '<div class="wko-sumtile"><div class="v">'+(worked>0?Math.min(100,Math.round(tracked/worked*100)):0)+'%</div><div class="k">Tracked / worked</div></div></div>';
+  h+='<div class="wko-sumgrid" style="margin-top:10px"><div class="wko-sumtile"><div class="v" style="color:var(--gold)">'+points+'</div><div class="k">Points</div></div>'+
+     '<div class="wko-sumtile"><div class="v">'+(calls.total||0)+'</div><div class="k">Calls</div></div>'+
+     '<div class="wko-sumtile"><div class="v">'+(output.woCreated+output.woUpdated)+'</div><div class="k">Workouts</div></div>'+
+     '<div class="wko-sumtile"><div class="v">'+(output.dietCreated+output.dietUpdated)+'</div><div class="k">Diet plans</div></div></div>';
+  h+='<div class="small" style="color:var(--muted);margin:8px 2px 0;line-height:1.6">📞 '+calls.onboarding+' onboarding · '+calls.revision+' revision · '+calls.checkin+' check-in · '+calls.normal+' normal &nbsp;|&nbsp; 📦 '+output.woCreated+' WO new / '+output.woUpdated+' upd · '+output.dietCreated+' diet new / '+output.dietUpdated+' upd &nbsp;|&nbsp; 🚩 '+issuesFlagged+' flagged / '+output.issuesResolved+' resolved</div>';
+  if(owner)h+='<div style="margin:14px 0 2px"><button class="btn btn-primary" style="width:100%" onclick="teamOpenWeekReport()">📊 Generate the weekend performance report</button><div class="small" style="color:var(--muted);text-align:center;margin-top:5px">AI briefing of the whole team’s week for the head coach</div></div>';
   if(cats.length){const max=Math.max.apply(null,cats.map(c=>byCat[c]))||1;h+='<div class="uline" style="margin:14px 0 6px">Time by category</div>'+cats.map(c=>'<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>'+esc(c)+'</span><b>'+teamHM(byCat[c])+'</b></div><div style="height:8px;background:var(--card2);border-radius:5px;overflow:hidden;margin-top:3px"><i style="display:block;height:100%;width:'+Math.round(byCat[c]/max*100)+'%;background:var(--red)"></i></div></div>').join('');}
-  if(owner&&TEAM_PERF_WHO==='all'){const per={};staff.forEach(s=>per[s.id]={name:s.name,worked:0,tracked:0});
-    TEAM.shifts.filter(s=>s.dateISO>=from).forEach(s=>{if(per[s.staffId])per[s.staffId].worked+=teamShiftSeconds(s);});
+  if(owner&&TEAM_PERF_WHO==='all'){const per={};staff.forEach(s=>per[s.id]={name:s.name,worked:0,tracked:0,points:0,calls:0});
+    TEAM.shifts.filter(s=>s.dateISO>=from).forEach(s=>{if(per[s.staffId]){per[s.staffId].worked+=teamShiftSeconds(s);if(s.debrief&&s.debrief.at)per[s.staffId].points+=(+s.debrief.points||0);}});
     logs.forEach(l=>{if(per[l.staffId])per[l.staffId].tracked+=(l.seconds||0);});
-    const rows=Object.keys(per).filter(k=>per[k].worked||per[k].tracked).sort((a,b)=>per[b].worked-per[a].worked);
-    if(rows.length)h+='<div class="uline" style="margin:16px 0 6px">By staff</div><div class="tbl-scroll"><table class="itbl"><thead><tr><th style="text-align:left">Staff</th><th>Worked</th><th>On tasks</th></tr></thead><tbody>'+rows.map(k=>'<tr><td style="text-align:left">'+esc(per[k].name)+'</td><td class="wk-1rm">'+teamHM(per[k].worked)+'</td><td>'+teamHM(per[k].tracked)+'</td></tr>').join('')+'</tbody></table></div>';}
+    staff.forEach(s=>{if(per[s.id])per[s.id].calls=teamCallsFor(s.name,from,_to).total;});
+    const rows=Object.keys(per).filter(k=>per[k].worked||per[k].tracked||per[k].points||per[k].calls).sort((a,b)=>per[b].points-per[a].points||per[b].worked-per[a].worked);
+    if(rows.length)h+='<div class="uline" style="margin:16px 0 6px">By staff · this range</div><div class="tbl-scroll"><table class="itbl"><thead><tr><th style="text-align:left">Staff</th><th>Pts</th><th>Worked</th><th>Calls</th></tr></thead><tbody>'+rows.map((k,i)=>'<tr><td style="text-align:left">'+(i===0&&per[k].points>0?'🏆 ':'')+esc(per[k].name)+'</td><td style="color:var(--gold);font-weight:800">'+per[k].points+'</td><td class="wk-1rm">'+teamHM(per[k].worked)+'</td><td>'+per[k].calls+'</td></tr>').join('')+'</tbody></table></div>';}
   if(!logs.length&&!shifts.length)h+='<div class="small" style="color:var(--muted);margin-top:14px">No activity in this range yet — clock a shift and run a task timer to populate this.</div>';
   host.innerHTML=h;}
+/* ═══════════ TEAM — weekend AI performance report (owner → head coach) ═══════════ */
+let TEAM_WEEK_REC=null;
+async function perfReportApi(payload){
+  const headers={'Content-Type':'application/json'};
+  if(SUPABASE_ANON_KEY){headers['apikey']=SUPABASE_ANON_KEY;headers['Authorization']='Bearer '+SUPABASE_ANON_KEY;}
+  const res=await fetch(PERF_URL,{method:'POST',headers,body:JSON.stringify(Object.assign({token:DB.token},payload||{}))});
+  let j={};try{j=await res.json();}catch(e){}
+  if(!res.ok||j.error)throw new Error(j.error||('Request failed ('+res.status+')'));
+  return j.data;
+}
+async function teamOpenWeekReport(force){
+  if(!teamIsOwner()){toast('Owner only',true);return;}
+  const m=$('perf-week-modal');if(m)m.classList.add('open');
+  const host=$('perf-week-host');if(host)host.innerHTML='<div class="empty" style="padding:44px">'+(force?'Generating the briefing…':'Loading the week…')+'</div>';
+  await teamEnsureCalls();
+  const staff=await teamStaffList();
+  const from=teamISOf(wkWeekStart(todayISO())), to=todayISO();
+  const label='Week of '+fmtDate(from)+' – '+fmtDate(to);
+  if(!force){try{const cached=await DB.getKV('team_week_report');if(cached&&cached.from===from&&cached.data){TEAM_WEEK_REC=cached;if(host)host.innerHTML=teamWeekReportHTML(cached.data,cached);return;}}catch(e){}}
+  const coaches=[];const team={coaches:0,hours:0,breaks:0,calls:{onboarding:0,revision:0,checkin:0,normal:0,total:0},output:{woCreated:0,woUpdated:0,dietCreated:0,dietUpdated:0,issuesResolved:0},issuesFlagged:0,points:0,debriefsFilled:0,shifts:0};
+  staff.forEach(s=>{
+    const shifts=TEAM.shifts.filter(x=>x.staffId===s.id&&x.dateISO>=from&&x.dateISO<=to);
+    if(!shifts.length)return;
+    const debs=shifts.map(x=>x.debrief).filter(x=>x&&x.at);
+    const worked=shifts.reduce((a,x)=>a+teamShiftSeconds(x),0);
+    const breaks=shifts.reduce((a,x)=>a+teamBreakSeconds(x),0);
+    const tracked=TEAM.logs.filter(l=>l.staffId===s.id&&l.dateISO>=from&&l.dateISO<=to).reduce((a,l)=>a+(l.seconds||0),0);
+    const sc=f=>debs.reduce((a,x)=>a+(+((x.counts||{})[f])||0),0);
+    const output={woCreated:sc('woCreated'),woUpdated:sc('woUpdated'),dietCreated:sc('dietCreated'),dietUpdated:sc('dietUpdated'),issuesResolved:sc('issuesResolved')};
+    const calls=teamCallsFor(s.name,from,to);
+    const issuesFlagged=debs.reduce((a,x)=>a+((x.issues||[]).length),0);
+    const flaggedIssues=[];debs.forEach(x=>(x.issues||[]).forEach(i=>flaggedIssues.push({client:i.client,severity:i.severity,note:i.note})));
+    const points=debs.reduce((a,x)=>a+(+x.points||0),0);
+    const ratings=debs.map(x=>+x.rating).filter(n=>n>0);const avgRating=ratings.length?(ratings.reduce((a,n)=>a+n,0)/ratings.length).toFixed(1):'';
+    const lowEnergyDays=debs.filter(x=>x.energy==='low').length;
+    const notes=debs.map(x=>{const bits=[];if(x.done)bits.push('done: '+x.done);if(x.blockers)bits.push('blockers: '+x.blockers);return bits.length?((x.at||'').slice(0,10)+' — '+bits.join('; ')):'';}).filter(Boolean);
+    const util=worked>0?Math.min(100,Math.round(tracked/worked*100)):0;
+    coaches.push({name:s.name,hours:worked/3600,breaks:breaks/3600,utilisationPct:util,shifts:shifts.length,debriefs:debs.length,calls:calls,output:output,issuesFlagged:issuesFlagged,issuesResolved:output.issuesResolved,points:points,avgRating:avgRating,lowEnergyDays:lowEnergyDays,notes:notes,flaggedIssues:flaggedIssues});
+    team.coaches++;team.hours+=worked/3600;team.breaks+=breaks/3600;team.points+=points;team.issuesFlagged+=issuesFlagged;team.debriefsFilled+=debs.length;team.shifts+=shifts.length;
+    ['onboarding','revision','checkin','normal','total'].forEach(f=>team.calls[f]+=calls[f]);
+    ['woCreated','woUpdated','dietCreated','dietUpdated','issuesResolved'].forEach(f=>team.output[f]+=output[f]);
+  });
+  if(!coaches.length){if(host)host.innerHTML='<div class="empty" style="padding:40px">No shift data logged for this week yet. Coaches need to clock shifts and file their daily reports first.</div>';return;}
+  if(DB.mode!=='api'||!DB.token){if(host)host.innerHTML='<div class="empty" style="padding:30px">The AI report needs the secure (online) mode with an admin session.</div>';return;}
+  let data;
+  try{data=await perfReportApi({weekLabel:label,from:from,to:to,team:team,coaches:coaches});}
+  catch(e){if(host)host.innerHTML='<div class="empty" style="padding:30px;color:var(--red)">Could not generate: '+esc((e&&e.message)||'error')+'<div style="margin-top:10px"><button class="btn-sm" onclick="teamOpenWeekReport(true)">Try again</button></div></div>';return;}
+  const rec={from:from,to:to,label:label,data:data,team:team,coaches:coaches,at:Date.now()};
+  TEAM_WEEK_REC=rec;
+  try{await DB.setKV('team_week_report',rec);}catch(e){}
+  if(host)host.innerHTML=teamWeekReportHTML(data,rec);
+}
+function teamCloseWeekReport(){const m=$('perf-week-modal');if(m)m.classList.remove('open');}
+function teamWeekReportHTML(data,rec){
+  data=data||{};const t=(rec&&rec.team)||{};const label=(rec&&rec.label)||'This week';
+  const chip=(arr,cls,ic)=>(arr&&arr.length)?('<ul class="pr-list '+cls+'">'+arr.map(x=>'<li>'+ic+' '+esc(x)+'</li>').join('')+'</ul>'):'';
+  let h='<div class="pr-deck">';
+  h+='<div class="pr-slide pr-cover"><div class="pr-kick">Weekend performance briefing</div><div class="pr-title">'+esc(label)+'</div>'+(data.headline?'<div class="pr-headline">'+esc(data.headline)+'</div>':'')+
+     '<div class="pr-cover-stats">'+[[t.coaches||0,'Coaches'],[Math.round(t.hours||0)+'h','Worked'],[(t.calls||{}).total||0,'Calls'],[t.points||0,'Points']].map(x=>'<div><b>'+x[0]+'</b><span>'+x[1]+'</span></div>').join('')+'</div></div>';
+  h+='<div class="pr-slide"><div class="pr-sh">Team overview</div>'+(data.teamSummary?'<p class="pr-p">'+esc(data.teamSummary)+'</p>':'')+
+     chip(data.teamHighlights,'good','✅')+chip(data.teamConcerns,'warn','⚠️')+((data.teamRecommendations&&data.teamRecommendations.length)?('<div class="pr-subh">Recommendations</div>'+chip(data.teamRecommendations,'rec','→')):'')+'</div>';
+  (data.coaches||[]).forEach(c=>{
+    const m=((rec&&rec.coaches)||[]).find(x=>String(x.name).toLowerCase()===String(c.name).toLowerCase())||{};
+    const k=m.calls||{};const o=m.output||{};
+    h+='<div class="pr-slide"><div class="pr-coach-h"><span class="pr-coach-n">'+esc(c.name)+'</span>'+(c.grade?'<span class="pr-grade">'+esc(c.grade)+'</span>':'')+'</div>'+
+       '<div class="pr-metrics">'+[[(m.hours!=null?(+m.hours).toFixed(1)+'h':'—'),'Worked'],[m.points||0,'Points'],[(k.total||0),'Calls'],[(m.utilisationPct||0)+'%','Utilisation']].map(x=>'<div class="pr-m"><b>'+x[0]+'</b><span>'+x[1]+'</span></div>').join('')+'</div>'+
+       '<div class="small" style="color:var(--muted);margin:2px 0 4px;line-height:1.6">📦 '+((o.woCreated||0)+(o.woUpdated||0))+' workouts · '+((o.dietCreated||0)+(o.dietUpdated||0))+' diet plans · 🚩 '+(m.issuesFlagged||0)+' flagged / '+(m.issuesResolved||0)+' resolved · debriefs '+(m.debriefs||0)+'/'+(m.shifts||0)+(m.avgRating?' · rating '+m.avgRating+'/5':'')+'</div>'+
+       (c.summary?'<p class="pr-p">'+esc(c.summary)+'</p>':'')+chip(c.highlights,'good','✅')+chip(c.concerns,'warn','⚠️')+((c.recommendations&&c.recommendations.length)?('<div class="pr-subh">Next week</div>'+chip(c.recommendations,'rec','→')):'')+'</div>';
+  });
+  h+='<div class="pr-foot">Figures are exact from the logs; the narrative is AI-written from the daily reports, time tracking and call logs. <button class="btn-xxs" onclick="teamOpenWeekReport(true)">🔄 Regenerate</button> <button class="btn-xxs" onclick="teamCopyWeekReport()">📋 Copy</button></div></div>';
+  return h;
+}
+function teamCopyWeekReport(){const rec=TEAM_WEEK_REC;if(!rec||!rec.data){toast('Nothing to copy',true);return;}const d=rec.data;const NL=String.fromCharCode(10);const L=[];L.push('WEEKEND PERFORMANCE BRIEFING — '+(rec.label||''));if(d.headline)L.push(d.headline);L.push('');if(d.teamSummary)L.push('TEAM: '+d.teamSummary);(d.teamHighlights||[]).forEach(x=>L.push('  + '+x));(d.teamConcerns||[]).forEach(x=>L.push('  ! '+x));(d.teamRecommendations||[]).forEach(x=>L.push('  -> '+x));L.push('');(d.coaches||[]).forEach(c=>{L.push('— '+c.name+(c.grade?' ['+c.grade+']':''));if(c.summary)L.push('  '+c.summary);(c.highlights||[]).forEach(x=>L.push('  + '+x));(c.concerns||[]).forEach(x=>L.push('  ! '+x));(c.recommendations||[]).forEach(x=>L.push('  -> '+x));L.push('');});try{navigator.clipboard.writeText(L.join(NL));toast('Report copied ✓');}catch(e){toast('Copy failed',true);}}
 /* ═══════════ TEAM — PROJECT MANAGEMENT (projects → tasks → subtasks, docs, timers) ═══════════ */
 let TEAM_STAFF=[], TEAM_PROJ_TASK_FORM=null, TEAM_DEBRIEF=null;
 function teamPrioMeta(p){return {urgent:{l:'Urgent',c:'var(--red)'},high:{l:'High',c:'#ff7a2f'},medium:{l:'Medium',c:'var(--gold)'},low:{l:'Low',c:'var(--prot)'}}[p||'medium']||{l:'Medium',c:'var(--gold)'};}
@@ -23959,28 +24099,103 @@ async function teamProjUploadDoc(pid,input){const f=input&&input.files&&input.fi
 async function teamProjDelDoc(pid,did){const p=teamProjGet(pid);if(!p)return;p.docs=(p.docs||[]).filter(d=>d.id!==did);await teamSave('projects');teamRenderProjects();}
 /* ═══════════ TEAM — SHIFT DEBRIEF FORM → REPORT ═══════════ */
 function teamShiftTasksWorked(sh){if(!sh)return [];const inAt=Date.parse(sh.clockIn),outAt=sh.clockOut?Date.parse(sh.clockOut):Date.now();const by={};(TEAM.logs||[]).filter(l=>l.staffId===sh.staffId&&Date.parse(l.startAt||l.endAt||0)>=inAt-60000&&Date.parse(l.startAt||l.endAt||0)<=outAt+60000).forEach(l=>{const k=l.taskId||l.title;by[k]=by[k]||{title:l.title,seconds:0};by[k].seconds+=(l.seconds||0);});return Object.keys(by).map(k=>by[k]).sort((a,b)=>b.seconds-a.seconds);}
+/* ═══════════ TEAM — daily report: points · call KPIs (auto) · client-issue flags ═══════════ */
+const TEAM_PTS={woCreated:12,woUpdated:5,dietCreated:14,dietUpdated:6,onboardingCall:18,revisionCall:12,checkinCall:10,normalCall:3,issueFlagged:3,issueResolved:12,perHour:4,taskDone:4};
+let TEAM_CALLS_LOADED=false;
+async function teamEnsureCalls(){try{if(TEAM_CALLS_LOADED&&Array.isArray(CALLS))return;CALLS=await DB.listCallLogs();TEAM_CALLS_LOADED=true;}catch(e){CALLS=Array.isArray(CALLS)?CALLS:[];}}
+function teamCallCat(ty){ty=(ty||'').toLowerCase();if(ty.indexOf('onboard')>=0)return 'onboarding';if(ty.indexOf('revision')>=0)return 'revision';if(ty.indexOf('check-in')>=0||ty.indexOf('checkin')>=0)return 'checkin';return 'normal';}
+/* calls a coach made in a date window — matched on handled_by === their name (scheduled rows excluded) */
+function teamCallsFor(staffName,fromISO,toISO){const o={onboarding:0,revision:0,checkin:0,normal:0,total:0};const nm=(staffName||'').trim().toLowerCase();
+  (CALLS||[]).forEach(r=>{if(!r||r.answered==='scheduled')return;const d=String(r.call_at||'').slice(0,10);if(!d)return;if(fromISO&&d<fromISO)return;if(toISO&&d>toISO)return;const hb=(r.handled_by||'').trim().toLowerCase();if(nm){if(!hb||hb!==nm)return;}o[teamCallCat(r.call_type)]++;o.total++;});return o;}
+function teamCallsForDay(staffName,dateISO){return teamCallsFor(staffName,dateISO,dateISO);}
+function teamBreakSeconds(sh){return (sh.breaks||[]).reduce((a,b)=>a+((b.end?Date.parse(b.end):Date.now())-Date.parse(b.start))/1000,0)+(sh.onBreakSince?Math.max(0,(Date.now()-Date.parse(sh.onBreakSince))/1000):0);}
+/* points for one day's debrief: self-reported output + auto call KPIs + issues + hours + tasks */
+function teamDebriefPoints(d,calls,workedSec,tasksDone){d=d||{};const c=d.counts||{};const k=calls||{};const rows=[];
+  const add=(label,n,per)=>{n=+n||0;if(n>0&&per>0)rows.push({label:label,n:n,pts:Math.round(n*per)});};
+  add('Workouts created',c.woCreated,TEAM_PTS.woCreated);add('Workouts updated',c.woUpdated,TEAM_PTS.woUpdated);
+  add('Diet plans created',c.dietCreated,TEAM_PTS.dietCreated);add('Diet plans updated',c.dietUpdated,TEAM_PTS.dietUpdated);
+  add('Onboarding calls',k.onboarding,TEAM_PTS.onboardingCall);add('Revision calls',k.revision,TEAM_PTS.revisionCall);
+  add('Check-in calls',k.checkin,TEAM_PTS.checkinCall);add('Normal calls',k.normal,TEAM_PTS.normalCall);
+  add('Issues flagged',(d.issues||[]).length,TEAM_PTS.issueFlagged);add('Issues resolved',c.issuesResolved,TEAM_PTS.issueResolved);
+  if(+tasksDone>0)add('Tasks done',tasksDone,TEAM_PTS.taskDone);
+  const hrs=Math.round((workedSec||0)/360)/10;if(hrs>0)rows.push({label:'Hours worked',n:hrs,pts:Math.round(hrs*TEAM_PTS.perHour)});
+  return {total:Math.round(rows.reduce((a,r)=>a+r.pts,0)),rows:rows};}
+/* client list for the issue flagger (works from whichever admin list is loaded; falls back to free text) */
+function teamClientList(){let list=[];
+  try{if(Array.isArray(OV_ROWS)&&OV_ROWS.length)list=OV_ROWS.map(r=>({id:r.id,name:r.name||r.email||'Client'}));}catch(e){}
+  if(!list.length){try{if(Array.isArray(ALL_CLIENTS)&&ALL_CLIENTS.length)list=ALL_CLIENTS.map(r=>({id:r.id,name:r.name||r.email||'Client'}));}catch(e){}}
+  if(!list.length){try{if(Array.isArray(CALL_CLIENTS)&&CALL_CLIENTS.length)list=CALL_CLIENTS.map(r=>({id:r.id,name:r.name||r.email||'Client'}));}catch(e){}}
+  return list.filter(x=>x&&x.name).sort((a,b)=>String(a.name).localeCompare(String(b.name)));}
+let TEAM_DB_ISSUES=[], TEAM_DB_CTX={calls:null,worked:0,tasks:0};
+function teamDbReadCounts(){const g=id=>{const el=$(id);return el?Math.max(0,parseInt(el.value||'0',10)||0):0;};
+  return {woCreated:g('db-woC'),woUpdated:g('db-woU'),dietCreated:g('db-dC'),dietUpdated:g('db-dU'),issuesResolved:g('db-isR')};}
+function teamDbPtsPreview(){const d={counts:teamDbReadCounts(),issues:TEAM_DB_ISSUES};const pt=teamDebriefPoints(d,TEAM_DB_CTX.calls,TEAM_DB_CTX.worked,TEAM_DB_CTX.tasks);const el=$('db-pts');if(el)el.textContent=pt.total;}
+function teamDbAddIssue(){const cn=($('db-iss-client')&&$('db-iss-client').value||'').trim();const note=($('db-iss-note')&&$('db-iss-note').value||'').trim();const sev=($('db-iss-sev')&&$('db-iss-sev').value)||'watch';
+  if(!cn&&!note){toast('Pick a client or add a note',true);return;}
+  const list=teamClientList();const m=list.find(x=>String(x.name).toLowerCase()===cn.toLowerCase());
+  TEAM_DB_ISSUES.push({id:uid(),clientId:m?m.id:'',client:cn||'(general)',severity:sev,note:note});
+  if($('db-iss-client'))$('db-iss-client').value='';if($('db-iss-note'))$('db-iss-note').value='';
+  teamDbRenderIssues();teamDbPtsPreview();}
+function teamDbRemoveIssue(id){TEAM_DB_ISSUES=TEAM_DB_ISSUES.filter(x=>x.id!==id);teamDbRenderIssues();teamDbPtsPreview();}
+function teamDbSevMeta(s){return {critical:{l:'Critical',c:'var(--red)'},watch:{l:'Watch',c:'var(--gold)'},info:{l:'Info',c:'var(--prot)'}}[s||'watch']||{l:'Watch',c:'var(--gold)'};}
+function teamDbRenderIssues(){const host=$('db-iss-list');if(!host)return;
+  if(!TEAM_DB_ISSUES.length){host.innerHTML='<div class="small" style="color:var(--muted)">No issues flagged yet.</div>';return;}
+  host.innerHTML=TEAM_DB_ISSUES.map(x=>{const m=teamDbSevMeta(x.severity);return '<div class="db-iss-row"><span class="team-chip" style="color:'+m.c+';border-color:'+m.c+'">'+m.l+'</span><div style="flex:1;min-width:0"><b style="font-size:12.5px">'+esc(x.client)+'</b>'+(x.note?'<div class="small" style="color:var(--muted);white-space:normal">'+esc(x.note)+'</div>':'')+'</div><button class="btn-xxs" onclick="teamDbRemoveIssue(\''+x.id+'\')">✕</button></div>';}).join('');}
 function teamOpenDebrief(id){TEAM_DEBRIEF=id;teamTab('shift');}
-function teamRenderDebriefForm(sh){const host=$('team-shift-host');if(!host)return;const d=sh.debrief||{};const worked=teamShiftSeconds(sh);const tasks=teamShiftTasksWorked(sh);
-  let h='<div class="team-cal-head"><b>📝 Shift debrief</b><span class="small" style="color:var(--muted)">'+esc(fmtDate(sh.dateISO))+' · '+teamClock(sh.clockIn)+'–'+(sh.clockOut?teamClock(sh.clockOut):'now')+' · '+teamHM(worked)+'</span></div>';
-  if(tasks.length)h+='<div class="small" style="color:var(--muted);margin-bottom:8px">Worked on: '+esc(tasks.slice(0,6).map(t=>(t.title||'task')+' ('+teamHM(t.seconds)+')').join(', '))+'</div>';
-  h+='<div class="field"><label class="lab">What did you get done this shift?</label><textarea id="db-done" rows="3" placeholder="Key things completed…">'+esc(d.done||'')+'</textarea></div>'+
+async function teamRenderDebriefForm(sh){const host=$('team-shift-host');if(!host)return;await teamEnsureCalls();const d=sh.debrief||{};const c=d.counts||{};const worked=teamShiftSeconds(sh);const tasks=teamShiftTasksWorked(sh);
+  const calls=teamCallsForDay(teamStaffNameById(sh.staffId),sh.dateISO);const brk=teamBreakSeconds(sh);
+  TEAM_DB_ISSUES=Array.isArray(d.issues)?d.issues.map(x=>Object.assign({id:x.id||uid()},x)):[];
+  TEAM_DB_CTX={calls:calls,worked:worked,tasks:tasks.length};
+  const numF=(id,lab,val)=>'<div class="db-cnt"><label>'+lab+'</label><input id="'+id+'" type="number" min="0" inputmode="numeric" value="'+(parseInt(val||0,10)||0)+'" oninput="teamDbPtsPreview()"></div>';
+  const kTile=(v,k)=>'<div class="db-ktile"><div class="v">'+v+'</div><div class="k">'+k+'</div></div>';
+  const initPts=teamDebriefPoints({counts:{woCreated:c.woCreated,woUpdated:c.woUpdated,dietCreated:c.dietCreated,dietUpdated:c.dietUpdated,issuesResolved:c.issuesResolved},issues:TEAM_DB_ISSUES},calls,worked,tasks.length).total;
+  let h='<div class="team-cal-head"><b>📝 Daily report</b><span class="small" style="color:var(--muted)">'+esc(fmtDate(sh.dateISO))+' · '+teamClock(sh.clockIn)+'–'+(sh.clockOut?teamClock(sh.clockOut):'now')+'</span></div>';
+  h+='<div class="db-sec"><div class="db-sec-h">⏱️ Auto — from your clock &amp; call logs</div><div class="db-ktiles">'+
+     kTile(teamHM(worked),'Worked')+kTile(teamHM(brk),'Breaks')+kTile(calls.total,'Calls')+kTile(tasks.length,'Tasks')+'</div>'+
+     '<div class="db-calrow">'+[['onboarding','Onboard'],['revision','Revision'],['checkin','Check-in'],['normal','Normal']].map(p=>'<span class="db-cchip">'+calls[p[0]]+' '+p[1]+'</span>').join('')+'</div>'+
+     (calls.total===0?'<div class="small" style="color:var(--muted);margin-top:5px">No calls matched your name in today’s logs — make sure calls are logged with you as “handled by”.</div>':'')+'</div>';
+  if(tasks.length)h+='<div class="small" style="color:var(--muted);margin:-4px 2px 8px">Timed tasks: '+esc(tasks.slice(0,6).map(t=>(t.title||'task')+' ('+teamHM(t.seconds)+')').join(', '))+'</div>';
+  h+='<div class="db-sec"><div class="db-sec-h">📦 Today’s output</div><div class="db-cnts">'+
+     numF('db-woC','Workouts created',c.woCreated)+numF('db-woU','Workouts updated',c.woUpdated)+
+     numF('db-dC','Diet plans created',c.dietCreated)+numF('db-dU','Diet plans updated',c.dietUpdated)+
+     numF('db-isR','Issues resolved',c.issuesResolved)+'</div></div>';
+  const cl=teamClientList();
+  h+='<div class="db-sec"><div class="db-sec-h">🚩 Flag client issues</div>'+
+     '<div class="db-issform"><input id="db-iss-client" list="db-iss-clients" placeholder="Client name" autocomplete="off">'+
+       (cl.length?'<datalist id="db-iss-clients">'+cl.map(x=>'<option value="'+esc(x.name)+'"></option>').join('')+'</datalist>':'')+
+       '<select id="db-iss-sev"><option value="critical">Critical</option><option value="watch" selected>Watch</option><option value="info">Info</option></select></div>'+
+     '<div class="db-issform"><input id="db-iss-note" placeholder="What’s the issue? (optional)" autocomplete="off"><button class="btn-sm solid" onclick="teamDbAddIssue()">＋ Add</button></div>'+
+     '<div id="db-iss-list" style="margin-top:8px"></div></div>';
+  h+='<div class="db-sec"><div class="db-sec-h">🗒️ Notes</div>'+
+     '<div class="field"><label class="lab">What did you get done this shift?</label><textarea id="db-done" rows="3" placeholder="Key things completed…">'+esc(d.done||'')+'</textarea></div>'+
      '<div class="field"><label class="lab">Blockers / issues</label><textarea id="db-blockers" rows="2" placeholder="Anything that got in the way…">'+esc(d.blockers||'')+'</textarea></div>'+
      '<div class="field"><label class="lab">Handover / notes for next shift</label><textarea id="db-notes" rows="2" placeholder="What the next person should know…">'+esc(d.notes||'')+'</textarea></div>'+
      '<div class="row"><div class="field" style="max-width:150px"><label class="lab">How did it go?</label><select id="db-rating">'+[['','—'],['5','🙂 Great (5)'],['4','Good (4)'],['3','OK (3)'],['2','Tough (2)'],['1','😣 Rough (1)']].map(r=>'<option value="'+r[0]+'"'+(String(d.rating||'')===r[0]?' selected':'')+'>'+r[1]+'</option>').join('')+'</select></div>'+
-       '<div class="field" style="max-width:150px"><label class="lab">Energy left</label><select id="db-energy">'+[['','—'],['high','High'],['medium','Medium'],['low','Low']].map(r=>'<option value="'+r[0]+'"'+((d.energy||'')===r[0]?' selected':'')+'>'+r[1]+'</option>').join('')+'</select></div></div>'+
-     '<div class="row" style="gap:8px;margin-top:6px;align-items:center"><button class="btn btn-primary" onclick="teamSubmitDebrief(\''+sh.id+'\')">Submit &amp; generate report</button><button class="btn-sm" onclick="teamSkipDebrief()">Skip</button></div>';
-  host.innerHTML=h;
+       '<div class="field" style="max-width:150px"><label class="lab">Energy left</label><select id="db-energy">'+[['','—'],['high','High'],['medium','Medium'],['low','Low']].map(r=>'<option value="'+r[0]+'"'+((d.energy||'')===r[0]?' selected':'')+'>'+r[1]+'</option>').join('')+'</select></div></div></div>';
+  h+='<div class="db-ptsbar"><div>⭐ Today’s points</div><div class="db-ptsval" id="db-pts">'+initPts+'</div></div>';
+  h+='<div class="row" style="gap:8px;margin-top:10px;align-items:center"><button class="btn btn-primary" onclick="teamSubmitDebrief(\''+sh.id+'\')">Submit &amp; generate report</button><button class="btn-sm" onclick="teamSkipDebrief()">Skip</button></div>';
+  host.innerHTML=h;teamDbRenderIssues();
 }
-async function teamSubmitDebrief(id){const sh=(TEAM.shifts||[]).find(s=>s.id===id);if(!sh)return;sh.debrief={done:($('db-done').value||'').trim(),blockers:($('db-blockers').value||'').trim(),notes:($('db-notes').value||'').trim(),rating:$('db-rating').value||'',energy:$('db-energy').value||'',at:new Date().toISOString()};await teamSave('shifts');TEAM_DEBRIEF=null;toast('Debrief saved ✓');teamShowReport(id);}
+async function teamSubmitDebrief(id){const sh=(TEAM.shifts||[]).find(s=>s.id===id);if(!sh)return;
+  const counts=teamDbReadCounts();const calls=teamCallsForDay(teamStaffNameById(sh.staffId),sh.dateISO);const worked=teamShiftSeconds(sh);const tasks=teamShiftTasksWorked(sh);const issues=TEAM_DB_ISSUES.slice();
+  const pts=teamDebriefPoints({counts:counts,issues:issues},calls,worked,tasks.length).total;
+  sh.debrief={done:(($('db-done')||{}).value||'').trim(),blockers:(($('db-blockers')||{}).value||'').trim(),notes:(($('db-notes')||{}).value||'').trim(),rating:($('db-rating')||{}).value||'',energy:($('db-energy')||{}).value||'',counts:counts,issues:issues,calls:calls,points:pts,at:new Date().toISOString()};
+  await teamSave('shifts');TEAM_DEBRIEF=null;TEAM_DB_ISSUES=[];toast('Daily report saved ✓ · '+pts+' pts');teamShowReport(id);}
 function teamSkipDebrief(){TEAM_DEBRIEF=null;teamRenderShift();}
 let TEAM_REPORT=null;
 function teamShowReport(id){TEAM_REPORT=id;teamTab('shift');}
 function teamRenderReport(sh){const host=$('team-shift-host');if(!host)return;const worked=teamShiftSeconds(sh);const tasks=teamShiftTasksWorked(sh);const d=sh.debrief||{};const br=(sh.breaks||[]).reduce((a,b)=>a+((b.end?Date.parse(b.end):Date.now())-Date.parse(b.start))/1000,0);const tracked=tasks.reduce((a,t)=>a+t.seconds,0);
+  const cc=d.counts||{};const calls=d.calls||{};const iss=Array.isArray(d.issues)?d.issues:[];const pts=d.points||0;
+  const outLine=[[cc.woCreated,'workouts created'],[cc.woUpdated,'updated'],[cc.dietCreated,'diet plans created'],[cc.dietUpdated,'updated'],[cc.issuesResolved,'issues resolved']].filter(x=>+x[0]>0).map(x=>'<b>'+(+x[0])+'</b> '+x[1]).join(' · ');
+  const callLine=[[calls.onboarding,'onboarding'],[calls.revision,'revision'],[calls.checkin,'check-in'],[calls.normal,'normal']].filter(x=>+x[0]>0).map(x=>'<b>'+(+x[0])+'</b> '+x[1]).join(' · ');
   let h='<div class="team-cal-head"><button class="btn-sm" onclick="teamReportBack()">‹ Back</button><b style="margin-left:4px">📋 Shift report</b><span class="sp" style="flex:1"></span><button class="btn-sm" onclick="teamCopyReport(\''+sh.id+'\')">📋 Copy</button></div>';
   h+='<div class="card"><div class="card-body" id="team-report-body">'+
      '<div style="font-family:var(--disp);font-weight:800;font-size:16px">'+esc(teamStaffNameById(sh.staffId))+' · '+esc(fmtDate(sh.dateISO))+'</div>'+
      '<div class="small" style="color:var(--muted);margin-bottom:10px">'+teamClock(sh.clockIn)+' → '+(sh.clockOut?teamClock(sh.clockOut):'open')+'</div>'+
-     '<div class="wko-sumgrid"><div class="wko-sumtile"><div class="v wk-1rm">'+teamHM(worked)+'</div><div class="k">Worked</div></div><div class="wko-sumtile"><div class="v">'+teamHM(br)+'</div><div class="k">Breaks</div></div><div class="wko-sumtile"><div class="v">'+teamHM(tracked)+'</div><div class="k">On tasks</div></div><div class="wko-sumtile"><div class="v">'+tasks.length+'</div><div class="k">Tasks</div></div></div>'+
+     '<div class="wko-sumgrid"><div class="wko-sumtile"><div class="v wk-1rm">'+teamHM(worked)+'</div><div class="k">Worked</div></div><div class="wko-sumtile"><div class="v">'+teamHM(br)+'</div><div class="k">Breaks</div></div><div class="wko-sumtile"><div class="v">'+(calls.total||0)+'</div><div class="k">Calls</div></div><div class="wko-sumtile"><div class="v" style="color:var(--gold)">'+pts+'</div><div class="k">Points</div></div></div>'+
+     (callLine?'<div class="uline" style="margin:12px 0 4px">📞 Calls</div><div class="small" style="line-height:1.6">'+callLine+'</div>':'')+
+     (outLine?'<div class="uline" style="margin:12px 0 4px">📦 Output</div><div class="small" style="line-height:1.6">'+outLine+'</div>':'')+
+     (iss.length?'<div class="uline" style="margin:12px 0 6px">🚩 Flagged client issues</div>'+iss.map(x=>{const m=teamDbSevMeta(x.severity);return '<div class="db-iss-row"><span class="team-chip" style="color:'+m.c+';border-color:'+m.c+'">'+m.l+'</span><div style="flex:1;min-width:0"><b style="font-size:12.5px">'+esc(x.client||'')+'</b>'+(x.note?'<div class="small" style="color:var(--muted);white-space:normal">'+esc(x.note)+'</div>':'')+'</div></div>';}).join('')+'':'')+
      (tasks.length?'<div class="uline" style="margin:12px 0 6px">Time on tasks</div><div class="tbl-scroll"><table class="itbl"><tbody>'+tasks.map(t=>'<tr><td style="text-align:left">'+esc(t.title||'Task')+'</td><td class="wk-1rm" style="text-align:right">'+teamHM(t.seconds)+'</td></tr>').join('')+'</tbody></table></div>':'')+
      (d.done?'<div class="uline" style="margin:12px 0 4px">Got done</div><div class="small" style="white-space:pre-wrap;line-height:1.5">'+esc(d.done)+'</div>':'')+
      (d.blockers?'<div class="uline" style="margin:10px 0 4px">Blockers</div><div class="small" style="white-space:pre-wrap;line-height:1.5">'+esc(d.blockers)+'</div>':'')+
