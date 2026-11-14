@@ -6772,7 +6772,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04qk';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04ql';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -11030,6 +11030,29 @@ function mcEvalMetric(label,kind,rule,tr,phase){const spanDays=tr.spanDays,wk=Ma
   else if(rule.dir==='hold'){if(rule.maxDropTotal!=null&&tr.delta<-rule.maxDropTotal)return {metric:label,sev:'red',msg:'down '+dd+' in '+phase+' — losing muscle'};}
   else if(rule.dir==='flat'){if(rule.maxRiseTotal!=null&&tr.delta>rule.maxRiseTotal)return {metric:label,sev:'amber',msg:'up '+dd+' in '+phase+' — expected steady'};}
   return null;}
+/* strength: est-1RM trend of the client's most-logged barbell/dumbbell lift from their workout history */
+function mcStrengthTrend(workouts){
+  if(!Array.isArray(workouts)||workouts.length<2)return null;const byEx={};
+  workouts.forEach(w=>{const d=(w&&w.date||'').slice(0,10);if(!d)return;(w.entries||[]).forEach(en=>{
+    if(!en)return;const rt=en.repType||'reps';if(rt==='time'||rt==='distance'||rt==='calories'||en.cardio===true)return;
+    const name=(en.name||'').trim();if(!name)return;let best=0;
+    (en.sets||[]).forEach(s=>{const r=+s.reps||0,ww=+s.weight||0;if(r>0&&ww>0){const e=est1RM(ww,r);if(e>best)best=e;}});
+    if(best>0){const k=name.toLowerCase();const ex=(byEx[k]=byEx[k]||{name:name,pts:[]});const p0=ex.pts.find(p=>p.date===d);if(p0){if(best>p0.value)p0.value=best;}else ex.pts.push({date:d,value:best});}
+  });});
+  let chosen=null;Object.keys(byEx).forEach(k=>{const ex=byEx[k];ex.pts.sort((a,b)=>a.date<b.date?-1:1);
+    if(ex.pts.length>=3){const span=(new Date(ex.pts[ex.pts.length-1].date)-new Date(ex.pts[0].date))/86400000;if(span>=21&&(!chosen||ex.pts.length>chosen.pts.length))chosen=ex;}});
+  if(!chosen)return null;
+  const lastDate=chosen.pts[chosen.pts.length-1].date,cut=addDaysISO(lastDate,-56);
+  let pts=chosen.pts.filter(p=>p.date>=cut);if(pts.length<2)pts=chosen.pts.slice(-4);if(pts.length<2)return null;
+  const first=pts[0],last=pts[pts.length-1];const days=(new Date(last.date+'T00:00:00')-new Date(first.date+'T00:00:00'))/86400000;if(days<14||!(first.value>0))return null;
+  const weeks=days/7;return {name:chosen.name,pctRate:((last.value-first.value)/first.value)*100/weeks,weeks:Math.round(weeks*10)/10};}
+function mcCardioLastDate(plan){const cm=(plan&&plan.milestones&&plan.milestones.cardio)||{};let last='';
+  const push=d=>{d=(d||'').slice(0,10);if(d&&d>last)last=d;};
+  ((cm.fatloss&&cm.fatloss.logs)||[]).forEach(l=>push(l&&l.date));
+  ((cm.performance&&cm.performance.sessions)||[]).forEach(s=>push(s&&s.date));
+  return last||null;}
+function mcCardioActive(plan){const cm=(plan&&plan.milestones&&plan.milestones.cardio)||{};
+  return !!((cm.fatloss&&(cm.fatloss.enabled||((cm.fatloss.logs||[]).length)))||(cm.performance&&(cm.performance.enabled||((cm.performance.sessions||[]).length))));}
 function mcEvalClient(plan){
   const phase=(plan&&plan.phase)||'Foundation';const flags=[];
   // 1) scale weight — its own rule shape (lives on MC_DATA)
@@ -11051,6 +11074,19 @@ function mcEvalClient(plan){
   ['waist','bf','muscle'].forEach(id=>{const def=MC_WATCH[id];if(!def)return;const r2=def[phase];if(!r2)return;
     const tr=mcTrend(plan,id,def.window,def.minSpan);if(!tr)return;
     const f=mcEvalMetric(MC_WLABEL[id],def.kind,r2,tr,phase);if(f)flags.push(f);});
+  // 3) strength — est 1RM trend of the most-logged lift (from plan._workouts attached on the dashboard)
+  try{const st=mcStrengthTrend(plan&&plan._workouts);if(st){const r=st.pctRate,rr=(r>=0?'+':'')+(Math.round(r*10)/10)+'%/wk';
+    const rise=(phase==='Foundation'||phase==='Strength'||phase==='Hypertrophy'||phase==='Performance');
+    const hold=(phase==='Fat loss'||phase==='Recomposition');
+    if(rise&&r<-1.0)flags.push({metric:'Strength',sev:'amber',msg:st.name+' est. 1RM down ('+rr+') in '+phase+' — should be rising'});
+    else if(hold&&r<-2.0)flags.push({metric:'Strength',sev:'amber',msg:'losing strength ('+st.name+' '+rr+') in '+phase+' — slow the deficit / check recovery'});
+  }}catch(e){}
+  // 4) cardio — engagement in cardio-relevant phases
+  try{if((phase==='Fat loss'||phase==='Recomposition'||phase==='Performance')&&mcCardioActive(plan)){
+    const last=mcCardioLastDate(plan);
+    if(last){const ds=Math.round((new Date(todayISO()+'T00:00:00')-new Date(last+'T00:00:00'))/86400000);
+      if(ds>=14)flags.push({metric:'Cardio',sev:'amber',msg:'no cardio logged in '+ds+'d — '+phase+' expects conditioning work'});}
+  }}catch(e){}
   return flags;
 }
 /* dashboard Client-cell chips: phase (click to change) + metric-watch flag count (click to open board) */
@@ -11065,7 +11101,7 @@ function mcWatchOpen(){const m=$('mc-watch-modal');if(!m)return;mcWatchRender();
 function mcWatchClose(){const m=$('mc-watch-modal');if(m)m.classList.remove('open');}
 function mcWatchRender(){const host=$('mc-watch-host');if(!host)return;const rows=mcWatchRows();
   const red=rows.reduce((a,r)=>a+r.mcFlags.filter(f=>f.sev==='red').length,0),amber=mcWatchCount()-red;
-  host.innerHTML='<div class="small" style="color:var(--muted);margin:0 0 12px">Clients whose tracked metrics are moving against what’s expected for their current phase.'+(rows.length?(' <b style="color:var(--red)">'+red+'</b> red · <b style="color:var(--gold,#f5c842)">'+amber+'</b> amber'):'')+'<br><span class="funit">Watches weight, waist, body-fat % and muscle % trends vs phase. (Strength &amp; cardio coming.)</span></div>'+
+  host.innerHTML='<div class="small" style="color:var(--muted);margin:0 0 12px">Clients whose tracked metrics are moving against what’s expected for their current phase.'+(rows.length?(' <b style="color:var(--red)">'+red+'</b> red · <b style="color:var(--gold,#f5c842)">'+amber+'</b> amber'):'')+'<br><span class="funit">Watches weight, waist, body-fat %, muscle %, strength (est. 1RM) &amp; cardio engagement vs phase.</span></div>'+
     (rows.length?rows.map(r=>'<div class="card" style="margin-bottom:10px;border-left:3px solid '+(r.mcFlags.some(f=>f.sev==='red')?'var(--red)':'var(--gold,#f5c842)')+'"><div class="card-body" style="padding:11px 13px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b>👤 '+esc(r.name)+'</b><span class="pill" style="background:rgba(74,158,232,.12);color:var(--prot);border-color:rgba(74,158,232,.35)">📈 '+esc(r.phase||'Foundation')+'</span><div style="flex:1"></div><button class="btn-xxs" onclick="mcWatchClose();editClient(\''+r.id+'\')">Open client</button></div>'+
       r.mcFlags.map(f=>'<div style="display:flex;gap:8px;align-items:flex-start;margin-top:8px"><span>'+(f.sev==='red'?'🔴':'🟠')+'</span><div class="small" style="flex:1"><b>'+esc(f.metric)+':</b> '+esc(f.msg)+'</div><button class="btn-xxs" onclick="mcWatchTask(\''+r.id+'\',this.getAttribute(\'data-n\'),this.getAttribute(\'data-m\'))" data-n="'+esc(r.name)+'" data-m="'+esc(f.metric+' — '+f.msg)+'">＋ Task</button></div>').join('')+
       '</div></div>').join(''):'<div class="empty">✓ Everyone’s metrics are tracking with their phase. Nice work.</div>');
@@ -21777,15 +21813,16 @@ async function renderOverview(){
   // then group by client — turns ~2·N round-trips into 2. Big win with a large roster.
   let allLogs=[],allWk=[];
   try{[allLogs,allWk]=await Promise.all([DB.listLogsAll(start,today,Math.max(600,(clients.length||0)*(days+2))).catch(()=>[]),DB.listWorkoutLogs(null).catch(()=>[])]);}catch(e){}
-  const logsByC={},wkByC={};
+  const logsByC={},wkByC={},wkAllByC={};
   (allLogs||[]).forEach(l=>{(logsByC[l.client_id]=logsByC[l.client_id]||[]).push(l);});
-  (allWk||[]).forEach(w=>{if((w.date||'')<commentCut)return;(wkByC[w.client_id]=wkByC[w.client_id]||[]).push(w);});   // only recent workouts are needed (exercise comments)
+  (allWk||[]).forEach(w=>{(wkAllByC[w.client_id]=wkAllByC[w.client_id]||[]).push(w);if((w.date||'')<commentCut)return;(wkByC[w.client_id]=wkByC[w.client_id]||[]).push(w);});   // wkAllByC = full history (for the strength watch); wkByC = recent only (exercise comments)
   OV_ROWS=await Promise.all((clients||[]).map(async c=>{
     let rawPlan=null;const logs=logsByC[c.id]||[],wlogs=wkByC[c.id]||[];
     if(plansByC){rawPlan=plansByC[c.id]||null;}   // from the bulk overview call
     else{try{rawPlan=await DB.getPlan(c.id);}catch(e){}}   // fallback path
     const exComments=[];(wlogs||[]).forEach(w=>{if((w.date||'')<commentCut)return;(w.entries||[]).forEach(en=>{if(en&&en.comment&&String(en.comment).trim())exComments.push({at:w.date,ex:en.name||'Exercise',text:String(en.comment)});});});
     const plan=rawPlan?migratePlan(rawPlan):null;
+    if(plan)plan._workouts=wkAllByC[c.id]||[];   // full workout history for the strength watch (transient, not saved)
     const logged=(logs||[]).filter(l=>(l.items||[]).length);
     let adhSum=0,adhN=0,lastLog=null;
     logged.forEach(l=>{const tc=plan?calOf(dayTypeForDate(plan,l.log_date).target):0;const cal=sumItems(l.items).cal;
