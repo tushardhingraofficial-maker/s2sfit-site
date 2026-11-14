@@ -6710,7 +6710,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04qd';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04qe';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -18979,21 +18979,65 @@ function chatFabClick(){if(!ADMIN_OK)setSection('chat');}
 function openChatAdmin(){openDock('chat');try{$('chat-adm-text').focus();}catch(e){}}
 /* task priority ranking */
 const PRI_RANK={high:0,medium:1,low:2};
+/* ===== Shared Team-&-Calendar task helpers — surface team/project tasks in the Tasks panel ===== */
+/* These read the SAME TEAM.events objects as the Team & Calendar section, so toggling a task here
+   completes it there too (true sync — no duplicated task). */
+function tkProjName(id){try{const p=((typeof TEAM!=='undefined'&&TEAM&&TEAM.projects)||[]).find(x=>x.id===id);return p?(p.name||''):'';}catch(e){return '';}}
+function tkTeamDone(ev){return (typeof teamTaskIsDone==='function')?teamTaskIsDone(ev):(ev&&ev.status==='done');}
+async function tkEnsureTeam(){try{if(typeof teamLoad==='function')await teamLoad();}catch(e){}
+  try{if(typeof teamStaffList==='function'&&(typeof TEAM_STAFF==='undefined'||!TEAM_STAFF||!TEAM_STAFF.length))TEAM_STAFF=await teamStaffList();}catch(e){}
+  return ((typeof TEAM!=='undefined'&&TEAM&&TEAM.events)||[]).filter(e=>e&&e.kind==='task');}
+function tkTeamRow(ev,compact){const done=tkTeamDone(ev);const pri=ev.priority||'medium';
+  const who=ev.assignee?teamStaffNameById(ev.assignee):'';const proj=tkProjName(ev.projectId);
+  const meta=(who?'<div class="funit">👤 '+esc(who)+'</div>':'')+
+    (proj?'<div class="funit">📁 '+esc(proj)+'</div>':'')+
+    (ev.notes?'<div class="funit" style="white-space:pre-wrap">'+esc(ev.notes)+'</div>':'')+
+    (ev.deadline?'<div class="funit">🏁 '+esc(fmtDate(ev.deadline))+'</div>':'')+
+    ((ev.recur&&ev.recur!=='none')?'<div class="funit">↻ recurring</div>':'');
+  const cls=compact?'dtask':'task-item';
+  return '<div class="'+cls+' pri-'+pri+'"'+(done?' style="opacity:.6"':'')+'><input type="checkbox"'+(done?' checked':'')+' onchange="drawerTeamToggle(\''+ev.id+'\')" style="width:auto;margin-top:'+(compact?'2px':'3px')+'">'+
+    '<div style="flex:1;min-width:0"><div style="font-weight:'+(compact?'600':'700')+';overflow-wrap:anywhere'+(done?';text-decoration:line-through;color:var(--muted)':'')+'"><span class="pri-dot '+pri+'" style="margin-right:5px"></span>'+esc(ev.title||'Task')+'</div>'+meta+'</div>'+
+    '<button class="icon-x" style="font-size:15px" title="Open in Team & Calendar" onclick="openTeam()">↗</button></div>';}
+/* Toggle a team task from the Tasks panel → updates the shared store + both Tasks views + the open Team modal */
+async function drawerTeamToggle(id){const ev=((typeof TEAM!=='undefined'&&TEAM&&TEAM.events)||[]).find(e=>e.id===id);if(!ev)return;
+  if((ev.recur||'none')==='none'){ev.status=ev.status==='done'?'todo':'done';ev.doneAt=ev.status==='done'?new Date().toISOString():null;}
+  else{const iso=todayISO();ev.doneDates=ev.doneDates||[];const i=ev.doneDates.indexOf(iso);if(i>=0)ev.doneDates.splice(i,1);else ev.doneDates.push(iso);}
+  try{if(typeof teamSave==='function')await teamSave('events');}catch(e){}
+  try{renderDrawerTasks();}catch(e){}
+  try{if(typeof renderTasks==='function')renderTasks();}catch(e){}
+  try{const tm=$('team-modal');if(tm&&tm.classList.contains('open')&&typeof teamTab==='function')teamTab(TEAM_TAB);}catch(e){}}
+/* which team tasks belong to the "allocated" section for the current signer */
+function tkAllocSectionHTML(tOpen,compact){
+  const owner=(typeof teamIsOwner==='function')?teamIsOwner():true;
+  const mineId=(typeof teamStaffId==='function')?teamStaffId():'owner';
+  if(!owner){const mine=tOpen.filter(e=>e.assignee===mineId);
+    return mine.length?mine.map(e=>tkTeamRow(e,compact)).join(''):'<div class="small" style="color:var(--muted);padding:3px 2px">Nothing allocated to you right now.</div>';}
+  const byCoach={};tOpen.forEach(e=>{if(!e.assignee)return;(byCoach[e.assignee]=byCoach[e.assignee]||[]).push(e);});
+  const ids=Object.keys(byCoach);
+  return ids.length?ids.map(id=>'<div class="'+(compact?'funit':'small')+'" style="font-weight:800;margin:8px 0 3px'+(compact?'':';color:var(--muted)')+'">'+esc(teamStaffNameById(id))+'</div>'+byCoach[id].map(e=>tkTeamRow(e,compact)).join('')).join(''):'<div class="small" style="color:var(--muted);padding:3px 2px">No coach-allocated tasks yet.</div>';}
+function tkTeamOpenSorted(tOpen){return tOpen.slice().sort((a,b)=>{const pa=PRI_RANK[a.priority||'medium'],pb=PRI_RANK[b.priority||'medium'];if(pa!==pb)return pa-pb;return (a.deadline||'9999')<(b.deadline||'9999')?-1:1;});}
 async function renderDrawerTasks(){
   const body=$('drawer-tasks');if(!body)return;
   let tasks=[];try{tasks=await DB.listTasks();}catch(e){body.innerHTML='<div class="small">Could not load.</div>';return;}
+  let teamTasks=[];try{teamTasks=await tkEnsureTeam();}catch(e){teamTasks=[];}
   const today=todayISO();
   const open=tasks.filter(t=>t.status!=='done').sort((a,b)=>{const pa=PRI_RANK[a.priority||'medium'],pb=PRI_RANK[b.priority||'medium'];if(pa!==pb)return pa-pb;return (a.due_date||'9999')<(b.due_date||'9999')?-1:1;});
-  const done=tasks.filter(t=>t.status==='done').sort((a,b)=>((a.done_at||'')<(b.done_at||'')?1:-1)).slice(0,5);
+  const tOpen=tkTeamOpenSorted(teamTasks.filter(e=>!tkTeamDone(e)));
   const overdue=open.filter(t=>t.due_date&&t.due_date<today).length;
-  const badge=$('adr-tasks-badge');if(badge){if(open.length){badge.textContent=open.length;badge.className='pill '+(overdue?'crit':'warn');badge.classList.remove('hidden');}else badge.classList.add('hidden');}
+  const badge=$('adr-tasks-badge');const nOpen=open.length+tOpen.length;if(badge){if(nOpen){badge.textContent=nOpen;badge.className='pill '+(overdue?'crit':'warn');badge.classList.remove('hidden');}else badge.classList.add('hidden');}
   const row=t=>{const od=t.due_date&&t.due_date<today&&t.status!=='done';const pri=t.priority||'medium';
     return '<div class="dtask pri-'+pri+(t.status==='done'?'" style="opacity:.6':'')+'"><input type="checkbox"'+(t.status==='done'?' checked':'')+' onchange="drawerTaskToggle(\''+t.id+'\')" style="width:auto;margin-top:2px">'+
       '<div style="flex:1;min-width:0"><div style="font-weight:600;overflow-wrap:anywhere'+(t.status==='done'?';text-decoration:line-through;color:var(--muted)':'')+'"><span class="pri-dot '+pri+'" style="margin-right:5px"></span>'+esc(t.title)+'</div>'+
       (t.client_name?'<div class="funit">👤 '+esc(t.client_name)+'</div>':'')+(t.details?'<div class="funit">'+esc(t.details)+'</div>':'')+
       (t.due_date?'<div class="funit" style="'+(od?'color:var(--crit)':'')+'">'+(od?'⏰ ':'')+esc(fmtDate(t.due_date))+'</div>':'')+'</div>'+
       '<button class="icon-x" style="font-size:15px" onclick="drawerTaskDel(\''+t.id+'\')">×</button></div>';};
-  body.innerHTML=(open.length?open.map(row).join(''):'<div class="small" style="padding:6px 2px;color:var(--muted)">Nothing to do 🎉</div>')+(done.length?'<div class="uline" style="margin:10px 0 6px">Recently done</div>'+done.map(row).join(''):'');
+  const genRows=(open.length?open.map(row).join(''):'')+(tOpen.length?tOpen.map(e=>tkTeamRow(e,true)).join(''):'');
+  const owner=(typeof teamIsOwner==='function')?teamIsOwner():true;
+  body.innerHTML=
+    '<div class="uline" style="margin:2px 0 6px">👥 Team / general</div>'+
+    (genRows||'<div class="small" style="padding:4px 2px;color:var(--muted)">Nothing to do 🎉</div>')+
+    '<div class="uline" style="margin:13px 0 6px">🙋 Allocated to '+(owner?'a coach':'me')+'</div>'+
+    tkAllocSectionHTML(tOpen,true);
 }
 async function drawerTaskToggle(id){try{await DB.toggleTask(id);renderDrawerTasks();if(typeof renderTasks==='function')renderTasks();}catch(e){toast('Could not update',true);}}
 async function drawerTaskDel(id){if(!confirm('Delete this task?'))return;try{await DB.deleteTask(id);renderDrawerTasks();if(typeof renderTasks==='function')renderTasks();}catch(e){toast('Could not delete',true);}}
@@ -21303,7 +21347,17 @@ async function renderTasks(){
       '<div style="text-align:right;white-space:nowrap;flex:none">'+(t.status==='done'?(t.done_at?'<span class="funit">done '+esc(fmtDate((t.done_at||'').slice(0,10)))+'</span>':''):(t.due_date?'<span class="pill '+(od?'crit':'')+'">'+(od?'⏰ ':'')+esc(fmtDate(t.due_date))+'</span>':'<span class="funit">no date</span>'))+
       (t.status==='done'?'':' <button class="icon-x" style="font-size:14px" title="Edit task" onclick="taskEdit(\''+t.id+'\')">✏️</button>')+
       ' <button class="icon-x" style="font-size:16px" title="Delete task" onclick="taskDelete(\''+t.id+'\')">×</button></div></div>';};
-  host.innerHTML=open.length?open.map(row).join(''):'<div class="empty">🎉 All caught up — no open tasks.</div>';
+  // ----- team / project tasks from Team & Calendar (shared objects → completing here syncs there) -----
+  let teamTasks=[];try{teamTasks=await tkEnsureTeam();}catch(e){teamTasks=[];}
+  const tOpen=tkTeamOpenSorted(teamTasks.filter(e=>!tkTeamDone(e)));
+  const owner=(typeof teamIsOwner==='function')?teamIsOwner():true;
+  const genRows=(open.length?open.map(row).join(''):'')+(tOpen.length?tOpen.map(e=>tkTeamRow(e,false)).join(''):'');
+  host.innerHTML=
+    '<div class="uline" style="margin:2px 0 8px">👥 Team / general tasks</div>'+
+    (genRows||'<div class="empty">🎉 All caught up — no open team or general tasks.</div>')+
+    '<div class="uline" style="margin:18px 0 8px">🙋 Allocated to '+(owner?'a coach':'me')+'</div>'+
+    tkAllocSectionHTML(tOpen,false);
+  {const tot=open.length+tOpen.length,odAll=overdue+tOpen.filter(e=>e.deadline&&e.deadline<today).length;const cnt2=$('tasks-count');if(cnt2){cnt2.textContent=tot+' open'+(odAll?' · '+odAll+' overdue':'');cnt2.className='pill '+(odAll?'crit':tot?'warn':'good');}const tc2=$('tasks-card');if(tc2)tc2.style.borderColor=odAll?'var(--red)':'var(--border)';}
   // Completed tasks live in their own collapsible section (auto-cleared after 7 days)
   const dWrap=$('tasks-done-wrap'),dHost=$('tasks-done-host'),dCnt=$('tasks-done-count');
   if(dWrap&&dHost){
@@ -23146,7 +23200,8 @@ async function teamDeleteEvent(id){if(!confirm('Delete this item?'))return;TEAM.
 async function teamToggleDone(id,iso){const ev=TEAM.events.find(e=>e.id===id);if(!ev)return;
   if((ev.recur||'none')==='none'){ev.status=ev.status==='done'?'todo':'done';ev.doneAt=ev.status==='done'?new Date().toISOString():null;}
   else{ev.doneDates=ev.doneDates||[];const i=ev.doneDates.indexOf(iso);if(i>=0)ev.doneDates.splice(i,1);else ev.doneDates.push(iso);}
-  await teamSave('events');teamTab(TEAM_TAB);}
+  await teamSave('events');teamTab(TEAM_TAB);
+  try{if(typeof renderDrawerTasks==='function')renderDrawerTasks();}catch(e){}try{if(typeof renderTasks==='function')renderTasks();}catch(e){}}   // keep the Tasks panel in sync
 /* ---- my day ---- */
 function teamRenderDay(){const host=$('team-day-host');if(!host)return;const iso=todayISO();const sid=teamStaffId();
   const mine=TEAM.events.filter(ev=>teamOccursOn(ev,iso)&&(ev.assignee===sid||!ev.assignee));const act=teamMyActive();
