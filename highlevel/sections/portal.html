@@ -4891,6 +4891,7 @@ img,svg,canvas,video{max-width:100%}
               <button class="adash-navbtn" onclick="openAlloc()" title="Training &amp; nutrition plan updates — record when each client was last updated, set the review cycle (e.g. 4 weeks) and see who's overdue"><svg class="nav-ic"><use href="#ic-refresh"/></svg> Plan updates</button>
               <button class="adash-navbtn" onclick="openOnb()" title="Onboarding tracker — every client's onboarding stage (strategy call → setup → assessment → allocation → demo → portal tour) on a timeline"><svg class="nav-ic"><use href="#ic-compass"/></svg> Onboarding tracker</button>
               <button class="adash-navbtn" onclick="mcWatchOpen()" title="Metric watch — clients whose tracked metrics are moving against their current training phase">📊 Metric watch <span id="mc-watch-badge" class="pill warn hidden" style="margin-left:4px"></span></button>
+              <button class="adash-navbtn" onclick="mcOpen()" title="Understanding Your Metrics — the interactive course clients see in their Progress section (open it here to review)">📈 Metrics course</button>
               <button class="adash-navbtn" onclick="openIngLib()" title="Ingredient library — the master food + macro list the whole app uses. Import your list, add/edit ingredients &amp; macros, set diet type (veg / vegan / non-veg)."><svg class="nav-ic"><use href="#ic-bowl"/></svg> Ingredient library</button>
               <button class="adash-navbtn" onclick="openRecipeMod()" title="Moderate the shared community recipe book — review every recipe clients have added (macros, author, Smart vs personal) and remove anything inappropriate for everyone."><svg class="nav-ic"><use href="#ic-pot"/></svg> Recipes</button>
               <button class="adash-navbtn" onclick="openSL()" title="Strategy Call leads — who opened your VSL page, watched the video, downloaded the guide and did the 7-Level assessment, with a call-prep report for each" style="position:relative"><svg class="nav-ic"><use href="#ic-phone"/></svg> Strategy leads <span class="chat-badge hidden" id="sl-nav-badge" style="position:absolute;top:6px;right:8px"></span></button>
@@ -6772,7 +6773,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04qm';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04qn';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -11122,7 +11123,7 @@ async function mcSetClientPhase(cid){
   }catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);}
 }
 async function renderClientMetrics(){
-  const card=$('pg-metrics-card');if(!card||!SESSION||(typeof ADMIN_OK!=='undefined'&&ADMIN_OK))return;
+  const card=$('pg-metrics-card');if(!card||!SESSION)return;   // runs only in the client portal (incl. coach 👁 Preview)
   let bannerHTML='';try{bannerHTML=mcClientBannerHTML();}catch(e){bannerHTML='';}
   let all=[];try{all=Array.isArray(CLIENT_PROGRESS)?CLIENT_PROGRESS:await DB.listProgress(SESSION.id);}catch(e){all=[];}   // reuse the already-loaded list even when it's empty (don't refetch)
   all=(all||[]).filter(p=>pgIsPublished(p)&&!p.acknowledged);   // mirror the note card: only active (unread) pushes — so the chart clears when the client marks the update as read
