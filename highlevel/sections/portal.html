@@ -1968,6 +1968,10 @@ body{overflow-x:hidden}
 .tk-col>.uline:first-child{margin-top:0}
 @container (max-width:540px){.tk-cols{grid-template-columns:1fr;gap:2px}}
 @media(max-width:720px){.tk-cols{grid-template-columns:1fr;gap:2px}}
+/* side-by-side sections scroll independently on wide screens (each column its own scroller; no chaining to the page) */
+@media(min-width:721px){.tk-cols>.tk-col{max-height:calc(100dvh - 250px);overflow-y:auto;overscroll-behavior:contain;padding-right:5px}}
+@media(min-width:861px){.dt-cols>.dt-main{max-height:calc(100dvh - 210px);overflow-y:auto;overscroll-behavior:contain;padding-right:5px}}
+.indep-scroll{overflow-y:auto;overscroll-behavior:contain}
 /* ---- Metrics course + phase banner ---- */
 #mc-host{max-width:480px;margin:0 auto}
 .mc-hero{background:linear-gradient(140deg,#15181c,#241a1f);color:#fff;border-radius:16px;padding:18px;position:relative;overflow:hidden;margin-bottom:6px}
@@ -2054,6 +2058,30 @@ details.mcx-map .mapwrap{padding-bottom:12px}
 .pfu-chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
 .pfu-chip{border:1px solid var(--border);background:var(--card);border-radius:20px;padding:8px 15px;font-weight:800;font-size:13px;color:var(--muted);cursor:pointer}
 .pfu-chip.on{background:linear-gradient(135deg,var(--red),#ff5a3c);border-color:transparent;color:#fff}
+/* ── client metric-update reminders ── */
+.rm-top{background:linear-gradient(135deg,var(--red),#ff5a3c);color:#fff;padding:18px 16px 16px}
+.rm-kick{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;opacity:.9}
+.rm-title{font-family:var(--disp);font-weight:900;font-size:24px;text-transform:uppercase;line-height:1;margin-top:3px}
+.rm-body{padding:14px 16px 16px}
+.rm-row{display:flex;align-items:center;gap:11px;border:1px solid var(--border);border-radius:13px;padding:10px 12px;margin-bottom:9px}
+.rm-ic{width:36px;height:36px;flex:none;border-radius:10px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:19px}
+.rm-main{flex:1;min-width:0}
+.rm-nm{font-weight:800;font-size:13.5px}
+.rm-due{font-size:11.5px;font-weight:700}
+.rm-due.over{color:var(--red)}.rm-due.today{color:var(--gold)}.rm-due.soon{color:var(--muted)}
+.rm-log{border:none;background:var(--red);color:#fff;font-weight:800;font-size:12px;border-radius:9px;padding:9px 13px;cursor:pointer;flex:none}
+.rm-foot{display:flex;gap:8px;margin-top:4px}
+.mr-card{border:1px solid var(--border);border-left:4px solid var(--gold);border-radius:14px;background:var(--card);padding:12px 13px;margin:0 2px 14px;cursor:pointer;box-shadow:0 8px 20px -16px rgba(16,24,40,.4)}
+.mr-card-top{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px}
+.mr-pills{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.mr-pill{font-size:11px;font-weight:800;border-radius:20px;padding:4px 10px;background:var(--card2);color:var(--muted)}
+.mr-pill.over{background:rgba(232,23,13,.1);color:var(--red)}
+.mr-pill.due{background:rgba(200,150,12,.14);color:var(--gold)}
+.mr-srow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border)}
+.mr-srow:first-of-type{border-top:0}
+.mr-sic{width:32px;height:32px;flex:none;border-radius:9px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:17px}
+.mr-snm{flex:1;font-weight:700;font-size:13px}
+.mr-srow select{max-width:150px}
 /* ── weekend performance report deck ── */
 .pr-deck{display:flex;flex-direction:column;gap:14px}
 .pr-slide{border:1px solid var(--border);border-radius:16px;background:var(--card);padding:16px}
@@ -5705,6 +5733,8 @@ img,svg,canvas,video{max-width:100%}
     </div>
   </div>
 </div>
+<!-- ============ CLIENT · metric-update reminder popup ============ -->
+<div class="overlay" id="mr-modal"><div class="modal" style="max-width:420px;padding:0;overflow:hidden"><div id="mr-host"></div></div></div>
 <div class="overlay" id="onb-modal">
   <div class="modal">
     <div class="modal-head"><div class="brand-logo admin-logo" role="img" aria-label="S2S Fit"></div><h2><svg class="hd-ic"><use href="#ic-compass"/></svg>Onboarding tracker</h2><span class="sync"><span class="small">every client's onboarding stage on a timeline</span></span><span class="sp"></span><button class="icon-x" onclick="closeOnb()">×</button></div>
@@ -6882,7 +6912,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04qy';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04qz';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -8564,7 +8594,9 @@ async function renderDashboard(){
   }
   host.innerHTML='<div class="dash-hero2"><div style="flex:1;min-width:0"><div class="dh2-kick">'+greet+'</div><div class="dh2-name">'+esc(first)+'</div><div class="dh2-date">'+esc(dstr)+'</div></div>'+wtHero+'</div>'+
     '<div id="dash-momentum" class="dash-mom-wrap"><div id="dm-strip"></div><div id="dm-lvl"></div><div id="dm-focus"></div></div>'+
+    (function(){try{return mrDashCardHTML();}catch(e){return '';}})()+
     '<div class="dash-grid" id="dash-grid"><div class="empty">Loading your day…</div></div>';
+  try{setTimeout(mrPopupCheck,600);}catch(e){}   // nudge the client to log any due metrics
   // async data
   let dayLog=null,wlogs=[],journal=[];
   let tasks=[];
@@ -11263,6 +11295,63 @@ async function mcSetClientPhase(cid){
     try{renderOverviewTable();mcWatchBadge();}catch(e){}toast('Phase set to '+ph+' ✓');
   }catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);}
 }
+/* ═══════════ Client metric-update reminders — coach sets a per-metric frequency, client gets reminders until logged ═══════════ */
+const MR_METRICS=[
+  {id:'weight',ic:'⚖️',name:'Weight',branch:'weight',last:function(){try{const a=weightSorted();return a.length?String(a[a.length-1].date||'').slice(0,10):'';}catch(e){return '';}}},
+  {id:'measurements',ic:'📏',name:'Measurements',branch:'meas',last:function(){try{const a=measSorted();return a.length?String(a[a.length-1].date||'').slice(0,10):'';}catch(e){return '';}}},
+  {id:'composition',ic:'🔬',name:'Body composition',branch:'comp',last:function(){try{const a=compTestsSorted();return a.length?String(a[a.length-1].date||'').slice(0,10):'';}catch(e){return '';}}},
+  {id:'photos',ic:'📸',name:'Progress photos',branch:'photos',last:function(){try{const a=ppSorted();return a.length?String(a[a.length-1].date||'').slice(0,10):'';}catch(e){return '';}}},
+  {id:'health',ic:'🩺',name:'Health markers',branch:'health',last:function(){try{const a=(healthData().logs||[]).slice().sort((x,y)=>((x.date||'')<(y.date||'')?-1:1));return a.length?String(a[a.length-1].date||'').slice(0,10):'';}catch(e){return '';}}}
+];
+const MR_FREQ_OPTS=[[0,'Off'],[7,'Weekly'],[14,'Fortnightly'],[28,'Every 4 weeks'],[56,'Every 8 weeks'],[84,'Every 12 weeks']];
+const MR_LEAD=2;   // days before the due date to start a gentle reminder
+function mrMetaById(id){return MR_METRICS.find(m=>m.id===id);}
+function mrSched(plan){const p=plan||(typeof PLAN!=='undefined'?PLAN:null);return (p&&p.milestones&&p.milestones.metricSchedule)||{};}
+function mrStatusAll(){const sched=mrSched();const out=[];const today=todayISO();
+  MR_METRICS.forEach(m=>{const freq=+sched[m.id]||0;if(freq<=0)return;const lastISO=m.last();
+    let daysSince=null,state='due',nextDue=today;
+    if(!lastISO){state='due';}
+    else{nextDue=addDaysISO(lastISO,freq);daysSince=Math.floor((new Date(today+'T00:00:00')-new Date(lastISO+'T00:00:00'))/86400000);
+      if(daysSince>=freq)state=(daysSince>freq?'overdue':'due');else if(daysSince>=freq-MR_LEAD)state='soon';else state='ok';}
+    out.push({id:m.id,ic:m.ic,name:m.name,branch:m.branch,freq,lastISO,daysSince,nextDue,state,overBy:(daysSince!=null?Math.max(0,daysSince-freq):0)});});
+  return out;}
+function mrDueList(){return mrStatusAll().filter(x=>x.state==='due'||x.state==='overdue'||!x.lastISO);}
+function mrActiveList(){return mrStatusAll().filter(x=>x.state!=='ok');}
+function mrDueLabel(x){if(!x.lastISO)return 'Not logged yet';if(x.state==='overdue')return x.overBy+' day'+(x.overBy===1?'':'s')+' overdue';if(x.state==='due')return 'Due today';if(x.state==='soon'){const d=x.freq-x.daysSince;return 'Due in '+d+' day'+(d===1?'':'s');}return '';}
+function mrDueCls(x){return (x.state==='overdue')?'over':((x.state==='due'||!x.lastISO)?'today':'soon');}
+function mrLog(id){const m=mrMetaById(id);mrCloseModal();try{setSection('goals');setTimeout(function(){try{gmBranch(m?m.branch:'overview');}catch(e){}},70);}catch(e){}}
+function mrCloseModal(){const m=$('mr-modal');if(m)m.classList.remove('open');}
+function mrLater(){mrCloseModal();try{localStorage.setItem('s2s_mr_snooze_'+((SESSION&&SESSION.id)||'x'),todayISO());}catch(e){}}
+function mrPopupHTML(due){
+  return '<div class="rm-top"><div class="rm-kick">Your check-in</div><div class="rm-title">Time to update your metrics</div></div>'+
+    '<div class="rm-body"><div class="small" style="color:var(--muted);margin-bottom:10px">Your coach asks you to keep these up to date — quick to log:</div>'+
+    due.map(x=>'<div class="rm-row"><div class="rm-ic">'+x.ic+'</div><div class="rm-main"><div class="rm-nm">'+esc(x.name)+'</div><div class="rm-due '+mrDueCls(x)+'">'+esc(mrDueLabel(x))+'</div></div><button class="rm-log" onclick="mrLog(\''+x.id+'\')">Log →</button></div>').join('')+
+    '<div class="rm-foot"><button class="btn-sm" style="flex:1" onclick="mrLater()">Remind me later</button></div></div>';
+}
+function mrShowPopup(){const due=mrDueList();if(!due.length){toast('All your metrics are up to date ✓');return;}const host=$('mr-host');const m=$('mr-modal');if(!host||!m)return;host.innerHTML=mrPopupHTML(due);m.classList.add('open');}
+function mrPopupCheck(){try{
+  if(typeof SESSION==='undefined'||!SESSION||(typeof ADMIN_OK!=='undefined'&&ADMIN_OK))return;   // clients only
+  if(typeof sectionLive==='function'&&!sectionLive('goals'))return;
+  if(!mrDueList().length)return;
+  let snooze='';try{snooze=localStorage.getItem('s2s_mr_snooze_'+((SESSION&&SESSION.id)||'x'))||'';}catch(e){}
+  if(snooze===todayISO())return;
+  mrShowPopup();
+}catch(e){}}
+function mrDashCardHTML(){
+  if(typeof sectionLive==='function'&&!sectionLive('goals'))return '';
+  const act=mrActiveList();if(!act.length)return '';
+  const due=act.filter(x=>x.state==='overdue'||x.state==='due'||!x.lastISO);
+  const over=due.some(x=>x.state==='overdue');
+  const pills=act.slice(0,4).map(x=>'<span class="mr-pill'+(x.state==='overdue'?' over':((x.state==='due'||!x.lastISO)?' due':''))+'">'+x.ic+' '+esc(x.name)+' · '+esc(mrDueLabel(x))+'</span>').join('');
+  return '<div class="mr-card" onclick="mrShowPopup()" style="border-left-color:'+(over?'var(--red)':'var(--gold)')+'"><div class="mr-card-top"><span>📊</span><span>'+(due.length?(due.length+' metric'+(due.length===1?'':'s')+' to update'):'Metrics coming up')+'</span></div><div class="small" style="color:var(--muted);margin-top:3px">Tap to log and keep your progress accurate.</div><div class="mr-pills">'+pills+'</div></div>';
+}
+/* coach: the per-metric frequency card (shown on the admin Progress Tracking tab under the phase picker) */
+function edMrScheduleHTML(){
+  const sched=(typeof edPlan!=='undefined'&&edPlan&&edPlan.milestones&&edPlan.milestones.metricSchedule)||{};
+  return '<div style="margin-bottom:14px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--card2)"><div class="uline" style="margin:0 0 4px">📅 Metric update schedule</div><div class="small" style="color:var(--muted);margin-bottom:8px">How often this client should log each metric. They get reminders when one is due; logging it clears the reminder until the next is due.</div>'+
+    MR_METRICS.map(m=>'<div class="mr-srow"><span class="mr-sic">'+m.ic+'</span><span class="mr-snm">'+esc(m.name)+'</span><select onchange="edMrSet(\''+m.id+'\',this.value)">'+MR_FREQ_OPTS.map(o=>'<option value="'+o[0]+'"'+((+sched[m.id]||0)===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></div>').join('')+'</div>';
+}
+function edMrSet(id,days){if(typeof edPlan==='undefined'||!edPlan)return;edPlan.milestones=edPlan.milestones||{goals:[]};edPlan.milestones.metricSchedule=edPlan.milestones.metricSchedule||{};edPlan.milestones.metricSchedule[id]=Math.max(0,parseInt(days,10)||0);}
 async function renderClientMetrics(){
   // phase/course banner now renders inside the Progress → Overview panel (renderOverviewProgress), which is a visible scrollable view; the old #mc-prog-banner sat behind the fixed Progress overlays and was never seen.
   const card=$('pg-metrics-card');if(!card||!SESSION)return;
@@ -25369,7 +25458,7 @@ function edRenderGoalPlan(){
   host.querySelectorAll('textarea').forEach(taGrow);
   gpStartClock(g.deadline,g.done);
 }
-function edRenderPhase(){const h=$('ed-phase-host');if(h)h.innerHTML=(typeof mcAdminPhaseHTML==='function'?mcAdminPhaseHTML():'');}
+function edRenderPhase(){const h=$('ed-phase-host');if(h)h.innerHTML=(typeof mcAdminPhaseHTML==='function'?mcAdminPhaseHTML():'')+(typeof edMrScheduleHTML==='function'?edMrScheduleHTML():'');}
 function edRenderGoals(){
   edRenderPhase();
   const host=$('ed-goals');if(!host)return;const gs=edGoals();
