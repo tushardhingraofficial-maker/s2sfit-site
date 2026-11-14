@@ -2131,6 +2131,23 @@ details.mcx-map .mapwrap{padding-bottom:12px}
 .rd-micro.ok .rd-mname{color:var(--muted);text-decoration:line-through}
 .rd-mtg{font-size:10.5px;color:var(--muted);font-weight:700}
 .rd-mtg b{color:var(--prot)}
+/* metric-goal rows (live progress bars) */
+.rd-goal{margin-bottom:12px}
+.rd-gtop{display:flex;align-items:baseline;gap:7px;margin-bottom:5px}
+.rd-gname{font-weight:800;font-size:13px}
+.rd-gsrc{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;padding:1px 6px;border-radius:5px;background:var(--card2);color:var(--muted)}
+.rd-gsrc.lift{background:#fff0e3;color:#c8700c}
+.rd-grange{margin-left:auto;font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap}
+.rd-gtrack{position:relative;height:9px;border-radius:6px;background:var(--card2)}
+.rd-gfill{height:100%;border-radius:6px;background:linear-gradient(90deg,#ff7a5c,var(--red))}
+.rd-goal.done .rd-gfill{background:linear-gradient(90deg,#34c76a,var(--good))}
+.rd-gnow{position:absolute;top:-4px;width:3px;height:17px;border-radius:2px;background:var(--text);box-shadow:0 0 0 2px var(--card)}
+.rd-gcap{display:flex;justify-content:space-between;gap:8px;font-size:11px;font-weight:700;margin-top:6px}
+.rd-gcap .cur{color:var(--text)}.rd-gcap .pct{color:var(--muted)}
+.rd-goal.done .rd-gcap .pct{color:var(--good)}
+.rd-gach{font-size:11px;font-weight:800;color:var(--good)}
+.rdb-goal{border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:9px;background:var(--card2)}
+.rdb-row3{display:flex;gap:7px}.rdb-row3>*{flex:1;min-width:0;margin-bottom:0}
 .rd-empty{text-align:center;color:var(--muted);padding:26px 16px}
 /* coach builder */
 .rdb-vcard{border:1px solid var(--border);border-radius:12px;background:var(--card2);padding:13px;margin-bottom:14px}
@@ -6985,7 +7002,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04ra';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04rb';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -11426,15 +11443,18 @@ function edMrScheduleHTML(){
 }
 function edMrSet(id,days){if(typeof edPlan==='undefined'||!edPlan)return;edPlan.milestones=edPlan.milestones||{goals:[]};edPlan.milestones.metricSchedule=edPlan.milestones.metricSchedule||{};edPlan.milestones.metricSchedule[id]=Math.max(0,parseInt(days,10)||0);}
 
-/* ═══════════ ROADMAP — long-term vision → macro blocks (phase+targets+focus) → micro goals ═══════════
+/* ═══════════ ROADMAP — long-term vision → macro blocks (phase + LIVE metric goals + micro goals) ═══════════
    Mainly for bodybuilding clients. Coach builds it; client sees it read-only and can tick manual micros.
-   Stored on plan.milestones.roadmap (jsonb, no SQL). Metric-linked micros auto-tick from logged Progress data. */
+   Stored on plan.milestones.roadmap (jsonb, no SQL). Metric goals sync live from Progress data + workout
+   history (est. 1RM / top set); a block auto-completes when every metric goal is hit + micros ticked. */
 const RM_PHASES=(typeof MC_PHASES!=='undefined'&&Array.isArray(MC_PHASES)&&MC_PHASES.length)?MC_PHASES:['Foundation','Strength','Hypertrophy','Recomposition','Fat loss','Performance'];
-let RM_OPEN=null;   // which block ids are expanded in the client view (null → default-open the active one)
+const RM_BLOCK_PTS=200;   // reward points when a block auto-completes from the client hitting its goals
+let RM_OPEN=null;         // which block ids are expanded in the client view (null → default-open the active one)
+let RM_LIFTS=null, RM_LIFTS_LOADING=false;   // {exLower:{e1rm,top,name}} from the client's workout history
 function rmData(plan){const p=plan||(typeof PLAN!=='undefined'?PLAN:null);if(!p)return null;p.milestones=p.milestones||{goals:[]};const r=p.milestones.roadmap=p.milestones.roadmap||{vision:{},blocks:[]};if(!Array.isArray(r.blocks))r.blocks=[];r.vision=r.vision||{};r.blocks.forEach(b=>{if(!Array.isArray(b.targets))b.targets=[];if(!Array.isArray(b.micros))b.micros=[];});return r;}
 function rmHas(plan){const p=plan||(typeof PLAN!=='undefined'?PLAN:null);const r=p&&p.milestones&&p.milestones.roadmap;if(!r)return false;return !!(((r.vision&&(r.vision.title||'').trim()))||(Array.isArray(r.blocks)&&r.blocks.length));}
 function rmPhaseCls(ph){ph=(ph||'').toLowerCase();if(ph.indexOf('found')>=0)return 'rdp-found';if(ph.indexOf('hyp')>=0||ph.indexOf('recomp')>=0)return 'rdp-hyp';if(ph.indexOf('str')>=0)return 'rdp-str';if(ph.indexOf('fat')>=0||ph.indexOf('cut')>=0||ph.indexOf('prep')>=0)return 'rdp-fat';if(ph.indexOf('perf')>=0)return 'rdp-perf';return 'rdp-found';}
-/* metric link helpers — read the client's latest logged value for a micro goal */
+/* --- metric link helpers (Progress panel) --- */
 function rmMetricVal(metric){try{
   if(metric==='weight'){const a=weightSorted();return a.length?+a[a.length-1].value:null;}
   if(metric==='bodyfat'){const a=compTestsSorted();for(let i=a.length-1;i>=0;i--){if(a[i].fat!=null&&a[i].fat!=='')return +a[i].fat;}return null;}
@@ -11444,18 +11464,72 @@ function rmMetricVal(metric){try{
 function rmMetricLabel(metric){if(metric==='weight')return 'Weight';if(metric==='bodyfat')return 'Body-fat %';if(metric==='muscle')return 'Muscle %';const f=(typeof MEAS_FIELDS!=='undefined')?MEAS_FIELDS.find(x=>x[0]===metric):null;return f?f[1]:metric;}
 function rmMetricUnit(metric){if(metric==='weight')return 'kg';if(metric==='bodyfat'||metric==='muscle')return '%';return 'cm';}
 function rmMetricBranch(metric){if(metric==='weight')return 'weight';if(metric==='bodyfat'||metric==='muscle')return 'comp';return 'meas';}
+/* --- workout-lift link: best est-1RM / top-set weight per exercise, from the client's logged workouts --- */
+function rmLiftsLoad(){
+  if(RM_LIFTS||RM_LIFTS_LOADING||typeof SESSION==='undefined'||!SESSION)return;
+  RM_LIFTS_LOADING=true;
+  try{DB.listWorkoutLogs(SESSION.id).then(function(ws){
+    const map={};(ws||[]).forEach(function(w){(((w||{}).entries)||[]).forEach(function(en){
+      if(!en)return;const rt=en.repType||'reps';if(rt==='time'||rt==='distance'||rt==='calories'||en.cardio===true)return;
+      const nm=(en.name||'').trim();if(!nm)return;const k=nm.toLowerCase();const m=map[k]=map[k]||{e1rm:0,top:0,name:nm};
+      (en.sets||[]).forEach(function(s){const ww=+s.weight||0,r=+s.reps||0;if(ww>0){if(ww>m.top)m.top=ww;const e=(typeof est1RM==='function')?est1RM(ww,r):ww;if(e>m.e1rm)m.e1rm=e;}});
+    });});
+    RM_LIFTS=map;RM_LIFTS_LOADING=false;try{if(GM_BRANCH==='roadmap')renderRoadmap();}catch(e){}
+  }).catch(function(){RM_LIFTS={};RM_LIFTS_LOADING=false;});}catch(e){RM_LIFTS={};RM_LIFTS_LOADING=false;}
+}
+function rmLiftVal(exName,measure){if(!RM_LIFTS||!exName)return null;const m=RM_LIFTS[(''+exName).toLowerCase()];if(!m)return null;return (measure==='top')?(m.top||null):(m.e1rm||null);}
+/* --- metric-goal (target) resolution --- */
+function rmTargetSrc(t){return (t&&t.src)||'text';}
+function rmTargetCur(t){const s=rmTargetSrc(t);if(s==='progress')return rmMetricVal(t.metric);if(s==='lift')return rmLiftVal(t.exName,t.liftMeasure);return null;}
+function rmTargetMeasurable(t){const s=rmTargetSrc(t);return (s==='progress'||s==='lift')&&t.to!=null&&t.to!==''&&!isNaN(parseFloat(t.to));}
+function rmTargetAchieved(t){if(!rmTargetMeasurable(t))return false;const cur=rmTargetCur(t);if(cur==null)return false;const to=parseFloat(t.to);return (t.dir==='down')?(cur<=to):(cur>=to);}
+function rmTargetPct(t){if(!rmTargetMeasurable(t))return null;const cur=rmTargetCur(t);if(cur==null)return null;const from=parseFloat(t.from),to=parseFloat(t.to);if(isNaN(from)||from===to)return rmTargetAchieved(t)?100:0;let p=Math.round((cur-from)/(to-from)*100);return Math.max(0,Math.min(100,p));}
+function rmTargetUnit(t){const s=rmTargetSrc(t);if(s==='progress')return rmMetricUnit(t.metric);if(s==='lift')return 'kg';return t.unit||'';}
+function rmTargetLabel(t){if(t.label&&(''+t.label).trim())return (''+t.label).trim();const s=rmTargetSrc(t);if(s==='progress')return rmMetricLabel(t.metric);if(s==='lift')return (t.exName||'Lift')+(t.liftMeasure==='top'?' — top set':' — Est. 1RM');return 'Target';}
+/* --- micro-goal (checklist) --- */
 function rmMicroDone(mi){if(!mi)return false;if(mi.kind==='metric'&&mi.metric){const v=rmMetricVal(mi.metric);if(v==null)return false;const t=parseFloat(mi.target);if(isNaN(t))return false;return (mi.dir==='down')?(v<=t):(v>=t);}return !!mi.done;}
-function rmBlockDone(b){if(!b)return false;if(b.complete)return true;const ms=b.micros||[];if(!ms.length)return false;return ms.every(rmMicroDone);}
-function rmBlockPct(b){if(b&&b.complete)return 100;const ms=(b&&b.micros)||[];if(!ms.length)return 0;return Math.round(ms.filter(rmMicroDone).length/ms.length*100);}
+/* --- block roll-up (metric goals achieved + micros ticked) --- */
+function rmBlockGoals(b){return ((b&&b.targets)||[]).filter(rmTargetMeasurable);}
+function rmBlockUnits(b){return rmBlockGoals(b).length+(((b&&b.micros)||[]).length);}
+function rmBlockDoneCount(b){return rmBlockGoals(b).filter(rmTargetAchieved).length+(((b&&b.micros)||[]).filter(rmMicroDone).length);}
+function rmBlockAllMet(b){const tot=rmBlockUnits(b);return tot>0&&rmBlockDoneCount(b)===tot;}
+function rmBlockDone(b){if(!b)return false;if(b.complete)return true;return rmBlockAllMet(b);}
+function rmBlockPct(b){if(b&&b.complete)return 100;const tot=rmBlockUnits(b);if(!tot)return 0;return Math.round(rmBlockDoneCount(b)/tot*100);}
 function rmActiveIdx(blocks){for(let i=0;i<blocks.length;i++){if(!rmBlockDone(blocks[i]))return i;}return blocks.length-1;}
 function rmJourneyPct(blocks){if(!blocks.length)return 0;let s=0;blocks.forEach(b=>{s+=rmBlockDone(b)?100:rmBlockPct(b);});return Math.round(s/blocks.length);}
+function rmNeedLifts(blocks){return (blocks||[]).some(b=>((b&&b.targets)||[]).some(t=>rmTargetSrc(t)==='lift'));}
+/* award + celebrate the first time a block's goals are all genuinely met (data-driven, not the manual flag) */
+function rmCheckAwards(blocks){
+  try{if(typeof ADMIN_OK!=='undefined'&&ADMIN_OK)return;
+    (blocks||[]).forEach(function(b){if(rmBlockAllMet(b)){
+      try{rwAutoAward('roadmap_block','Roadmap block complete — '+(b.name||''),RM_BLOCK_PTS,{period:'rmblk:'+b.id});}catch(e){}
+    }});
+  }catch(e){}
+}
 
+/* ---- CLIENT: a single metric-goal row with a live progress bar ---- */
+function rmGoalRowHTML(t){
+  const cur=rmTargetCur(t),unit=rmTargetUnit(t),ach=rmTargetAchieved(t),pct=rmTargetPct(t);
+  const srcTag=(rmTargetSrc(t)==='lift')?'<span class="rd-gsrc lift">Workout</span>':'<span class="rd-gsrc">Progress</span>';
+  const range=((t.from!=null&&t.from!=='')?(esc(t.from)+' → '):'')+esc((t.to!=null?t.to:'')+(unit?(' '+unit):''));
+  const w=(pct!=null?pct:0);
+  let cap;
+  if(cur==null)cap='<span class="cur">No data yet</span><span class="pct">log to start</span>';
+  else if(ach)cap='<span class="cur">Now '+round(cur,1)+(unit?(' '+esc(unit)):'')+'</span><span class="rd-gach">✓ Achieved</span>';
+  else cap='<span class="cur">Now '+round(cur,1)+(unit?(' '+esc(unit)):'')+'</span><span class="pct">'+(pct!=null?pct+'% there':'')+'</span>';
+  return '<div class="rd-goal'+(ach?' done':'')+'">'+
+    '<div class="rd-gtop"><span class="rd-gname">'+esc(rmTargetLabel(t))+'</span>'+srcTag+'<span class="rd-grange">'+range+'</span></div>'+
+    '<div class="rd-gtrack"><div class="rd-gfill" style="width:'+w+'%"></div>'+((ach||cur==null)?'':'<div class="rd-gnow" style="left:'+w+'%"></div>')+'</div>'+
+    '<div class="rd-gcap">'+cap+'</div></div>';
+}
 /* ---- CLIENT: render the Roadmap tab ---- */
 function renderRoadmap(){
   const host=$('roadmap-host');if(!host)return;
   const r=rmData();if(!r){host.innerHTML='';return;}
   const blocks=r.blocks||[],v=r.vision||{};
   if(!rmHas()){host.innerHTML='<div class="rd-empty"><div style="font-size:34px">🗺️</div><div class="ov-uline" style="margin-top:8px">Your roadmap is on its way</div><p class="small" style="color:var(--muted);max-width:360px;margin:6px auto 0">Your coach will map out your long-term goal and the blocks to get there. Check back soon.</p></div>';gmSyncHeight();return;}
+  if(rmNeedLifts(blocks)&&RM_LIFTS===null){rmLiftsLoad();}   // lazy-load workout lifts, then re-render
+  try{rmCheckAwards(blocks);}catch(e){}
   const actIdx=rmActiveIdx(blocks);
   if(RM_OPEN===null){RM_OPEN={};if(blocks[actIdx])RM_OPEN[blocks[actIdx].id]=1;}
   const jp=rmJourneyPct(blocks);
@@ -11473,6 +11547,8 @@ function renderRoadmap(){
   h+='<div class="rd-sh">The plan — '+blocks.length+' block'+(blocks.length===1?'':'s')+'</div><div class="rd-tl">';
   blocks.forEach((b,i)=>{
     const done=rmBlockDone(b),active=(i===actIdx&&!done),pct=rmBlockPct(b),open=!!RM_OPEN[b.id];
+    const goals=rmBlockGoals(b);                               // measurable metric goals
+    const texts=(b.targets||[]).filter(t=>!rmTargetMeasurable(t));   // legacy / text-only chips
     const badge=done?'<span class="rd-badge rd-bdone">Done</span>':active?'<span class="rd-badge rd-bactive">On now</span>':'<span class="rd-badge rd-bup">Upcoming</span>';
     h+='<div class="rd-stage '+(done?'done':active?'active':'')+'"><div class="rd-dot">'+(done?'✓':'')+'</div>'+
        '<div class="rd-scard" onclick="rmToggleOpen(\''+b.id+'\')">'+
@@ -11480,9 +11556,10 @@ function renderRoadmap(){
        (b.phase?'<span class="rd-phase '+rmPhaseCls(b.phase)+'">'+esc(b.phase)+'</span>':'')+badge+'</div>';
     if(open){
       if(b.focus)h+='<div class="rd-focus"><b>Focus of this block</b>'+esc(b.focus)+'</div>';
-      if((b.targets||[]).length){h+='<div class="rd-tg">'+b.targets.map(t=>'<span class="rd-tgi">'+esc(t.label||'Target')+' '+((t.from!=null&&t.from!=='')?'<span class="ar">'+esc(t.from)+'→</span>':'')+'<b>'+esc((t.to!=null?t.to:'')+(t.unit?(' '+t.unit):''))+'</b></span>').join('')+'</div>';}
+      if(goals.length){h+='<div class="rd-mtitle">Metric goals — synced live with your data</div>'+goals.map(rmGoalRowHTML).join('');}
+      if(texts.length)h+='<div class="rd-tg">'+texts.map(t=>'<span class="rd-tgi">'+esc(rmTargetLabel(t))+' '+((t.from!=null&&t.from!=='')?'<span class="ar">'+esc(t.from)+'→</span>':'')+'<b>'+esc((t.to!=null?t.to:'')+(t.unit?(' '+t.unit):''))+'</b></span>').join('')+'</div>';
       if((b.micros||[]).length){
-        h+='<div class="rd-micros"><div class="rd-mtitle">Micro goals — the small wins</div>';
+        h+='<div class="rd-micros"><div class="rd-mtitle" style="margin-top:0">Micro goals &amp; habits</div>';
         b.micros.forEach(mi=>{
           const md=rmMicroDone(mi),man=(mi.kind!=='metric');
           let tg='';
@@ -11494,10 +11571,12 @@ function renderRoadmap(){
         });
         h+='</div>';
       }
-      h+='<div class="rd-sbar"><i style="width:'+pct+'%"></i></div><div class="rd-sbarl">'+(b.micros||[]).filter(rmMicroDone).length+' of '+(b.micros||[]).length+' micro goals · '+pct+'%</div>';
-    } else if((b.targets||[]).length||b.micros.length){
-      if((b.targets||[]).length)h+='<div class="rd-tg">'+b.targets.slice(0,3).map(t=>'<span class="rd-tgi">'+esc(t.label||'Target')+' <b>'+esc((t.to!=null?t.to:'')+(t.unit?(' '+t.unit):''))+'</b></span>').join('')+'</div>';
-      h+='<div class="rd-sbar"><i style="width:'+pct+'%"></i></div><div class="rd-sbarl">Tap to open · '+(b.micros||[]).filter(rmMicroDone).length+' / '+(b.micros||[]).length+' micro goals · '+pct+'%</div>';
+      const dc=rmBlockDoneCount(b),tu=rmBlockUnits(b);
+      h+='<div class="rd-sbar"><i style="width:'+pct+'%"></i></div><div class="rd-sbarl">'+(tu?(dc+' of '+tu+' goals hit · '+pct+'% through the block'):'No measurable goals set')+'</div>';
+    } else {
+      if(goals.length)h+=goals.slice(0,2).map(rmGoalRowHTML).join('');
+      else if(texts.length)h+='<div class="rd-tg">'+texts.slice(0,3).map(t=>'<span class="rd-tgi">'+esc(rmTargetLabel(t))+' <b>'+esc((t.to!=null?t.to:'')+(t.unit?(' '+t.unit):''))+'</b></span>').join('')+'</div>';
+      if(rmBlockUnits(b)){const dc=rmBlockDoneCount(b),tu=rmBlockUnits(b);h+='<div class="rd-sbar"><i style="width:'+pct+'%"></i></div><div class="rd-sbarl">Tap to open · '+dc+' / '+tu+' goals · '+pct+'%</div>';}
     }
     h+='</div></div>';
   });
@@ -11522,19 +11601,30 @@ function rmAdminCardHTML(){
   const nB=(r&&Array.isArray(r.blocks))?r.blocks.length:0;
   const vt=(r&&r.vision&&r.vision.title)||'';
   return '<div style="margin-bottom:14px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--card2)">'+
-    '<div class="uline" style="margin:0 0 4px">🗺️ Roadmap <span class="small" style="font-weight:600;color:var(--muted)">(long-term → blocks → micro goals)</span></div>'+
-    '<div class="small" style="color:var(--muted);margin-bottom:9px">'+(has?('<b style="color:var(--text)">'+esc(vt||'Vision set')+'</b> · '+nB+' block'+(nB===1?'':'s')+'. The client sees this as a <b>Roadmap</b> tab in Progress.'):'Map this client’s long-term goal, the blocks to get there, targets and micro goals. Ideal for bodybuilding clients.')+'</div>'+
+    '<div class="uline" style="margin:0 0 4px">🗺️ Roadmap <span class="small" style="font-weight:600;color:var(--muted)">(vision → blocks → live metric goals)</span></div>'+
+    '<div class="small" style="color:var(--muted);margin-bottom:9px">'+(has?('<b style="color:var(--text)">'+esc(vt||'Vision set')+'</b> · '+nB+' block'+(nB===1?'':'s')+'. Metric goals sync live from Progress + workouts; blocks auto-complete when goals are hit. Client sees a <b>Roadmap</b> tab.'):'Map this client’s long-term goal → blocks with live metric goals (synced to Progress + workouts) → micro goals. Ideal for bodybuilding clients.')+'</div>'+
     '<button class="btn-sm solid" onclick="rmBuilderOpen()">'+(has?'🗺️ Edit roadmap':'＋ Build roadmap')+'</button></div>';
 }
 
 /* ---- COACH: full builder (modal) ---- */
-function rmBuilderOpen(){if(typeof edPlan==='undefined'||!edPlan){toast('Open a client first',true);return;}rmData(edPlan);const m=$('rm-build-modal');if(!m)return;rmBuilderRender();m.classList.add('open');}
+function rmBuilderOpen(){if(typeof edPlan==='undefined'||!edPlan){toast('Open a client first',true);return;}rmData(edPlan);const m=$('rm-build-modal');if(!m)return;rmBuilderRender();m.classList.add('open');
+  try{if(typeof loadExLib==='function'&&(!EX_LIB||!EX_LIB.length)){loadExLib().then(function(){const mm=$('rm-build-modal');if(mm&&mm.classList.contains('open'))rmBuilderRender();}).catch(function(){});}}catch(e){}   // populate the exercise picker, then re-render
+}
 function rmBuilderClose(){const m=$('rm-build-modal');if(m)m.classList.remove('open');}
 function rmBMetricOpts(sel){
   let opts=[['__manual','Manual / habit — tick by hand'],['weight','Weight (kg)'],['bodyfat','Body-fat %'],['muscle','Muscle %']];
   if(typeof MEAS_FIELDS!=='undefined')opts=opts.concat(MEAS_FIELDS.map(f=>[f[0],f[1]+' (cm)']));
   return opts.map(o=>'<option value="'+o[0]+'"'+(o[0]===sel?' selected':'')+'>'+esc(o[1])+'</option>').join('');
 }
+/* progress-metric options for a metric goal (no "manual") */
+function rmBProgressOpts(sel){
+  let opts=[['weight','Body weight (kg)'],['bodyfat','Body-fat %'],['muscle','Muscle %']];
+  if(typeof MEAS_FIELDS!=='undefined')opts=opts.concat(MEAS_FIELDS.map(f=>[f[0],f[1]+' (cm)']));
+  return opts.map(o=>'<option value="'+o[0]+'"'+(o[0]===sel?' selected':'')+'>'+esc(o[1])+'</option>').join('');
+}
+/* exercise names from the library (for lift goals) */
+function rmExNames(){const names=[],seen={};(EX_LIB||[]).forEach(function(e){const n=((e&&e.name)||'').trim();if(n&&!seen[n.toLowerCase()]){seen[n.toLowerCase()]=1;names.push(n);}});names.sort(function(a,b){return a.toLowerCase()<b.toLowerCase()?-1:1;});return names;}
+function rmBExerciseOpts(sel){const names=rmExNames();let seenSel=false;let h=names.map(function(n){if(sel&&n.toLowerCase()===(''+sel).toLowerCase())seenSel=true;return '<option value="'+esc(n)+'"'+(n===sel?' selected':'')+'>'+esc(n)+'</option>';}).join('');if(sel&&!seenSel)h='<option value="'+esc(sel)+'" selected>'+esc(sel)+' (custom)</option>'+h;return h;}
 function rmBuilderFlush(){
   if(typeof edPlan==='undefined'||!edPlan)return;const r=rmData(edPlan);if(!r)return;
   const gv=id=>{const el=$(id);return el?el.value:undefined;};const tv=(id,cur)=>{const x=gv(id);return x===undefined?cur:x;};
@@ -11542,15 +11632,24 @@ function rmBuilderFlush(){
   r.blocks.forEach((b,i)=>{
     b.name=tv('rmb-name-'+i,b.name||'');b.phase=tv('rmb-phase-'+i,b.phase||'Foundation');b.dates=tv('rmb-dates-'+i,b.dates||'');b.focus=tv('rmb-focus-'+i,b.focus||'');
     const cc=$('rmb-complete-'+i);if(cc)b.complete=!!cc.checked;
-    (b.targets||[]).forEach((t,j)=>{t.label=tv('rmt-label-'+i+'-'+j,t.label||'');t.from=tv('rmt-from-'+i+'-'+j,t.from||'');t.to=tv('rmt-to-'+i+'-'+j,t.to||'');t.unit=tv('rmt-unit-'+i+'-'+j,t.unit||'');});
+    (b.targets||[]).forEach((t,j)=>{
+      const src=gv('rmt-src-'+i+'-'+j);if(src!==undefined)t.src=src;if(!t.src)t.src='progress';
+      t.label=tv('rmt-label-'+i+'-'+j,t.label||'');
+      if(t.src==='progress'){const mt=gv('rmt-metric-'+i+'-'+j);if(mt!==undefined)t.metric=mt;delete t.exName;delete t.liftMeasure;delete t.unit;}
+      else if(t.src==='lift'){const ex=gv('rmt-ex-'+i+'-'+j);if(ex!==undefined)t.exName=ex;const me=gv('rmt-measure-'+i+'-'+j);if(me!==undefined)t.liftMeasure=me;delete t.metric;delete t.unit;}
+      else {t.unit=tv('rmt-unit-'+i+'-'+j,t.unit||'');delete t.metric;delete t.exName;delete t.liftMeasure;}
+      t.from=tv('rmt-from-'+i+'-'+j,t.from||'');t.to=tv('rmt-to-'+i+'-'+j,t.to||'');
+      const dr=gv('rmt-dir-'+i+'-'+j);if(dr!==undefined)t.dir=dr;
+    });
     (b.micros||[]).forEach((m,k)=>{m.name=tv('rmm-name-'+i+'-'+k,m.name||'');const mt=gv('rmm-metric-'+i+'-'+k);if(mt!==undefined){if(mt==='__manual'){m.kind='manual';delete m.metric;}else{m.kind='metric';m.metric=mt;}}m.target=tv('rmm-target-'+i+'-'+k,m.target||'');m.dir=tv('rmm-dir-'+i+'-'+k,m.dir||'up');});
   });
 }
 function rmAddBlock(){rmBuilderFlush();rmData(edPlan).blocks.push({id:uid(),name:'New block',phase:'Hypertrophy',dates:'',focus:'',complete:false,targets:[],micros:[]});rmBuilderRender();}
 function rmDelBlock(i){rmBuilderFlush();if(!confirm('Remove this block and its goals?'))return;rmData(edPlan).blocks.splice(i,1);rmBuilderRender();}
 function rmMoveBlock(i,d){rmBuilderFlush();const bl=rmData(edPlan).blocks,j=i+d;if(j<0||j>=bl.length)return;const t=bl[i];bl[i]=bl[j];bl[j]=t;rmBuilderRender();}
-function rmAddTarget(i){rmBuilderFlush();rmData(edPlan).blocks[i].targets.push({id:uid(),label:'',from:'',to:'',unit:''});rmBuilderRender();}
+function rmAddTarget(i){rmBuilderFlush();rmData(edPlan).blocks[i].targets.push({id:uid(),src:'progress',metric:'weight',label:'',from:'',to:'',dir:'up',unit:''});rmBuilderRender();}
 function rmDelTarget(i,j){rmBuilderFlush();rmData(edPlan).blocks[i].targets.splice(j,1);rmBuilderRender();}
+function rmTargetSrcChange(i,j,val){rmBuilderFlush();const t=rmData(edPlan).blocks[i].targets[j];t.src=val;if(val==='progress'&&!t.metric)t.metric='weight';if(val==='lift'){if(!t.exName){const ns=rmExNames();t.exName=ns[0]||'';}if(!t.liftMeasure)t.liftMeasure='e1rm';}rmBuilderRender();}
 function rmAddMicro(i){rmBuilderFlush();rmData(edPlan).blocks[i].micros.push({id:uid(),name:'',kind:'manual',target:'',dir:'up'});rmBuilderRender();}
 function rmDelMicro(i,k){rmBuilderFlush();rmData(edPlan).blocks[i].micros.splice(k,1);rmBuilderRender();}
 function rmMicroMetricChange(i,k,val){rmBuilderFlush();const mi=rmData(edPlan).blocks[i].micros[k];if(val==='__manual'){mi.kind='manual';delete mi.metric;}else{mi.kind='metric';mi.metric=val;}rmBuilderRender();}
@@ -11573,15 +11672,25 @@ function rmBuilderRender(){
        '<div><div class="rdb-lab">Dates / timeframe</div><input id="rmb-dates-'+i+'" class="rdb-in" value="'+esc(b.dates||'')+'" placeholder="Apr–Sep 2026"></div></div>'+
        '<div class="rdb-lab">Focus of this block</div><textarea id="rmb-focus-'+i+'" class="rdb-in" rows="2" placeholder="What to prioritise, in plain language">'+esc(b.focus||'')+'</textarea>'+
        '<label class="rdb-comp"><input type="checkbox" id="rmb-complete-'+i+'"'+(b.complete?' checked':'')+'> Mark this block complete</label>';
-    // targets
-    h+='<div class="rdb-lab">Targets (from → to)</div>';
-    (b.targets||[]).forEach((t,j)=>{h+='<div class="rdb-mini"><div>'+
-      '<input id="rmt-label-'+i+'-'+j+'" class="rdb-in" style="margin-bottom:5px" value="'+esc(t.label||'')+'" placeholder="Label — e.g. Body weight">'+
-      '<div class="rdb-row2"><input id="rmt-from-'+i+'-'+j+'" class="rdb-in" style="margin:0" value="'+esc(t.from||'')+'" placeholder="from">'+
-      '<input id="rmt-to-'+i+'-'+j+'" class="rdb-in" style="margin:0" value="'+esc(t.to||'')+'" placeholder="to">'+
-      '<input id="rmt-unit-'+i+'-'+j+'" class="rdb-in" style="margin:0" value="'+esc(t.unit||'')+'" placeholder="unit"></div></div>'+
-      '<button class="rdb-ic" onclick="rmDelTarget('+i+','+j+')">🗑</button></div>';});
-    h+='<button class="rdb-add" onclick="rmAddTarget('+i+')">＋ Add target</button>';
+    // metric goals (live progress bars)
+    h+='<div class="rdb-lab">Metric goals — synced + progress bars</div>';
+    (b.targets||[]).forEach((t,j)=>{const src=rmTargetSrc(t);const noLib=(src==='lift'&&rmExNames().length===0);
+      h+='<div class="rdb-goal"><div class="rdb-stop" style="margin:0 0 7px"><span class="n">Goal '+(j+1)+'</span><button class="rdb-ic" onclick="rmDelTarget('+i+','+j+')">🗑</button></div>'+
+        '<div class="rdb-row2"><div><div class="rdb-lab">Sync with</div><select id="rmt-src-'+i+'-'+j+'" class="rdb-in" style="margin:0" onchange="rmTargetSrcChange('+i+','+j+',this.value)"><option value="progress"'+(src==='progress'?' selected':'')+'>Progress metric</option><option value="lift"'+(src==='lift'?' selected':'')+'>Workout lift</option><option value="text"'+(src==='text'?' selected':'')+'>Just text (no sync)</option></select></div>';
+      if(src==='progress'){
+        h+='<div><div class="rdb-lab">Metric</div><select id="rmt-metric-'+i+'-'+j+'" class="rdb-in" style="margin:0">'+rmBProgressOpts(t.metric||'weight')+'</select></div></div>';
+      }else if(src==='lift'){
+        h+='<div><div class="rdb-lab">Exercise (as logged)</div>'+(noLib?'<input id="rmt-ex-'+i+'-'+j+'" class="rdb-in" style="margin:0" value="'+esc(t.exName||'')+'" placeholder="e.g. Bench press">':'<select id="rmt-ex-'+i+'-'+j+'" class="rdb-in" style="margin:0">'+rmBExerciseOpts(t.exName||'')+'</select>')+'</div></div>'+
+          '<div class="rdb-lab" style="margin-top:7px">Measure</div><select id="rmt-measure-'+i+'-'+j+'" class="rdb-in"><option value="e1rm"'+(t.liftMeasure!=='top'?' selected':'')+'>Estimated 1RM (kg)</option><option value="top"'+(t.liftMeasure==='top'?' selected':'')+'>Top set weight (kg)</option></select>';
+      }else{
+        h+='<div><div class="rdb-lab">Label</div><input id="rmt-label-'+i+'-'+j+'" class="rdb-in" style="margin:0" value="'+esc(t.label||'')+'" placeholder="e.g. Posing practice"></div></div>'+
+          '<input id="rmt-unit-'+i+'-'+j+'" class="rdb-in" style="margin-top:7px" value="'+esc(t.unit||'')+'" placeholder="unit (optional)">';
+      }
+      if(src!=='text')h+='<div class="rdb-lab" style="margin-top:7px">Label <span style="font-weight:600;text-transform:none">(optional — auto from the metric)</span></div><input id="rmt-label-'+i+'-'+j+'" class="rdb-in" value="'+esc(t.label||'')+'" placeholder="Leave blank to auto-name">';
+      h+='<div class="rdb-row3"><input id="rmt-from-'+i+'-'+j+'" class="rdb-in" style="margin:0" value="'+esc(t.from||'')+'" placeholder="start"><input id="rmt-to-'+i+'-'+j+'" class="rdb-in" style="margin:0" value="'+esc(t.to||'')+'" placeholder="target">'+
+        (src==='text'?'':'<select id="rmt-dir-'+i+'-'+j+'" class="rdb-in" style="margin:0"><option value="up"'+(t.dir!=='down'?' selected':'')+'>reach ≥</option><option value="down"'+(t.dir==='down'?' selected':'')+'>reach ≤</option></select>')+'</div>';
+      h+='</div>';});
+    h+='<button class="rdb-add" onclick="rmAddTarget('+i+')">＋ Add metric goal</button>';
     // micros
     h+='<div class="rdb-lab" style="margin-top:6px">Micro goals</div>';
     (b.micros||[]).forEach((m,k)=>{const sel=(m.kind==='metric'&&m.metric)?m.metric:'__manual';const isMetric=(sel!=='__manual');
