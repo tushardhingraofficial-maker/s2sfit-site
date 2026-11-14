@@ -6710,7 +6710,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04qc';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04qd';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -12826,8 +12826,15 @@ function cheatLocalEstimate(desc,qty,tg){
   const items=[{name:name,qty:(qty||desc||'').toString().slice(0,40),cal:cal,p:p,c:c,f:f}];
   return {name:name,items:items,cal:cal,p:p,c:c,f:f,reco:cheatLocalReco(cal,p,tg),source:'estimate'};
 }
+/* protein-add examples that respect the client's diet preference (used in the local cheat tip) */
+function cheatProteinEg(){const c=(typeof dietNorm==='function')?dietNorm(typeof clientDiet==='function'?clientDiet():''):'';
+  if(c==='vegan')return 'a scoop of plant/pea protein, a tofu or soya-chunk side, a soy yoghurt, or a bowl of dal/legumes';
+  if(c==='veg')return 'a bowl of Greek yoghurt, some paneer, a protein shake, or a bowl of dal/rajma/chana';
+  if(c==='egg')return 'a couple of eggs, some Greek yoghurt or paneer, or a protein shake';
+  if(c==='pesc')return 'some grilled fish or prawns, a couple of eggs, Greek yoghurt, or a protein shake';
+  return 'a side of Greek yoghurt, a couple of eggs, grilled chicken/paneer, or a protein shake';}
 function cheatLocalReco(cal,p,tg){const band=cheatBand(cal,tg);const bits=[];
-  bits.push('💪 Add protein: this looks protein-light (~'+p+'g). Pair it with ~20–30g protein — a side of Greek yoghurt, a couple of eggs, grilled chicken/paneer, or a protein shake — to make the cheat more muscle-friendly without killing the fun.');
+  bits.push('💪 Add protein: this looks protein-light (~'+p+'g). Pair it with ~20–30g protein — '+cheatProteinEg()+' — to make the cheat more muscle-friendly without killing the fun.');
   if(band==='over')bits.push('⚖️ You’re over today’s calorie ceiling ('+tg.hi+' kcal). Keep the same food next time but trim the portion a little, or swap fried for grilled/baked to land in range.');
   else if(band==='under')bits.push('👍 You’re comfortably under today’s limit ('+tg.lo+'–'+tg.hi+' kcal) — you’ve got room to enjoy it fully.');
   else bits.push('🎯 Nicely inside today’s range ('+tg.lo+'–'+tg.hi+' kcal) — this is exactly the skill we’re building: enjoy the food and stay on target.');
@@ -12861,7 +12868,7 @@ async function cheatAnalyse(){if(!CHEAT)return;
     if(d&&((d.items&&d.items.length)||d.cal!=null))ai=cheatPrepAI(d,tg);}catch(e){CHEAT.aiErr=String((e&&e.message)||e);}}
   // 2) fallback: legacy n8n cheatmeal webhook (may or may not return items[])
   if(!ai){const hook=(typeof ingWebhookGet==='function')?ingWebhookGet():'';
-    if(hook){try{const r=await fetch(hook,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'cheatmeal',imageUrl:CHEAT.photoUrl||'',description:CHEAT.desc,quantity:CHEAT.qty,target:tg.target,lo:tg.lo,hi:tg.hi,dailyBudget:tg.budget})});
+    if(hook){try{const r=await fetch(hook,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'cheatmeal',imageUrl:CHEAT.photoUrl||'',description:CHEAT.desc,quantity:CHEAT.qty,target:tg.target,lo:tg.lo,hi:tg.hi,dailyBudget:tg.budget,diet:(typeof clientDiet==='function'?clientDiet():'')})});
       let d=null;try{d=await r.json();}catch(e){}d=(d&&d.data)||d||{};
       if(d&&(d.cal!=null||d.calories!=null||(d.items&&d.items.length))){ai=cheatPrepAI({name:(d.name||d.meal||''),items:d.items,cal:+d.cal||+d.calories||0,p:+d.p||+d.protein||0,c:+d.c||+d.carbs||0,f:+d.f||+d.fat||0,reco:(d.reco||d.recommendation||d.suggestion||''),source:'ai'},tg);}}catch(e){}}}
   // 3) offline / no AI configured → rough local estimate
@@ -12935,6 +12942,7 @@ async function cheatAnalyzeApi(payload){
   payload=payload||{};
   try{if((typeof INGREDIENTS==='undefined'||!INGREDIENTS||!INGREDIENTS.length)&&typeof loadIngredients==='function')await loadIngredients();}catch(e){}   // make sure the food DB is loaded (challenge section may open it cold)
   if(payload.ingredients===undefined){try{var ing=analyzerIngredients(payload.description||'');if(ing.length)payload=Object.assign({},payload,{ingredients:ing});}catch(e){}}
+  if(payload.diet===undefined){try{payload=Object.assign({},payload,{diet:(typeof clientDiet==='function'?clientDiet():'')});}catch(e){}}   // so the AI tip/suggestions respect veg/vegan/etc.
   const headers={'Content-Type':'application/json'};
   if(SUPABASE_ANON_KEY){headers['apikey']=SUPABASE_ANON_KEY;headers['Authorization']='Bearer '+SUPABASE_ANON_KEY;}
   const res=await fetch(CHEAT_ANALYZE_URL,{method:'POST',headers,body:JSON.stringify(Object.assign({token:DB.token},payload||{}))});
@@ -17212,7 +17220,7 @@ function onbOpenClient(cid){closeOnb();editClient(cid);}
 function onbDays(a,b){return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);}
 function onbRender(){
   const host=$('onb-host');if(!host)return;const today=todayISO();
-  const rows=(ONB_CLIENTS||[]).map(c=>{const p=ONB_PLANS[c.id]||{};const ob=p.onboarding||{};const sm=onbSummary(ob);
+  const rows=(ONB_CLIENTS||[]).filter(c=>!((ONB_PLANS[c.id]||{}).archived)).map(c=>{const p=ONB_PLANS[c.id]||{};const ob=p.onboarding||{};const sm=onbSummary(ob);   // archived clients drop off the onboarding tracker
     const dl=onbDeadline(sm,(p.profile||{}).startDate);
     const kind=sm.complete?'done':(sm.hasData?'progress':'new');return {c,ob,sm,dl,kind,stuck:kind==='progress'&&!!dl.overdue};});   // "stuck" = past the 7-day onboarding target
   const n=k=>rows.filter(r=>r.kind===k).length,stuckN=rows.filter(r=>r.stuck).length;
