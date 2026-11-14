@@ -1395,6 +1395,15 @@ body{overflow-x:hidden}
 .focus-title{font-family:var(--disp);font-weight:900;font-size:20px;color:#fff;margin:4px 0 2px;text-transform:uppercase;line-height:1.12;overflow-wrap:anywhere}
 .focus-sub{font-size:12.5px;color:rgba(255,255,255,.92);overflow-wrap:anywhere}
 .focus-cta{display:block;width:100%;text-align:center;background:#fff;color:var(--red);font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.03em;font-size:13px;border:none;border-radius:13px;padding:12px;margin-top:12px;cursor:pointer}
+.focus-more-h{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 4px 8px}
+.focus-more{margin:0 2px 14px;display:flex;flex-direction:column;gap:8px}
+.focus-row{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:11px 13px;cursor:pointer;box-shadow:0 8px 20px -16px rgba(16,24,40,.4)}
+.focus-row:hover{border-color:var(--line-strong)}
+.focus-row .fr-ic{font-size:18px;flex:none;width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--card2);border-radius:9px}
+.focus-row .fr-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.focus-row .fr-t{font-weight:800;font-size:13.5px;color:var(--text);overflow-wrap:anywhere}
+.focus-row .fr-s{font-size:11.5px;color:var(--muted);overflow-wrap:anywhere}
+.focus-row .fr-go{flex:none;font-size:22px;color:var(--muted);font-weight:700;line-height:1}
 .dash-card{position:relative;border:1px solid var(--border);border-radius:16px;background:linear-gradient(160deg,var(--accent-weak,rgba(255,255,255,.015)),transparent 70%),var(--card);padding:15px 15px 13px;display:flex;flex-direction:column;gap:9px;cursor:pointer;overflow:hidden;transition:border-color .15s,transform .1s,box-shadow .15s}
 .dash-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(to bottom,var(--accent,var(--red)),var(--accent-deep,var(--accent,var(--red))));opacity:.95}
 .dash-card:hover{border-color:var(--accent,var(--red));transform:translateY(-2px);box-shadow:0 8px 24px -14px var(--accent,rgba(232,23,13,.6))}
@@ -6772,7 +6781,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04qr';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04qs';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -8477,12 +8486,26 @@ async function renderDashboard(){
     if(momTiles.length<3&&sectionLive('habits')){try{const s=hbDashSummary();if(s.hasAny)momTiles.push({ic:'✅',v:(s.total?s.pct+'<small>%</small>':String(s.active)),k:'Habits'});}catch(_){}}
     if(momTiles.length<3&&sectionLive('sleep')){try{const lg=(sleepData().logs||[]);const l7=lg.filter(function(l){return l.date>=addDaysISO(today,-6);});momTiles.push({ic:'😴',v:l7.length+'<small>/7</small>',k:'Sleep'});}catch(_){}}
     const mstrip=$('dm-strip');if(mstrip)mstrip.innerHTML=momTiles.length?('<div class="mom-strip">'+momTiles.slice(0,3).map(function(t){return '<div class="mom-tile"><div class="ic">'+t.ic+'</div><div class="v">'+t.v+'</div><div class="k">'+t.k+'</div></div>';}).join('')+'</div>'):'';
-    let focus=null;const openT=(tasks||[]).filter(function(t){return t.status!=='done';});const nxt=openT.slice().sort(function(a,b){return ((a.due_date||'9999')<(b.due_date||'9999')?-1:1);})[0];
-    if(sectionLive('mytasks')&&nxt){const due=nxt.due_date?(nxt.due_date<today?'Overdue':nxt.due_date===today?'Due today':'Due '+fmtDate(nxt.due_date)):'';focus={t:(nxt.title||'Task'),s:(due?due+' · ':'')+'from your coach',c:'Start →',a:"setSection('mytasks')"};}
-    else if(sectionLive('goals')&&!wToday){focus={t:'Log today’s weight',s:'10 seconds · keeps your trend moving',c:'Log weight →',a:"setSection('goals');setTimeout(function(){try{gmBranch('weight')}catch(e){}},60)"};}
-    else if(sectionLive('nutrition')&&!(dayLog&&((dayLog.items||[]).length))){focus={t:'Log your first meal',s:'Stay on top of today’s macros',c:'Log food →',a:"setSection('nutrition')"};}
-    else {focus={t:'You’re all caught up',s:'Nice work today — keep the streak going 🔥',c:null,a:null};}
-    const mfocus=$('dm-focus');if(mfocus&&focus)mfocus.innerHTML='<div class="focus-card"'+(focus.a?' onclick="'+focus.a+'"':'')+'><div class="focus-inner"><div class="focus-kick">Your focus today</div><div class="focus-title">'+esc(focus.t)+'</div><div class="focus-sub">'+esc(focus.s)+'</div>'+(focus.c?'<button class="focus-cta" onclick="event.stopPropagation();'+(focus.a||'')+'">'+esc(focus.c)+'</button>':'')+'</div></div>';
+    // "Your focus today" — the top item is the hero card, the rest drop into an "Also on your list" list (each gated by what's live + still pending)
+    const fitems=[];
+    const openT=(tasks||[]).filter(function(t){return t.status!=='done';}).sort(function(a,b){return ((a.due_date||'9999')<(b.due_date||'9999')?-1:1);});
+    if(sectionLive('mytasks')){openT.slice(0,3).forEach(function(t){const due=t.due_date?(t.due_date<today?'Overdue':t.due_date===today?'Due today':'Due '+fmtDate(t.due_date)):'';fitems.push({ic:'📋',t:(t.title||'Task'),s:(due?due+' · ':'')+'from your coach',c:'Start →',a:"setSection('mytasks')"});});}
+    if(sectionLive('goals')&&!wToday)fitems.push({ic:'⚖️',t:'Log today’s weight',s:'10 seconds · keeps your trend moving',c:'Log weight →',a:"setSection('goals');setTimeout(function(){try{gmBranch('weight')}catch(e){}},60)"});
+    if(sectionLive('nutrition')&&!(dayLog&&((dayLog.items||[]).length)))fitems.push({ic:'🍎',t:'Log your first meal',s:'Stay on top of today’s macros',c:'Log food →',a:"setSection('nutrition')"});
+    if(sectionLive('training')){try{const schToday=(((t2c().calendar||{})[today])||[]).length>0;const wDoneToday=(wlogs||[]).some(function(l){return String(l.date||'').slice(0,10)===today;});if(schToday&&!wDoneToday)fitems.push({ic:'🏋️',t:'Today’s workout',s:'You’ve got a session scheduled',c:'Start →',a:"setSection('training')"});}catch(_){}}
+    if(sectionLive('habits')){try{const hs=hbDashSummary();if(hs&&hs.hasAny&&hs.total&&hs.pct<100)fitems.push({ic:'✅',t:'Tick today’s habits',s:hs.pct+'% done — keep the chain going',c:'Open →',a:"setSection('habits')"});}catch(_){}}
+    const mfocus=$('dm-focus');
+    if(mfocus){
+      if(!fitems.length){
+        mfocus.innerHTML='<div class="focus-card"><div class="focus-inner"><div class="focus-kick">Your focus today</div><div class="focus-title">You’re all caught up</div><div class="focus-sub">Nice work today — keep the streak going 🔥</div></div></div>';
+      } else {
+        const hero=fitems[0];
+        let fhtml='<div class="focus-card"'+(hero.a?' onclick="'+hero.a+'"':'')+'><div class="focus-inner"><div class="focus-kick">Your focus today</div><div class="focus-title">'+esc(hero.t)+'</div><div class="focus-sub">'+esc(hero.s)+'</div>'+(hero.c?'<button class="focus-cta" onclick="event.stopPropagation();'+(hero.a||'')+'">'+esc(hero.c)+'</button>':'')+'</div></div>';
+        const rest=fitems.slice(1);
+        if(rest.length){fhtml+='<div class="focus-more-h">Also on your list</div><div class="focus-more">'+rest.map(function(it){return '<button type="button" class="focus-row"'+(it.a?' onclick="'+it.a+'"':'')+'><span class="fr-ic">'+it.ic+'</span><span class="fr-main"><span class="fr-t">'+esc(it.t)+'</span><span class="fr-s">'+esc(it.s)+'</span></span><span class="fr-go">›</span></button>';}).join('')+'</div>';}
+        mfocus.innerHTML=fhtml;
+      }
+    }
     if(sectionLive('rewards')){(async function(){try{
       const cfg=await rewardsCfg();
       // pull the live balance the same way the Rewards section does (coach may have awarded/redeemed since login)
