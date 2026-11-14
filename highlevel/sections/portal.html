@@ -164,7 +164,7 @@ img,svg,canvas,video,input,select,textarea{max-width:100%}
   #view-dashboard:not(.hidden) .dash-card{animation:s2sFadeUp .38s cubic-bezier(.22,.9,.3,1) both}
   .dash-grid>*:nth-child(1){animation-delay:.03s}.dash-grid>*:nth-child(2){animation-delay:.07s}.dash-grid>*:nth-child(3){animation-delay:.11s}.dash-grid>*:nth-child(4){animation-delay:.15s}.dash-grid>*:nth-child(5){animation-delay:.19s}.dash-grid>*:nth-child(6){animation-delay:.23s}.dash-grid>*:nth-child(n+7){animation-delay:.26s}
   /* Progress overlays fade in when you switch tabs (host persists, so it won't re-flash on data saves) */
-  #overview-host:not(.hidden),#weight-host:not(.hidden),#comp-host:not(.hidden),#photos-host:not(.hidden),#perf-host:not(.hidden),#meas-host:not(.hidden),#custom-host:not(.hidden){animation:s2sFade .26s ease both}
+  #overview-host:not(.hidden),#roadmap-host:not(.hidden),#weight-host:not(.hidden),#comp-host:not(.hidden),#photos-host:not(.hidden),#perf-host:not(.hidden),#meas-host:not(.hidden),#custom-host:not(.hidden){animation:s2sFade .26s ease both}
   /* Tactile button press across the app */
   .btn,.btn-sm,.btn-primary,.btn-xxs,.btn-xs,.dash-card{transition:transform .12s ease,box-shadow .18s ease,background .16s ease,filter .16s ease,border-color .16s ease}
   .btn:active,.btn-sm:active,.btn-primary:active,.btn-xxs:active,.btn-xs:active,.dash-card:active{transform:translateY(1px) scale(.985)}
@@ -2082,6 +2082,70 @@ details.mcx-map .mapwrap{padding-bottom:12px}
 .mr-sic{width:32px;height:32px;flex:none;border-radius:9px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:17px}
 .mr-snm{flex:1;font-weight:700;font-size:13px}
 .mr-srow select{max-width:150px}
+/* ── Roadmap (Progress → Roadmap tab; client journey + coach builder) ── */
+.rd-vision{background:linear-gradient(140deg,#14181d 0%,#2a1a22 100%);color:#fff;border-radius:18px;padding:18px 17px 17px;position:relative;overflow:hidden;margin:0 2px 14px}
+.rd-vision:before{content:"";position:absolute;right:-30px;top:-30px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(232,23,13,.33),transparent 70%)}
+.rd-eyebrow{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#ff9f8e}
+.rd-vtitle{font-weight:900;font-size:24px;line-height:1.05;margin:5px 0 8px;letter-spacing:.2px}
+.rd-vwhy{font-size:12.5px;color:rgba(255,255,255,.82);line-height:1.5}
+.rd-vmeta{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.rd-vchip{font-size:11px;font-weight:800;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:4px 10px;color:#fff}
+.rd-vchip b{color:#ffd59e}
+.rd-prog{height:7px;border-radius:6px;background:rgba(255,255,255,.16);margin-top:13px;overflow:hidden}
+.rd-prog>i{display:block;height:100%;background:linear-gradient(90deg,#ff5a3c,#E8170D)}
+.rd-progl{display:flex;justify-content:space-between;font-size:10.5px;font-weight:700;color:rgba(255,255,255,.72);margin-top:6px}
+.rd-sh{font-weight:800;font-size:14px;margin:4px 4px 10px}
+.rd-tl{position:relative;padding-left:28px}
+.rd-tl:before{content:"";position:absolute;left:9px;top:6px;bottom:14px;width:2px;background:var(--border)}
+.rd-stage{position:relative;margin-bottom:12px}
+.rd-dot{position:absolute;left:-27px;top:13px;width:20px;height:20px;border-radius:50%;background:var(--card);border:3px solid var(--line-strong);display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;z-index:2}
+.rd-stage.done .rd-dot{border-color:var(--good);background:var(--good)}
+.rd-stage.active .rd-dot{border-color:var(--red);box-shadow:0 0 0 4px rgba(232,23,13,.14)}
+.rd-scard{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 13px;cursor:pointer}
+.rd-stage.active .rd-scard{border-color:var(--red);box-shadow:0 6px 18px -12px rgba(232,23,13,.5)}
+.rd-shead{display:flex;align-items:flex-start;gap:8px}
+.rd-sname{flex:1;font-weight:800;font-size:15px;line-height:1.15}
+.rd-sdate{font-size:10.5px;color:var(--muted);font-weight:700;margin-top:2px}
+.rd-phase{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:7px;white-space:nowrap}
+.rdp-found{background:#eaf1fb;color:#2f6fd1}.rdp-hyp{background:#efeaff;color:#6b45e8}.rdp-str{background:#fff0e3;color:#c8700c}.rdp-fat{background:#ffe9e7;color:#e8170d}.rdp-perf{background:#e7f6ee;color:#15a34a}
+.rd-badge{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:20px;white-space:nowrap}
+.rd-bactive{background:rgba(232,23,13,.1);color:var(--red)}.rd-bdone{background:rgba(21,163,74,.12);color:var(--good)}.rd-bup{background:var(--card2);color:var(--muted)}
+.rd-focus{font-size:11.5px;color:var(--text);line-height:1.5;margin-top:9px;background:var(--card2);border-radius:9px;padding:8px 10px}
+.rd-focus b{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:2px}
+.rd-tg{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.rd-tgi{font-size:11px;font-weight:700;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:5px 9px;display:flex;align-items:center;gap:5px}
+.rd-tgi .ar{color:var(--muted)}.rd-tgi b{color:var(--text)}
+.rd-sbar{height:5px;border-radius:5px;background:var(--card2);margin-top:10px;overflow:hidden}
+.rd-sbar>i{display:block;height:100%;background:var(--red)}
+.rd-sbarl{font-size:10px;font-weight:700;color:var(--muted);margin-top:5px}
+.rd-micros{margin-top:11px;border-top:1px dashed var(--border);padding-top:10px}
+.rd-mtitle{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:7px}
+.rd-micro{display:flex;align-items:center;gap:9px;padding:7px 0;border-top:1px solid var(--border)}
+.rd-micro:first-of-type{border-top:0}
+.rd-chk{width:19px;height:19px;flex:none;border-radius:6px;border:2px solid var(--line-strong);display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;background:var(--card)}
+.rd-micro.ok .rd-chk{background:var(--good);border-color:var(--good)}
+.rd-micro.prog .rd-chk{border-color:var(--red)}
+.rd-micro.man .rd-chk{cursor:pointer}
+.rd-mmain{flex:1;min-width:0}
+.rd-mname{font-weight:700;font-size:12.5px}
+.rd-micro.ok .rd-mname{color:var(--muted);text-decoration:line-through}
+.rd-mtg{font-size:10.5px;color:var(--muted);font-weight:700}
+.rd-mtg b{color:var(--prot)}
+.rd-empty{text-align:center;color:var(--muted);padding:26px 16px}
+/* coach builder */
+.rdb-vcard{border:1px solid var(--border);border-radius:12px;background:var(--card2);padding:13px;margin-bottom:14px}
+.rdb-lab{font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:0 0 4px}
+.rdb-in{width:100%;border:1px solid var(--border);border-radius:9px;padding:8px 10px;font-size:13px;font-family:inherit;background:var(--card);color:var(--text);margin-bottom:9px}
+.rdb-row2{display:flex;gap:8px}.rdb-row2>div{flex:1;min-width:0}
+.rdb-stage{border:1px solid var(--border);border-left:3px solid var(--red);border-radius:12px;padding:11px 12px;margin-bottom:11px;background:var(--card)}
+.rdb-stop{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.rdb-stop .n{flex:1;font-weight:800;font-size:13px;color:var(--muted)}
+.rdb-ic{border:1px solid var(--border);background:var(--card);border-radius:7px;width:28px;height:28px;font-size:13px;cursor:pointer;color:var(--muted);flex:none}
+.rdb-mini{display:flex;align-items:flex-start;gap:7px;padding:7px 0;border-top:1px solid var(--border)}
+.rdb-mini>div{flex:1;min-width:0}
+.rdb-add{width:100%;border:1px dashed var(--line-strong);background:transparent;border-radius:9px;padding:8px;font-weight:700;font-size:12px;color:var(--muted);cursor:pointer;margin:2px 0 4px}
+.rdb-addbig{width:100%;border:none;background:var(--red);color:#fff;border-radius:10px;padding:11px;font-weight:800;font-size:13px;cursor:pointer}
+.rdb-comp{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--text);margin:2px 0 9px}
 /* ── weekend performance report deck ── */
 .pr-deck{display:flex;flex-direction:column;gap:14px}
 .pr-slide{border:1px solid var(--border);border-radius:16px;background:var(--card);padding:16px}
@@ -2757,10 +2821,10 @@ svg.ic{width:22px;height:22px;display:inline-block;vertical-align:middle;flex:no
 body.gm-has-switch #climb-frame{top:var(--gm-h,48px);height:calc(100dvh - 74px - var(--gm-h,48px) - env(safe-area-inset-bottom))}
 #custom-host{position:fixed;left:0;right:0;top:0;bottom:calc(74px + env(safe-area-inset-bottom));overflow-y:auto;z-index:1100;background:var(--ink);padding:16px}
 body.gm-has-switch #custom-host{top:var(--gm-h,48px)}
-#overview-host,#weight-host,#comp-host,#assess-host,#photos-host,#perf-host,#meas-host{position:fixed;left:0;right:0;top:var(--gm-h,48px);bottom:calc(74px + env(safe-area-inset-bottom));overflow-y:auto;z-index:1100;background:radial-gradient(1200px 400px at 50% -120px,rgba(232,23,13,.06),transparent 70%),var(--ink);padding:20px clamp(14px,4vw,36px) 32px}
-#overview-host.hidden,#weight-host.hidden,#comp-host.hidden,#assess-host.hidden,#photos-host.hidden,#perf-host.hidden,#meas-host.hidden{display:none}
+#overview-host,#roadmap-host,#weight-host,#comp-host,#assess-host,#photos-host,#perf-host,#meas-host{position:fixed;left:0;right:0;top:var(--gm-h,48px);bottom:calc(74px + env(safe-area-inset-bottom));overflow-y:auto;z-index:1100;background:radial-gradient(1200px 400px at 50% -120px,rgba(232,23,13,.06),transparent 70%),var(--ink);padding:20px clamp(14px,4vw,36px) 32px}
+#overview-host.hidden,#roadmap-host.hidden,#weight-host.hidden,#comp-host.hidden,#assess-host.hidden,#photos-host.hidden,#perf-host.hidden,#meas-host.hidden{display:none}
 /* centre every progress-section card in a readable column on wide screens */
-#overview-host>*,#weight-host>*,#comp-host>*,#assess-host>*,#photos-host>*,#perf-host>*,#meas-host>*,#custom-host>*{max-width:900px;margin-left:auto;margin-right:auto}
+#overview-host>*,#roadmap-host>*,#weight-host>*,#comp-host>*,#assess-host>*,#photos-host>*,#perf-host>*,#meas-host>*,#custom-host>*{max-width:900px;margin-left:auto;margin-right:auto}
 /* ══ Progress "Overview" landing ══ */
 .ov-card{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 1px 2px rgba(16,24,40,.04);margin:0 0 14px;padding:16px}
 .ov-hero-top{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
@@ -4738,6 +4802,7 @@ img,svg,canvas,video{max-width:100%}
            client (view-only except check-ins); progress saves to dp_plans.milestones.climb. -->
       <div id="gm-switch" class="gm-switch hidden">
         <button id="gm-tab-overview" class="gm-tab active" onclick="gmBranch('overview')"><span class="gm-ic" data-gmic="reports"></span><span class="gm-lbl">Overview</span></button>
+        <button id="gm-tab-roadmap" class="gm-tab hidden" onclick="gmBranch('roadmap')"><span class="gm-ic" data-gmic="climb"></span><span class="gm-lbl">Roadmap</span></button>
         <button id="gm-tab-weight" class="gm-tab" onclick="gmBranch('weight')"><span class="gm-ic" data-gmic="weight"></span><span class="gm-lbl">Weight</span></button>
         <button id="gm-tab-comp" class="gm-tab" onclick="gmBranch('comp')"><span class="gm-ic" data-gmic="composition"></span><span class="gm-lbl">Body</span></button>
         <button id="gm-tab-photos" class="gm-tab" onclick="gmBranch('photos')"><span class="gm-ic" data-gmic="history"></span><span class="gm-lbl">Photos</span></button>
@@ -4749,6 +4814,7 @@ img,svg,canvas,video{max-width:100%}
       </div>
       <iframe id="climb-frame" title="Progress Tracking — your climb" style="display:none"></iframe>
       <div id="overview-host" class="hidden"></div>
+      <div id="roadmap-host" class="hidden"></div>
       <div id="custom-host" class="hidden"></div>
       <div id="weight-host" class="hidden"></div>
       <div id="comp-host" class="hidden"></div>
@@ -6532,6 +6598,13 @@ img,svg,canvas,video{max-width:100%}
     <div class="modal-body"><div id="mc-watch-host"></div></div>
   </div>
 </div>
+<!-- ============ ROADMAP BUILDER (coach) ============ -->
+<div class="overlay" id="rm-build-modal" style="z-index:1600">
+  <div class="modal"><div class="modal-head"><h2>🗺️ Build the roadmap</h2><span class="sp"></span><button class="icon-x" onclick="rmBuilderClose()">×</button></div>
+    <div class="modal-body"><div id="rm-build-host"></div></div>
+    <div class="modal-foot" style="display:flex;gap:9px;padding:12px 16px;border-top:1px solid var(--border);position:sticky;bottom:0;background:var(--surface);border-radius:0 0 var(--radius-lg) var(--radius-lg);z-index:70"><button class="btn-sm" style="flex:1" onclick="rmBuilderClose()">Close</button><button class="btn-sm solid" id="rm-save-btn" style="flex:1" onclick="rmBuilderSave()">Save roadmap</button></div>
+  </div>
+</div>
 
 <!-- ================= ADMIN LEFT DOCK · TASKS ================= -->
 <div id="tasks-dock" class="hidden">
@@ -6912,7 +6985,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04qz';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04ra';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -11352,6 +11425,188 @@ function edMrScheduleHTML(){
     MR_METRICS.map(m=>'<div class="mr-srow"><span class="mr-sic">'+m.ic+'</span><span class="mr-snm">'+esc(m.name)+'</span><select onchange="edMrSet(\''+m.id+'\',this.value)">'+MR_FREQ_OPTS.map(o=>'<option value="'+o[0]+'"'+((+sched[m.id]||0)===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></div>').join('')+'</div>';
 }
 function edMrSet(id,days){if(typeof edPlan==='undefined'||!edPlan)return;edPlan.milestones=edPlan.milestones||{goals:[]};edPlan.milestones.metricSchedule=edPlan.milestones.metricSchedule||{};edPlan.milestones.metricSchedule[id]=Math.max(0,parseInt(days,10)||0);}
+
+/* ═══════════ ROADMAP — long-term vision → macro blocks (phase+targets+focus) → micro goals ═══════════
+   Mainly for bodybuilding clients. Coach builds it; client sees it read-only and can tick manual micros.
+   Stored on plan.milestones.roadmap (jsonb, no SQL). Metric-linked micros auto-tick from logged Progress data. */
+const RM_PHASES=(typeof MC_PHASES!=='undefined'&&Array.isArray(MC_PHASES)&&MC_PHASES.length)?MC_PHASES:['Foundation','Strength','Hypertrophy','Recomposition','Fat loss','Performance'];
+let RM_OPEN=null;   // which block ids are expanded in the client view (null → default-open the active one)
+function rmData(plan){const p=plan||(typeof PLAN!=='undefined'?PLAN:null);if(!p)return null;p.milestones=p.milestones||{goals:[]};const r=p.milestones.roadmap=p.milestones.roadmap||{vision:{},blocks:[]};if(!Array.isArray(r.blocks))r.blocks=[];r.vision=r.vision||{};r.blocks.forEach(b=>{if(!Array.isArray(b.targets))b.targets=[];if(!Array.isArray(b.micros))b.micros=[];});return r;}
+function rmHas(plan){const p=plan||(typeof PLAN!=='undefined'?PLAN:null);const r=p&&p.milestones&&p.milestones.roadmap;if(!r)return false;return !!(((r.vision&&(r.vision.title||'').trim()))||(Array.isArray(r.blocks)&&r.blocks.length));}
+function rmPhaseCls(ph){ph=(ph||'').toLowerCase();if(ph.indexOf('found')>=0)return 'rdp-found';if(ph.indexOf('hyp')>=0||ph.indexOf('recomp')>=0)return 'rdp-hyp';if(ph.indexOf('str')>=0)return 'rdp-str';if(ph.indexOf('fat')>=0||ph.indexOf('cut')>=0||ph.indexOf('prep')>=0)return 'rdp-fat';if(ph.indexOf('perf')>=0)return 'rdp-perf';return 'rdp-found';}
+/* metric link helpers — read the client's latest logged value for a micro goal */
+function rmMetricVal(metric){try{
+  if(metric==='weight'){const a=weightSorted();return a.length?+a[a.length-1].value:null;}
+  if(metric==='bodyfat'){const a=compTestsSorted();for(let i=a.length-1;i>=0;i--){if(a[i].fat!=null&&a[i].fat!=='')return +a[i].fat;}return null;}
+  if(metric==='muscle'){const a=compTestsSorted();for(let i=a.length-1;i>=0;i--){if(a[i].muscle!=null&&a[i].muscle!=='')return +a[i].muscle;}return null;}
+  const a=measSorted();for(let i=a.length-1;i>=0;i--){const v=(a[i].values||{})[metric];if(v!=null&&v!=='')return +v;}return null;
+}catch(e){return null;}}
+function rmMetricLabel(metric){if(metric==='weight')return 'Weight';if(metric==='bodyfat')return 'Body-fat %';if(metric==='muscle')return 'Muscle %';const f=(typeof MEAS_FIELDS!=='undefined')?MEAS_FIELDS.find(x=>x[0]===metric):null;return f?f[1]:metric;}
+function rmMetricUnit(metric){if(metric==='weight')return 'kg';if(metric==='bodyfat'||metric==='muscle')return '%';return 'cm';}
+function rmMetricBranch(metric){if(metric==='weight')return 'weight';if(metric==='bodyfat'||metric==='muscle')return 'comp';return 'meas';}
+function rmMicroDone(mi){if(!mi)return false;if(mi.kind==='metric'&&mi.metric){const v=rmMetricVal(mi.metric);if(v==null)return false;const t=parseFloat(mi.target);if(isNaN(t))return false;return (mi.dir==='down')?(v<=t):(v>=t);}return !!mi.done;}
+function rmBlockDone(b){if(!b)return false;if(b.complete)return true;const ms=b.micros||[];if(!ms.length)return false;return ms.every(rmMicroDone);}
+function rmBlockPct(b){if(b&&b.complete)return 100;const ms=(b&&b.micros)||[];if(!ms.length)return 0;return Math.round(ms.filter(rmMicroDone).length/ms.length*100);}
+function rmActiveIdx(blocks){for(let i=0;i<blocks.length;i++){if(!rmBlockDone(blocks[i]))return i;}return blocks.length-1;}
+function rmJourneyPct(blocks){if(!blocks.length)return 0;let s=0;blocks.forEach(b=>{s+=rmBlockDone(b)?100:rmBlockPct(b);});return Math.round(s/blocks.length);}
+
+/* ---- CLIENT: render the Roadmap tab ---- */
+function renderRoadmap(){
+  const host=$('roadmap-host');if(!host)return;
+  const r=rmData();if(!r){host.innerHTML='';return;}
+  const blocks=r.blocks||[],v=r.vision||{};
+  if(!rmHas()){host.innerHTML='<div class="rd-empty"><div style="font-size:34px">🗺️</div><div class="ov-uline" style="margin-top:8px">Your roadmap is on its way</div><p class="small" style="color:var(--muted);max-width:360px;margin:6px auto 0">Your coach will map out your long-term goal and the blocks to get there. Check back soon.</p></div>';gmSyncHeight();return;}
+  const actIdx=rmActiveIdx(blocks);
+  if(RM_OPEN===null){RM_OPEN={};if(blocks[actIdx])RM_OPEN[blocks[actIdx].id]=1;}
+  const jp=rmJourneyPct(blocks);
+  // vision hero
+  let h='<div class="rd-vision"><div class="rd-eyebrow">My long-term goal</div>'+
+    '<div class="rd-vtitle">'+esc(v.title||'My transformation')+'</div>'+
+    (v.why?'<div class="rd-vwhy">'+esc(v.why)+'</div>':'')+
+    '<div class="rd-vmeta">'+
+      (v.weight?'<span class="rd-vchip">🎯 Goal <b>'+esc(v.weight)+'</b></span>':'')+
+      (v.date?'<span class="rd-vchip">📅 Target <b>'+esc(v.date)+'</b></span>':'')+
+      '<span class="rd-vchip">🧭 Block <b>'+(Math.min(actIdx+1,blocks.length)||0)+' of '+blocks.length+'</b></span>'+
+    '</div>'+
+    '<div class="rd-prog"><i style="width:'+jp+'%"></i></div>'+
+    '<div class="rd-progl"><span>Journey progress</span><span>'+jp+'% complete</span></div></div>';
+  h+='<div class="rd-sh">The plan — '+blocks.length+' block'+(blocks.length===1?'':'s')+'</div><div class="rd-tl">';
+  blocks.forEach((b,i)=>{
+    const done=rmBlockDone(b),active=(i===actIdx&&!done),pct=rmBlockPct(b),open=!!RM_OPEN[b.id];
+    const badge=done?'<span class="rd-badge rd-bdone">Done</span>':active?'<span class="rd-badge rd-bactive">On now</span>':'<span class="rd-badge rd-bup">Upcoming</span>';
+    h+='<div class="rd-stage '+(done?'done':active?'active':'')+'"><div class="rd-dot">'+(done?'✓':'')+'</div>'+
+       '<div class="rd-scard" onclick="rmToggleOpen(\''+b.id+'\')">'+
+       '<div class="rd-shead"><div style="flex:1"><div class="rd-sname">'+esc(b.name||'Block '+(i+1))+'</div>'+(b.dates?'<div class="rd-sdate">'+esc(b.dates)+'</div>':'')+'</div>'+
+       (b.phase?'<span class="rd-phase '+rmPhaseCls(b.phase)+'">'+esc(b.phase)+'</span>':'')+badge+'</div>';
+    if(open){
+      if(b.focus)h+='<div class="rd-focus"><b>Focus of this block</b>'+esc(b.focus)+'</div>';
+      if((b.targets||[]).length){h+='<div class="rd-tg">'+b.targets.map(t=>'<span class="rd-tgi">'+esc(t.label||'Target')+' '+((t.from!=null&&t.from!=='')?'<span class="ar">'+esc(t.from)+'→</span>':'')+'<b>'+esc((t.to!=null?t.to:'')+(t.unit?(' '+t.unit):''))+'</b></span>').join('')+'</div>';}
+      if((b.micros||[]).length){
+        h+='<div class="rd-micros"><div class="rd-mtitle">Micro goals — the small wins</div>';
+        b.micros.forEach(mi=>{
+          const md=rmMicroDone(mi),man=(mi.kind!=='metric');
+          let tg='';
+          if(mi.kind==='metric'&&mi.metric){const cur=rmMetricVal(mi.metric),u=rmMetricUnit(mi.metric);tg=(cur!=null?('Now '+round(cur,1)+' · '):'')+'target <b>'+esc(mi.target||'')+' '+u+'</b>';}
+          else tg=mi.done?'Marked done':'Tap the box when done';
+          h+='<div class="rd-micro '+(md?'ok':(mi.kind==='metric'?'prog':''))+(man?' man':'')+'">'+
+             '<div class="rd-chk"'+(man?' onclick="event.stopPropagation();rmToggleMicro(\''+b.id+'\',\''+mi.id+'\')"':'')+'>'+(md?'✓':'')+'</div>'+
+             '<div class="rd-mmain"><div class="rd-mname">'+esc(mi.name||'Goal')+'</div><div class="rd-mtg">'+tg+'</div></div></div>';
+        });
+        h+='</div>';
+      }
+      h+='<div class="rd-sbar"><i style="width:'+pct+'%"></i></div><div class="rd-sbarl">'+(b.micros||[]).filter(rmMicroDone).length+' of '+(b.micros||[]).length+' micro goals · '+pct+'%</div>';
+    } else if((b.targets||[]).length||b.micros.length){
+      if((b.targets||[]).length)h+='<div class="rd-tg">'+b.targets.slice(0,3).map(t=>'<span class="rd-tgi">'+esc(t.label||'Target')+' <b>'+esc((t.to!=null?t.to:'')+(t.unit?(' '+t.unit):''))+'</b></span>').join('')+'</div>';
+      h+='<div class="rd-sbar"><i style="width:'+pct+'%"></i></div><div class="rd-sbarl">Tap to open · '+(b.micros||[]).filter(rmMicroDone).length+' / '+(b.micros||[]).length+' micro goals · '+pct+'%</div>';
+    }
+    h+='</div></div>';
+  });
+  h+='</div>';
+  host.innerHTML=h;gmSyncHeight();
+}
+function rmToggleOpen(id){if(RM_OPEN===null)RM_OPEN={};RM_OPEN[id]=RM_OPEN[id]?0:1;renderRoadmap();}
+async function rmToggleMicro(bid,mid){
+  const r=rmData();if(!r)return;const b=r.blocks.find(x=>x.id===bid);if(!b)return;const mi=(b.micros||[]).find(x=>x.id===mid);if(!mi||mi.kind==='metric')return;
+  mi.done=!mi.done;
+  try{await DB.saveMilestones(SESSION.id,PLAN.milestones);}catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);mi.done=!mi.done;return;}
+  try{await DB.addAudit({client_id:SESSION.id,actor:'client',action:'Roadmap micro goal '+(mi.done?'completed':'reopened'),detail:(b.name||'')+' · '+(mi.name||'')});}catch(e){}
+  if(mi.done)toast('Nice — micro goal done ✓');
+  renderRoadmap();
+}
+
+/* ---- COACH: summary card on the Progress Tracking editor tab (under the phase picker) ---- */
+function rmAdminCardHTML(){
+  if(typeof edPlan==='undefined'||!edPlan)return '';
+  const r=(edPlan.milestones&&edPlan.milestones.roadmap)||null;
+  const has=!!(r&&(((r.vision&&(r.vision.title||'').trim()))||(Array.isArray(r.blocks)&&r.blocks.length)));
+  const nB=(r&&Array.isArray(r.blocks))?r.blocks.length:0;
+  const vt=(r&&r.vision&&r.vision.title)||'';
+  return '<div style="margin-bottom:14px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--card2)">'+
+    '<div class="uline" style="margin:0 0 4px">🗺️ Roadmap <span class="small" style="font-weight:600;color:var(--muted)">(long-term → blocks → micro goals)</span></div>'+
+    '<div class="small" style="color:var(--muted);margin-bottom:9px">'+(has?('<b style="color:var(--text)">'+esc(vt||'Vision set')+'</b> · '+nB+' block'+(nB===1?'':'s')+'. The client sees this as a <b>Roadmap</b> tab in Progress.'):'Map this client’s long-term goal, the blocks to get there, targets and micro goals. Ideal for bodybuilding clients.')+'</div>'+
+    '<button class="btn-sm solid" onclick="rmBuilderOpen()">'+(has?'🗺️ Edit roadmap':'＋ Build roadmap')+'</button></div>';
+}
+
+/* ---- COACH: full builder (modal) ---- */
+function rmBuilderOpen(){if(typeof edPlan==='undefined'||!edPlan){toast('Open a client first',true);return;}rmData(edPlan);const m=$('rm-build-modal');if(!m)return;rmBuilderRender();m.classList.add('open');}
+function rmBuilderClose(){const m=$('rm-build-modal');if(m)m.classList.remove('open');}
+function rmBMetricOpts(sel){
+  let opts=[['__manual','Manual / habit — tick by hand'],['weight','Weight (kg)'],['bodyfat','Body-fat %'],['muscle','Muscle %']];
+  if(typeof MEAS_FIELDS!=='undefined')opts=opts.concat(MEAS_FIELDS.map(f=>[f[0],f[1]+' (cm)']));
+  return opts.map(o=>'<option value="'+o[0]+'"'+(o[0]===sel?' selected':'')+'>'+esc(o[1])+'</option>').join('');
+}
+function rmBuilderFlush(){
+  if(typeof edPlan==='undefined'||!edPlan)return;const r=rmData(edPlan);if(!r)return;
+  const gv=id=>{const el=$(id);return el?el.value:undefined;};const tv=(id,cur)=>{const x=gv(id);return x===undefined?cur:x;};
+  r.vision.title=tv('rmv-title',r.vision.title||'');r.vision.why=tv('rmv-why',r.vision.why||'');r.vision.date=tv('rmv-date',r.vision.date||'');r.vision.weight=tv('rmv-weight',r.vision.weight||'');
+  r.blocks.forEach((b,i)=>{
+    b.name=tv('rmb-name-'+i,b.name||'');b.phase=tv('rmb-phase-'+i,b.phase||'Foundation');b.dates=tv('rmb-dates-'+i,b.dates||'');b.focus=tv('rmb-focus-'+i,b.focus||'');
+    const cc=$('rmb-complete-'+i);if(cc)b.complete=!!cc.checked;
+    (b.targets||[]).forEach((t,j)=>{t.label=tv('rmt-label-'+i+'-'+j,t.label||'');t.from=tv('rmt-from-'+i+'-'+j,t.from||'');t.to=tv('rmt-to-'+i+'-'+j,t.to||'');t.unit=tv('rmt-unit-'+i+'-'+j,t.unit||'');});
+    (b.micros||[]).forEach((m,k)=>{m.name=tv('rmm-name-'+i+'-'+k,m.name||'');const mt=gv('rmm-metric-'+i+'-'+k);if(mt!==undefined){if(mt==='__manual'){m.kind='manual';delete m.metric;}else{m.kind='metric';m.metric=mt;}}m.target=tv('rmm-target-'+i+'-'+k,m.target||'');m.dir=tv('rmm-dir-'+i+'-'+k,m.dir||'up');});
+  });
+}
+function rmAddBlock(){rmBuilderFlush();rmData(edPlan).blocks.push({id:uid(),name:'New block',phase:'Hypertrophy',dates:'',focus:'',complete:false,targets:[],micros:[]});rmBuilderRender();}
+function rmDelBlock(i){rmBuilderFlush();if(!confirm('Remove this block and its goals?'))return;rmData(edPlan).blocks.splice(i,1);rmBuilderRender();}
+function rmMoveBlock(i,d){rmBuilderFlush();const bl=rmData(edPlan).blocks,j=i+d;if(j<0||j>=bl.length)return;const t=bl[i];bl[i]=bl[j];bl[j]=t;rmBuilderRender();}
+function rmAddTarget(i){rmBuilderFlush();rmData(edPlan).blocks[i].targets.push({id:uid(),label:'',from:'',to:'',unit:''});rmBuilderRender();}
+function rmDelTarget(i,j){rmBuilderFlush();rmData(edPlan).blocks[i].targets.splice(j,1);rmBuilderRender();}
+function rmAddMicro(i){rmBuilderFlush();rmData(edPlan).blocks[i].micros.push({id:uid(),name:'',kind:'manual',target:'',dir:'up'});rmBuilderRender();}
+function rmDelMicro(i,k){rmBuilderFlush();rmData(edPlan).blocks[i].micros.splice(k,1);rmBuilderRender();}
+function rmMicroMetricChange(i,k,val){rmBuilderFlush();const mi=rmData(edPlan).blocks[i].micros[k];if(val==='__manual'){mi.kind='manual';delete mi.metric;}else{mi.kind='metric';mi.metric=val;}rmBuilderRender();}
+function rmBuilderRender(){
+  const host=$('rm-build-host');if(!host||typeof edPlan==='undefined'||!edPlan)return;const r=rmData(edPlan);
+  const phOpts=sel=>RM_PHASES.map(p=>'<option'+(p===sel?' selected':'')+'>'+esc(p)+'</option>').join('');
+  let h='<div class="rdb-vcard"><div class="uline" style="margin:0 0 8px">🗺️ Long-term goal</div>'+
+    '<div class="rdb-lab">Vision title</div><input id="rmv-title" class="rdb-in" value="'+esc(r.vision.title||'')+'" placeholder="e.g. Classic physique — stage-ready 2027">'+
+    '<div class="rdb-lab">What it means / why</div><textarea id="rmv-why" class="rdb-in" rows="2" placeholder="The big picture for this client">'+esc(r.vision.why||'')+'</textarea>'+
+    '<div class="rdb-row2"><div><div class="rdb-lab">Target date</div><input id="rmv-date" class="rdb-in" value="'+esc(r.vision.date||'')+'" placeholder="May 2027"></div>'+
+    '<div><div class="rdb-lab">Goal weight / metric</div><input id="rmv-weight" class="rdb-in" value="'+esc(r.vision.weight||'')+'" placeholder="82 kg"></div></div></div>';
+  h+='<div class="uline" style="margin:2px 2px 9px">Blocks (macro goals)</div>';
+  r.blocks.forEach((b,i)=>{
+    h+='<div class="rdb-stage"><div class="rdb-stop"><span class="n">Block '+(i+1)+'</span>'+
+       '<button class="rdb-ic" title="Move up" onclick="rmMoveBlock('+i+',-1)">↑</button>'+
+       '<button class="rdb-ic" title="Move down" onclick="rmMoveBlock('+i+',1)">↓</button>'+
+       '<button class="rdb-ic" title="Delete block" onclick="rmDelBlock('+i+')">🗑</button></div>'+
+       '<div class="rdb-lab">Block name</div><input id="rmb-name-'+i+'" class="rdb-in" value="'+esc(b.name||'')+'" placeholder="e.g. Lean mass block">'+
+       '<div class="rdb-row2"><div><div class="rdb-lab">Phase</div><select id="rmb-phase-'+i+'" class="rdb-in">'+phOpts(b.phase||'Foundation')+'</select></div>'+
+       '<div><div class="rdb-lab">Dates / timeframe</div><input id="rmb-dates-'+i+'" class="rdb-in" value="'+esc(b.dates||'')+'" placeholder="Apr–Sep 2026"></div></div>'+
+       '<div class="rdb-lab">Focus of this block</div><textarea id="rmb-focus-'+i+'" class="rdb-in" rows="2" placeholder="What to prioritise, in plain language">'+esc(b.focus||'')+'</textarea>'+
+       '<label class="rdb-comp"><input type="checkbox" id="rmb-complete-'+i+'"'+(b.complete?' checked':'')+'> Mark this block complete</label>';
+    // targets
+    h+='<div class="rdb-lab">Targets (from → to)</div>';
+    (b.targets||[]).forEach((t,j)=>{h+='<div class="rdb-mini"><div>'+
+      '<input id="rmt-label-'+i+'-'+j+'" class="rdb-in" style="margin-bottom:5px" value="'+esc(t.label||'')+'" placeholder="Label — e.g. Body weight">'+
+      '<div class="rdb-row2"><input id="rmt-from-'+i+'-'+j+'" class="rdb-in" style="margin:0" value="'+esc(t.from||'')+'" placeholder="from">'+
+      '<input id="rmt-to-'+i+'-'+j+'" class="rdb-in" style="margin:0" value="'+esc(t.to||'')+'" placeholder="to">'+
+      '<input id="rmt-unit-'+i+'-'+j+'" class="rdb-in" style="margin:0" value="'+esc(t.unit||'')+'" placeholder="unit"></div></div>'+
+      '<button class="rdb-ic" onclick="rmDelTarget('+i+','+j+')">🗑</button></div>';});
+    h+='<button class="rdb-add" onclick="rmAddTarget('+i+')">＋ Add target</button>';
+    // micros
+    h+='<div class="rdb-lab" style="margin-top:6px">Micro goals</div>';
+    (b.micros||[]).forEach((m,k)=>{const sel=(m.kind==='metric'&&m.metric)?m.metric:'__manual';const isMetric=(sel!=='__manual');
+      h+='<div class="rdb-mini"><div>'+
+        '<input id="rmm-name-'+i+'-'+k+'" class="rdb-in" style="margin-bottom:5px" value="'+esc(m.name||'')+'" placeholder="Micro goal — e.g. Grow arms to 40cm">'+
+        '<div class="rdb-lab" style="margin:0 0 3px">Auto-tick from</div>'+
+        '<select id="rmm-metric-'+i+'-'+k+'" class="rdb-in" style="margin-bottom:5px" onchange="rmMicroMetricChange('+i+','+k+',this.value)">'+rmBMetricOpts(sel)+'</select>'+
+        (isMetric?('<div class="rdb-row2"><select id="rmm-dir-'+i+'-'+k+'" class="rdb-in" style="margin:0"><option value="up"'+(m.dir!=='down'?' selected':'')+'>reach ≥ target</option><option value="down"'+(m.dir==='down'?' selected':'')+'>reach ≤ target</option></select>'+
+          '<input id="rmm-target-'+i+'-'+k+'" class="rdb-in" style="margin:0" value="'+esc(m.target||'')+'" placeholder="target '+esc(rmMetricUnit(m.metric))+'"></div>'):
+          '<div class="small" style="color:var(--muted)">Client ticks this by hand when done.<input id="rmm-dir-'+i+'-'+k+'" type="hidden" value="'+esc(m.dir||'up')+'"><input id="rmm-target-'+i+'-'+k+'" type="hidden" value="'+esc(m.target||'')+'"></div>')+
+        '</div><button class="rdb-ic" onclick="rmDelMicro('+i+','+k+')">🗑</button></div>';});
+    h+='<button class="rdb-add" onclick="rmAddMicro('+i+')">＋ Add micro goal</button>';
+    h+='</div>';
+  });
+  h+='<button class="rdb-addbig" onclick="rmAddBlock()">＋ Add a block</button>';
+  host.innerHTML=h;
+}
+async function rmBuilderSave(){
+  rmBuilderFlush();
+  const btn=$('rm-save-btn');if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  try{await savePlan();}catch(e){if(btn){btn.disabled=false;btn.textContent='Save roadmap';}toast('Could not save — '+((e&&e.message)||'error'),true);return;}
+  if(btn){btn.disabled=false;btn.textContent='Save roadmap';}
+  try{if(typeof edRenderPhase==='function')edRenderPhase();}catch(e){}
+  rmBuilderClose();toast('Roadmap saved ✓');
+}
 async function renderClientMetrics(){
   // phase/course banner now renders inside the Progress → Overview panel (renderOverviewProgress), which is a visible scrollable view; the old #mc-prog-banner sat behind the fixed Progress overlays and was never seen.
   const card=$('pg-metrics-card');if(!card||!SESSION)return;
@@ -20060,7 +20315,9 @@ function gmSetup(){
   if(sw)sw.classList.remove('hidden');
   gmFillTabIcons();
   const tk=$('gm-tab-custom');if(tk)tk.classList.toggle('hidden',!hasCustom);
-  if((GM_BRANCH==='custom'&&!hasCustom)||GM_BRANCH==='climb'||GM_BRANCH==='assess'||!GM_BRANCH)GM_BRANCH='overview';   // Climb hidden for now → land on the Overview
+  const hasRoadmap=(typeof rmHas==='function')&&rmHas();
+  const rt=$('gm-tab-roadmap');if(rt)rt.classList.toggle('hidden',!hasRoadmap);
+  if((GM_BRANCH==='custom'&&!hasCustom)||(GM_BRANCH==='roadmap'&&!hasRoadmap)||GM_BRANCH==='climb'||GM_BRANCH==='assess'||!GM_BRANCH)GM_BRANCH='overview';   // Climb hidden for now → land on the Overview
   gmBranch(GM_BRANCH);
   gmSyncHeight();
   gmBindScroll();
@@ -20072,12 +20329,13 @@ function gmBranch(which){
   GM_BRANCH=which;
   try{navStateSave();}catch(e){}
   if(which==='assess')which='climb';   // Fitness assessment tab removed
-  const f=$('climb-frame'),host=$('custom-host'),comp=$('comp-host'),wt=$('weight-host'),ph=$('photos-host'),pf=$('perf-host'),ms=$('meas-host'),hl=$('health-host'),ov=$('overview-host');
-  const tabs={overview:'gm-tab-overview',climb:'gm-tab-climb',custom:'gm-tab-custom',weight:'gm-tab-weight',comp:'gm-tab-comp',photos:'gm-tab-photos',perf:'gm-tab-perf',meas:'gm-tab-meas',health:'gm-tab-health'};
+  const f=$('climb-frame'),host=$('custom-host'),comp=$('comp-host'),wt=$('weight-host'),ph=$('photos-host'),pf=$('perf-host'),ms=$('meas-host'),hl=$('health-host'),ov=$('overview-host'),rd=$('roadmap-host');
+  const tabs={overview:'gm-tab-overview',roadmap:'gm-tab-roadmap',climb:'gm-tab-climb',custom:'gm-tab-custom',weight:'gm-tab-weight',comp:'gm-tab-comp',photos:'gm-tab-photos',perf:'gm-tab-perf',meas:'gm-tab-meas',health:'gm-tab-health'};
   Object.keys(tabs).forEach(k=>{const b=$(tabs[k]);if(b)b.classList.toggle('active',k===which);});
   try{const _ab=$(tabs[which]);if(_ab&&_ab.scrollIntoView)_ab.scrollIntoView({inline:'center',block:'nearest'});}catch(e){}   // keep the active tab visible in the swipeable bar
   if(f)f.style.display=(which==='climb')?'':'none';
   if(ov)ov.classList.toggle('hidden',which!=='overview');
+  if(rd)rd.classList.toggle('hidden',which!=='roadmap');
   if(host)host.classList.toggle('hidden',which!=='custom');
   if(wt)wt.classList.toggle('hidden',which!=='weight');
   if(comp)comp.classList.toggle('hidden',which!=='comp');
@@ -20086,6 +20344,7 @@ function gmBranch(which){
   if(ms)ms.classList.toggle('hidden',which!=='meas');
   if(hl)hl.classList.toggle('hidden',which!=='health');
   if(which==='overview'){try{renderOverviewProgress();}catch(e){}}
+  else if(which==='roadmap'){try{renderRoadmap();}catch(e){}}
   else if(which==='custom'){renderCustomTrack();}
   else if(which==='weight'){try{renderWeightTracker();}catch(e){}}
   else if(which==='comp'){try{renderComposition();}catch(e){}}
@@ -25458,7 +25717,7 @@ function edRenderGoalPlan(){
   host.querySelectorAll('textarea').forEach(taGrow);
   gpStartClock(g.deadline,g.done);
 }
-function edRenderPhase(){const h=$('ed-phase-host');if(h)h.innerHTML=(typeof mcAdminPhaseHTML==='function'?mcAdminPhaseHTML():'')+(typeof edMrScheduleHTML==='function'?edMrScheduleHTML():'');}
+function edRenderPhase(){const h=$('ed-phase-host');if(h)h.innerHTML=(typeof mcAdminPhaseHTML==='function'?mcAdminPhaseHTML():'')+(typeof edMrScheduleHTML==='function'?edMrScheduleHTML():'')+(typeof rmAdminCardHTML==='function'?rmAdminCardHTML():'');}
 function edRenderGoals(){
   edRenderPhase();
   const host=$('ed-goals');if(!host)return;const gs=edGoals();
