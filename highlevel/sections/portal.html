@@ -6848,7 +6848,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04qu';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04qv';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -22476,9 +22476,15 @@ async function allocSetDetails(cid,track,v){allocEnsure(cid)[track].details=v||'
 async function allocMarkToday(cid,track){allocEnsure(cid)[track].on=todayISO();await allocSave();allocRender();}
 /* ── Plan-updates automation: a diet/training save auto-stamps the update date, pops a "next review cycle" prompt, and auto-creates a follow-up task (due 1 week before the next review) ── */
 async function allocEnsureLoaded(){if(ALLOC_LOADED_OK)return true;try{const v=await DB.getKV('plan_allocations');ALLOC=(v&&typeof v==='object'&&!Array.isArray(v))?v:{};ALLOC_LOADED_OK=true;}catch(e){ALLOC_LOADED_OK=false;}return ALLOC_LOADED_OK;}
-let PLAN_FU=null;
-async function planUpdateOnDietSave(cid,name){try{if(!(await allocEnsureLoaded()))return;allocEnsure(cid).nutrition.on=todayISO();await allocSave();if($('alloc-modal')&&$('alloc-modal').classList.contains('open'))allocRender();}catch(e){}
-  planFuOpen(cid,name,'nutrition',(allocGet(cid,'nutrition').weeks||4));}
+let PLAN_FU=null, PLAN_FU_QUEUE=[];
+/* called after a save with the tracks that changed ('nutrition' and/or 'training'); stamps each date then queues a review-cycle prompt per track */
+async function planUpdateAfterSave(cid,name,tracks){
+  try{if(!(await allocEnsureLoaded()))return;}catch(e){return;}
+  let any=false;(tracks||[]).forEach(tr=>{if(tr!=='nutrition'&&tr!=='training')return;allocEnsure(cid)[tr].on=todayISO();PLAN_FU_QUEUE.push({cid:cid,name:name||'client',track:tr});any=true;});
+  if(any){try{await allocSave();}catch(e){}if($('alloc-modal')&&$('alloc-modal').classList.contains('open'))allocRender();}
+  if(!PLAN_FU)planFuNext();
+}
+function planFuNext(){const item=PLAN_FU_QUEUE.shift();if(!item){PLAN_FU=null;return;}planFuOpen(item.cid,item.name,item.track,(allocGet(item.cid,item.track).weeks||4));}
 function planFuOpen(cid,name,track,weeks){PLAN_FU={cid:cid,name:name||'client',track:track};const m=$('plan-fu-modal');if(!m)return;
   const w=Math.max(1,parseInt(weeks,10)||4);if($('pfu-weeks'))$('pfu-weeks').value=w;if($('pfu-name'))$('pfu-name').textContent=name||'client';if($('pfu-track'))$('pfu-track').textContent=(track==='nutrition'?'diet plan':'training plan');
   planFuChipsRender();planFuPreview();m.classList.add('open');}
@@ -22489,8 +22495,10 @@ async function planFuApply(){if(!PLAN_FU){planFuClose();return;}const w=Math.max
   try{if(await allocEnsureLoaded()){allocEnsure(cid)[track].on=allocGet(cid,track).on||todayISO();allocEnsure(cid)[track].weeks=w;await allocSave();if($('alloc-modal')&&$('alloc-modal').classList.contains('open'))allocRender();}}catch(e){}
   const nextDue=addDaysISO(allocGet(cid,track).on||todayISO(),w*7);
   await planFuCreateTask(cid,name,track,nextDue);
-  planFuClose();toast('✓ Next '+(track==='nutrition'?'diet':'training')+' review set ('+w+' wks) · follow-up task created');}
-function planFuClose(){const m=$('plan-fu-modal');if(m)m.classList.remove('open');PLAN_FU=null;}
+  toast('✓ Next '+(track==='nutrition'?'diet':'training')+' review set ('+w+' wks) · follow-up task created');
+  planFuDismiss();setTimeout(planFuNext,150);}
+function planFuDismiss(){const m=$('plan-fu-modal');if(m)m.classList.remove('open');PLAN_FU=null;}
+function planFuClose(){planFuDismiss();setTimeout(planFuNext,150);}   /* Not now / × → still move to the next queued track */
 async function planFuCreateTask(cid,name,track,nextDueISO){
   try{if(typeof teamLoad==='function')await teamLoad();}catch(e){}
   if(typeof TEAM==='undefined'||!TEAM)return;
@@ -26599,9 +26607,14 @@ async function savePlan(){
     if(wasNew&&$('ed-pass'))$('ed-pass').value=edClient.pw||$('ed-pass').value;
     // Offer to notify the client of what changed (existing clients only, when something actually changed)
     if(!wasNew){const changes=diffPlan(oldPlan,plan);if(changes&&changes!=='saved (no field changes)')openNotifyModal(plan,(edClient.name||email),changes);}
-    // Plan-updates automation: a diet change auto-stamps the nutrition update date + prompts for the next review cycle → auto follow-up task
-    try{const dietChanged=wasNew?((plan.dayTypes||[]).some(d=>(d.meals||[]).length)):!!histNutritionDiff({dayTypes:(oldPlan||{}).dayTypes,schedule:(oldPlan||{}).schedule,hydration:(oldPlan||{}).hydration,supplements:(oldPlan||{}).supplements},{dayTypes:plan.dayTypes,schedule:plan.schedule,hydration:plan.hydration,supplements:plan.supplements});
-      if(dietChanged)planUpdateOnDietSave(edClient.id,(edClient.name||email));}catch(e){}
+    // Plan-updates automation: a diet and/or training change auto-stamps its update date + prompts for the next review cycle → auto follow-up task
+    try{const tracks=[];
+      const dietChanged=wasNew?((plan.dayTypes||[]).some(d=>(d.meals||[]).length)):!!histNutritionDiff({dayTypes:(oldPlan||{}).dayTypes,schedule:(oldPlan||{}).schedule,hydration:(oldPlan||{}).hydration,supplements:(oldPlan||{}).supplements},{dayTypes:plan.dayTypes,schedule:plan.schedule,hydration:plan.hydration,supplements:plan.supplements});
+      if(dietChanged)tracks.push('nutrition');
+      const _trN=plan.training||{},_trO=(oldPlan||{}).training||{};
+      const trainChanged=wasNew?(((_trN.days||[]).length)||((_trN.phases||[]).length)||((_trN.startPoint||'').trim())||((_trN.split||'').trim())):!!histTrainingDiff(_trO,_trN);
+      if(trainChanged)tracks.push('training');
+      if(tracks.length)planUpdateAfterSave(edClient.id,(edClient.name||email),tracks);}catch(e){}
   }catch(e){console.error(e);toast('Save failed — '+(e.message||'error'),true);}
 }
 async function deleteClient(){
