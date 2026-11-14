@@ -4645,6 +4645,15 @@ img,svg,canvas,video{max-width:100%}
 
     <!-- ---- WEEKLY CHECK-INS VIEW ---- -->
     <section id="view-checkins" class="hidden">
+      <div class="card"><div class="card-head"><span class="step-no">📅</span><h2>Book your weekly check-in call</h2>
+        <span class="sp"></span><span class="pill" id="ci-booked-pill"></span></div>
+        <div class="card-body">
+          <p class="small" style="margin-bottom:10px">Pick a time below. Once you've booked, tap “I've booked my call” so your coach knows.</p>
+          <div id="ci-cal-embed" style="min-height:640px"></div>
+          <button class="btn-sm solid" style="margin-top:10px" onclick="ciConfirmBooking()">✓ I've booked my call</button>
+          <div id="ci-book-reward" style="margin-top:12px"></div>
+        </div></div>
+
       <div class="card"><div class="card-head"><span class="step-no">📝</span><h2>Weekly check-in</h2>
         <span class="sp"></span><span class="small">Fill this in once a week</span></div>
         <div class="card-body">
@@ -4672,15 +4681,6 @@ img,svg,canvas,video{max-width:100%}
           <div id="ci-custom"></div>
           <div class="ci-reward-box" style="margin:0 0 4px;display:flex;align-items:center;gap:9px;border-color:var(--prot)"><span style="font-size:20px">📸</span><div class="small">Progress photos have moved to <b>Progress Tracking → Progress photos</b> (front/side/back, with a photo guide) — <button type="button" class="btn-xxs" onclick="setSection('milestones');setTimeout(function(){try{gmBranch('photos')}catch(e){}},80)">open it →</button></div></div>
           <button class="btn btn-primary" id="ci-submit-btn" onclick="ciSubmit()">Submit check-in</button>
-        </div></div>
-
-      <div class="card"><div class="card-head"><span class="step-no">📅</span><h2>Book your weekly check-in call</h2>
-        <span class="sp"></span><span class="pill" id="ci-booked-pill"></span></div>
-        <div class="card-body">
-          <p class="small" style="margin-bottom:10px">Pick a time below. Once you've booked, tap “I've booked my call” so your coach knows.</p>
-          <div id="ci-cal-embed" style="min-height:640px"></div>
-          <button class="btn-sm solid" style="margin-top:10px" onclick="ciConfirmBooking()">✓ I've booked my call</button>
-          <div id="ci-book-reward" style="margin-top:12px"></div>
         </div></div>
 
       <div class="card"><div class="card-head"><span class="step-no">📈</span><h2>Your trends</h2></div>
@@ -6772,7 +6772,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04ql';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04qm';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
