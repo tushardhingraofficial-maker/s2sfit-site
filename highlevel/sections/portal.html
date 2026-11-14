@@ -6710,7 +6710,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04qb';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04qc';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -8690,21 +8690,56 @@ function renderPlan(){
 }
 const PROFILE_FIELDS=[['startDate','Start date'],['goal','Goal'],['diet','Diet type'],['bodyType','Body type'],['trainingLevel','Training level'],['activity','Activity level'],['sex','Sex'],['age','Age'],['height','Height'],['startWeight','Starting weight'],['weight','Current weight'],['bodyFat','Body fat %'],['goalWeight','Goal weight']];
 const PROFILE_KEYS=['startDate','goal','diet','bodyType','trainingLevel','activity','sex','age','height','startWeight','weight','bodyFat','goalWeight'];
-function dietAllows(f,pref){
-  if(!pref||pref==='Non-vegetarian')return true;
-  const cat=(f.cat||'').toLowerCase(),isEgg=/\begg/.test((f.name||'').toLowerCase());
-  if(pref==='Vegan')return cat==='vegan';
-  if(pref==='Vegetarian')return (cat==='vegan'||cat==='vegetarian')&&!isEgg;
-  if(pref==='Eggetarian')return (cat==='vegan'||cat==='vegetarian');
-  return true;
-}
 function clientDiet(){return (PLAN&&PLAN.profile&&PLAN.profile.diet)||'';}
-/* ───────── Ingredient action: library replacements (diet-matched, auto-scaled qty) + flag + comment ───────── */
-function ingNormDiet(s){s=(s||'').toLowerCase();if(/vegan/.test(s))return 'vegan';if(/non.?veg|nonveg|omni|meat|chicken|fish|pesc/.test(s))return 'nonveg';if(/veg|lacto|ovo/.test(s))return 'veg';return 'any';}
-function dietAllows(clientDiet,foodDiet){clientDiet=clientDiet||'any';foodDiet=foodDiet||'any';
-  if(clientDiet==='vegan')return foodDiet==='vegan'||foodDiet==='any';
-  if(clientDiet==='veg')return foodDiet==='vegan'||foodDiet==='veg'||foodDiet==='any';
+/* ───────── Diet-preference engine — ONE source of truth, used across every food feature ───────── */
+/* normalize any client diet-preference string → one of: vegan | veg | egg | pesc | nonveg | any */
+function dietNorm(s){s=(s||'').toString().toLowerCase().trim();
+  if(s==='veg'||s==='vegan'||s==='egg'||s==='pesc'||s==='nonveg'||s==='any')return s;   // already a code (idempotent)
+  if(/vegan|plant.?based/.test(s))return 'vegan';
+  if(/egg[ie]tarian|ovo.?veg/.test(s))return 'egg';
+  if(/pesca?e?tarian|\bpesc\b/.test(s))return 'pesc';
+  if(/non.?veg|nonveg|omnivore|\bmeat\b|chicken|\bfish\b|seafood|mutton|\bbeef\b|\bpork\b|poultry/.test(s))return 'nonveg';
+  if(/veg|lacto|plant/.test(s))return 'veg';
+  return 'any';}
+function ingNormDiet(s){return dietNorm(s);}
+/* classify a FOOD (library item / recipe ingredient) → vegan | veg | egg | nonveg | any.
+   The food NAME/group wins for the hard cases, so a mis-categorised item can't slip through to a veg client. */
+function foodDietClass(f){
+  if(!f)return 'any';
+  const g=(typeof ingFoodGroup==='function')?ingFoodGroup(f):'other';
+  if(g==='meat'||g==='fish')return 'nonveg';
+  if(g==='egg')return 'egg';
+  const fd=(''+(f.diet||'')).toLowerCase();
+  if(/vegan/.test(fd))return 'vegan';
+  if(/non.?veg|nonveg/.test(fd))return 'nonveg';
+  if(/veg/.test(fd))return 'veg';
+  const cd=(typeof ilDietFromCat==='function')?ilDietFromCat(f.cat):'';
+  if(cd==='vegan')return 'vegan';
+  if(cd==='nonveg')return 'nonveg';
+  if(cd==='veg')return 'veg';
+  if(['dairy','legume','grain','veg','fruit','nut','fat'].indexOf(g)>=0)return 'veg';
+  return 'any';}
+/* does a food fit the client's preference?  clientPref = raw profile string OR a normalized code;
+   food = a food object (preferred — enables the name-based safety net) OR a normalized diet string. */
+function dietAllows(clientPref,food){
+  const c=dietNorm(clientPref);
+  if(c==='nonveg'||c==='any')return true;
+  if(c==='pesc')return true;   // veg + eggs + dairy + fish all fine; land-meat handled in AI prompts
+  const fd=(typeof food==='string')?dietNorm(food):foodDietClass(food);
+  if(c==='vegan')return fd==='vegan';
+  if(c==='veg')return fd==='vegan'||fd==='veg'||fd==='any';
+  if(c==='egg')return fd==='vegan'||fd==='veg'||fd==='egg'||fd==='any';
   return true;}
+/* short label for the "off-plan" tag shown next to foods that don't fit the client's diet */
+function dietOffLabel(pref){const c=dietNorm(pref);return c==='vegan'?'not vegan':(c==='veg'?'non-veg':(c==='egg'?'non-veg':(c==='pesc'?'has meat':'off-plan')));}
+/* a strong, explicit instruction block for the AI meal/recipe generators (weekly meals, meal-prep) */
+function dietRuleText(pref){const c=dietNorm(pref);
+  if(c==='vegan')return 'STRICT DIETARY RULE — the client is VEGAN. Every meal, recipe and ingredient you suggest MUST be 100% plant-based. NEVER include meat, poultry, fish, seafood, eggs, dairy (milk, cheese, paneer, yoghurt, curd, butter, ghee, whey, casein, cream), honey or any animal-derived product. Use plant proteins only (tofu, tempeh, seitan, legumes, dals, beans, soya, pea/plant protein).';
+  if(c==='veg')return 'STRICT DIETARY RULE — the client is VEGETARIAN. Every meal, recipe and ingredient MUST be vegetarian. NEVER include meat, poultry, fish, seafood or eggs (or anything made with them — gelatin, fish sauce, meat/bone stock). Dairy IS allowed. Use vegetarian proteins (paneer, dairy, tofu, soya, legumes, dals, beans, whey).';
+  if(c==='egg')return 'STRICT DIETARY RULE — the client is EGGETARIAN (vegetarian plus eggs). NEVER include meat, poultry, fish or seafood. Eggs and dairy ARE allowed. Favour eggs, paneer, dairy, legumes, tofu and soya for protein.';
+  if(c==='pesc')return 'STRICT DIETARY RULE — the client is PESCATARIAN. NEVER include meat or poultry (chicken, beef, pork, lamb, mutton, turkey, bacon, ham). Fish, seafood, eggs and dairy ARE allowed.';
+  return '';}
+/* ───────── Ingredient action: library replacements (diet-matched, auto-scaled qty) + flag + comment ───────── */
 function ingFoodDiet(f){return f.diet||(typeof ilDietFromCat==='function'?ilDietFromCat(f.cat):'any');}
 /* Food-group / "role" so swaps stay sensible: chicken → eggs/turkey (direct), paneer/tofu (indirect), not vegetables. */
 function ingFoodGroup(f){const s=(((f&&f.cat)||'')+' '+((f&&f.name)||'')).toLowerCase();
@@ -8739,7 +8774,7 @@ function ingReplacements(target,clientDietStr,n){
   const tname=(target.name||'').trim().toLowerCase();const tg=ingFoodGroup({name:target.name});
   const rel=[],unrel=[];
   (INGREDIENTS||[]).forEach(f=>{
-    if(!dietAllows(cd,ingFoodDiet(f)))return;
+    if(!dietAllows(cd,f))return;
     const fp=+f.p||0,fc=+f.carb||0,ff=+f.f||0,fcl=+f.cal||0;
     if(fp<=0&&fc<=0&&ff<=0&&fcl<=0)return;
     if((f.name||'').trim().toLowerCase()===tname)return;
@@ -11622,7 +11657,7 @@ function weeklyMealsMeta(){
 function weeklyMealsPrompt(diet,meals,prefs){
   prefs=prefs||{};
   const L=['You are a sports nutritionist for S2S Fit. Build a 7-day (Monday to Sunday) meal-variety chart. The client is bored of eating the same thing, so GENUINE day-to-day variety is the whole point — repetitive output is a failure.'];
-  L.push('Dietary preference: '+(diet||'no specific restriction')+'.');
+  {const _dr=dietRuleText(diet);L.push(_dr?_dr:('Dietary preference: '+(diet||'no specific restriction')+'.'));}
   if(prefs.cuisine)L.push('Preferred cuisine / food style: '+prefs.cuisine+'.');
   if(prefs.region)L.push('Client is based in: '+prefs.region+' — use ingredients, brands and staples available and familiar there.');
   if(prefs.prep)L.push('Preparation style: '+prefs.prep+' — keep every meal consistent with this (e.g. "quick" = under ~15 min, "no-cook" = assembly only, "takeaway / eating out" = realistic ordered/restaurant options).');
@@ -11650,7 +11685,7 @@ function weeklyMealsPrompt(diet,meals,prefs){
 function weeklyMealsFillTemplate(tpl,diet,meals,prefs){
   prefs=prefs||{};
   const mealsList=(meals||[]).map(m=>'- '+m.label+' (target '+m.target+')').join('\n');
-  const map={'{{diet}}':diet||'no specific restriction','{{cuisine}}':prefs.cuisine||'','{{region}}':prefs.region||'',
+  const map={'{{diet}}':(dietRuleText(diet)||('Dietary preference: '+(diet||'no specific restriction'))),'{{cuisine}}':prefs.cuisine||'','{{region}}':prefs.region||'',
     '{{prep}}':prefs.prep||'','{{avoid}}':prefs.avoid||'','{{allergies}}':prefs.allergies||'','{{notes}}':prefs.notes||'','{{meals}}':mealsList};
   let out=String(tpl||'');Object.keys(map).forEach(k=>{out=out.split(k).join(map[k]);});
   if(!/"days"\s*:/.test(out))
@@ -11766,6 +11801,7 @@ function mealPrepPlansText(plans){
 function mealPrepPrompt(prepDays,notes,plans){
   const L=['You are a PROFESSIONAL CHEF and sports nutritionist creating a DETAILED batch meal-prep strategy for S2S Fit. Write with a chef’s depth — specific quantities, temperatures, timings, yields and pro techniques — while staying easy to follow.'];
   L.push('The client batch-cooks on '+prepDays+' day(s) per week and eats from those batches across the whole week — scale all quantities and yields accordingly.');
+  {const _dr=dietRuleText(clientDiet());if(_dr)L.push(_dr);}   // client's diet preference — must be respected in every recipe & ingredient
   if(notes)L.push('Special prep instructions (follow these EXACTLY): '+notes);
   L.push('This client has '+plans.length+' diet plan(s) / day type(s). Produce a SEPARATE, detailed strategy for EACH plan below.');
   L.push('Present each plan’s content in THIS EXACT ORDER:');
@@ -11848,6 +11884,7 @@ function mealPrepPlansDataClient(){
   });
 }
 function mpComposeNotes(p){const L=[];
+  {const _dr=dietRuleText(clientDiet());if(_dr)L.push(_dr);}   // client's diet preference — highest priority, must be respected
   if(p.time)L.push('Time available per prep session: '+p.time+'.');
   if(p.equipment&&p.equipment.length)L.push('Available equipment (use only these): '+p.equipment.join(', ')+'.');
   if(p.skill)L.push('Cooking skill level: '+p.skill+'.');
@@ -11910,7 +11947,7 @@ async function mealPrepGenClient(){
   let baseGen='';try{const p0=await DB.getPlan(SESSION.id);baseGen=((p0&&p0.meal_prep)||{}).generatedAt||'';}catch(e){}
   const prompt=mealPrepPrompt(prepDays,notes,plans);
   const jobId='c'+Math.random().toString(36).slice(2,9)+Date.now().toString(36);
-  const payload={type:'meal_prep',jobId:jobId,clientId:SESSION.id,secret:secret,prepDays:+prepDays,notes:notes,plans:plans,prompt:prompt,callbackUrl:(typeof API_URL!=='undefined'?API_URL:'')};
+  const payload={type:'meal_prep',jobId:jobId,clientId:SESSION.id,secret:secret,prepDays:+prepDays,diet:clientDiet(),notes:notes,plans:plans,prompt:prompt,callbackUrl:(typeof API_URL!=='undefined'?API_URL:'')};
   const body=JSON.stringify(payload);
   let sent=false,corsHint=false;
   try{await fetch(hook,{method:'POST',headers:{'Content-Type':'application/json'},body:body});sent=true;}   // works when the n8n webhook has CORS Allowed Origins = *
@@ -14817,13 +14854,16 @@ function renderLogMeal(key,name,time,planned,rows,jrs){
 function logAcInput(key){
   const inp=$('logadd-'+key),menu=$('logac-'+key),q=inp.value.trim().toLowerCase();
   if(!INGREDIENTS.length){menu.innerHTML='<div class="ac-empty">Loading…</div>';menu.classList.add('open');return;}
-  const list=[];for(let i=0;i<INGREDIENTS.length&&list.length<80;i++){const f=INGREDIENTS[i];if(!q||ingLabel(f).toLowerCase().indexOf(q)>=0)list.push(f);}
+  const _d=clientDiet();
+  const matches=[];for(let i=0;i<INGREDIENTS.length;i++){const f=INGREDIENTS[i];if(!q||ingLabel(f).toLowerCase().indexOf(q)>=0){matches.push(f);if(matches.length>=400)break;}}
+  if(_d)matches.sort((a,b)=>(dietAllows(_d,a)?0:1)-(dietAllows(_d,b)?0:1));   // surface diet-appropriate foods first
+  const list=matches.slice(0,80);
   if(!list.length){const qq=inp.value.trim();
     menu.innerHTML='<div class="ac-add"><div class="ac-add-msg">No food matches “'+esc(qq)+'” in your list.</div>'+
       '<button class="ac-add-btn" onmousedown="logAddNew(\''+key+'\')">＋ Add “'+esc(qq)+'” to your foods</button></div>';
     menu.classList.add('open');return;}
-  const _d=clientDiet();
-  menu.innerHTML=list.map(f=>{const idx=INGREDIENTS.indexOf(f);const off=_d&&!dietAllows(f,_d);return '<div class="ac-item" onmousedown="logPick(\''+key+'\','+idx+')"><span>'+esc(f.name)+(f.units?' <span class="funit">· '+esc(f.units)+'</span>':'')+(off?' <span class="pill warn" style="padding:0 6px">off-plan</span>':'')+'</span><span class="macros">'+round(f.p)+'P '+round(f.carb)+'C '+round(f.f)+'F · '+round(f.cal)+'k</span></div>';}).join('');
+  const _off=dietOffLabel(_d);
+  menu.innerHTML=list.map(f=>{const idx=INGREDIENTS.indexOf(f);const off=_d&&!dietAllows(_d,f);return '<div class="ac-item" onmousedown="logPick(\''+key+'\','+idx+')"><span>'+esc(f.name)+(f.units?' <span class="funit">· '+esc(f.units)+'</span>':'')+(off?' <span class="pill warn" style="padding:0 6px">'+_off+'</span>':'')+'</span><span class="macros">'+round(f.p)+'P '+round(f.carb)+'C '+round(f.f)+'F · '+round(f.cal)+'k</span></div>';}).join('');
   menu.classList.add('open');
 }
 let LOG_PICK={};
@@ -14845,7 +14885,7 @@ function logAddNew(key){const inp=$('logadd-'+key);const q=inp?inp.value.trim():
 function addLogTo(key){
   const f=LOG_PICK[key]||findIngByLabel($('logadd-'+key).value);if(!f){toast('Pick a food from the list',true);return;}
   const qty=Number($('logqty-'+key).value)||1;const unit=(($('logunit-'+key)||{}).value)||f.units;
-  const pref=clientDiet();if(pref&&!dietAllows(f,pref))toast('⚠ '+f.name+' is off your '+pref+' plan — added anyway',true);
+  const pref=clientDiet();if(pref&&!dietAllows(pref,f))toast('⚠ '+f.name+' is off your '+pref+' plan — added anyway',true);
   const mealName=key==='extra'?'Extra':((DAY_MEALS[parseInt(key.slice(1))]||{}).name||'Meal');
   const it=uApplyUnit(f,qty,unit);it.name=f.name;it.cat=f.cat;it.meal=mealName;
   DAYLOG.items=DAYLOG.items||[];DAYLOG.items.push(it);LOG_PICK[key]=null;
@@ -20737,7 +20777,7 @@ function ingYieldOut(raw,cooked){
   out.innerHTML=html;
 }
 /* ═══════════════ SHARED RECIPE BOOK ═══════════════ */
-let RECIPES=[], RCP_LOADED=false, RCP_SEARCH='', RCP_DIET='all';
+let RECIPES=[], RCP_LOADED=false, RCP_SEARCH='', RCP_DIET='all', RCP_DIET_DEFAULTED=false;
 let RCP_EDIT=null, RCP_EDIT_INGS=[], RCPE_MATCHES=[];
 const RCP_DIETS=[['all','All'],['mine','Mine'],['veg','Veg'],['vegan','Vegan'],['nonveg','Non-veg']];
 function recipeScaleIng(base,grams){const denom=ilParseGrams(base.units)||100;const k=(+grams||0)/denom;
@@ -20755,13 +20795,17 @@ function recipeNormLocal(rc,existing){const ings=(Array.isArray(rc.ingredients)?
   const servings=Math.max(1,Math.round(+rc.servings||1));const T=recipeTotals(ings);const now=new Date().toISOString();
   return {id:rc.id||(existing&&existing.id)||('r'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)),name:(rc.name||'')+'',author:(rc.author||'')+'',authorId:(rc.authorId||(existing&&existing.authorId)||'')+'',servings:servings,ingredients:ings,instructions:(rc.instructions||'')+'',tags:(Array.isArray(rc.tags)?rc.tags:[]).slice(0,12),diet:['any','veg','vegan','nonveg'].includes(rc.diet)?rc.diet:((existing&&existing.diet)||'any'),source:['custom','online'].includes(rc.source)?rc.source:((existing&&existing.source)||'custom'),macros:{p:Math.round(T.p/servings*10)/10,carb:Math.round(T.carb/servings*10)/10,f:Math.round(T.f/servings*10)/10,cal:Math.round(T.cal/servings)},totals:T,createdAt:(existing&&existing.createdAt)||rc.createdAt||now,updatedAt:now};}
 async function loadRecipes(force){if(RCP_LOADED&&!force)return RECIPES;try{RECIPES=await DB.recipes();}catch(e){RECIPES=[];}if(!Array.isArray(RECIPES))RECIPES=[];RCP_LOADED=true;return RECIPES;}
-async function renderRecipes(){const host=$('recipe-host');if(host)host.innerHTML='<div class="empty">Loading recipes…</div>';await loadRecipes(true);rcpRenderFilters();recipeHostRender();}
+async function renderRecipes(){const host=$('recipe-host');if(host)host.innerHTML='<div class="empty">Loading recipes…</div>';await loadRecipes(true);
+  if(!RCP_DIET_DEFAULTED){RCP_DIET_DEFAULTED=true;if(!ADMIN_OK){const c=dietNorm(clientDiet());if(c==='vegan')RCP_DIET='vegan';else if(c==='veg')RCP_DIET='veg';}}   // default a veg/vegan client to their own diet (they can tap "All")
+  rcpRenderFilters();recipeHostRender();}
 function rcpRenderFilters(){const h=$('rcp-filters');if(!h)return;h.innerHTML=RCP_DIETS.map(d=>'<button class="rcp-chip'+(RCP_DIET===d[0]?' on':'')+'" onclick="rcpSetDiet(\''+d[0]+'\')">'+d[1]+'</button>').join('');}
 function rcpSetDiet(d){RCP_DIET=d;rcpRenderFilters();recipeHostRender();}
 function rcpSetSearch(v){RCP_SEARCH=(v||'').toLowerCase();recipeHostRender();}
 function rcpFilteredList(){const me=(SESSION&&SESSION.id)||'';let list=RECIPES.slice();
   if(RCP_DIET==='mine')list=list.filter(r=>r.authorId===me);
-  else if(RCP_DIET!=='all')list=list.filter(r=>(r.diet||'any')===RCP_DIET||(RCP_DIET!=='nonveg'&&r.diet==='any'));
+  else if(RCP_DIET==='veg')list=list.filter(r=>{const d=r.diet||'any';return d==='veg'||d==='vegan'||d==='any';});   // vegetarians can also eat vegan dishes
+  else if(RCP_DIET==='vegan')list=list.filter(r=>(r.diet||'')==='vegan');
+  else if(RCP_DIET==='nonveg')list=list.filter(r=>(r.diet||'any')==='nonveg');
   if(RCP_SEARCH){const q=RCP_SEARCH;list=list.filter(r=>((r.name||'')+' '+(r.author||'')+' '+(r.tags||[]).join(' ')+' '+(r.ingredients||[]).map(i=>i.name).join(' ')).toLowerCase().includes(q));}
   return list.sort((a,b)=>((b.updatedAt||'')<(a.updatedAt||'')?-1:1));}
 function rcpDietChip(d){const map={veg:['Veg','var(--good)'],vegan:['Vegan','var(--good)'],nonveg:['Non-veg','var(--red)'],any:['',null]};const m=map[d||'any'];return m&&m[0]?'<span class="rcp-diet" style="color:'+m[1]+';border-color:'+m[1]+'">'+m[0]+'</span>':'';}
@@ -21658,7 +21702,7 @@ function notesQueueSave(){ const s=$('ns-save'); if(s){s.textContent='Saving…'
 async function notesSaveNow(){ if(NOTES_SAVE_T){clearTimeout(NOTES_SAVE_T);NOTES_SAVE_T=null;} try{ await DB.saveNotes(NOTES); const s=$('ns-save'); if(s){s.textContent='Saved ✓';s.classList.add('show');setTimeout(()=>s.classList.remove('show'),1400);} }catch(e){ const s=$('ns-save'); if(s){s.textContent='Save failed';s.classList.add('show');} toast('Could not save notes: '+(e.message||e),true); } }
 
 /* ===== Call logs — record of coaching / sales calls (admin only) ===== */
-let CALLS=[], CALLS_LOADED=false, CALL_CLIENTS=[], CALL_ARCHIVED=new Set();
+let CALLS=[], CALLS_LOADED=false, CALL_CLIENTS=[], CALL_ARCHIVED=new Set(), CALL_PAUSED=new Set();
 function nowLocalDT(){const d=new Date();const p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes());}
 const CALL_STATUS={positive:'🟢 Positive',neutral:'⚪ Neutral',concern:'🔴 Needs attention'};
 const CALL_ANSWERED={yes:'📞 Picked up',replied:'💬 Replied',voicemail:'📩 Left a message',callback:'🔁 To call back',no:'📵 No answer',scheduled:'📅 Scheduled',custom:'✏️ Custom'};
@@ -21680,9 +21724,9 @@ async function openCalls(){
   $('calls-host').innerHTML='<div class="empty">Loading…</div>';
   try{CALL_CLIENTS=await DB.listClients();}catch(e){CALL_CLIENTS=[];}
   // which clients are archived? — hide them from the call dashboards (Follow-ups, Stats, filter list)
-  CALL_ARCHIVED=new Set();try{const ov=await DB.overview();(ov&&ov.plans||[]).forEach(p=>{if(p&&p.archived&&p.client_id)CALL_ARCHIVED.add(p.client_id);});}catch(e){}
-  const active=CALL_CLIENTS.filter(c=>!CALL_ARCHIVED.has(c.id));
-  const opts='<option value="">— general / no client —</option>'+CALL_CLIENTS.map(c=>'<option value="'+c.id+'">'+esc(c.name||c.email)+(CALL_ARCHIVED.has(c.id)?' (archived)':'')+'</option>').join('');
+  CALL_ARCHIVED=new Set();CALL_PAUSED=new Set();try{const ov=await DB.overview();(ov&&ov.plans||[]).forEach(p=>{if(!p||!p.client_id)return;if(p.archived)CALL_ARCHIVED.add(p.client_id);else if(p.paused)CALL_PAUSED.add(p.client_id);});}catch(e){}
+  const active=CALL_CLIENTS.filter(c=>!CALL_ARCHIVED.has(c.id)&&!CALL_PAUSED.has(c.id));
+  const opts='<option value="">— general / no client —</option>'+CALL_CLIENTS.map(c=>'<option value="'+c.id+'">'+esc(c.name||c.email)+(CALL_ARCHIVED.has(c.id)?' (archived)':(CALL_PAUSED.has(c.id)?' (paused)':''))+'</option>').join('');
   if($('cl-client'))$('cl-client').innerHTML=opts;   // log form keeps everyone (archived flagged) so you can still log a stray call
   if($('calls-fclient'))$('calls-fclient').innerHTML='<option value="">All clients</option>'+active.map(c=>'<option value="'+c.id+'">'+esc(c.name||c.email)+'</option>').join('');
   try{CALLS=await DB.listCallLogs();}catch(e){CALLS=[];}
@@ -21798,7 +21842,7 @@ function callMonthHTML(rows){
   return '<div class="cal-grid">'+['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(w=>'<div class="cal-dow">'+w+'</div>').join('')+cells+'</div>';
 }
 function callStatsHTML(){
-  const all=(CALLS||[]).filter(r=>!CALL_ARCHIVED.has(r.client_id));   // archived clients are off the dashboards
+  const all=(CALLS||[]).filter(r=>!CALL_ARCHIVED.has(r.client_id)&&!CALL_PAUSED.has(r.client_id));   // archived + paused clients are off the dashboards
   const tot=all.length,picked=all.filter(r=>(r.answered||'yes')==='yes').length,missed=all.filter(r=>r.answered==='no').length,sched=all.filter(r=>r.answered==='scheduled').length;
   const done=picked+missed,rate=done?Math.round(picked/done*100):0;
   const byC={};all.forEach(r=>{const k=r.client_id||'__gen';const o=byC[k]=byC[k]||{name:r.client_name||'General',total:0,picked:0,missed:0,last:''};o.total++;if((r.answered||'yes')==='yes')o.picked++;else if(r.answered==='no')o.missed++;if((r.call_at||'')>o.last)o.last=r.call_at;});
@@ -21830,7 +21874,7 @@ async function callRemind(cid){
   catch(e){toast('Could not add reminder — '+((e&&e.message)||'error'),true);}
 }
 function callFollowupsHTML(){
-  const rows=(CALL_CLIENTS||[]).filter(c=>!CALL_ARCHIVED.has(c.id)).map(c=>Object.assign({id:c.id,name:c.name||c.email},callClientStats(c.id)));
+  const rows=(CALL_CLIENTS||[]).filter(c=>!CALL_ARCHIVED.has(c.id)&&!CALL_PAUSED.has(c.id)).map(c=>Object.assign({id:c.id,name:c.name||c.email},callClientStats(c.id)));
   rows.forEach(r=>{r.tier=callTier(r.daysSince);});
   rows.sort((a,b)=>{const av=a.daysSince==null?1e9:a.daysSince,bv=b.daysSince==null?1e9:b.daysSince;return bv-av;});
   const nCrit=rows.filter(r=>r.tier==='crit'||r.tier==='never').length,nWarn=rows.filter(r=>r.tier==='warn').length,nDue=rows.filter(r=>r.tier==='due').length;
@@ -24251,11 +24295,11 @@ function edAc(i,mi,prep){
   if(!INGREDIENTS.length){menu.innerHTML='<div class="ac-empty">Loading…</div>';menu.classList.add('open');return;}
   const list=[];for(let k=0;k<INGREDIENTS.length&&list.length<80;k++){const f=INGREDIENTS[k];if(!q||ingLabel(f).toLowerCase().indexOf(q)>=0)list.push(f);}
   if(!list.length){menu.innerHTML='<div class="ac-empty">No match.</div>';menu.classList.add('open');return;}
-  const _d=adminDiet();
-  menu.innerHTML=list.map(f=>{const idx=INGREDIENTS.indexOf(f);const off=_d&&!dietAllows(f,_d);return '<div class="ac-item" onmousedown="edItemAdd('+i+','+mi+','+idx+','+(prep?'true':'false')+')"><span>'+esc(f.name)+(f.units?' <span class="funit">· '+esc(f.units)+'</span>':'')+(off?' <span class="pill warn" style="padding:0 6px">off-plan</span>':'')+'</span><span class="macros">'+round(f.p)+'P '+round(f.carb)+'C '+round(f.f)+'F · '+round(f.cal)+'k</span></div>';}).join('');
+  const _d=adminDiet();const _off=dietOffLabel(_d);
+  menu.innerHTML=list.map(f=>{const idx=INGREDIENTS.indexOf(f);const off=_d&&!dietAllows(_d,f);return '<div class="ac-item" onmousedown="edItemAdd('+i+','+mi+','+idx+','+(prep?'true':'false')+')"><span>'+esc(f.name)+(f.units?' <span class="funit">· '+esc(f.units)+'</span>':'')+(off?' <span class="pill warn" style="padding:0 6px">'+_off+'</span>':'')+'</span><span class="macros">'+round(f.p)+'P '+round(f.carb)+'C '+round(f.f)+'F · '+round(f.cal)+'k</span></div>';}).join('');
   menu.classList.add('open');
 }
-function edItemAdd(i,mi,idx,prep){const f=INGREDIENTS[idx];if(!f)return;const pref=adminDiet();if(pref&&!dietAllows(f,pref))toast('⚠ '+f.name+' is not '+pref+' — added anyway',true);edPlan.dayTypes[i].meals[mi].items=edPlan.dayTypes[i].meals[mi].items||[];edPlan.dayTypes[i].meals[mi].items.push({name:f.name,units:f.units,qty:1,p:f.p,carb:f.carb,f:f.f,cal:f.cal,cat:f.cat,prep:!!prep});edRenderDayTypes();}
+function edItemAdd(i,mi,idx,prep){const f=INGREDIENTS[idx];if(!f)return;const pref=adminDiet();if(pref&&!dietAllows(pref,f))toast('⚠ '+f.name+' is not '+pref+' — added anyway',true);edPlan.dayTypes[i].meals[mi].items=edPlan.dayTypes[i].meals[mi].items||[];edPlan.dayTypes[i].meals[mi].items.push({name:f.name,units:f.units,qty:1,p:f.p,carb:f.carb,f:f.f,cal:f.cal,cat:f.cat,prep:!!prep});edRenderDayTypes();}
 function edAddDayType(){const c=DT_COLORS[edPlan.dayTypes.length%DT_COLORS.length];edPlan.dayTypes.push({id:uid(),name:'Day type '+(edPlan.dayTypes.length+1),color:c,target:{p:0,c:0,f:0,cal:0},meals:[]});edRenderDayTypes();edRenderSchedule();}
 function edRmDayType(i){if(edPlan.dayTypes.length<=1){toast('Keep at least one day type',true);return;}const removed=edPlan.dayTypes[i].id;edPlan.dayTypes.splice(i,1);for(let d=0;d<7;d++){if(edPlan.schedule[d]===removed)edPlan.schedule[d]=edPlan.dayTypes[0].id;}edRenderDayTypes();edRenderSchedule();}
 
