@@ -7002,7 +7002,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04rb';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04rc';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -11454,6 +11454,11 @@ let RM_LIFTS=null, RM_LIFTS_LOADING=false;   // {exLower:{e1rm,top,name}} from t
 function rmData(plan){const p=plan||(typeof PLAN!=='undefined'?PLAN:null);if(!p)return null;p.milestones=p.milestones||{goals:[]};const r=p.milestones.roadmap=p.milestones.roadmap||{vision:{},blocks:[]};if(!Array.isArray(r.blocks))r.blocks=[];r.vision=r.vision||{};r.blocks.forEach(b=>{if(!Array.isArray(b.targets))b.targets=[];if(!Array.isArray(b.micros))b.micros=[];});return r;}
 function rmHas(plan){const p=plan||(typeof PLAN!=='undefined'?PLAN:null);const r=p&&p.milestones&&p.milestones.roadmap;if(!r)return false;return !!(((r.vision&&(r.vision.title||'').trim()))||(Array.isArray(r.blocks)&&r.blocks.length));}
 function rmPhaseCls(ph){ph=(ph||'').toLowerCase();if(ph.indexOf('found')>=0)return 'rdp-found';if(ph.indexOf('hyp')>=0||ph.indexOf('recomp')>=0)return 'rdp-hyp';if(ph.indexOf('str')>=0)return 'rdp-str';if(ph.indexOf('fat')>=0||ph.indexOf('cut')>=0||ph.indexOf('prep')>=0)return 'rdp-fat';if(ph.indexOf('perf')>=0)return 'rdp-perf';return 'rdp-found';}
+/* dates: coach picks them from a calendar; stored ISO (vision.dateISO, block.start/.end). Display month+year; fall back to the old free-text when no ISO set. */
+const RM_MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function rmFmtMon(iso){const m=/^(\d{4})-(\d{2})/.exec(''+(iso||''));return m?(RM_MON[(+m[2])-1]+' '+m[1]):'';}
+function rmVisionDateText(v){return (v&&v.dateISO)?rmFmtMon(v.dateISO):((v&&v.date)||'');}
+function rmBlockDatesText(b){if(b&&(b.start||b.end)){const s=rmFmtMon(b.start),e=rmFmtMon(b.end);return (s&&e)?(s+' – '+e):(s||e);}return (b&&b.dates)||'';}
 /* --- metric link helpers (Progress panel) --- */
 function rmMetricVal(metric){try{
   if(metric==='weight'){const a=weightSorted();return a.length?+a[a.length-1].value:null;}
@@ -11471,13 +11476,29 @@ function rmLiftsLoad(){
   try{DB.listWorkoutLogs(SESSION.id).then(function(ws){
     const map={};(ws||[]).forEach(function(w){(((w||{}).entries)||[]).forEach(function(en){
       if(!en)return;const rt=en.repType||'reps';if(rt==='time'||rt==='distance'||rt==='calories'||en.cardio===true)return;
-      const nm=(en.name||'').trim();if(!nm)return;const k=nm.toLowerCase();const m=map[k]=map[k]||{e1rm:0,top:0,name:nm};
+      const nm=(en.name||'').trim();if(!nm)return;const k=nm.toLowerCase();const m=map[k]=map[k]||{e1rm:0,top:0,name:nm,norm:rmNorm(nm)};
       (en.sets||[]).forEach(function(s){const ww=+s.weight||0,r=+s.reps||0;if(ww>0){if(ww>m.top)m.top=ww;const e=(typeof est1RM==='function')?est1RM(ww,r):ww;if(e>m.e1rm)m.e1rm=e;}});
     });});
     RM_LIFTS=map;RM_LIFTS_LOADING=false;try{if(GM_BRANCH==='roadmap')renderRoadmap();}catch(e){}
   }).catch(function(){RM_LIFTS={};RM_LIFTS_LOADING=false;});}catch(e){RM_LIFTS={};RM_LIFTS_LOADING=false;}
 }
-function rmLiftVal(exName,measure){if(!RM_LIFTS||!exName)return null;const m=RM_LIFTS[(''+exName).toLowerCase()];if(!m)return null;return (measure==='top')?(m.top||null):(m.e1rm||null);}
+/* fuzzy exercise-name matching: normalise punctuation/whitespace + common synonyms, then exact → containment → token-overlap */
+function rmNorm(s){s=(''+(s||'')).toLowerCase();
+  s=s.replace(/\b(bb)\b/g,'barbell').replace(/\b(db|dumbell)\b/g,'dumbbell').replace(/\b(bw)\b/g,'bodyweight').replace(/\b(ohp)\b/g,'overhead press').replace(/\b(rdl)\b/g,'romanian deadlift').replace(/\bpulldowns?\b/g,'pulldown').replace(/\bextensions?\b/g,'extension').replace(/\bcurls?\b/g,'curl').replace(/\bpresses\b/g,'press').replace(/\brows\b/g,'row').replace(/\braises\b/g,'raise').replace(/\bsquats\b/g,'squat');
+  s=s.replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();return s;}
+function rmTok(s){return rmNorm(s).split(' ').filter(Boolean);}
+function rmLiftMatch(exName){
+  if(!RM_LIFTS||!exName)return null;
+  const vals=Object.keys(RM_LIFTS).map(k=>RM_LIFTS[k]);
+  const target=rmNorm(exName);if(!target)return null;
+  let hit=vals.find(v=>v.norm===target);if(hit)return hit;                                   // 1 exact (normalised)
+  hit=vals.find(v=>v.norm&&(v.norm.indexOf(target)>=0||target.indexOf(v.norm)>=0));if(hit)return hit;   // 2 one contains the other
+  const tt=rmTok(exName);if(!tt.length)return null;const tset={};tt.forEach(w=>tset[w]=1);     // 3 Jaccard token overlap
+  let best=null,bestScore=0;
+  vals.forEach(v=>{const vt=rmTok(v.name);if(!vt.length)return;const vset={};vt.forEach(w=>vset[w]=1);let inter=0;Object.keys(tset).forEach(w=>{if(vset[w])inter++;});const uni=Object.keys(tset).length+vt.length-inter;const sc=uni?inter/uni:0;if(sc>bestScore){bestScore=sc;best=v;}});
+  return bestScore>=0.5?best:null;
+}
+function rmLiftVal(exName,measure){const m=rmLiftMatch(exName);if(!m)return null;return (measure==='top')?(m.top||null):(m.e1rm||null);}
 /* --- metric-goal (target) resolution --- */
 function rmTargetSrc(t){return (t&&t.src)||'text';}
 function rmTargetCur(t){const s=rmTargetSrc(t);if(s==='progress')return rmMetricVal(t.metric);if(s==='lift')return rmLiftVal(t.exName,t.liftMeasure);return null;}
@@ -11539,7 +11560,7 @@ function renderRoadmap(){
     (v.why?'<div class="rd-vwhy">'+esc(v.why)+'</div>':'')+
     '<div class="rd-vmeta">'+
       (v.weight?'<span class="rd-vchip">🎯 Goal <b>'+esc(v.weight)+'</b></span>':'')+
-      (v.date?'<span class="rd-vchip">📅 Target <b>'+esc(v.date)+'</b></span>':'')+
+      (rmVisionDateText(v)?'<span class="rd-vchip">📅 Target <b>'+esc(rmVisionDateText(v))+'</b></span>':'')+
       '<span class="rd-vchip">🧭 Block <b>'+(Math.min(actIdx+1,blocks.length)||0)+' of '+blocks.length+'</b></span>'+
     '</div>'+
     '<div class="rd-prog"><i style="width:'+jp+'%"></i></div>'+
@@ -11552,7 +11573,7 @@ function renderRoadmap(){
     const badge=done?'<span class="rd-badge rd-bdone">Done</span>':active?'<span class="rd-badge rd-bactive">On now</span>':'<span class="rd-badge rd-bup">Upcoming</span>';
     h+='<div class="rd-stage '+(done?'done':active?'active':'')+'"><div class="rd-dot">'+(done?'✓':'')+'</div>'+
        '<div class="rd-scard" onclick="rmToggleOpen(\''+b.id+'\')">'+
-       '<div class="rd-shead"><div style="flex:1"><div class="rd-sname">'+esc(b.name||'Block '+(i+1))+'</div>'+(b.dates?'<div class="rd-sdate">'+esc(b.dates)+'</div>':'')+'</div>'+
+       '<div class="rd-shead"><div style="flex:1"><div class="rd-sname">'+esc(b.name||'Block '+(i+1))+'</div>'+(rmBlockDatesText(b)?'<div class="rd-sdate">'+esc(rmBlockDatesText(b))+'</div>':'')+'</div>'+
        (b.phase?'<span class="rd-phase '+rmPhaseCls(b.phase)+'">'+esc(b.phase)+'</span>':'')+badge+'</div>';
     if(open){
       if(b.focus)h+='<div class="rd-focus"><b>Focus of this block</b>'+esc(b.focus)+'</div>';
@@ -11628,9 +11649,9 @@ function rmBExerciseOpts(sel){const names=rmExNames();let seenSel=false;let h=na
 function rmBuilderFlush(){
   if(typeof edPlan==='undefined'||!edPlan)return;const r=rmData(edPlan);if(!r)return;
   const gv=id=>{const el=$(id);return el?el.value:undefined;};const tv=(id,cur)=>{const x=gv(id);return x===undefined?cur:x;};
-  r.vision.title=tv('rmv-title',r.vision.title||'');r.vision.why=tv('rmv-why',r.vision.why||'');r.vision.date=tv('rmv-date',r.vision.date||'');r.vision.weight=tv('rmv-weight',r.vision.weight||'');
+  r.vision.title=tv('rmv-title',r.vision.title||'');r.vision.why=tv('rmv-why',r.vision.why||'');const vdi=gv('rmv-dateISO');if(vdi!==undefined)r.vision.dateISO=vdi;r.vision.weight=tv('rmv-weight',r.vision.weight||'');
   r.blocks.forEach((b,i)=>{
-    b.name=tv('rmb-name-'+i,b.name||'');b.phase=tv('rmb-phase-'+i,b.phase||'Foundation');b.dates=tv('rmb-dates-'+i,b.dates||'');b.focus=tv('rmb-focus-'+i,b.focus||'');
+    b.name=tv('rmb-name-'+i,b.name||'');b.phase=tv('rmb-phase-'+i,b.phase||'Foundation');const bs=gv('rmb-start-'+i);if(bs!==undefined)b.start=bs;const be=gv('rmb-end-'+i);if(be!==undefined)b.end=be;b.focus=tv('rmb-focus-'+i,b.focus||'');
     const cc=$('rmb-complete-'+i);if(cc)b.complete=!!cc.checked;
     (b.targets||[]).forEach((t,j)=>{
       const src=gv('rmt-src-'+i+'-'+j);if(src!==undefined)t.src=src;if(!t.src)t.src='progress';
@@ -11659,7 +11680,7 @@ function rmBuilderRender(){
   let h='<div class="rdb-vcard"><div class="uline" style="margin:0 0 8px">🗺️ Long-term goal</div>'+
     '<div class="rdb-lab">Vision title</div><input id="rmv-title" class="rdb-in" value="'+esc(r.vision.title||'')+'" placeholder="e.g. Classic physique — stage-ready 2027">'+
     '<div class="rdb-lab">What it means / why</div><textarea id="rmv-why" class="rdb-in" rows="2" placeholder="The big picture for this client">'+esc(r.vision.why||'')+'</textarea>'+
-    '<div class="rdb-row2"><div><div class="rdb-lab">Target date</div><input id="rmv-date" class="rdb-in" value="'+esc(r.vision.date||'')+'" placeholder="May 2027"></div>'+
+    '<div class="rdb-row2"><div><div class="rdb-lab">Target date</div><input type="date" id="rmv-dateISO" class="rdb-in" value="'+esc(r.vision.dateISO||'')+'">'+((r.vision.date&&!r.vision.dateISO)?'<div class="small" style="color:var(--muted);margin:-4px 0 6px">Previously: '+esc(r.vision.date)+'</div>':'')+'</div>'+
     '<div><div class="rdb-lab">Goal weight / metric</div><input id="rmv-weight" class="rdb-in" value="'+esc(r.vision.weight||'')+'" placeholder="82 kg"></div></div></div>';
   h+='<div class="uline" style="margin:2px 2px 9px">Blocks (macro goals)</div>';
   r.blocks.forEach((b,i)=>{
@@ -11668,8 +11689,10 @@ function rmBuilderRender(){
        '<button class="rdb-ic" title="Move down" onclick="rmMoveBlock('+i+',1)">↓</button>'+
        '<button class="rdb-ic" title="Delete block" onclick="rmDelBlock('+i+')">🗑</button></div>'+
        '<div class="rdb-lab">Block name</div><input id="rmb-name-'+i+'" class="rdb-in" value="'+esc(b.name||'')+'" placeholder="e.g. Lean mass block">'+
-       '<div class="rdb-row2"><div><div class="rdb-lab">Phase</div><select id="rmb-phase-'+i+'" class="rdb-in">'+phOpts(b.phase||'Foundation')+'</select></div>'+
-       '<div><div class="rdb-lab">Dates / timeframe</div><input id="rmb-dates-'+i+'" class="rdb-in" value="'+esc(b.dates||'')+'" placeholder="Apr–Sep 2026"></div></div>'+
+       '<div class="rdb-lab">Phase</div><select id="rmb-phase-'+i+'" class="rdb-in">'+phOpts(b.phase||'Foundation')+'</select>'+
+       '<div class="rdb-row2"><div><div class="rdb-lab">Start date</div><input type="date" id="rmb-start-'+i+'" class="rdb-in" value="'+esc(b.start||'')+'"></div>'+
+       '<div><div class="rdb-lab">End date</div><input type="date" id="rmb-end-'+i+'" class="rdb-in" value="'+esc(b.end||'')+'"></div></div>'+
+       ((b.dates&&!b.start&&!b.end)?'<div class="small" style="color:var(--muted);margin:-4px 0 8px">Previously: '+esc(b.dates)+'</div>':'')+
        '<div class="rdb-lab">Focus of this block</div><textarea id="rmb-focus-'+i+'" class="rdb-in" rows="2" placeholder="What to prioritise, in plain language">'+esc(b.focus||'')+'</textarea>'+
        '<label class="rdb-comp"><input type="checkbox" id="rmb-complete-'+i+'"'+(b.complete?' checked':'')+'> Mark this block complete</label>';
     // metric goals (live progress bars)
