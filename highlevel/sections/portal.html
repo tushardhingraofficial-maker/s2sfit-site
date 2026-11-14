@@ -1953,6 +1953,12 @@ body{overflow-x:hidden}
 .wk-day .wk-lbl{font-family:var(--disp);font-weight:800;text-transform:uppercase;font-size:11px;color:var(--muted);margin-bottom:6px;letter-spacing:.03em}
 .task-item{display:flex;gap:10px;align-items:flex-start;padding:10px 2px;border-bottom:1px solid var(--border)}
 .task-item:last-child{border-bottom:none}
+#tasks-host{container-type:inline-size}
+.tk-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.tk-col{min-width:0}
+.tk-col>.uline:first-child{margin-top:0}
+@container (max-width:540px){.tk-cols{grid-template-columns:1fr;gap:2px}}
+@media(max-width:720px){.tk-cols{grid-template-columns:1fr;gap:2px}}
 /* Day-type editor: meals left, sticky target/allocated panel right */
 .dt-cols{display:flex;gap:16px;align-items:stretch}
 .dt-main{flex:1;min-width:0}
@@ -4911,7 +4917,8 @@ img,svg,canvas,video{max-width:100%}
                   <input id="tk-editid" type="hidden">
                   <div class="uline" id="tk-form-title" style="margin:0 0 8px">New task</div>
                   <div class="row"><div class="field"><label class="lab">Task</label><input id="tk-title" placeholder="e.g. Update Alex's macros"></div>
-                    <div class="field"><label class="lab">For client (optional)</label><select id="tk-client"></select></div></div>
+                    <div class="field"><label class="lab">For client (optional)</label><select id="tk-client"></select></div>
+                    <div class="field"><label class="lab">Assign to coach (optional)</label><select id="tk-coach"><option value="">— no coach (general) —</option></select></div></div>
                   <div class="row"><div class="field"><label class="lab">Deadline</label><input id="tk-due" type="date"></div>
                     <div class="field"><label class="lab">Priority</label><select id="tk-priority"><option value="high">🔴 High</option><option value="medium" selected>🟠 Medium</option><option value="low">🔵 Low</option></select></div>
                     <div class="field"><label class="lab">Repeat</label><select id="tk-recur" onchange="tkRecurChange()"><option value="none">One-off</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="days">Specific days</option></select></div></div>
@@ -6341,7 +6348,8 @@ img,svg,canvas,video{max-width:100%}
   <div class="dock-head">✓ Tasks<span class="pill warn hidden" id="adr-tasks-badge" style="margin-left:6px"></span><span style="flex:1"></span><button class="dock-x" onclick="closeDock('tasks')" title="Hide tasks panel">×</button></div>
   <div style="padding:9px 10px;border-bottom:1px solid var(--border)">
     <div style="display:flex;gap:6px"><input id="adt-title" placeholder="New task…" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();adtAdd()}"><select id="adt-priority" style="max-width:92px"><option value="high">🔴 High</option><option value="medium" selected>🟠 Med</option><option value="low">🔵 Low</option></select></div>
-    <div style="display:flex;gap:6px;margin-top:6px"><input id="adt-client" placeholder="For client (optional)" list="adt-clients" style="flex:1"><input id="adt-due" type="date" style="max-width:132px"><button class="btn-sm solid" style="flex:none" onclick="adtAdd()">Add</button></div>
+    <div style="display:flex;gap:6px;margin-top:6px"><input id="adt-client" placeholder="For client (optional)" list="adt-clients" style="flex:1"><input id="adt-due" type="date" style="max-width:132px"></div>
+    <div style="display:flex;gap:6px;margin-top:6px"><select id="adt-coach" style="flex:1" title="Allocate to a coach (optional)"><option value="">— no coach (general) —</option></select><button class="btn-sm solid" style="flex:none" onclick="adtAdd()">Add</button></div>
     <datalist id="adt-clients"></datalist>
   </div>
   <div id="drawer-tasks" style="overflow-y:auto;padding:6px 10px 12px;flex:1"></div>
@@ -6710,7 +6718,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04qe';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04qf';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -19016,6 +19024,22 @@ function tkAllocSectionHTML(tOpen,compact){
   const ids=Object.keys(byCoach);
   return ids.length?ids.map(id=>'<div class="'+(compact?'funit':'small')+'" style="font-weight:800;margin:8px 0 3px'+(compact?'':';color:var(--muted)')+'">'+esc(teamStaffNameById(id))+'</div>'+byCoach[id].map(e=>tkTeamRow(e,compact)).join('')).join(''):'<div class="small" style="color:var(--muted);padding:3px 2px">No coach-allocated tasks yet.</div>';}
 function tkTeamOpenSorted(tOpen){return tOpen.slice().sort((a,b)=>{const pa=PRI_RANK[a.priority||'medium'],pb=PRI_RANK[b.priority||'medium'];if(pa!==pb)return pa-pb;return (a.deadline||'9999')<(b.deadline||'9999')?-1:1;});}
+/* refresh both Tasks views (dashboard card + dock) — call after any Team & Calendar task changes */
+function tkRefreshPanels(){try{if(typeof renderDrawerTasks==='function')renderDrawerTasks();}catch(e){}try{if(typeof renderTasks==='function')renderTasks();}catch(e){}}
+/* fill the "assign to coach" selects (dock + card) without clobbering a selection already made */
+async function tkFillCoachSelects(){let staff=[];try{staff=(typeof teamStaffList==='function')?await teamStaffList():[];}catch(e){staff=[];}
+  if(!staff.length)return;const opts='<option value="">— no coach (general) —</option>'+staff.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>').join('');
+  ['adt-coach','tk-coach'].forEach(id=>{const el=$(id);if(el&&el.options.length<=1)el.innerHTML=opts;});}
+/* create a Team & Calendar task (kind:task) allocated to a coach, straight from the Tasks panel's add box */
+async function tkAddTeamTask(fld){
+  try{if(typeof teamLoad==='function')await teamLoad();}catch(e){}
+  if(typeof TEAM==='undefined'||!TEAM)return false;
+  let staff=[];try{staff=(typeof TEAM_STAFF!=='undefined'&&TEAM_STAFF&&TEAM_STAFF.length)?TEAM_STAFF:((typeof teamStaffList==='function')?await teamStaffList():[]);}catch(e){}
+  const nm=(staff.find(s=>s.id===fld.assignee)||{}).name||'';
+  const ev={id:uid(),kind:'task',title:fld.title,date:'',start:'',end:'',allDay:true,assignee:fld.assignee,assigneeName:nm,category:'',priority:fld.priority||'medium',deadline:fld.deadline||'',estimate:0,stage:'To do',blockedBy:[],recur:'none',recurDays:[],notes:fld.notes||'',status:'todo',createdAt:new Date().toISOString(),_src:'tasks-panel'};
+  TEAM.events=TEAM.events||[];TEAM.events.push(ev);
+  try{if(typeof teamSave==='function')await teamSave('events');}catch(e){return false;}
+  return true;}
 async function renderDrawerTasks(){
   const body=$('drawer-tasks');if(!body)return;
   let tasks=[];try{tasks=await DB.listTasks();}catch(e){body.innerHTML='<div class="small">Could not load.</div>';return;}
@@ -19038,11 +19062,15 @@ async function renderDrawerTasks(){
     (genRows||'<div class="small" style="padding:4px 2px;color:var(--muted)">Nothing to do 🎉</div>')+
     '<div class="uline" style="margin:13px 0 6px">🙋 Allocated to '+(owner?'a coach':'me')+'</div>'+
     tkAllocSectionHTML(tOpen,true);
+  try{tkFillCoachSelects();}catch(e){}
 }
 async function drawerTaskToggle(id){try{await DB.toggleTask(id);renderDrawerTasks();if(typeof renderTasks==='function')renderTasks();}catch(e){toast('Could not update',true);}}
 async function drawerTaskDel(id){if(!confirm('Delete this task?'))return;try{await DB.deleteTask(id);renderDrawerTasks();if(typeof renderTasks==='function')renderTasks();}catch(e){toast('Could not delete',true);}}
 async function fillAdtClients(){try{const cs=await DB.listClients();const dl=$('adt-clients');if(dl)dl.innerHTML=cs.map(c=>'<option value="'+esc(c.name||c.email)+'">').join('');}catch(e){}}
 async function adtAdd(){const title=($('adt-title').value||'').trim();if(!title){toast('Type a task',true);return;}
+  const coach=($('adt-coach')&&$('adt-coach').value)||'';
+  if(coach){const cl=($('adt-client').value||'').trim();const okT=await tkAddTeamTask({title,assignee:coach,priority:$('adt-priority').value||'medium',deadline:$('adt-due').value||'',notes:cl?('Client: '+cl):''});
+    if(okT){$('adt-title').value='';$('adt-client').value='';$('adt-due').value='';$('adt-coach').value='';toast('Task allocated to coach ✓');renderDrawerTasks();if(typeof renderTasks==='function')renderTasks();}else toast('Could not allocate — try again',true);return;}
   const t={id:uid(),client_id:null,client_name:($('adt-client').value||'').trim(),title,details:'',due_date:$('adt-due').value||null,recurrence:'none',priority:$('adt-priority').value||'medium',status:'open',created_at:new Date().toISOString()};
   try{await DB.saveTask(t);$('adt-title').value='';$('adt-client').value='';$('adt-due').value='';renderDrawerTasks();if(typeof renderTasks==='function')renderTasks();}catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);}}
 /* prominent, attention-grabbing notification */
@@ -21352,11 +21380,13 @@ async function renderTasks(){
   const tOpen=tkTeamOpenSorted(teamTasks.filter(e=>!tkTeamDone(e)));
   const owner=(typeof teamIsOwner==='function')?teamIsOwner():true;
   const genRows=(open.length?open.map(row).join(''):'')+(tOpen.length?tOpen.map(e=>tkTeamRow(e,false)).join(''):'');
-  host.innerHTML=
-    '<div class="uline" style="margin:2px 0 8px">👥 Team / general tasks</div>'+
-    (genRows||'<div class="empty">🎉 All caught up — no open team or general tasks.</div>')+
-    '<div class="uline" style="margin:18px 0 8px">🙋 Allocated to '+(owner?'a coach':'me')+'</div>'+
-    tkAllocSectionHTML(tOpen,false);
+  host.innerHTML='<div class="tk-cols">'+
+    '<div class="tk-col"><div class="uline" style="margin:2px 0 8px">👥 Team / general tasks</div>'+
+      (genRows||'<div class="empty">🎉 All caught up — no open team or general tasks.</div>')+'</div>'+
+    '<div class="tk-col"><div class="uline" style="margin:2px 0 8px">🙋 Allocated to '+(owner?'a coach':'me')+'</div>'+
+      tkAllocSectionHTML(tOpen,false)+'</div>'+
+    '</div>';
+  try{tkFillCoachSelects();}catch(e){}
   {const tot=open.length+tOpen.length,odAll=overdue+tOpen.filter(e=>e.deadline&&e.deadline<today).length;const cnt2=$('tasks-count');if(cnt2){cnt2.textContent=tot+' open'+(odAll?' · '+odAll+' overdue':'');cnt2.className='pill '+(odAll?'crit':tot?'warn':'good');}const tc2=$('tasks-card');if(tc2)tc2.style.borderColor=odAll?'var(--red)':'var(--border)';}
   // Completed tasks live in their own collapsible section (auto-cleared after 7 days)
   const dWrap=$('tasks-done-wrap'),dHost=$('tasks-done-host'),dCnt=$('tasks-done-count');
@@ -21373,7 +21403,7 @@ function tkDayToggle(d){const i=TK_DAYS.indexOf(d);if(i>=0)TK_DAYS.splice(i,1);e
 function tkRecurChange(){const v=$('tk-recur')?$('tk-recur').value:'none';const w=$('tk-days-wrap');if(w)w.style.display=(v==='days')?'':'none';if(v==='days'&&!TK_DAYS.length)TK_DAYS=[1,3,5];tkRenderDays();}
 function recurLabel(t){if(!t||!t.recurrence||t.recurrence==='none')return '';if(t.recurrence==='days'){const ds=(t.recur_days||[]).slice().sort((a,b)=>((a===0?7:a)-(b===0?7:b)));return ds.length?ds.map(d=>TK_DAYNAME[d]).join('/'):'days';}return t.recurrence;}
 function tkNextDate(due,days){if(!days||!days.length)return addDaysISO(due,7);let d=new Date(due+'T00:00:00');for(let i=0;i<7;i++){d.setDate(d.getDate()+1);if(days.includes(d.getDay())){const p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());}}return addDaysISO(due,1);}
-function taskResetForm(){if($('tk-editid'))$('tk-editid').value='';['tk-title','tk-details','tk-due'].forEach(id=>{if($(id))$(id).value='';});if($('tk-client'))$('tk-client').value='';if($('tk-recur'))$('tk-recur').value='none';if($('tk-priority'))$('tk-priority').value='medium';TK_DAYS=[];tkRecurChange();try{PEND['task']=null;renderPendPreview('task');}catch(e){}if($('tk-form-title'))$('tk-form-title').textContent='New task';if($('tk-save-btn'))$('tk-save-btn').textContent='Save task';}
+function taskResetForm(){if($('tk-editid'))$('tk-editid').value='';['tk-title','tk-details','tk-due'].forEach(id=>{if($(id))$(id).value='';});if($('tk-client'))$('tk-client').value='';if($('tk-coach'))$('tk-coach').value='';try{tkFillCoachSelects();}catch(e){}if($('tk-recur'))$('tk-recur').value='none';if($('tk-priority'))$('tk-priority').value='medium';TK_DAYS=[];tkRecurChange();try{PEND['task']=null;renderPendPreview('task');}catch(e){}if($('tk-form-title'))$('tk-form-title').textContent='New task';if($('tk-save-btn'))$('tk-save-btn').textContent='Save task';}
 function toggleTaskForm(){const f=$('task-form');if(!f)return;f.classList.toggle('hidden');if(!f.classList.contains('hidden')){taskResetForm();setTimeout(()=>{try{$('tk-title').focus();}catch(e){}},10);}}
 function taskCancelForm(){taskResetForm();const f=$('task-form');if(f)f.classList.add('hidden');}
 function taskEdit(id){const t=(TASKS||[]).find(x=>x.id===id);if(!t){toast('Task not found',true);return;}
@@ -21393,6 +21423,10 @@ function taskEdit(id){const t=(TASKS||[]).find(x=>x.id===id);if(!t){toast('Task 
 async function addTask(){const title=($('tk-title').value||'').trim();if(!title){toast('Name the task',true);return;}
   const cid=$('tk-client').value||null;const cName=cid&&$('tk-client').selectedOptions[0]?$('tk-client').selectedOptions[0].textContent:'';
   const editId=$('tk-editid')?$('tk-editid').value:'';
+  const coachId=($('tk-coach')&&$('tk-coach').value)||'';
+  if(coachId&&!editId){const notes=[($('tk-details').value||'').trim(),cName?('Client: '+cName):''].filter(Boolean).join(' — ');
+    const okT=await tkAddTeamTask({title,assignee:coachId,priority:($('tk-priority')?$('tk-priority').value:'medium'),deadline:$('tk-due').value||'',notes:notes});
+    if(okT){toast('Task allocated to coach ✓');taskCancelForm();renderTasks();renderDrawerTasks();}else toast('Could not allocate — try again',true);return;}
   const existing=editId?(TASKS||[]).find(x=>x.id===editId):null;
   const recur=$('tk-recur').value||'none';
   if(recur==='days'&&!TK_DAYS.length){toast('Pick at least one day to repeat on',true);return;}
@@ -23195,13 +23229,12 @@ async function teamSaveForm(){const f=TEAM_FORM;if(!f)return;
   if(f.kind==='task'){f.priority=($('tf-prio')||{}).value||'medium';f.stage=($('tf-stage')||{}).value||'To do';f.deadline=($('tf-deadline')||{}).value||'';f.estimate=teamParseDur(($('tf-est')||{}).value);f.blockedBy=$('tf-blocked')?[...$('tf-blocked').selectedOptions].map(o=>o.value):(f.blockedBy||[]);if(f.stage==='Done'&&!teamTaskIsDone(f)){if((f.recur||'none')==='none'){f.status='done';f.doneAt=new Date().toISOString();}}else if(f.stage!=='Done'&&f.status==='done'&&(f.recur||'none')==='none'){f.status=f.stage==='In progress'?'doing':'todo';f.doneAt=null;}}
   if(f._new){delete f._new;f.createdBy=teamStaffName();f.createdAt=new Date().toISOString();f.status=f.status||'todo';TEAM.events.push(f);}
   else{const i=TEAM.events.findIndex(e=>e.id===f.id);if(i>=0)TEAM.events[i]=f;}
-  await teamSave('events');TEAM_FORM=null;toast('Saved ✓');teamRenderCalendar();}
-async function teamDeleteEvent(id){if(!confirm('Delete this item?'))return;TEAM.events=TEAM.events.filter(e=>e.id!==id);await teamSave('events');TEAM_FORM=null;teamRenderCalendar();}
+  await teamSave('events');TEAM_FORM=null;toast('Saved ✓');teamRenderCalendar();tkRefreshPanels();}
+async function teamDeleteEvent(id){if(!confirm('Delete this item?'))return;TEAM.events=TEAM.events.filter(e=>e.id!==id);await teamSave('events');TEAM_FORM=null;teamRenderCalendar();tkRefreshPanels();}
 async function teamToggleDone(id,iso){const ev=TEAM.events.find(e=>e.id===id);if(!ev)return;
   if((ev.recur||'none')==='none'){ev.status=ev.status==='done'?'todo':'done';ev.doneAt=ev.status==='done'?new Date().toISOString():null;}
   else{ev.doneDates=ev.doneDates||[];const i=ev.doneDates.indexOf(iso);if(i>=0)ev.doneDates.splice(i,1);else ev.doneDates.push(iso);}
-  await teamSave('events');teamTab(TEAM_TAB);
-  try{if(typeof renderDrawerTasks==='function')renderDrawerTasks();}catch(e){}try{if(typeof renderTasks==='function')renderTasks();}catch(e){}}   // keep the Tasks panel in sync
+  await teamSave('events');teamTab(TEAM_TAB);tkRefreshPanels();}   // keep the Tasks panel in sync
 /* ---- my day ---- */
 function teamRenderDay(){const host=$('team-day-host');if(!host)return;const iso=todayISO();const sid=teamStaffId();
   const mine=TEAM.events.filter(ev=>teamOccursOn(ev,iso)&&(ev.assignee===sid||!ev.assignee));const act=teamMyActive();
@@ -23488,7 +23521,7 @@ async function teamSaveProject(){const f=TEAM_PROJ_FORM;if(!f)return;f.name=($('
   if(f._new){delete f._new;TEAM.projects.push(f);}else{const i=TEAM.projects.findIndex(p=>p.id===f.id);if(i>=0){f.docs=TEAM.projects[i].docs||f.docs||[];TEAM.projects[i]=f;}}
   const openId=f.id;await teamSave('projects');TEAM_PROJ_FORM=null;toast('Saved ✓');TEAM_PROJ_OPEN=openId;teamRenderProjects();
 }
-async function teamDeleteProject(id){if(!confirm('Delete this project? Its tasks are kept but unlinked.'))return;TEAM.projects=TEAM.projects.filter(p=>p.id!==id);(TEAM.events||[]).forEach(e=>{if(e.projectId===id){e.projectId=null;e.parentId=null;}});await teamSave('projects');await teamSave('events');TEAM_PROJ_FORM=null;TEAM_PROJ_OPEN=null;teamRenderProjects();}
+async function teamDeleteProject(id){if(!confirm('Delete this project? Its tasks are kept but unlinked.'))return;TEAM.projects=TEAM.projects.filter(p=>p.id!==id);(TEAM.events||[]).forEach(e=>{if(e.projectId===id){e.projectId=null;e.parentId=null;}});await teamSave('projects');await teamSave('events');TEAM_PROJ_FORM=null;TEAM_PROJ_OPEN=null;teamRenderProjects();tkRefreshPanels();}
 function teamOpenProject(id){TEAM_PROJ_OPEN=id;TEAM_PROJ_FORM=null;TEAM_PROJ_TASK_FORM=null;teamRenderProjects();}
 function teamRenderProjectDetail(){const host=$('team-proj-host');const p=teamProjGet(TEAM_PROJ_OPEN);if(!host)return;if(!p){TEAM_PROJ_OPEN=null;return teamRenderProjects();}
   const prg=teamProjProgress(p.id);const tops=teamProjTopTasks(p.id).sort((a,b)=>{const pr={urgent:0,high:1,medium:2,low:3};return (pr[a.priority]||2)-(pr[b.priority]||2)||String(a.deadline||'9').localeCompare(String(b.deadline||'9'));});
@@ -23530,10 +23563,10 @@ async function teamSaveProjTask(){const f=TEAM_PROJ_TASK_FORM;if(!f)return;f.tit
   if(!f.date&&f.deadline)f.date=f.deadline;   // appear on the calendar on its deadline if not separately scheduled
   const pid=f._proj;const clean=Object.assign({},f);delete clean._new;delete clean._proj;
   if(f._new){TEAM.events.push(clean);}else{const i=TEAM.events.findIndex(e=>e.id===f.id);if(i>=0)TEAM.events[i]=clean;}
-  await teamSave('events');TEAM_PROJ_TASK_FORM=null;toast('Saved ✓');TEAM_PROJ_OPEN=pid;teamRenderProjects();
+  await teamSave('events');TEAM_PROJ_TASK_FORM=null;toast('Saved ✓');TEAM_PROJ_OPEN=pid;teamRenderProjects();tkRefreshPanels();
 }
-async function teamDeleteProjTask(id){const hasSubs=teamTaskSubs(id).length;if(!confirm('Delete this task'+(hasSubs?' and its subtasks':'')+'?'))return;const pid=TEAM_PROJ_TASK_FORM&&TEAM_PROJ_TASK_FORM._proj;TEAM.events=TEAM.events.filter(e=>e.id!==id&&e.parentId!==id);await teamSave('events');TEAM_PROJ_TASK_FORM=null;if(pid)TEAM_PROJ_OPEN=pid;teamRenderProjects();}
-async function teamProjToggleDone(id){const ev=(TEAM.events||[]).find(e=>e.id===id);if(!ev)return;if((ev.recur||'none')==='none'){ev.status=ev.status==='done'?'todo':'done';ev.doneAt=ev.status==='done'?new Date().toISOString():null;}else{ev.doneDates=ev.doneDates||[];const d=todayISO();const i=ev.doneDates.indexOf(d);if(i>=0)ev.doneDates.splice(i,1);else ev.doneDates.push(d);}await teamSave('events');teamRenderProjects();}
+async function teamDeleteProjTask(id){const hasSubs=teamTaskSubs(id).length;if(!confirm('Delete this task'+(hasSubs?' and its subtasks':'')+'?'))return;const pid=TEAM_PROJ_TASK_FORM&&TEAM_PROJ_TASK_FORM._proj;TEAM.events=TEAM.events.filter(e=>e.id!==id&&e.parentId!==id);await teamSave('events');TEAM_PROJ_TASK_FORM=null;if(pid)TEAM_PROJ_OPEN=pid;teamRenderProjects();tkRefreshPanels();}
+async function teamProjToggleDone(id){const ev=(TEAM.events||[]).find(e=>e.id===id);if(!ev)return;if((ev.recur||'none')==='none'){ev.status=ev.status==='done'?'todo':'done';ev.doneAt=ev.status==='done'?new Date().toISOString():null;}else{ev.doneDates=ev.doneDates||[];const d=todayISO();const i=ev.doneDates.indexOf(d);if(i>=0)ev.doneDates.splice(i,1);else ev.doneDates.push(d);}await teamSave('events');teamRenderProjects();tkRefreshPanels();}
 function teamDocChip(pid,d){const isImg=/^image\//.test(d.type||'')||/\.(png|jpe?g|gif|webp)$/i.test(d.url||'');return '<span class="team-doc">'+(isImg?'🖼':'📄')+' <a href="'+esc(d.url)+'" target="_blank" rel="noopener">'+esc((d.name||'file').slice(0,26))+'</a> <button class="icon-x" style="font-size:13px;padding:0 3px" onclick="teamProjDelDoc(\''+pid+'\',\''+d.id+'\')" title="Remove">×</button></span>';}
 async function teamProjUploadDoc(pid,input){const f=input&&input.files&&input.files[0];if(!f)return;input.value='';const p=teamProjGet(pid);if(!p)return;if(f.size>25*1024*1024){toast('File too large (25 MB max)',true);return;}const st=$('team-doc-stat-'+pid);if(st)st.textContent='Uploading… 0%';
   try{const ext=((f.name.split('.').pop()||'bin').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5))||'bin';
