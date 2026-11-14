@@ -4619,6 +4619,7 @@ img,svg,canvas,video{max-width:100%}
 
     <!-- ---- GOALS & MILESTONES VIEW ---- -->
     <section id="view-milestones" class="hidden">
+      <div id="mc-prog-banner"></div>
       <!-- Goals & Milestones is the built-in S2S Climb (CLIMB_HTML → iframe srcdoc). Full-screen for the
            client (view-only except check-ins); progress saves to dp_plans.milestones.climb. -->
       <div id="gm-switch" class="gm-switch hidden">
@@ -6772,7 +6773,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04qo';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04qp';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -11122,20 +11123,20 @@ async function mcSetClientPhase(cid){
   }catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);}
 }
 async function renderClientMetrics(){
-  const card=$('pg-metrics-card');if(!card||!SESSION)return;   // runs only in the client portal (incl. coach 👁 Preview)
-  let bannerHTML='';try{bannerHTML=mcClientBannerHTML();}catch(e){bannerHTML='';}
+  try{const pb=$('mc-prog-banner');if(pb)pb.innerHTML=(SESSION?mcClientBannerHTML():'');}catch(e){}   // phase/course banner lives ONLY in the Progress panel
+  const card=$('pg-metrics-card');if(!card||!SESSION)return;
   let all=[];try{all=Array.isArray(CLIENT_PROGRESS)?CLIENT_PROGRESS:await DB.listProgress(SESSION.id);}catch(e){all=[];}   // reuse the already-loaded list even when it's empty (don't refetch)
   all=(all||[]).filter(p=>pgIsPublished(p)&&!p.acknowledged);   // mirror the note card: only active (unread) pushes — so the chart clears when the client marks the update as read
   const asc=all.slice().sort((a,b)=>(a.week||'')<(b.week||'')?-1:1);
   // union of metrics present in this client's own logs (self-describing: {n,u,v})
   const meta={};asc.forEach(p=>{const md=pgData(p).metrics;Object.keys(md).forEach(id=>{const mo=md[id];if(!meta[id])meta[id]={name:(mo&&mo.n)||'Metric',unit:(mo&&mo.u)||''};});});
   const ids=Object.keys(meta);
-  if(!ids.length){card.classList.remove('hidden');card.innerHTML=bannerHTML;return;}
+  if(!ids.length){card.classList.add('hidden');card.innerHTML='';return;}
   CLIENT_METRIC_SRC=ids.map(id=>{const pts=asc.map(p=>{const mo=pgData(p).metrics[id];return (mo!=null)?{date:p.week,value:pgMetricVal(mo)}:null;}).filter(Boolean);return {id:id,label:meta[id].name,unit:meta[id].unit||'',pts:pts};}).filter(s=>s.pts.length>=2);   // never a lone single-point chart — need a real trend
-  if(!CLIENT_METRIC_SRC.length){card.classList.remove('hidden');card.innerHTML=bannerHTML;return;}
+  if(!CLIENT_METRIC_SRC.length){card.classList.add('hidden');card.innerHTML='';return;}
   if(!CLIENT_METRIC_SRC.find(s=>s.id===CLIENT_METRIC))CLIENT_METRIC=CLIENT_METRIC_SRC[0].id;
   card.classList.remove('hidden');
-  card.innerHTML=bannerHTML+'<div class="pg-mycard"><div class="pg-mycard-h">📈 My progress metrics</div>'+
+  card.innerHTML='<div class="pg-mycard"><div class="pg-mycard-h">📈 My progress metrics</div>'+
     '<div class="pg-mysel"><label class="lab" style="margin:0">Trend</label><select onchange="clientMetricPick(this.value)">'+CLIENT_METRIC_SRC.map(s=>'<option value="'+s.id+'"'+(s.id===CLIENT_METRIC?' selected':'')+'>'+esc(s.label)+(s.unit?(' ('+esc(s.unit)+')'):'')+'</option>').join('')+'</select><span class="small" style="color:var(--muted)">week by week</span></div>'+
     '<div id="pg-mychart">'+pgMyChartHTML()+'</div></div>';
 }
@@ -13170,10 +13171,16 @@ function cheatProteinEg(){const c=(typeof dietNorm==='function')?dietNorm(typeof
   if(c==='pesc')return 'some grilled fish or prawns, a couple of eggs, Greek yoghurt, or a protein shake';
   return 'a side of Greek yoghurt, a couple of eggs, grilled chicken/paneer, or a protein shake';}
 function cheatLocalReco(cal,p,tg){const band=cheatBand(cal,tg);const bits=[];
-  bits.push('💪 Add protein: this looks protein-light (~'+p+'g). Pair it with ~20–30g protein — '+cheatProteinEg()+' — to make the cheat more muscle-friendly without killing the fun.');
-  if(band==='over')bits.push('⚖️ You’re over today’s calorie ceiling ('+tg.hi+' kcal). Keep the same food next time but trim the portion a little, or swap fried for grilled/baked to land in range.');
-  else if(band==='under')bits.push('👍 You’re comfortably under today’s limit ('+tg.lo+'–'+tg.hi+' kcal) — you’ve got room to enjoy it fully.');
-  else bits.push('🎯 Nicely inside today’s range ('+tg.lo+'–'+tg.hi+' kcal) — this is exactly the skill we’re building: enjoy the food and stay on target.');
+  const P=Math.round(+p||0);const protShare=(+cal>0)?(P*4)/(+cal):0;
+  const proteinOk=(P>=25)||(protShare>=0.2);   // enough protein for the size of the meal
+  if(proteinOk&&band!=='over'){
+    bits.push('✅ Nicely done — this is balanced and lands right in your range ('+tg.lo+'–'+tg.hi+' kcal) with solid protein (~'+P+'g). Nothing to add — enjoy it as-is. 👏');
+  } else {
+    if(!proteinOk)bits.push('💪 Add protein: this looks protein-light (~'+P+'g). Pair it with ~20–30g protein — '+cheatProteinEg()+' — to make it more muscle-friendly without killing the fun.');
+    if(band==='over')bits.push('⚖️ You’re over today’s calorie ceiling ('+tg.hi+' kcal). Keep the same food next time but trim the portion a little, or swap fried for grilled/baked to land in range.');
+    else if(band==='under')bits.push('👍 You’re comfortably under today’s limit ('+tg.lo+'–'+tg.hi+' kcal) — you’ve got room to enjoy it fully.');
+    else bits.push('🎯 Nicely inside today’s range ('+tg.lo+'–'+tg.hi+' kcal) — enjoy the food and stay on target.');
+  }
   bits.push('🥤 Drink water with it and keep the rest of the day a touch lighter in fats to balance it out.');
   return bits.join('\n\n');
 }
