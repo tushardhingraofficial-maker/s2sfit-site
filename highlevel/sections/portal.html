@@ -2005,6 +2005,34 @@ table.mc-mx tbody tr:last-child td,table.mc-mx tbody tr:last-child th{border-bot
 .mc-proj-ic{font-size:20px}
 .mc-proj-n{font-size:10.5px;font-weight:700;text-align:center;line-height:1.1;color:var(--text)}
 .mc-proj-tr{font-family:var(--disp);font-weight:900;font-size:18px}
+/* ── metrics hub — interactive phase cards ── */
+.mc-prog{height:6px;border-radius:6px;background:rgba(255,255,255,.16);margin-top:11px;overflow:hidden}
+.mc-prog>i{display:block;height:100%;background:linear-gradient(90deg,#ff5a3c,var(--red))}
+.mcx-phs{display:flex;gap:7px;overflow-x:auto;padding:2px 2px 8px;scrollbar-width:none}
+.mcx-phs::-webkit-scrollbar{display:none}
+.mcx-ph{flex:none;border:1px solid var(--border);background:var(--card);border-radius:20px;padding:7px 13px;font-weight:800;font-size:12px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.mcx-ph.on{background:linear-gradient(135deg,var(--red),#ff5a3c);border-color:transparent;color:#fff;box-shadow:0 6px 16px -8px rgba(232,23,13,.8)}
+.mcx-ph .you{display:block;font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;opacity:.9;margin-top:1px}
+.mcx-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:0 2px}
+@media(min-width:620px){.mcx-grid{grid-template-columns:repeat(3,1fr)}}
+.mcx-card{text-align:left;border:1px solid var(--border);border-radius:16px;background:var(--card);padding:12px;cursor:pointer;display:flex;flex-direction:column;gap:9px;box-shadow:0 8px 20px -16px rgba(16,24,40,.4);transition:transform .1s,border-color .15s,box-shadow .15s;color:var(--text)}
+.mcx-card:hover{transform:translateY(-2px);border-color:var(--line-strong);box-shadow:0 12px 26px -16px rgba(16,24,40,.5)}
+.mcx-top{display:flex;align-items:center;gap:9px}
+.mcx-ic{flex:none;width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.mcx-nm{font-family:var(--disp);font-weight:900;font-size:15px;line-height:1;text-transform:uppercase}
+.mcx-eye{font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.mcx-trend{display:flex;align-items:center;gap:8px}
+.mcx-arrow{font-family:var(--disp);font-weight:900;font-size:26px;line-height:1}
+.mcx-tlab{font-weight:800;font-size:12px}
+.mcx-spark{margin-left:auto;display:inline-flex}
+.mcx-what{font-size:11px;color:var(--muted);line-height:1.35;min-height:44px}
+.mcx-foot{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;color:var(--muted)}
+.mcx-foot .rd{color:var(--good)}
+details.mcx-map{margin:14px 2px 0;border:1px solid var(--border);border-radius:12px;background:var(--card);padding:0 12px}
+details.mcx-map summary{padding:12px 0;font-weight:800;font-size:12.5px;cursor:pointer;list-style:none}
+details.mcx-map summary::-webkit-details-marker{display:none}
+details.mcx-map[open] summary{border-bottom:1px solid var(--border);margin-bottom:10px}
+details.mcx-map .mapwrap{padding-bottom:12px}
 /* ── daily report (shift debrief) ── */
 .db-sec{border:1px solid var(--border);border-radius:14px;background:var(--card);padding:12px;margin:0 0 12px}
 .db-sec-h{font-weight:800;font-size:12.5px;margin:0 0 9px}
@@ -6848,7 +6876,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04qv';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04qw';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -11023,18 +11051,36 @@ function mcPhaseData(m,ph){return (m&&m.ph&&(m.ph[ph]||m.ph['Foundation']))||{tr
 function mcSpark(dir){const pts=dir==='u'?[22,20,17,15,11,8]:dir==='d'?[8,10,9,13,12,17]:[13,11,14,12,13,12];const col=MC_TREND[dir][1];
   return '<svg width="76" height="26" viewBox="0 0 70 26"><polyline points="'+pts.map((y,i)=>(i*13+2)+','+y).join(' ')+'" fill="none" stroke="'+col+'" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';}
 /* MATRIX cell glyphs for the hub */
+function mcPhaseShort(p){return ({Foundation:'Found.',Strength:'Str.',Hypertrophy:'Hyper.',Recomposition:'Recomp','Fat loss':'Fat loss',Performance:'Perf.'})[p]||p;}
+function mcTrendTint(t){return ({u:'rgba(21,163,74,.12)',d:'rgba(47,127,209,.12)',f:'var(--card2)'})[t]||'var(--card2)';}
+function mcHubPhase(ph){MC_LESSON=null;MC_LPHASE=ph;const h=$('mc-host');if(h)h.innerHTML=mcHubHTML();}
 function mcHubHTML(){
-  const done=mcDoneSet();
-  const head='<tr><th style="text-align:left;padding-left:10px">Metric</th>'+MC_PHASES.map(p=>'<th>'+esc(p.replace('Recomposition','Recomp').replace('Foundation','Found.').replace('Hypertrophy','Hyper.').replace('Performance','Perf.').replace('Strength','Str.').replace('Fat loss','Fat loss'))+'</th>').join('')+'</tr>';
-  const body=MC_DATA.map(m=>'<tr class="mc-mrow" onclick="mcOpenLesson(\''+m.id+'\')"><th style="text-align:left;padding-left:10px;white-space:nowrap">'+m.ic+' '+esc(m.name)+(done[m.id]?' <span style="color:var(--good)">✓</span>':'')+'</th>'+
+  const done=mcDoneSet();const nDone=Object.keys(done).length;
+  const cur=mcPhase();                       // the client's actual training phase
+  const sel=MC_LPHASE||cur;                   // the phase currently being explored
+  // hero
+  let h='<div class="mc-hero"><div class="eyebrow" style="color:#ff9a90">Interactive course</div>'+
+    '<h1 style="font-size:26px;font-weight:900;text-transform:uppercase;line-height:.98;margin:2px 0 0">Understanding<br>Your Metrics</h1>'+
+    '<p style="margin:8px 0 0;color:#d7d9de;font-size:12.5px;max-width:320px">Pick a phase, then tap a metric to see why it moves — and how to control it.</p>'+
+    '<div style="margin-top:10px"><span class="mc-pill">'+(sel===cur?'You’re in: ':'Previewing: ')+esc(sel)+'</span> <span class="mc-pill">'+nDone+' / '+MC_DATA.length+' read</span></div>'+
+    '<div class="mc-prog"><i style="width:'+Math.round(nDone/Math.max(1,MC_DATA.length)*100)+'%"></i></div></div>';
+  // phase selector
+  h+='<div class="uline" style="margin:14px 2px 8px">Choose a phase to explore</div>'+
+    '<div class="mcx-phs">'+MC_PHASES.map(p=>'<button class="mcx-ph'+(p===sel?' on':'')+'" onclick="mcHubPhase(\''+p+'\')">'+esc(p)+(p===cur?'<span class="you">You’re here</span>':'')+'</button>').join('')+'</div>';
+  // metric cards for the selected phase
+  h+='<div class="mcx-grid">'+MC_DATA.map(m=>{const d=mcPhaseData(m,sel);const t=d.tr;const meta=MC_TREND[t];const hh=(d.h||m.what||'');return '<button type="button" class="mcx-card" onclick="mcOpenLesson(\''+m.id+'\',\''+sel+'\')">'+
+      '<div class="mcx-top"><div class="mcx-ic" style="background:'+mcTrendTint(t)+'">'+m.ic+'</div><div style="min-width:0"><div class="mcx-nm">'+esc(m.name)+'</div><div class="mcx-eye">'+esc(m.eye||'')+'</div></div></div>'+
+      '<div class="mcx-trend"><span class="mcx-arrow" style="color:'+meta[1]+'">'+meta[0]+'</span><span class="mcx-tlab" style="color:'+meta[1]+'">'+esc(meta[2])+'</span><span class="mcx-spark">'+mcSpark(t)+'</span></div>'+
+      '<div class="mcx-what">'+esc(hh.length>112?hh.slice(0,110)+'…':hh)+'</div>'+
+      '<div class="mcx-foot">'+(done[m.id]?'<span class="rd">✓ Read</span>':'<span>Tap to learn →</span>')+'</div>'+
+    '</button>';}).join('')+'</div>';
+  // collapsible full matrix (all phases at once)
+  const head='<tr><th style="text-align:left;padding-left:10px">Metric</th>'+MC_PHASES.map(p=>'<th'+(p===sel?' style="color:var(--red)"':'')+'>'+esc(mcPhaseShort(p))+'</th>').join('')+'</tr>';
+  const body=MC_DATA.map(m=>'<tr class="mc-mrow" onclick="mcOpenLesson(\''+m.id+'\',\''+sel+'\')"><th style="text-align:left;padding-left:10px;white-space:nowrap">'+m.ic+' '+esc(m.name)+(done[m.id]?' <span style="color:var(--good)">✓</span>':'')+'</th>'+
     MC_PHASES.map(p=>{const t=mcPhaseData(m,p).tr;return '<td><span class="mc-cell mc-'+t+'">'+MC_TREND[t][0]+'</span></td>';}).join('')+'</tr>').join('');
-  const cur=mcPhase();const nDone=Object.keys(done).length;
-  return '<div class="mc-hero"><div class="eyebrow" style="color:#ff9a90">Interactive course</div><h1 style="font-size:28px;font-weight:900;text-transform:uppercase;line-height:.98;margin:2px 0 0">Understanding<br>Your Metrics</h1>'+
-    '<p style="margin:8px 0 0;color:#d7d9de;font-size:13px;max-width:300px">What every number on your Progress page means — and how it should move in each phase.</p>'+
-    '<div style="margin-top:10px"><span class="mc-pill">You’re in: '+esc(cur)+'</span> <span class="mc-pill">'+nDone+' / '+MC_DATA.length+' read</span></div></div>'+
-    '<div class="uline" style="margin:16px 2px 8px">📊 Metric × phase — tap any row</div>'+
-    '<div class="mc-matrix"><table class="mc-mx"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div>'+
-    '<div class="mc-legend"><span><b class="mc-cell mc-u">↑</b> should rise</span><span><b class="mc-cell mc-d">↓</b> should fall</span><span><b class="mc-cell mc-f">→</b> hold steady</span></div>';
+  h+='<details class="mcx-map"><summary>🗺️ See the full map — all phases at once</summary><div class="mapwrap"><div class="mc-matrix"><table class="mc-mx"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div>'+
+    '<div class="mc-legend"><span><b class="mc-cell mc-u">↑</b> should rise</span><span><b class="mc-cell mc-d">↓</b> should fall</span><span><b class="mc-cell mc-f">→</b> hold steady</span></div></div></details>';
+  return h;
 }
 let MC_LESSON=null, MC_LPHASE='';
 function mcOpen(startPhase){const m=$('mc-modal');if(!m)return;MC_LESSON=null;MC_LPHASE=startPhase||mcPhase();
