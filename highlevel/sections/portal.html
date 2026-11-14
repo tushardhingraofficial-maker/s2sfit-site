@@ -1959,6 +1959,43 @@ body{overflow-x:hidden}
 .tk-col>.uline:first-child{margin-top:0}
 @container (max-width:540px){.tk-cols{grid-template-columns:1fr;gap:2px}}
 @media(max-width:720px){.tk-cols{grid-template-columns:1fr;gap:2px}}
+/* ---- Metrics course + phase banner ---- */
+#mc-host{max-width:480px;margin:0 auto}
+.mc-hero{background:linear-gradient(140deg,#15181c,#241a1f);color:#fff;border-radius:16px;padding:18px;position:relative;overflow:hidden;margin-bottom:6px}
+.mc-pill{display:inline-block;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:3px 9px;border-radius:20px;background:rgba(255,255,255,.14);color:#fff;font-family:var(--disp)}
+.mc-matrix{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--card)}
+table.mc-mx{border-collapse:collapse;width:100%;font-size:12px;min-width:420px}
+table.mc-mx th,table.mc-mx td{padding:7px 3px;text-align:center;border-bottom:1px solid var(--border)}
+table.mc-mx thead th{font-family:var(--disp);font-weight:700;text-transform:uppercase;font-size:9.5px;color:var(--muted)}
+table.mc-mx tbody th{font-weight:700;font-size:12px;color:var(--text)}
+table.mc-mx tbody tr:last-child td,table.mc-mx tbody tr:last-child th{border-bottom:none}
+.mc-mrow{cursor:pointer}.mc-mrow:hover tbody th{color:var(--red)}
+.mc-cell{display:inline-block;width:26px;height:26px;line-height:26px;border-radius:7px;font-weight:800;font-size:13px}
+.mc-u{color:var(--good);background:rgba(21,163,74,.12)}
+.mc-d{color:var(--prot);background:rgba(47,127,209,.12)}
+.mc-f{color:var(--muted);background:var(--card2)}
+.mc-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin:8px 2px 0}
+.mc-mhead{display:flex;align-items:center;gap:12px;margin-bottom:2px}
+.mc-mic{width:44px;height:44px;border-radius:12px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:23px;flex:none}
+.mc-phtabs{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;margin-top:10px}
+.mc-phtab{font-family:var(--disp);font-weight:700;text-transform:uppercase;font-size:12px;padding:8px 12px;border-radius:20px;border:1px solid var(--border);background:var(--card2);color:var(--muted);white-space:nowrap;cursor:pointer;flex:none}
+.mc-phtab.on{background:var(--red);color:#fff;border-color:var(--red)}
+.mc-phtab.mine{border-color:var(--prot)}
+.mc-trendbox{display:flex;align-items:center;gap:14px;background:var(--card2);border-radius:12px;padding:14px;margin:4px 0 8px}
+.mc-arrow{font-family:var(--disp);font-weight:900;font-size:32px;line-height:1}
+.mc-sect{font-family:var(--disp);font-weight:800;text-transform:uppercase;font-size:12.5px;color:var(--muted);margin:16px 2px 7px}
+.mc-factors{display:flex;gap:7px;flex-wrap:wrap}
+.mc-factor{font-size:12.5px;font-weight:600;padding:8px 11px;border-radius:10px;background:var(--card2);border:1px solid var(--border)}
+.mc-fix{display:flex;gap:10px;padding:11px 12px;border:1px solid var(--border);border-radius:12px;margin-bottom:8px;background:var(--card)}
+.mc-fixn{width:22px;height:22px;border-radius:50%;background:var(--good);color:#fff;font-family:var(--disp);font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px}
+.mc-worry{background:rgba(220,59,47,.07);border:1px solid rgba(220,59,47,.25);border-radius:12px;padding:11px 13px;font-size:13px;display:flex;gap:9px;margin-top:10px}
+.mc-banner{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:14px}
+.mc-banner-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.mc-projrow{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.mc-proj{flex:none;min-width:92px;border:1px solid var(--border);border-radius:12px;background:var(--card2);padding:10px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+.mc-proj-ic{font-size:20px}
+.mc-proj-n{font-size:10.5px;font-weight:700;text-align:center;line-height:1.1;color:var(--text)}
+.mc-proj-tr{font-family:var(--disp);font-weight:900;font-size:18px}
 /* Day-type editor: meals left, sticky target/allocated panel right */
 .dt-cols{display:flex;gap:16px;align-items:stretch}
 .dt-main{flex:1;min-width:0}
@@ -6344,6 +6381,13 @@ img,svg,canvas,video{max-width:100%}
   </div>
 </div>
 
+<!-- ============ UNDERSTANDING YOUR METRICS (interactive course) ============ -->
+<div class="overlay" id="mc-modal" style="z-index:1600">
+  <div class="modal"><div class="modal-head"><h2>📈 Understanding Your Metrics</h2><span class="sp"></span><button class="icon-x" onclick="mcClose()">×</button></div>
+    <div class="modal-body"><div id="mc-host"></div></div>
+  </div>
+</div>
+
 <!-- ================= ADMIN LEFT DOCK · TASKS ================= -->
 <div id="tasks-dock" class="hidden">
   <div class="dock-resize" onpointerdown="dockResizeStart(event,'tasks')" title="Drag to resize"></div>
@@ -6721,7 +6765,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04qh';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04qi';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -10797,20 +10841,156 @@ function pgMyChartHTML(){
   return '<div class="pg-chart"><div class="pg-chart-h"><span class="pg-mychart-now">'+round(last.value,2)+(s.unit?(' '+esc(s.unit)):'')+'</span><span class="small" style="float:right;margin-top:4px;color:'+(delta>0?'var(--good)':delta<0?'var(--red)':'var(--muted)')+'">'+dtxt+'</span></div>'+lineChartSVG([{label:s.label,color:'var(--prot)',pts:pts}])+'</div>';
 }
 function clientMetricPick(v){CLIENT_METRIC=v;const c=$('pg-mychart');if(c)c.innerHTML=pgMyChartHTML();}
+/* ═══════════ METRICS COURSE + CLIENT PHASES — "Understanding Your Metrics" ═══════════ */
+const MC_PHASES=['Foundation','Strength','Hypertrophy','Recomposition','Fat loss','Performance'];
+const MC_TREND={u:['↑','var(--good)','Trends up'],d:['↓','var(--prot)','Trends down'],f:['→','var(--muted)','Holds steady']};
+/* per metric: ph keyed by phase → {tr:trend, h:what's happening, f:[factors], x:[fixes], w:when-to-flag}.
+   `rule` (weight only for now) powers the auto-watch engine: dir + weekly-rate band + stall weeks. */
+const MC_DATA=[
+ {id:'weight',ic:'⚖️',name:'Scale weight',eye:'Body metric',what:'Your bodyweight — always read as a 7-day average, never one morning.',
+  ph:{
+   'Foundation':{tr:'f',h:'Early on the scale can jump 0.5–2 kg from glycogen, food and water before any real fat change — normal, not fat gain.',f:['Glycogen + water','Sodium/salt','More food volume','First-week bloat'],x:['Weigh 3–4 mornings and use the average.','Judge over 2–3 weeks, not daily.','Keep salt & water steady so readings compare.'],w:'the average climbs >1%/week for 2+ weeks while leaning out.',rule:{dir:'flat',maxUp:1.2}},
+   'Strength':{tr:'f',h:'You eat to lift hard; carbs and creatine add muscle water, so weight is flat or drifts up slightly even as you lean out.',f:['Carb/glycogen','Creatine water','Progressive overload','Recovery food'],x:['Expect small bumps on carb days.','Treat rising lifts as the real win.','Use the weekly average.'],w:'weight is dropping weekly — you may be under-eating.',rule:{dir:'flat',maxUp:1,maxDown:0.6}},
+   'Hypertrophy':{tr:'u',h:'A slight surplus means the scale should rise slowly; fast jumps are mostly fat and water.',f:['Calorie surplus','Glycogen fill','Muscle gain','Weekend overshoot'],x:['Aim ~0.25–0.5% gain/week.','If faster, trim surplus ~150–200 kcal.','Keep protein high.'],w:'gaining >0.75%/week — surplus too big.',rule:{dir:'up',minRate:0.1,maxRate:0.75}},
+   'Recomposition':{tr:'f',h:'The scale can sit still for weeks while you look leaner — fat out, muscle in. Photos and the tape tell the story here.',f:['Fat ↔ muscle swap','Protein intake','Training stimulus','Water shifts'],x:['Use photos and waist/arm measurements.','Protein ~2 g/kg, keep lifts progressing.','Give it 4+ weeks.'],w:'nothing moves — scale, tape, photos or lifts — after 4–6 weeks.',rule:{dir:'flat',maxUp:0.6,maxDown:0.6}},
+   'Fat loss':{tr:'d',h:'The weekly average should drift down; day to day it bounces with water, salt, carbs, sleep, stress and your cycle.',f:['Calorie deficit','Water & sodium','Carb/glycogen','Stress/cortisol','Menstrual cycle','Sleep & steps'],x:['Trust the 7-day average — expect flat/up days in a down week.','Aim ~0.5–1%/week.','Stalled 2–3 wks → trim intake or add steps.','Protect sleep to limit water retention.'],w:'no change in the average for 3 weeks, or losing >1.2%/week (muscle risk).',rule:{dir:'down',minRate:0.3,maxRate:1.2,stallWeeks:3}},
+   'Performance':{tr:'f',h:'The goal is output, not the scale — hold weight steady and fuel training.',f:['Carb loading','Hydration','Training load','Weight-class target'],x:['Keep weight stable, eat to fuel sessions.','Don’t hard-diet in-season.','Make a weight class with your coach, not by crash-cutting.'],w:'weight sliding down and sessions feel flat — under-fuelling.',rule:{dir:'flat',maxDown:0.8,maxUp:0.8}}
+  }},
+ {id:'bf',ic:'🔬',name:'Body-fat %',eye:'Body composition',what:'The share of your weight that’s fat. Moves slowly and noisily — judge over 3–4+ weeks, same method each time.',
+  ph:{
+   'Foundation':{tr:'f',h:'Composition is shifting but the number barely moves yet, and early readings are noisy.',f:['Measurement method','Hydration','Early recomposition','Time of day'],x:['Same method, time and person.','Measure every 2–4 weeks.','Don’t chase single readings.'],w:'readings swing wildly — that’s measurement error.'},
+   'Strength':{tr:'f',h:'Eating to lift may nudge body-fat up a touch if in a small surplus — fine while strength climbs.',f:['Slight surplus','Glycogen','Muscle gain','Protein'],x:['Accept a small rise.','Prioritise the lifts.','Keep protein high.'],w:'it’s climbing quickly — surplus too big.'},
+   'Hypertrophy':{tr:'u',h:'A lean bulk adds some fat with muscle, so body-fat drifts up gradually — keep that rise small.',f:['Surplus size','Training stimulus','Protein','Diet breaks'],x:['Keep the surplus modest.','Short diet-break if it climbs too high.','Train hard to partition toward muscle.'],w:'body-fat up >3–4 points — end the bulk.'},
+   'Recomposition':{tr:'d',h:'The headline number for a recomp — fat % drops while weight stays flat. Your clearest proof it’s working.',f:['Protein','Training progression','Sleep','Consistency'],x:['Keep protein high and lifts progressing.','Measure consistently every 3–4 weeks.','Be patient — a month+.'],w:'no change after 6 weeks.'},
+   'Fat loss':{tr:'d',h:'Body-fat % should steadily fall; with high protein + lifting, most of the loss is fat, not muscle.',f:['Deficit size','Muscle retention','Measurement noise','Water'],x:['Protein high + lift heavy to protect muscle.','Measure every 3–4 weeks.','Trust the trend, not one reading.'],w:'body-fat dropping but strength tanking — possible muscle loss; slow the deficit.'},
+   'Performance':{tr:'f',h:'Hold a healthy, performance-ready level — leaning out further can hurt output.',f:['Fuelling','Sport demands','Weight class'],x:['Maintain.','Don’t crash body-fat in-season.'],w:'body-fat dropping unintentionally — under-fuelling.'}
+  }},
+ {id:'muscle',ic:'💪',name:'Muscle mass',eye:'Body composition',what:'Your lean (muscle) mass. Builds slowly — the game is to gain it in most phases and keep it in a diet. Rising lifts confirm it.',
+  ph:{
+   'Foundation':{tr:'u',h:'New or returning trainees gain muscle quickly ("newbie gains"), helped by muscles rehydrating.',f:['Training stimulus','Protein','Newbie effect','Glycogen'],x:['Train progressively.','1.6–2.2 g/kg protein.','Stay consistent.'],w:'mass isn’t rising and lifts are weak — under-eating/training.'},
+   'Strength':{tr:'u',h:'Early strength is partly neural, but muscle grows with heavy work too.',f:['Progressive overload','Protein','Recovery','Sleep'],x:['Add load/reps weekly.','Eat enough.','Sleep 7–9 h.'],w:'lifts stall for weeks — recovery/fuel issue.'},
+   'Hypertrophy':{tr:'u',h:'The dedicated build phase — with volume, progression and food, muscle rises fastest here.',f:['Surplus','Training volume','Progressive overload','Protein'],x:['~10–20 hard sets/muscle/week.','Hold a slight surplus.','Protein + sleep.'],w:'not growing in a surplus — volume too low or not progressing.'},
+   'Recomposition':{tr:'u',h:'You add muscle at a stable weight — slower than a bulk but achievable, especially if newer/returning.',f:['Protein','Training quality','Sleep','Training age'],x:['Push the lifts.','Protein high.','Be patient.'],w:'lifts and mass both flat — may need a dedicated bulk.'},
+   'Fat loss':{tr:'f',h:'In a deficit the goal is to KEEP the muscle you have while fat comes off — holding steady is a win.',f:['Protein','Lifting intensity','Deficit size','Sleep'],x:['Keep lifting heavy.','Protein high.','Moderate deficit + good sleep.'],w:'muscle falling with weight — deficit too aggressive.'},
+   'Performance':{tr:'f',h:'Maintain the muscle that supports your sport; big changes aren’t the aim mid-season.',f:['Fuelling','Training balance'],x:['Keep some heavy strength work.','Fuel training.'],w:'losing mass — under-fuelled or over-trained.'}
+  }},
+ {id:'waist',ic:'📏',name:'Waist & girths',eye:'Measurements',what:'Tape measures. Waist is a great fat proxy; arms/thighs/chest track muscle. Measure relaxed, same spot and time.',
+  ph:{
+   'Foundation':{tr:'f',h:'You’re building a baseline and learning to measure — little real change yet.',f:['Measurement spot/tension','Bloat','Time of day','Technique'],x:['Same spot, relaxed (don’t suck in).','Same time of day.','Measure weekly.'],w:'big day-to-day swings — usually technique.'},
+   'Strength':{tr:'f',h:'Waist holds steady; arms and thighs may tick up as you get stronger.',f:['Muscle pump','Food/glycogen','Overload'],x:['Treat limb-girth gains as wins.','Keep the waist steady.'],w:'the waist is climbing — surplus leaking to fat.'},
+   'Hypertrophy':{tr:'u',h:'Limb girths rise (muscle), and the waist may creep up slightly from extra food and glycogen.',f:['Muscle growth','Surplus','Glycogen','Posture'],x:['Celebrate arm/thigh/chest growth.','Watch waist creep.','Keep the surplus modest.'],w:'the waist growing faster than your limbs — too much fat.'},
+   'Recomposition':{tr:'d',h:'The clearest recomp proof — waist shrinks while arms/thighs hold or grow, even if the scale won’t move.',f:['Fat loss at the waist','Muscle at the limbs','Protein','Training'],x:['Track waist AND arms/thighs.','Protein high, lifts progressing.','Trust it — your best recomp evidence.'],w:'nothing moves after 6 weeks.'},
+   'Fat loss':{tr:'d',h:'The waist should shrink; limbs may come down a little too. Fat leaves in its own stubborn order.',f:['Deficit','Water','Menstrual cycle','Stubborn-fat order'],x:['Trust the waist over the scale.','Measure every 1–2 weeks.','Protein + lifting to hold limb size.'],w:'the waist stuck for 3 weeks — adjust intake or steps.'},
+   'Performance':{tr:'f',h:'Hold your measurements; changes aren’t the focus mid-season.',f:['Fuelling','Sport demands'],x:['Maintain.'],w:'unintended shrinking — a fuelling red flag.'}
+  }},
+ {id:'strength',ic:'🏋️',name:'Strength (est. 1RM)',eye:'Performance',what:'Your estimated one-rep max from the weights and reps you log — the headline training-progress metric. Trends beat single sessions.',
+  ph:{
+   'Foundation':{tr:'u',h:'Fast early gains from skill and neural learning as much as muscle.',f:['Skill/neural','Consistency','Warm-ups','Sleep'],x:['Drill technique.','Add a little load/reps weekly.','Log every session.'],w:'no progress at all — programming or recovery issue.'},
+   'Strength':{tr:'u',h:'The point of the phase — numbers should climb with heavy, low-rep work and full recovery.',f:['Progressive overload','Heavy low-rep work','Recovery','Fuel'],x:['Add weight/reps each week.','Rest 2–4 min on heavy sets.','Eat & sleep; deload when stalling.'],w:'stalled 2–3 weeks — deload or check recovery/fuel.'},
+   'Hypertrophy':{tr:'u',h:'Strength rises as muscle and volume grow, usually via reps before load.',f:['Volume','Progressive overload','Protein','Surplus'],x:['Progress reps, then load.','Keep volume high.','Fuel it.'],w:'strength falling in a surplus — over-reaching.'},
+   'Recomposition':{tr:'f',h:'At maintenance you should at least hold strength and ideally gain slowly.',f:['Protein','Training quality','Recovery'],x:['Keep pushing the lifts.','Protein + sleep.'],w:'strength dropping — under-recovered.'},
+   'Fat loss':{tr:'f',h:'Holding your lifts in a deficit is a win — it means you’re keeping muscle.',f:['Deficit size','Protein','Intensity','Fatigue'],x:['Keep intensity high (heavy, lower volume).','Protein high; don’t chase PRs.','Sleep.'],w:'strength dropping fast — deficit too aggressive; slow it.'},
+   'Performance':{tr:'u',h:'Strength or power peaks for your sport, managed around freshness and tapering.',f:['Specificity','Tapering','CNS freshness','Fuel'],x:['Train the quality your sport needs.','Manage fatigue.','Fuel well.'],w:'performance drops near an event — over-trained; taper.'}
+  }},
+ {id:'rir',ic:'🎚️',name:'Effort / RIR',eye:'Training quality',what:'How many reps you had left "in the tank". Lower RIR = closer to failure = harder. Each phase has a target range.',
+  ph:{
+   'Foundation':{tr:'f',h:'Leave 2–3 reps in reserve while you build technique and tissue tolerance.',f:['Technique focus','Tissue tolerance','Confidence'],x:['Stop 2–3 reps short of failure.','Nail form first.','Build the habit.'],w:'hitting failure often this early — ego/injury risk.'},
+   'Strength':{tr:'d',h:'Heavy compounds are tough but you stop short of failure (RIR 1–3) to keep technique and recover.',f:['Load','CNS fatigue','Warm-ups'],x:['Heavy sets ~1–3 RIR.','Save failure for isolations.','Rest fully.'],w:'grinding to failure on big lifts every session — burnout risk.'},
+   'Hypertrophy':{tr:'d',h:'Growth rewards training close to failure (RIR 0–2) on your last sets.',f:['Proximity to failure','Volume','Recovery'],x:['Last sets 0–2 RIR.','Add sets over time.','Manage fatigue.'],w:'every set to failure tanks your volume and recovery.'},
+   'Recomposition':{tr:'d',h:'Hard, quality sets (RIR 1–2) tell your body to keep and build muscle at maintenance.',f:['Intensity','Recovery'],x:['Sets ~1–2 RIR.','Quality over quantity.'],w:'sessions feel too easy — not enough stimulus.'},
+   'Fat loss':{tr:'f',h:'Keep the weights heavy (RIR 1–2) to hold muscle; trim junk volume if fatigue builds.',f:['Deficit fatigue','Recovery','Sleep'],x:['Keep weights heavy (1–2 RIR).','Cut volume, not intensity.','Add rest.'],w:'strength and effort slipping — over-reaching in a deficit.'},
+   'Performance':{tr:'f',h:'Effort flexes with the block and schedule — freshness matters more than always maxing out.',f:['Fatigue','Event proximity'],x:['Auto-regulate by feel.','Back off near events.'],w:'maxed out every session with no easier days — no room to peak.'}
+  }},
+ {id:'cardio',ic:'🏃',name:'Cardio pace & HR',eye:'Conditioning',what:'Your conditioning — faster pace and lower heart-rate at the same effort = fitter. A falling resting HR over time is a good sign.',
+  ph:{
+   'Foundation':{tr:'u',h:'Pace improves and heart rate drops at the same effort as your base builds.',f:['Base conditioning','Consistency','Sleep','Hydration'],x:['Easy, steady sessions.','Build gradually.','Same route/effort to compare.'],w:'heart rate not improving after weeks — recovery or over-reach.'},
+   'Strength':{tr:'f',h:'Cardio is maintained, not a focus — protect recovery for heavy lifting.',f:['Minimal cardio','Recovery priority'],x:['Keep light conditioning.','Don’t sabotage strength recovery.'],w:'too much cardio is hurting your lifts.'},
+   'Hypertrophy':{tr:'f',h:'Light cardio supports health and recovery without eating into growth.',f:['Low-intensity work','Step targets'],x:['Easy cardio / hit your steps.','Avoid heavy interference.'],w:'excess cardio is blunting growth.'},
+   'Recomposition':{tr:'u',h:'Steady cardio and steps support the "maintenance deficit" and health while you recompose.',f:['Steps','Conditioning','Recovery'],x:['Steady steps + some intervals.','Keep it easy enough to recover.'],w:'heart rate creeping up / pace falling — under-recovered.'},
+   'Fat loss':{tr:'u',h:'Cardio and steps rise to support the burn — watch it doesn’t wreck lifting recovery.',f:['Step target','Session volume','Fatigue','Fuelling'],x:['Prioritise daily steps (NEAT) first.','Add structured cardio only as needed.','Protect lifting recovery.'],w:'pace falling, heart rate rising and exhausted — too much; pull back.'},
+   'Performance':{tr:'u',h:'Conditioning is a headline metric — pace, HR and recovery track your readiness.',f:['Specificity','Taper','Fuelling','Sleep'],x:['Train the energy systems your sport needs.','Taper to peak.','Fuel and sleep.'],w:'resting HR up / pace down near an event — over-trained.'}
+  }},
+ {id:'health',ic:'🩺',name:'Health markers',eye:'BP · sugar · lipids',what:'Blood pressure, blood sugar, cholesterol/HbA1c — tracked for the trend and your GP. Tracking only, not medical advice; always follow your doctor.',
+  ph:{
+   'Foundation':{tr:'f',h:'Starting to train and eat better often nudges these in a healthier direction.',f:['New activity','Diet quality','Bodyweight','Sleep/stress'],x:['Stay consistent.','Record each reading.','Share the trend with your GP.'],w:'any reading is high — see your GP; this tool tracks, it doesn’t diagnose.'},
+   'Strength':{tr:'f',h:'Generally stable; a bigger surplus can nudge blood pressure or lipids up a little.',f:['Surplus size','Sodium','Stimulants','Bodyweight'],x:['Keep an eye on readings during a bulk.','Watch sodium and stimulants.','GP if flagged.'],w:'readings drift out of a healthy range.'},
+   'Hypertrophy':{tr:'f',h:'Usually stable through a lean bulk; watch blood pressure and lipids if the surplus is large.',f:['Surplus','Sodium','Stimulants','Bodyweight'],x:['Monitor during the bulk.','Moderate sodium/stimulants.','GP if flagged.'],w:'readings drift out of a healthy range.'},
+   'Recomposition':{tr:'d',h:'Better composition and more muscle usually hold or improve these markers.',f:['Insulin sensitivity','Diet quality','Activity'],x:['Keep the habits going.','Track quarterly.','GP for guidance.'],w:'readings are abnormal.'},
+   'Fat loss':{tr:'d',h:'Losing excess fat typically improves blood pressure, sugar and lipids — a big win of the phase.',f:['Fat loss','Sodium','Activity','Sleep/stress'],x:['Keep the deficit sustainable.','Manage sodium and sleep.','Track monthly; follow your GP.'],w:'readings worsen despite losing fat — get a GP review.'},
+   'Performance':{tr:'f',h:'Keep markers in a healthy range; heavy training, stimulants or dehydration can transiently affect BP and HR.',f:['Training load','Hydration','Stimulants','Stress'],x:['Monitor regularly.','Hydrate; moderate stimulants.','GP if concerned.'],w:'blood pressure or resting HR stays high — see your GP.'}
+  }}
+];
+function mcById(id){return MC_DATA.find(m=>m.id===id)||MC_DATA[0];}
+function mcPhase(){return (typeof PLAN!=='undefined'&&PLAN&&PLAN.phase)||'Foundation';}
+function mcPhaseData(m,ph){return (m&&m.ph&&(m.ph[ph]||m.ph['Foundation']))||{tr:'f',h:'',f:[],x:[],w:''};}
+function mcSpark(dir){const pts=dir==='u'?[22,20,17,15,11,8]:dir==='d'?[8,10,9,13,12,17]:[13,11,14,12,13,12];const col=MC_TREND[dir][1];
+  return '<svg width="76" height="26" viewBox="0 0 70 26"><polyline points="'+pts.map((y,i)=>(i*13+2)+','+y).join(' ')+'" fill="none" stroke="'+col+'" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';}
+/* MATRIX cell glyphs for the hub */
+function mcHubHTML(){
+  const done=mcDoneSet();
+  const head='<tr><th style="text-align:left;padding-left:10px">Metric</th>'+MC_PHASES.map(p=>'<th>'+esc(p.replace('Recomposition','Recomp').replace('Foundation','Found.').replace('Hypertrophy','Hyper.').replace('Performance','Perf.').replace('Strength','Str.').replace('Fat loss','Fat loss'))+'</th>').join('')+'</tr>';
+  const body=MC_DATA.map(m=>'<tr class="mc-mrow" onclick="mcOpenLesson(\''+m.id+'\')"><th style="text-align:left;padding-left:10px;white-space:nowrap">'+m.ic+' '+esc(m.name)+(done[m.id]?' <span style="color:var(--good)">✓</span>':'')+'</th>'+
+    MC_PHASES.map(p=>{const t=mcPhaseData(m,p).tr;return '<td><span class="mc-cell mc-'+t+'">'+MC_TREND[t][0]+'</span></td>';}).join('')+'</tr>').join('');
+  const cur=mcPhase();const nDone=Object.keys(done).length;
+  return '<div class="mc-hero"><div class="eyebrow" style="color:#ff9a90">Interactive course</div><h1 style="font-size:28px;font-weight:900;text-transform:uppercase;line-height:.98;margin:2px 0 0">Understanding<br>Your Metrics</h1>'+
+    '<p style="margin:8px 0 0;color:#d7d9de;font-size:13px;max-width:300px">What every number on your Progress page means — and how it should move in each phase.</p>'+
+    '<div style="margin-top:10px"><span class="mc-pill">You’re in: '+esc(cur)+'</span> <span class="mc-pill">'+nDone+' / '+MC_DATA.length+' read</span></div></div>'+
+    '<div class="uline" style="margin:16px 2px 8px">📊 Metric × phase — tap any row</div>'+
+    '<div class="mc-matrix"><table class="mc-mx"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div>'+
+    '<div class="mc-legend"><span><b class="mc-cell mc-u">↑</b> should rise</span><span><b class="mc-cell mc-d">↓</b> should fall</span><span><b class="mc-cell mc-f">→</b> hold steady</span></div>';
+}
+let MC_LESSON=null, MC_LPHASE='';
+function mcOpen(startPhase){const m=$('mc-modal');if(!m)return;MC_LESSON=null;MC_LPHASE=startPhase||mcPhase();
+  const h=$('mc-host');if(h)h.innerHTML=mcHubHTML();m.classList.add('open');try{window.scrollTo(0,0);}catch(e){}}
+function mcClose(){const m=$('mc-modal');if(m)m.classList.remove('open');}
+function mcOpenLesson(id,phase){const m=mcById(id);MC_LESSON=id;MC_LPHASE=phase||mcPhase();
+  const h=$('mc-host');if(h){h.innerHTML=mcLessonHTML(m);}}
+function mcSetLessonPhase(ph){MC_LPHASE=ph;const m=mcById(MC_LESSON);const h=$('mc-host');if(h)h.innerHTML=mcLessonHTML(m);}
+function mcLessonHTML(m){const ph=MC_LPHASE||mcPhase();const d=mcPhaseData(m,ph);const t=d.tr;const cur=(ph===mcPhase());
+  return '<button class="btn-sm" onclick="mcBackHub()" style="margin-bottom:12px">‹ All metrics</button>'+
+    '<div class="mc-mhead"><div class="mc-mic">'+m.ic+'</div><div><div class="eyebrow">'+esc(m.eye)+'</div><h2 style="font-size:22px;text-transform:uppercase;margin:0">'+esc(m.name)+'</h2></div></div>'+
+    '<p class="small" style="color:var(--muted);margin:4px 0 2px">'+esc(m.what)+'</p>'+
+    '<div class="mc-phtabs">'+MC_PHASES.map(p=>'<button class="mc-phtab'+(p===ph?' on':'')+(p===mcPhase()?' mine':'')+'" onclick="mcSetLessonPhase(\''+p+'\')">'+esc(p)+(p===mcPhase()?' ●':'')+'</button>').join('')+'</div>'+
+    (cur?'<div class="small" style="color:var(--prot);font-weight:700;margin:2px 2px 8px">● This is your current phase</div>':'')+
+    '<div class="mc-trendbox"><div class="mc-arrow" style="color:'+MC_TREND[t][1]+'">'+MC_TREND[t][0]+'</div><div style="min-width:0"><div style="font-family:var(--disp);font-weight:800;text-transform:uppercase;font-size:15px">'+MC_TREND[t][2]+' · '+esc(ph)+'</div></div><div style="margin-left:auto">'+mcSpark(t)+'</div></div>'+
+    '<div class="mc-sect">🔍 What’s happening in this phase</div><p class="small" style="margin:0">'+esc(d.h)+'</p>'+
+    '<div class="mc-sect">🎛️ Factors moving it</div><div class="mc-factors">'+(d.f||[]).map(f=>'<span class="mc-factor">'+esc(f)+'</span>').join('')+'</div>'+
+    '<div class="mc-sect">🛠️ How to fix & control it</div>'+(d.x||[]).map((x,i)=>'<div class="mc-fix"><div class="mc-fixn">'+(i+1)+'</div><div class="small">'+esc(x)+'</div></div>').join('')+
+    (d.w?'<div class="mc-worry"><span>⚠️</span><div><b>Flag your coach if:</b> '+esc(d.w)+'</div></div>':'')+
+    '<button class="btn btn-primary" style="width:100%;margin-top:16px" onclick="mcMarkRead(\''+m.id+'\')">✓ Mark “'+esc(m.name)+'” as read (+15 pts)</button>';
+}
+function mcBackHub(){MC_LESSON=null;const h=$('mc-host');if(h)h.innerHTML=mcHubHTML();try{window.scrollTo(0,0);}catch(e){}}
+function mcDoneSet(){try{return JSON.parse(localStorage.getItem('s2s_mc_done_'+((SESSION&&SESSION.id)||'x'))||'{}')||{};}catch(e){return {};}}
+function mcMarkRead(id){const d=mcDoneSet();if(!d[id]){d[id]={at:new Date().toISOString()};try{localStorage.setItem('s2s_mc_done_'+((SESSION&&SESSION.id)||'x'),JSON.stringify(d));}catch(e){}
+  try{if(typeof rwAutoAward==='function')rwAutoAward('metric_lesson',15,'Read the "'+mcById(id).name+'" metrics lesson');}catch(e){}
+  toast('✓ Lesson complete! +15 points');}else toast('Already completed ✓');
+  mcBackHub();}
+/* client Progress banner: current phase + per-metric expected trend for that phase + course launcher */
+function mcClientBannerHTML(){const cur=mcPhase();
+  const chips=MC_DATA.map(m=>{const t=mcPhaseData(m,cur).tr;return '<button class="mc-proj" onclick="mcOpen();setTimeout(function(){mcOpenLesson(\''+m.id+'\')},30)"><span class="mc-proj-ic">'+m.ic+'</span><span class="mc-proj-n">'+esc(m.name)+'</span><span class="mc-proj-tr" style="color:'+MC_TREND[t][1]+'">'+MC_TREND[t][0]+'</span></button>';}).join('');
+  return '<div class="mc-banner"><div class="mc-banner-top"><div><div class="eyebrow">Your current phase</div><div style="font-family:var(--disp);font-weight:900;font-size:22px;text-transform:uppercase;line-height:1">'+esc(cur)+'</div></div>'+
+    '<button class="btn-sm solid" style="margin-left:auto" onclick="mcOpen()">📈 Understand my metrics</button></div>'+
+    '<div class="small" style="color:var(--muted);margin:6px 0 10px">Here’s how each metric should trend while you’re in your <b>'+esc(cur)+'</b> phase — tap one to learn why.</div>'+
+    '<div class="mc-projrow">'+chips+'</div></div>';
+}
+/* admin: phase picker shown atop the client's Progress Tracking editor tab */
+function mcAdminPhaseHTML(){const cur=(typeof edPlan!=='undefined'&&edPlan&&edPlan.phase)||'Foundation';
+  return '<div style="margin-bottom:14px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--card2)"><div class="uline" style="margin:0 0 6px">📈 Current training phase</div><div class="small" style="color:var(--muted);margin-bottom:8px">Drives what this client sees as “expected” in their metrics course, and what the metric-watch flags against.</div><select onchange="if(typeof edPlan!==\'undefined\'&&edPlan)edPlan.phase=this.value" style="max-width:230px">'+MC_PHASES.map(p=>'<option'+(p===cur?' selected':'')+'>'+esc(p)+'</option>').join('')+'</select></div>';}
 async function renderClientMetrics(){
-  const card=$('pg-metrics-card');if(!card||!SESSION)return;
+  const card=$('pg-metrics-card');if(!card||!SESSION||(typeof ADMIN_OK!=='undefined'&&ADMIN_OK))return;
+  let bannerHTML='';try{bannerHTML=mcClientBannerHTML();}catch(e){bannerHTML='';}
   let all=[];try{all=Array.isArray(CLIENT_PROGRESS)?CLIENT_PROGRESS:await DB.listProgress(SESSION.id);}catch(e){all=[];}   // reuse the already-loaded list even when it's empty (don't refetch)
   all=(all||[]).filter(p=>pgIsPublished(p)&&!p.acknowledged);   // mirror the note card: only active (unread) pushes — so the chart clears when the client marks the update as read
   const asc=all.slice().sort((a,b)=>(a.week||'')<(b.week||'')?-1:1);
   // union of metrics present in this client's own logs (self-describing: {n,u,v})
   const meta={};asc.forEach(p=>{const md=pgData(p).metrics;Object.keys(md).forEach(id=>{const mo=md[id];if(!meta[id])meta[id]={name:(mo&&mo.n)||'Metric',unit:(mo&&mo.u)||''};});});
   const ids=Object.keys(meta);
-  if(!ids.length){card.classList.add('hidden');card.innerHTML='';return;}
+  if(!ids.length){card.classList.remove('hidden');card.innerHTML=bannerHTML;return;}
   CLIENT_METRIC_SRC=ids.map(id=>{const pts=asc.map(p=>{const mo=pgData(p).metrics[id];return (mo!=null)?{date:p.week,value:pgMetricVal(mo)}:null;}).filter(Boolean);return {id:id,label:meta[id].name,unit:meta[id].unit||'',pts:pts};}).filter(s=>s.pts.length>=2);   // never a lone single-point chart — need a real trend
-  if(!CLIENT_METRIC_SRC.length){card.classList.add('hidden');card.innerHTML='';return;}
+  if(!CLIENT_METRIC_SRC.length){card.classList.remove('hidden');card.innerHTML=bannerHTML;return;}
   if(!CLIENT_METRIC_SRC.find(s=>s.id===CLIENT_METRIC))CLIENT_METRIC=CLIENT_METRIC_SRC[0].id;
   card.classList.remove('hidden');
-  card.innerHTML='<div class="pg-mycard"><div class="pg-mycard-h">📈 My progress metrics</div>'+
+  card.innerHTML=bannerHTML+'<div class="pg-mycard"><div class="pg-mycard-h">📈 My progress metrics</div>'+
     '<div class="pg-mysel"><label class="lab" style="margin:0">Trend</label><select onchange="clientMetricPick(this.value)">'+CLIENT_METRIC_SRC.map(s=>'<option value="'+s.id+'"'+(s.id===CLIENT_METRIC?' selected':'')+'>'+esc(s.label)+(s.unit?(' ('+esc(s.unit)+')'):'')+'</option>').join('')+'</select><span class="small" style="color:var(--muted)">week by week</span></div>'+
     '<div id="pg-mychart">'+pgMyChartHTML()+'</div></div>';
 }
@@ -24573,8 +24753,8 @@ function edRenderGoalPlan(){
 function edRenderGoals(){
   const host=$('ed-goals');if(!host)return;const gs=edGoals();
   const sop='<div id="sopcard-goals" style="margin-bottom:14px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--card2)">'+sopCardInner('goals')+'</div>';
-  if(!gs.length){host.innerHTML=sop+'<div class="empty">No goals yet — click “Add goal”.</div>';return;}
-  host.innerHTML=sop+gs.map((g,i)=>{
+  if(!gs.length){host.innerHTML=mcAdminPhaseHTML()+sop+'<div class="empty">No goals yet — click “Add goal”.</div>';return;}
+  host.innerHTML=mcAdminPhaseHTML()+sop+gs.map((g,i)=>{
     const cust=edGoalIsCustom(g);
     const typeSel='<select onchange="edGoalType('+i+',this.value)">'+GOAL_TYPES.map(t=>{const on=(t==='Custom…')?cust:(!cust&&g.goalType===t);return '<option'+(on?' selected':'')+'>'+esc(t)+'</option>';}).join('')+'</select>';
     const custom=cust?'<div class="field"><label class="lab">Custom type</label><input value="'+esc(g.goalType||'')+'" oninput="edGoalSet('+i+',\'goalType\',this.value)" placeholder="e.g. Mobility"></div>':'';
@@ -25933,7 +26113,7 @@ async function savePlan(){
     internal_notes:($('ed-internal-notes')?$('ed-internal-notes').value:(edPlan.internal_notes||'')),
     feedback_notes:($('ed-feedback-notes')?$('ed-feedback-notes').value:(edPlan.feedback_notes||'')),
     feedback_status:($('ed-feedback-status')?$('ed-feedback-status').value:(edPlan.feedback_status||'pending')),
-    availability:edPlan.availability||{},onboarding:edPlan.onboarding||{done:{}},staff_feedback:edPlan.staff_feedback||{},paused:!!edPlan.paused,nutrition:edPlan.nutrition||{},
+    availability:edPlan.availability||{},onboarding:edPlan.onboarding||{done:{}},staff_feedback:edPlan.staff_feedback||{},paused:!!edPlan.paused,phase:edPlan.phase||'Foundation',nutrition:edPlan.nutrition||{},
     weekly_meals:edPlan.weekly_meals||{enabled:false,status:'idle',days:[]},
     meal_prep:edPlan.meal_prep||{enabled:false,status:'idle',prepDays:3,plans:[]},
     updated_at:new Date().toISOString()};
