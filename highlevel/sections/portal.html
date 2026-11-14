@@ -2078,6 +2078,11 @@ details.mcx-map .mapwrap{padding-bottom:12px}
 .pr-m b{display:block;font-family:var(--disp);font-weight:900;font-size:17px}
 .pr-m span{font-size:9px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:800}
 .pr-foot{font-size:11px;color:var(--muted);text-align:center;padding:4px 0 2px}
+.pf-tabs{display:flex;gap:8px;margin:0 0 12px}
+.pf-tab{flex:1;border:1px solid var(--border);background:var(--card);border-radius:11px;padding:9px 10px;font-weight:800;font-size:13px;color:var(--muted);cursor:pointer}
+.pf-tab.on{background:linear-gradient(135deg,var(--red),#ff5a3c);border-color:transparent;color:#fff}
+table.pf-cmp th,table.pf-cmp td{white-space:nowrap;text-align:center}
+table.pf-cmp th:first-child,table.pf-cmp td:first-child{text-align:left}
 /* Day-type editor: meals left, sticky target/allocated panel right */
 .dt-cols{display:flex;gap:16px;align-items:stretch}
 .dt-main{flex:1;min-width:0}
@@ -2384,7 +2389,7 @@ details.meal-add-choose[open]>summary{background:none;color:var(--muted);box-sha
 .dt-top{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
 .dt-swatch{width:16px;height:16px;border-radius:5px;flex:none;border:1px solid rgba(255,255,255,.15)}
 
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);z-index:1400;display:none;align-items:flex-start;justify-content:center;padding:24px 14px calc(40px + env(safe-area-inset-bottom));overflow-y:auto;-webkit-overflow-scrolling:touch}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);z-index:1400;display:none;align-items:flex-start;justify-content:center;padding:24px 14px calc(40px + env(safe-area-inset-bottom));overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .overlay.open{display:flex}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:0 20px 60px rgba(0,0,0,.6);width:100%;max-width:960px;margin:auto 0}
 .modal-head{display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;z-index:70}
@@ -5373,6 +5378,7 @@ img,svg,canvas,video{max-width:100%}
           <div class="card-body"><div id="ed-nutri-history"></div></div></div>
 
         <div class="card" data-edtab="goals" style="padding:8px;overflow:hidden">
+          <div id="ed-phase-host" style="margin:2px 2px 8px"></div>
           <p class="small" style="margin:2px 6px 8px;color:var(--muted)">This is exactly what the client sees in <b>Progress Tracking</b> — and you can add or edit their metrics here. Everything syncs both ways.</p>
           <div class="gm-switch" style="position:static;box-shadow:none;border:0;background:transparent;backdrop-filter:none;padding:2px">
             <button id="ed-gm-tab-overview" class="gm-tab active" onclick="edGoalsBranch('overview')"><span class="gm-ic">📊</span><span class="gm-lbl">Overview</span></button>
@@ -6876,7 +6882,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04qx';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04qy';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -23847,7 +23853,7 @@ async function teamRenderPerf(){const host=$('team-perf-host');if(!host)return;c
      '<div class="wko-sumtile"><div class="v">'+(output.woCreated+output.woUpdated)+'</div><div class="k">Workouts</div></div>'+
      '<div class="wko-sumtile"><div class="v">'+(output.dietCreated+output.dietUpdated)+'</div><div class="k">Diet plans</div></div></div>';
   h+='<div class="small" style="color:var(--muted);margin:8px 2px 0;line-height:1.6">📞 '+calls.onboarding+' onboarding · '+calls.revision+' revision · '+calls.checkin+' check-in · '+calls.normal+' normal &nbsp;|&nbsp; 📦 '+output.woCreated+' WO new / '+output.woUpdated+' upd · '+output.dietCreated+' diet new / '+output.dietUpdated+' upd &nbsp;|&nbsp; 🚩 '+issuesFlagged+' flagged / '+output.issuesResolved+' resolved</div>';
-  if(owner)h+='<div style="margin:14px 0 2px"><button class="btn btn-primary" style="width:100%" onclick="teamOpenWeekReport()">📊 Generate the weekend performance report</button><div class="small" style="color:var(--muted);text-align:center;margin-top:5px">AI briefing of the whole team’s week for the head coach</div></div>';
+  h+='<div style="margin:14px 0 2px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" style="flex:1;min-width:160px" onclick="teamPerfOpen(\'mine\')">📊 My weekly report</button><button class="btn-sm" style="flex:1;min-width:140px" onclick="teamPerfOpen(\'library\')">📚 Saved reports</button></div><div class="small" style="color:var(--muted);text-align:center;margin-top:5px">Generate your week, edit it, download a PPT · saved reports are shared for team comparison</div>';
   if(cats.length){const max=Math.max.apply(null,cats.map(c=>byCat[c]))||1;h+='<div class="uline" style="margin:14px 0 6px">Time by category</div>'+cats.map(c=>'<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>'+esc(c)+'</span><b>'+teamHM(byCat[c])+'</b></div><div style="height:8px;background:var(--card2);border-radius:5px;overflow:hidden;margin-top:3px"><i style="display:block;height:100%;width:'+Math.round(byCat[c]/max*100)+'%;background:var(--red)"></i></div></div>').join('');}
   if(owner&&TEAM_PERF_WHO==='all'){const per={};staff.forEach(s=>per[s.id]={name:s.name,worked:0,tracked:0,points:0,calls:0});
     TEAM.shifts.filter(s=>s.dateISO>=from).forEach(s=>{if(per[s.staffId]){per[s.staffId].worked+=teamShiftSeconds(s);if(s.debrief&&s.debrief.at)per[s.staffId].points+=(+s.debrief.points||0);}});
@@ -23857,8 +23863,8 @@ async function teamRenderPerf(){const host=$('team-perf-host');if(!host)return;c
     if(rows.length)h+='<div class="uline" style="margin:16px 0 6px">By staff · this range</div><div class="tbl-scroll"><table class="itbl"><thead><tr><th style="text-align:left">Staff</th><th>Pts</th><th>Worked</th><th>Calls</th></tr></thead><tbody>'+rows.map((k,i)=>'<tr><td style="text-align:left">'+(i===0&&per[k].points>0?'🏆 ':'')+esc(per[k].name)+'</td><td style="color:var(--gold);font-weight:800">'+per[k].points+'</td><td class="wk-1rm">'+teamHM(per[k].worked)+'</td><td>'+per[k].calls+'</td></tr>').join('')+'</tbody></table></div>';}
   if(!logs.length&&!shifts.length)h+='<div class="small" style="color:var(--muted);margin-top:14px">No activity in this range yet — clock a shift and run a task timer to populate this.</div>';
   host.innerHTML=h;}
-/* ═══════════ TEAM — weekend AI performance report (owner → head coach) ═══════════ */
-let TEAM_WEEK_REC=null;
+/* ═══════════ TEAM — weekly PER-COACH performance report (generate · edit · save · compare · PPT) ═══════════ */
+let TEAM_RPT=null, TEAM_RPT_VIEW='mine', TEAM_PERF_LIB=[];
 async function perfReportApi(payload){
   const headers={'Content-Type':'application/json'};
   if(SUPABASE_ANON_KEY){headers['apikey']=SUPABASE_ANON_KEY;headers['Authorization']='Bearer '+SUPABASE_ANON_KEY;}
@@ -23867,69 +23873,158 @@ async function perfReportApi(payload){
   if(!res.ok||j.error)throw new Error(j.error||('Request failed ('+res.status+')'));
   return j.data;
 }
-async function teamOpenWeekReport(force){
-  if(!teamIsOwner()){toast('Owner only',true);return;}
-  const m=$('perf-week-modal');if(m)m.classList.add('open');
-  const host=$('perf-week-host');if(host)host.innerHTML='<div class="empty" style="padding:44px">'+(force?'Generating the briefing…':'Loading the week…')+'</div>';
-  await teamEnsureCalls();
-  const staff=await teamStaffList();
-  const from=teamISOf(wkWeekStart(todayISO())), to=todayISO();
-  const label='Week of '+fmtDate(from)+' – '+fmtDate(to);
-  if(!force){try{const cached=await DB.getKV('team_week_report');if(cached&&cached.from===from&&cached.data){TEAM_WEEK_REC=cached;if(host)host.innerHTML=teamWeekReportHTML(cached.data,cached);return;}}catch(e){}}
-  const coaches=[];const team={coaches:0,hours:0,breaks:0,calls:{onboarding:0,revision:0,checkin:0,normal:0,total:0},output:{woCreated:0,woUpdated:0,dietCreated:0,dietUpdated:0,issuesResolved:0},issuesFlagged:0,points:0,debriefsFilled:0,shifts:0};
-  staff.forEach(s=>{
-    const shifts=TEAM.shifts.filter(x=>x.staffId===s.id&&x.dateISO>=from&&x.dateISO<=to);
-    if(!shifts.length)return;
-    const debs=shifts.map(x=>x.debrief).filter(x=>x&&x.at);
-    const worked=shifts.reduce((a,x)=>a+teamShiftSeconds(x),0);
-    const breaks=shifts.reduce((a,x)=>a+teamBreakSeconds(x),0);
-    const tracked=TEAM.logs.filter(l=>l.staffId===s.id&&l.dateISO>=from&&l.dateISO<=to).reduce((a,l)=>a+(l.seconds||0),0);
-    const sc=f=>debs.reduce((a,x)=>a+(+((x.counts||{})[f])||0),0);
-    const output={woCreated:sc('woCreated'),woUpdated:sc('woUpdated'),dietCreated:sc('dietCreated'),dietUpdated:sc('dietUpdated'),issuesResolved:sc('issuesResolved')};
-    const calls=teamCallsFor(s.name,from,to);
-    const issuesFlagged=debs.reduce((a,x)=>a+((x.issues||[]).length),0);
-    const flaggedIssues=[];debs.forEach(x=>(x.issues||[]).forEach(i=>flaggedIssues.push({client:i.client,severity:i.severity,note:i.note})));
-    const points=debs.reduce((a,x)=>a+(+x.points||0),0);
-    const ratings=debs.map(x=>+x.rating).filter(n=>n>0);const avgRating=ratings.length?(ratings.reduce((a,n)=>a+n,0)/ratings.length).toFixed(1):'';
-    const lowEnergyDays=debs.filter(x=>x.energy==='low').length;
-    const notes=debs.map(x=>{const bits=[];if(x.done)bits.push('done: '+x.done);if(x.blockers)bits.push('blockers: '+x.blockers);return bits.length?((x.at||'').slice(0,10)+' — '+bits.join('; ')):'';}).filter(Boolean);
-    const util=worked>0?Math.min(100,Math.round(tracked/worked*100)):0;
-    coaches.push({name:s.name,hours:worked/3600,breaks:breaks/3600,utilisationPct:util,shifts:shifts.length,debriefs:debs.length,calls:calls,output:output,issuesFlagged:issuesFlagged,issuesResolved:output.issuesResolved,points:points,avgRating:avgRating,lowEnergyDays:lowEnergyDays,notes:notes,flaggedIssues:flaggedIssues});
-    team.coaches++;team.hours+=worked/3600;team.breaks+=breaks/3600;team.points+=points;team.issuesFlagged+=issuesFlagged;team.debriefsFilled+=debs.length;team.shifts+=shifts.length;
-    ['onboarding','revision','checkin','normal','total'].forEach(f=>team.calls[f]+=calls[f]);
-    ['woCreated','woUpdated','dietCreated','dietUpdated','issuesResolved'].forEach(f=>team.output[f]+=output[f]);
-  });
-  if(!coaches.length){if(host)host.innerHTML='<div class="empty" style="padding:40px">No shift data logged for this week yet. Coaches need to clock shifts and file their daily reports first.</div>';return;}
-  if(DB.mode!=='api'||!DB.token){if(host)host.innerHTML='<div class="empty" style="padding:30px">The AI report needs the secure (online) mode with an admin session.</div>';return;}
-  let data;
-  try{data=await perfReportApi({weekLabel:label,from:from,to:to,team:team,coaches:coaches});}
-  catch(e){if(host)host.innerHTML='<div class="empty" style="padding:30px;color:var(--red)">Could not generate: '+esc((e&&e.message)||'error')+'<div style="margin-top:10px"><button class="btn-sm" onclick="teamOpenWeekReport(true)">Try again</button></div></div>';return;}
-  const rec={from:from,to:to,label:label,data:data,team:team,coaches:coaches,at:Date.now()};
-  TEAM_WEEK_REC=rec;
-  try{await DB.setKV('team_week_report',rec);}catch(e){}
-  if(host)host.innerHTML=teamWeekReportHTML(data,rec);
+function teamTaskBelongs(e,coachId){return e.assignee?(e.assignee===coachId):(e.createdBy===coachId||coachId==='owner');}
+function teamWeekMon(iso){return teamISOf(wkWeekStart(iso));}
+/* all of one coach's stats for a date window, from the raw shift/call/task/log data */
+function teamCoachWeekStats(coachId,coachName,from,to){
+  const shifts=(TEAM.shifts||[]).filter(x=>x.staffId===coachId&&x.dateISO>=from&&x.dateISO<=to);
+  const debs=shifts.map(x=>x.debrief).filter(x=>x&&x.at);
+  const worked=shifts.reduce((a,x)=>a+teamShiftSeconds(x),0);
+  const breaks=shifts.reduce((a,x)=>a+teamBreakSeconds(x),0);
+  const tracked=(TEAM.logs||[]).filter(l=>l.staffId===coachId&&l.dateISO>=from&&l.dateISO<=to).reduce((a,l)=>a+(l.seconds||0),0);
+  const sc=f=>debs.reduce((a,x)=>a+(+((x.counts||{})[f])||0),0);
+  const output={woCreated:sc('woCreated'),woUpdated:sc('woUpdated'),dietCreated:sc('dietCreated'),dietUpdated:sc('dietUpdated'),issuesResolved:sc('issuesResolved')};
+  const calls=teamCallsFor(coachName,from,to);
+  const issuesFlagged=debs.reduce((a,x)=>a+((x.issues||[]).length),0);
+  const flaggedIssues=[];debs.forEach(x=>(x.issues||[]).forEach(i=>flaggedIssues.push({client:i.client,severity:i.severity,note:i.note})));
+  const points=debs.reduce((a,x)=>a+(+x.points||0),0);
+  const ratings=debs.map(x=>+x.rating).filter(n=>n>0);const avgRating=ratings.length?(ratings.reduce((a,n)=>a+n,0)/ratings.length).toFixed(1):'';
+  const lowEnergyDays=debs.filter(x=>x.energy==='low').length;
+  const notes=debs.map(x=>{const b=[];if(x.done)b.push('done: '+x.done);if(x.blockers)b.push('blockers: '+x.blockers);return b.length?((x.at||'').slice(0,10)+' — '+b.join('; ')):'';}).filter(Boolean);
+  const tasksDone=(TEAM.events||[]).filter(e=>{if(e.kind!=='task'||!teamTaskBelongs(e,coachId))return false;if((e.recur||'none')==='none')return e.status==='done'&&(e.doneAt||'').slice(0,10)>=from&&(e.doneAt||'').slice(0,10)<=to;return (e.doneDates||[]).some(d=>d>=from&&d<=to);}).length;
+  const util=worked>0?Math.min(100,Math.round(tracked/worked*100)):0;
+  const woAll=output.woCreated+output.woUpdated,dietAll=output.dietCreated+output.dietUpdated;
+  return {from,to,hours:worked/3600,breaks:breaks/3600,worked,tracked,utilisationPct:util,shifts:shifts.length,debriefs:debs.length,calls,callsTotal:calls.total,output,outputAll:woAll+dietAll,tasksDone,issuesFlagged,issuesResolved:output.issuesResolved,flaggedIssues,points,avgRating,lowEnergyDays,notes};
 }
+/* 12-week series + now/prev/4-wk/12-wk averages for the headline metrics */
+function teamCoachTrend(coachId,coachName){
+  const weeks=[];const thisMon=teamWeekMon(todayISO());
+  for(let i=0;i<12;i++){const mon=addDaysISO(thisMon,-7*i);const to=(i===0?todayISO():addDaysISO(mon,6));weeks.push(teamCoachWeekStats(coachId,coachName,mon,to));}
+  const mk=k=>{const now=weeks[0]?(+weeks[0][k]||0):0;const prev=weeks[1]?(+weeks[1][k]||0):0;const avg=n=>{const s=weeks.slice(0,n);return s.length?s.reduce((a,w)=>a+(+w[k]||0),0)/s.length:0;};return {now,prev,avg4:avg(4),avg12:avg(12),series:weeks.map(w=>+w[k]||0)};};
+  return {weeks,points:mk('points'),hours:mk('hours'),calls:mk('callsTotal'),tasks:mk('tasksDone'),output:mk('outputAll')};
+}
+function teamPerfOpen(view){const m=$('perf-week-modal');if(m)m.classList.add('open');TEAM_RPT_VIEW=view||'mine';teamPerfRender();}
+async function teamOpenWeekReport(){teamPerfOpen('mine');}   /* back-compat alias */
 function teamCloseWeekReport(){const m=$('perf-week-modal');if(m)m.classList.remove('open');}
-function teamWeekReportHTML(data,rec){
-  data=data||{};const t=(rec&&rec.team)||{};const label=(rec&&rec.label)||'This week';
-  const chip=(arr,cls,ic)=>(arr&&arr.length)?('<ul class="pr-list '+cls+'">'+arr.map(x=>'<li>'+ic+' '+esc(x)+'</li>').join('')+'</ul>'):'';
-  let h='<div class="pr-deck">';
-  h+='<div class="pr-slide pr-cover"><div class="pr-kick">Weekend performance briefing</div><div class="pr-title">'+esc(label)+'</div>'+(data.headline?'<div class="pr-headline">'+esc(data.headline)+'</div>':'')+
-     '<div class="pr-cover-stats">'+[[t.coaches||0,'Coaches'],[Math.round(t.hours||0)+'h','Worked'],[(t.calls||{}).total||0,'Calls'],[t.points||0,'Points']].map(x=>'<div><b>'+x[0]+'</b><span>'+x[1]+'</span></div>').join('')+'</div></div>';
-  h+='<div class="pr-slide"><div class="pr-sh">Team overview</div>'+(data.teamSummary?'<p class="pr-p">'+esc(data.teamSummary)+'</p>':'')+
-     chip(data.teamHighlights,'good','✅')+chip(data.teamConcerns,'warn','⚠️')+((data.teamRecommendations&&data.teamRecommendations.length)?('<div class="pr-subh">Recommendations</div>'+chip(data.teamRecommendations,'rec','→')):'')+'</div>';
-  (data.coaches||[]).forEach(c=>{
-    const m=((rec&&rec.coaches)||[]).find(x=>String(x.name).toLowerCase()===String(c.name).toLowerCase())||{};
-    const k=m.calls||{};const o=m.output||{};
-    h+='<div class="pr-slide"><div class="pr-coach-h"><span class="pr-coach-n">'+esc(c.name)+'</span>'+(c.grade?'<span class="pr-grade">'+esc(c.grade)+'</span>':'')+'</div>'+
-       '<div class="pr-metrics">'+[[(m.hours!=null?(+m.hours).toFixed(1)+'h':'—'),'Worked'],[m.points||0,'Points'],[(k.total||0),'Calls'],[(m.utilisationPct||0)+'%','Utilisation']].map(x=>'<div class="pr-m"><b>'+x[0]+'</b><span>'+x[1]+'</span></div>').join('')+'</div>'+
-       '<div class="small" style="color:var(--muted);margin:2px 0 4px;line-height:1.6">📦 '+((o.woCreated||0)+(o.woUpdated||0))+' workouts · '+((o.dietCreated||0)+(o.dietUpdated||0))+' diet plans · 🚩 '+(m.issuesFlagged||0)+' flagged / '+(m.issuesResolved||0)+' resolved · debriefs '+(m.debriefs||0)+'/'+(m.shifts||0)+(m.avgRating?' · rating '+m.avgRating+'/5':'')+'</div>'+
-       (c.summary?'<p class="pr-p">'+esc(c.summary)+'</p>':'')+chip(c.highlights,'good','✅')+chip(c.concerns,'warn','⚠️')+((c.recommendations&&c.recommendations.length)?('<div class="pr-subh">Next week</div>'+chip(c.recommendations,'rec','→')):'')+'</div>';
-  });
-  h+='<div class="pr-foot">Figures are exact from the logs; the narrative is AI-written from the daily reports, time tracking and call logs. <button class="btn-xxs" onclick="teamOpenWeekReport(true)">🔄 Regenerate</button> <button class="btn-xxs" onclick="teamCopyWeekReport()">📋 Copy</button></div></div>';
-  return h;
+function teamPerfRender(){const host=$('perf-week-host');if(!host)return;
+  const bar='<div class="pf-tabs"><button class="pf-tab'+(TEAM_RPT_VIEW==='mine'?' on':'')+'" onclick="teamPerfOpen(\'mine\')">📊 My report</button><button class="pf-tab'+(TEAM_RPT_VIEW==='library'?' on':'')+'" onclick="teamPerfOpen(\'library\')">📚 Saved reports</button></div>';
+  host.innerHTML=bar+'<div id="pf-body"></div>';
+  if(TEAM_RPT_VIEW==='library'){teamPerfLibrary();return;}
+  if(TEAM_RPT&&TEAM_RPT.from===teamWeekMon(todayISO())&&!TEAM_RPT.saved){teamRenderMyReport();}else{TEAM_RPT=null;teamGenMyReport(false);}
 }
-function teamCopyWeekReport(){const rec=TEAM_WEEK_REC;if(!rec||!rec.data){toast('Nothing to copy',true);return;}const d=rec.data;const NL=String.fromCharCode(10);const L=[];L.push('WEEKEND PERFORMANCE BRIEFING — '+(rec.label||''));if(d.headline)L.push(d.headline);L.push('');if(d.teamSummary)L.push('TEAM: '+d.teamSummary);(d.teamHighlights||[]).forEach(x=>L.push('  + '+x));(d.teamConcerns||[]).forEach(x=>L.push('  ! '+x));(d.teamRecommendations||[]).forEach(x=>L.push('  -> '+x));L.push('');(d.coaches||[]).forEach(c=>{L.push('— '+c.name+(c.grade?' ['+c.grade+']':''));if(c.summary)L.push('  '+c.summary);(c.highlights||[]).forEach(x=>L.push('  + '+x));(c.concerns||[]).forEach(x=>L.push('  ! '+x));(c.recommendations||[]).forEach(x=>L.push('  -> '+x));L.push('');});try{navigator.clipboard.writeText(L.join(NL));toast('Report copied ✓');}catch(e){toast('Copy failed',true);}}
+async function teamGenMyReport(force){
+  const body=$('pf-body');if(body)body.innerHTML='<div class="empty" style="padding:42px">'+(force?'Generating your report…':'Preparing your week…')+'</div>';
+  await teamEnsureCalls();
+  const cid=teamStaffId();const nm=teamStaffNameById(cid)||teamStaffName();
+  const from=teamWeekMon(todayISO()),to=todayISO();const label='Week of '+fmtDate(from)+' – '+fmtDate(to);
+  const stats=teamCoachWeekStats(cid,nm,from,to);const trend=teamCoachTrend(cid,nm);
+  if(stats.shifts===0&&stats.points===0&&stats.callsTotal===0&&stats.tasksDone===0){if(body)body.innerHTML='<div class="empty" style="padding:36px">No activity logged for your week yet. Clock shifts + file your daily reports, then generate your report.</div>';return;}
+  if(DB.mode!=='api'||!DB.token){if(body)body.innerHTML='<div class="empty" style="padding:30px">The AI report needs the secure (online) mode with an admin session.</div>';return;}
+  const tp=m=>({now:m.now,prev:m.prev,avg4:+(+m.avg4).toFixed(1),avg12:+(+m.avg12).toFixed(1)});
+  const compactTrend={points:tp(trend.points),hours:tp(trend.hours),calls:tp(trend.calls),tasks:tp(trend.tasks),output:tp(trend.output)};
+  let data;
+  try{data=await perfReportApi({mode:'individual',weekLabel:label,from:from,to:to,coach:Object.assign({name:nm,trend:compactTrend},stats)});}
+  catch(e){if(body)body.innerHTML='<div class="empty" style="padding:30px;color:var(--red)">Could not generate: '+esc((e&&e.message)||'error')+'<div style="margin-top:10px"><button class="btn-sm" onclick="teamGenMyReport(true)">Try again</button></div></div>';return;}
+  TEAM_RPT={coachId:cid,coachName:nm,from:from,to:to,label:label,stats:stats,trend:trend,narrative:{headline:data.headline||'',summary:data.summary||'',grade:data.grade||'Solid',highlights:data.highlights||[],concerns:data.concerns||[],recommendations:data.recommendations||[],extras:''},at:Date.now()};
+  teamRenderMyReport();
+}
+function teamRenderMyReport(){const body=$('pf-body');if(body&&TEAM_RPT)body.innerHTML=teamMyReportHTML(TEAM_RPT,!TEAM_RPT.saved);}
+function teamCmpTableHTML(trend){
+  if(!trend)return '';
+  const rows=[['Points','points',0],['Hours','hours',1],['Calls','calls',0],['Tasks','tasks',0],['Workouts + diet','output',0]];
+  const fmt=(v,dp)=>dp?(+v||0).toFixed(dp):String(Math.round(+v||0));
+  const arrow=(now,prev)=>{const d=(+now||0)-(+prev||0);if(Math.abs(d)<0.05)return ' <span style="color:var(--muted)">–</span>';return d>0?' <span style="color:var(--good)">▲</span>':' <span style="color:var(--red)">▼</span>';};
+  let h='<div class="tbl-scroll"><table class="itbl pf-cmp"><thead><tr><th style="text-align:left">Metric</th><th>This wk</th><th>Last wk</th><th>4-wk avg</th><th>12-wk avg</th></tr></thead><tbody>';
+  rows.forEach(r=>{const m=trend[r[1]];if(!m)return;h+='<tr><td style="text-align:left">'+r[0]+'</td><td><b>'+fmt(m.now,r[2])+'</b>'+arrow(m.now,m.prev)+'</td><td>'+fmt(m.prev,r[2])+'</td><td>'+fmt(m.avg4,r[2])+'</td><td>'+fmt(m.avg12,r[2])+'</td></tr>';});
+  h+='</tbody></table></div>';return h;
+}
+function teamMyReportHTML(rpt,editable){
+  const s=rpt.stats||{};const n=rpt.narrative||{};const o=s.output||{};
+  const tiles=[[Math.round(s.hours||0)+'h','Worked'],[String(s.points||0),'Points'],[String((s.calls||{}).total||0),'Calls'],[String(s.tasksDone||0),'Tasks'],[String((o.woCreated||0)+(o.woUpdated||0)),'Workouts'],[String((o.dietCreated||0)+(o.dietUpdated||0)),'Diet plans']];
+  const chip=(a,cls,ic)=>(a&&a.length)?('<ul class="pr-list '+cls+'">'+a.map(x=>'<li>'+ic+' '+esc(x)+'</li>').join('')+'</ul>'):'';
+  let h='<div class="pr-deck">';
+  h+='<div class="pr-slide pr-cover"><div class="pr-kick">Weekly performance report</div><div class="pr-title">'+esc(rpt.coachName||'Coach')+'</div><div class="small" style="opacity:.85;margin-top:2px">'+esc(rpt.label||'')+'</div>'+(n.grade?'<div style="margin-top:9px"><span class="pr-grade" style="background:rgba(255,255,255,.16);color:#fff">'+esc(n.grade)+'</span></div>':'')+((n.headline&&!editable)?'<div class="pr-headline">'+esc(n.headline)+'</div>':'')+'</div>';
+  h+='<div class="pr-metrics" style="grid-template-columns:repeat(3,1fr);margin:0 2px 12px">'+tiles.map(x=>'<div class="pr-m"><b>'+x[0]+'</b><span>'+x[1]+'</span></div>').join('')+'</div>';
+  h+='<div class="pr-slide"><div class="pr-sh">📈 Trend vs history</div>'+teamCmpTableHTML(rpt.trend)+'<div class="small" style="color:var(--muted);margin-top:6px">▲ / ▼ shown vs last week.</div></div>';
+  if(editable){
+    h+='<div class="pr-slide"><div class="pr-sh">Your report</div><div class="small" style="color:var(--muted);margin:-2px 0 10px">AI-drafted from your logs — edit anything, add extras, then save or download.</div>'+
+      '<div class="field"><label class="lab">Headline</label><input id="rpt-headline" value="'+esc(n.headline||'')+'"></div>'+
+      '<div class="field" style="max-width:220px"><label class="lab">Grade</label><select id="rpt-grade">'+['Outstanding','Strong','Solid','Mixed','Needs attention'].map(g=>'<option'+(g===(n.grade||'Solid')?' selected':'')+'>'+g+'</option>').join('')+'</select></div>'+
+      '<div class="field"><label class="lab">Summary</label><textarea id="rpt-summary" rows="4">'+esc(n.summary||'')+'</textarea></div>'+
+      '<div class="field"><label class="lab">Highlights (one per line)</label><textarea id="rpt-highlights" rows="4">'+esc((n.highlights||[]).join('\n'))+'</textarea></div>'+
+      '<div class="field"><label class="lab">Concerns / watch (one per line)</label><textarea id="rpt-concerns" rows="3">'+esc((n.concerns||[]).join('\n'))+'</textarea></div>'+
+      '<div class="field"><label class="lab">Recommendations — next week (one per line)</label><textarea id="rpt-recs" rows="3">'+esc((n.recommendations||[]).join('\n'))+'</textarea></div>'+
+      '<div class="field"><label class="lab">➕ Manual extras / notes (added to the deck)</label><textarea id="rpt-extras" rows="3" placeholder="Anything you want to add to the report…">'+esc(n.extras||'')+'</textarea></div>'+
+      '<div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn btn-primary" onclick="teamSavePerfReport()">💾 Save (team can see)</button><button class="btn-sm" onclick="teamDownloadPPT()">⬇ Download PPT</button><button class="btn-sm" onclick="teamGenMyReport(true)">🔄 Regenerate</button></div></div>';
+  } else {
+    h+='<div class="pr-slide">'+(n.summary?'<p class="pr-p">'+esc(n.summary)+'</p>':'')+chip(n.highlights,'good','✅')+chip(n.concerns,'warn','⚠️')+((n.recommendations&&n.recommendations.length)?('<div class="pr-subh">Next week</div>'+chip(n.recommendations,'rec','→')):'')+(n.extras?('<div class="pr-subh">Notes</div><p class="pr-p" style="white-space:pre-wrap">'+esc(n.extras)+'</p>'):'')+'<div class="row" style="gap:8px;margin-top:10px"><button class="btn-sm" onclick="teamDownloadPPT()">⬇ Download PPT</button></div></div>';
+  }
+  h+='</div>';return h;
+}
+function teamReadReportFields(){if(!TEAM_RPT)return;const g=id=>{const el=$(id);return el?el.value:'';};const lines=id=>g(id).split('\n').map(s=>s.trim()).filter(Boolean);
+  if(!$('rpt-headline'))return;   // read-only view — nothing to read
+  TEAM_RPT.narrative={headline:g('rpt-headline').trim(),grade:g('rpt-grade'),summary:g('rpt-summary').trim(),highlights:lines('rpt-highlights'),concerns:lines('rpt-concerns'),recommendations:lines('rpt-recs'),extras:g('rpt-extras').trim()};}
+function teamStatsCompact(s){s=s||{};const o=s.output||{};return {hours:+(+s.hours||0).toFixed(2),points:s.points||0,callsTotal:(s.calls||{}).total||0,tasksDone:s.tasksDone||0,workouts:(o.woCreated||0)+(o.woUpdated||0),dietPlans:(o.dietCreated||0)+(o.dietUpdated||0),utilisationPct:s.utilisationPct||0,shifts:s.shifts||0,debriefs:s.debriefs||0,issuesFlagged:s.issuesFlagged||0,issuesResolved:s.issuesResolved||0};}
+function teamTrendCompact(t){if(!t)return null;const m=x=>({now:x.now,prev:x.prev,avg4:+(+x.avg4).toFixed(1),avg12:+(+x.avg12).toFixed(1)});return {points:m(t.points),hours:m(t.hours),calls:m(t.calls),tasks:m(t.tasks),output:m(t.output)};}
+function teamStatsFromCompact(s){s=s||{};return {hours:s.hours||0,points:s.points||0,calls:{total:s.callsTotal||0},tasksDone:s.tasksDone||0,output:{woCreated:0,woUpdated:s.workouts||0,dietCreated:0,dietUpdated:s.dietPlans||0},utilisationPct:s.utilisationPct||0,shifts:s.shifts||0,debriefs:s.debriefs||0,issuesFlagged:s.issuesFlagged||0,issuesResolved:s.issuesResolved||0};}
+async function teamSavePerfReport(){
+  if(!TEAM_RPT){toast('Generate a report first',true);return;}
+  teamReadReportFields();
+  const rec={id:TEAM_RPT.coachId+'|'+TEAM_RPT.from,coachId:TEAM_RPT.coachId,coachName:TEAM_RPT.coachName,from:TEAM_RPT.from,to:TEAM_RPT.to,label:TEAM_RPT.label,stats:teamStatsCompact(TEAM_RPT.stats),trend:teamTrendCompact(TEAM_RPT.trend),narrative:TEAM_RPT.narrative,at:Date.now()};
+  let list=[];try{const v=await DB.getKV('team_perf_reports');list=Array.isArray(v)?v:[];}catch(e){}
+  list=list.filter(r=>r&&r.id!==rec.id);list.push(rec);
+  try{await DB.setKV('team_perf_reports_bak',{data:list,at:Date.now()});}catch(e){}
+  try{await DB.setKV('team_perf_reports',list);toast('✓ Saved — visible to the whole team');}catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);}
+}
+async function teamPerfLibrary(){const body=$('pf-body');if(!body)return;body.innerHTML='<div class="empty" style="padding:30px">Loading…</div>';
+  let list=[];try{const v=await DB.getKV('team_perf_reports');list=Array.isArray(v)?v:[];}catch(e){}
+  TEAM_PERF_LIB=list;
+  if(!list.length){body.innerHTML='<div class="empty" style="padding:36px">No saved reports yet. Generate your weekly report on the “My report” tab and hit 💾 Save — it’ll appear here for the whole team to compare.</div>';return;}
+  const byWeek={};list.forEach(r=>{(byWeek[r.from]=byWeek[r.from]||[]).push(r);});
+  let h='<div class="pr-sh" style="margin:2px 2px 10px">📚 Saved reports — team comparison</div>';
+  Object.keys(byWeek).sort((a,b)=>a<b?1:-1).forEach(wk=>{const rows=byWeek[wk].slice().sort((a,b)=>((b.stats&&b.stats.points||0)-(a.stats&&a.stats.points||0)));
+    h+='<div class="uline" style="margin:12px 2px 6px">'+esc(rows[0].label||wk)+'</div><div class="tbl-scroll"><table class="itbl pf-cmp"><thead><tr><th style="text-align:left">Coach</th><th>Pts</th><th>Hrs</th><th>Calls</th><th>Tasks</th><th>Out</th><th>Grade</th></tr></thead><tbody>'+
+      rows.map((r,i)=>{const s=r.stats||{};return '<tr style="cursor:pointer" onclick="teamOpenSavedReport(\''+esc(r.id)+'\')"><td style="text-align:left">'+((i===0&&(s.points||0)>0)?'🏆 ':'')+esc(r.coachName)+'</td><td style="color:var(--gold);font-weight:800">'+(s.points||0)+'</td><td>'+Math.round(s.hours||0)+'h</td><td>'+(s.callsTotal||0)+'</td><td>'+(s.tasksDone||0)+'</td><td>'+((s.workouts||0)+(s.dietPlans||0))+'</td><td>'+esc((r.narrative&&r.narrative.grade)||'')+'</td></tr>';}).join('')+
+      '</tbody></table></div>';});
+  body.innerHTML=h;
+}
+function teamOpenSavedReport(id){const r=(TEAM_PERF_LIB||[]).find(x=>x.id===id);if(!r)return;
+  TEAM_RPT={coachId:r.coachId,coachName:r.coachName,from:r.from,to:r.to,label:r.label,stats:teamStatsFromCompact(r.stats),trend:r.trend,narrative:r.narrative,at:r.at,saved:true};
+  const body=$('pf-body');if(body)body.innerHTML='<div class="row" style="margin-bottom:10px"><button class="btn-sm" onclick="teamPerfOpen(\'library\')">‹ Back to saved reports</button></div>'+teamMyReportHTML(TEAM_RPT,false);
+}
+function ensurePptx(){return new Promise((resolve,reject)=>{if(window.PptxGenJS){resolve();return;}const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js';s.onload=()=>resolve();s.onerror=()=>reject(new Error('Could not load the PPT library (offline?)'));document.head.appendChild(s);});}
+async function teamDownloadPPT(){
+  if(!TEAM_RPT){toast('Generate a report first',true);return;}
+  teamReadReportFields();
+  toast('Building your PPT…');
+  try{await ensurePptx();}catch(e){toast((e&&e.message)||'PPT library failed',true);return;}
+  const rpt=TEAM_RPT,s=rpt.stats||{},n=rpt.narrative||{},t=rpt.trend||{},o=s.output||{};
+  const RED='E8170D',DARK='15181C',MUT='697079',INK='161A1E';
+  const pptx=new PptxGenJS();pptx.defineLayout({name:'S2S',width:10,height:5.625});pptx.layout='S2S';
+  let sl=pptx.addSlide();sl.background={color:DARK};
+  sl.addText('WEEKLY PERFORMANCE REPORT',{x:0.5,y:0.55,w:9,h:0.4,color:'FF9A90',fontSize:13,bold:true,charSpacing:2});
+  sl.addText(rpt.coachName||'Coach',{x:0.5,y:1.0,w:9,h:1,color:'FFFFFF',fontSize:40,bold:true});
+  sl.addText(rpt.label||'',{x:0.5,y:2.05,w:9,h:0.4,color:'D7D9DE',fontSize:16});
+  if(n.grade)sl.addText(String(n.grade).toUpperCase(),{x:0.5,y:2.6,w:3,h:0.5,color:'FFFFFF',fontSize:15,bold:true,fill:{color:'2A1F16'},align:'center',rectRadius:0.1});
+  if(n.headline)sl.addText(n.headline,{x:0.5,y:3.4,w:9,h:1.2,color:'FFFFFF',fontSize:18,italic:true});
+  sl=pptx.addSlide();sl.addText('This week',{x:0.5,y:0.4,w:9,h:0.5,fontSize:24,bold:true,color:INK});
+  const tiles=[[Math.round(s.hours||0)+'h','Worked'],[String(s.points||0),'Points'],[String((s.calls||{}).total||0),'Calls'],[String(s.tasksDone||0),'Tasks'],[String((o.woCreated||0)+(o.woUpdated||0)),'Workouts'],[String((o.dietCreated||0)+(o.dietUpdated||0)),'Diet plans']];
+  tiles.forEach((tl,i)=>{const col=i%3,row=Math.floor(i/3);const x=0.5+col*3.15,y=1.25+row*1.65;sl.addShape(pptx.ShapeType.roundRect,{x,y,w:2.9,h:1.45,fill:{color:'F2F3F5'},line:{color:'E2E6EB',width:1},rectRadius:0.08});sl.addText(tl[0],{x,y:y+0.18,w:2.9,h:0.7,fontSize:30,bold:true,align:'center',color:INK});sl.addText(tl[1],{x,y:y+0.92,w:2.9,h:0.4,fontSize:12,align:'center',color:MUT});});
+  sl=pptx.addSlide();sl.addText('Trend vs history',{x:0.5,y:0.4,w:9,h:0.5,fontSize:24,bold:true,color:INK});
+  const trows=[['Points','points',0],['Hours','hours',1],['Calls','calls',0],['Tasks','tasks',0],['Workouts + diet','output',0]];
+  const tbl=[['Metric','This wk','Last wk','4-wk avg','12-wk avg'].map(x=>({text:x,options:{bold:true,color:'FFFFFF',fill:{color:RED}}}))];
+  trows.forEach(r=>{const m=t[r[1]]||{};const f=v=>r[2]?(+v||0).toFixed(1):String(Math.round(+v||0));tbl.push([r[0],f(m.now),f(m.prev),f(m.avg4),f(m.avg12)]);});
+  sl.addTable(tbl,{x:0.5,y:1.1,w:9,fontSize:14,border:{type:'solid',color:'E2E6EB',pt:1},align:'center',valign:'middle',colW:[2.6,1.6,1.6,1.6,1.6]});
+  sl=pptx.addSlide();sl.addText('Summary',{x:0.5,y:0.4,w:9,h:0.5,fontSize:24,bold:true,color:INK});
+  if(n.summary)sl.addText(n.summary,{x:0.5,y:1.0,w:9,h:1.3,fontSize:15,color:INK});
+  if((n.highlights||[]).length){sl.addText('Highlights',{x:0.5,y:2.35,w:9,h:0.4,fontSize:16,bold:true,color:'15A34A'});sl.addText((n.highlights||[]).map(x=>({text:x,options:{bullet:true}})),{x:0.65,y:2.8,w:8.8,h:2.5,fontSize:13,color:INK});}
+  sl=pptx.addSlide();
+  if((n.concerns||[]).length){sl.addText('Watch / concerns',{x:0.5,y:0.4,w:9,h:0.4,fontSize:16,bold:true,color:'E8170D'});sl.addText((n.concerns||[]).map(x=>({text:x,options:{bullet:true}})),{x:0.65,y:0.85,w:8.8,h:1.9,fontSize:13,color:INK});}
+  if((n.recommendations||[]).length){sl.addText('Next week',{x:0.5,y:2.8,w:9,h:0.4,fontSize:16,bold:true,color:'2F7FD1'});sl.addText((n.recommendations||[]).map(x=>({text:x,options:{bullet:true}})),{x:0.65,y:3.25,w:8.8,h:1.9,fontSize:13,color:INK});}
+  if(n.extras){sl=pptx.addSlide();sl.addText('Notes',{x:0.5,y:0.4,w:9,h:0.5,fontSize:24,bold:true,color:INK});sl.addText(n.extras,{x:0.5,y:1.0,w:9,h:4,fontSize:14,color:INK});}
+  const fname='S2S_'+String(rpt.coachName||'coach').replace(/[^A-Za-z0-9]+/g,'_')+'_'+rpt.from+'.pptx';
+  try{await pptx.writeFile({fileName:fname});toast('✓ PPT downloaded');}catch(e){toast('PPT failed — '+((e&&e.message)||'error'),true);}
+}
 /* ═══════════ TEAM — PROJECT MANAGEMENT (projects → tasks → subtasks, docs, timers) ═══════════ */
 let TEAM_STAFF=[], TEAM_PROJ_TASK_FORM=null, TEAM_DEBRIEF=null;
 function teamPrioMeta(p){return {urgent:{l:'Urgent',c:'var(--red)'},high:{l:'High',c:'#ff7a2f'},medium:{l:'Medium',c:'var(--gold)'},low:{l:'Low',c:'var(--prot)'}}[p||'medium']||{l:'Medium',c:'var(--gold)'};}
@@ -25274,11 +25369,13 @@ function edRenderGoalPlan(){
   host.querySelectorAll('textarea').forEach(taGrow);
   gpStartClock(g.deadline,g.done);
 }
+function edRenderPhase(){const h=$('ed-phase-host');if(h)h.innerHTML=(typeof mcAdminPhaseHTML==='function'?mcAdminPhaseHTML():'');}
 function edRenderGoals(){
+  edRenderPhase();
   const host=$('ed-goals');if(!host)return;const gs=edGoals();
   const sop='<div id="sopcard-goals" style="margin-bottom:14px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--card2)">'+sopCardInner('goals')+'</div>';
-  if(!gs.length){host.innerHTML=mcAdminPhaseHTML()+sop+'<div class="empty">No goals yet — click “Add goal”.</div>';return;}
-  host.innerHTML=mcAdminPhaseHTML()+sop+gs.map((g,i)=>{
+  if(!gs.length){host.innerHTML=sop+'<div class="empty">No goals yet — click “Add goal”.</div>';return;}
+  host.innerHTML=sop+gs.map((g,i)=>{
     const cust=edGoalIsCustom(g);
     const typeSel='<select onchange="edGoalType('+i+',this.value)">'+GOAL_TYPES.map(t=>{const on=(t==='Custom…')?cust:(!cust&&g.goalType===t);return '<option'+(on?' selected':'')+'>'+esc(t)+'</option>';}).join('')+'</select>';
     const custom=cust?'<div class="field"><label class="lab">Custom type</label><input value="'+esc(g.goalType||'')+'" oninput="edGoalSet('+i+',\'goalType\',this.value)" placeholder="e.g. Mobility"></div>':'';
@@ -25783,7 +25880,7 @@ function edTab(name){ED_TAB=name;
   document.querySelectorAll('#ed-tabs [data-edtabbtn]').forEach(b=>b.classList.toggle('active',b.dataset.edtabbtn===name));
   if(name==='reports')edRenderDocs();
   if(name==='client'){try{edJrsInject();}catch(e){}}
-  if(name==='goals'){ED_COMP_UP=null;edGoalsBranch(ED_GM_BRANCH);}
+  if(name==='goals'){ED_COMP_UP=null;try{edRenderPhase();}catch(e){}edGoalsBranch(ED_GM_BRANCH);}
   if(name==='sleep'){try{edRenderSleepAdmin();}catch(e){}}
   if(name==='training'){edRenderVersions('training','ed-tr-history',true);try{edTrLiveStatus();}catch(e){}try{edRenderFormCheck();}catch(e){}}
   if(name==='cardio'){try{edRenderCardioAdmin();}catch(e){}}
