@@ -6773,7 +6773,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04qp';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04qq';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -8421,7 +8421,7 @@ async function dashJournalQuick(){
   toast('✨ Estimating & adding…');
   let nutri=null;   // estimate in the same tap so the meal counts toward today's macros
   try{
-    if(DB.mode==='api'){try{const d=await cheatAnalyzeApi({imageUrl:'',description:desc,plan:true});nutri=jrNormNutri(d,'ai');}catch(e){}}
+    if(DB.mode==='api'){try{const d=await cheatAnalyzeApi(Object.assign({imageUrl:'',description:desc,plan:true},jrBudgetCtx()));nutri=jrNormNutri(d,'ai');}catch(e){}}
     if(!nutri){try{const est=cheatLocalEstimate(desc,'',{target:0,lo:0,hi:0});nutri=jrNormNutri({name:est.name,items:est.items,cal:est.cal,p:est.p,c:est.c,f:est.f,reco:'',suggestions:[]},'estimate');}catch(e){}}
     if(nutri&&(!nutri.suggestions||!nutri.suggestions.length))nutri.suggestions=jrLocalSugg(nutri);
   }catch(e){}
@@ -15546,12 +15546,21 @@ function jrLocalSugg(res){
   out.push('🥗 Add some veg or salad on the side for fibre, so you stay full on fewer calories.');
   return out.slice(0,3);
 }
+/* today's calorie pool for the food-journal AI: daily allocation + what's left after logged food & journal */
+function jrBudgetCtx(){try{
+  if(typeof PLAN==='undefined'||!PLAN)return {};
+  const dt=(typeof dayTypeForDate==='function')?dayTypeForDate(PLAN,todayISO()):null;
+  const daily=dt?(calOf((dt.target)||{})||0):0;if(!(daily>0))return {};
+  let logged=0;try{logged=(sumItems((typeof DAYLOG!=='undefined'&&DAYLOG&&DAYLOG.items)||[]).cal)||0;}catch(e){}
+  try{if(typeof dayJournalTot==='function')logged+=(dayJournalTot().cal||0);}catch(e){}
+  return {dailyBudget:Math.round(daily),remaining:Math.max(0,Math.round(daily-logged))};
+}catch(e){return {};}}
 async function jrAnalyse(){
   const desc=($('jr-desc').value||'').trim();const img=JR_PHOTOS[0]||'';
   if(!desc&&!img){toast('Add a description of the meal first',true);try{const d=$('jr-desc');if(d)d.focus();}catch(e){}return;}
   JR_NUTRI_BUSY=true;jrRenderNutri();
   let res=null;
-  if(DB.mode==='api'){try{const d=await cheatAnalyzeApi({imageUrl:img,description:desc,plan:true});res=jrNormNutri(d,'ai');}catch(e){}}
+  if(DB.mode==='api'){try{const d=await cheatAnalyzeApi(Object.assign({imageUrl:img,description:desc,plan:true},jrBudgetCtx()));res=jrNormNutri(d,'ai');}catch(e){}}
   if(!res&&desc){try{const est=cheatLocalEstimate(desc,'',{target:0,lo:0,hi:0});res=jrNormNutri({name:est.name,items:est.items,cal:est.cal,p:est.p,c:est.c,f:est.f,reco:'',suggestions:[]},'estimate');}catch(e){}}
   if(res&&(!res.suggestions||!res.suggestions.length))res.suggestions=jrLocalSugg(res);
   JR_NUTRI=res;JR_NUTRI_BUSY=false;jrRenderNutri();
@@ -15807,7 +15816,7 @@ async function foodPlanRun(){
   var ids=fpIds();var desc=($(ids.desc)&&$(ids.desc).value||'').trim();if(!desc){toast('Describe the meal you\'re thinking about',true);return;}
   FOOD_PLAN={busy:true,res:null,text:desc};foodPlanRender();
   var res=null;
-  if(DB.mode==='api'){try{var d=await cheatAnalyzeApi({description:desc,plan:true});res=jrNormNutri(d,'ai');}catch(e){}}
+  if(DB.mode==='api'){try{var d=await cheatAnalyzeApi(Object.assign({description:desc,plan:true},jrBudgetCtx()));res=jrNormNutri(d,'ai');}catch(e){}}
   if(!res){try{var est=cheatLocalEstimate(desc,'',{target:0,lo:0,hi:0});res=jrNormNutri({name:est.name,items:est.items,cal:est.cal,p:est.p,c:est.c,f:est.f,reco:'',suggestions:[]},'estimate');}catch(e){}}
   if(res&&(!res.suggestions||!res.suggestions.length))res.suggestions=jrLocalSugg(res);
   FOOD_PLAN={busy:false,res:res,text:desc};foodPlanRender();
