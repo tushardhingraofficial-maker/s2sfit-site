@@ -6772,7 +6772,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04qj';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04qk';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -10983,23 +10983,58 @@ function mcClientBannerHTML(){const cur=mcPhase();
 /* admin: phase picker shown atop the client's Progress Tracking editor tab */
 function mcAdminPhaseHTML(){const cur=(typeof edPlan!=='undefined'&&edPlan&&edPlan.phase)||'Foundation';
   return '<div style="margin-bottom:14px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--card2)"><div class="uline" style="margin:0 0 6px">📈 Current training phase</div><div class="small" style="color:var(--muted);margin-bottom:8px">Drives what this client sees as “expected” in their metrics course, and what the metric-watch flags against.</div><select onchange="if(typeof edPlan!==\'undefined\'&&edPlan)edPlan.phase=this.value" style="max-width:230px">'+MC_PHASES.map(p=>'<option'+(p===cur?' selected':'')+'>'+esc(p)+'</option>').join('')+'</select></div>';}
-/* ---- metric-watch engine: compare a client's recent weight trend to their phase's expected rule ---- */
-function mcWeeklyRate(plan){
-  const wl=((plan&&plan.milestones&&Array.isArray(plan.milestones.weightLog))?plan.milestones.weightLog:[]).filter(e=>e&&+e.value>0&&e.date).slice().sort((a,b)=>a.date<b.date?-1:1);
-  if(wl.length<2)return null;
-  const lastDate=wl[wl.length-1].date,cut=addDaysISO(lastDate,-28);
-  let pts=wl.filter(e=>e.date>=cut);if(pts.length<2)pts=wl.slice(-6);
-  if(pts.length<2)return null;
-  const first=pts[0],last=pts[pts.length-1];
-  const days=(new Date(last.date+'T00:00:00')-new Date(first.date+'T00:00:00'))/86400000;
-  if(days<5)return null;   // need a real span to judge a trend
-  const w0=+first.value,w1=+last.value;if(!(w0>0))return null;
-  const weeks=days/7;return {ratePct:((w1-w0)/w0)*100/weeks,weeks:Math.round(weeks*10)/10,w0:w0,w1:w1,lastDate:lastDate};
-}
+/* ---- metric-watch engine: compare a client's recent metric trends to their phase's expected rules ----
+   Covers weight + waist (%/week) and body-fat % + muscle % (points change). Strength/cardio live in
+   workout/cardio logs (not the dashboard payload) — a future pass. */
+const MC_WATCH={
+ waist:{kind:'pct',window:56,minSpan:14,
+   'Fat loss':{dir:'down',maxRise:0.1,stallDays:28},
+   'Recomposition':{dir:'down',maxRise:0.15},
+   'Hypertrophy':{dir:'up',maxRate:0.6},
+   'Foundation':{dir:'flat',maxUp:0.5},'Strength':{dir:'flat',maxUp:0.5},'Performance':{dir:'flat',maxUp:0.5}},
+ bf:{kind:'pts',window:84,minSpan:14,
+   'Fat loss':{dir:'down',maxRiseTotal:0.5,stallDays:42},
+   'Recomposition':{dir:'down',maxRiseTotal:0.7},
+   'Hypertrophy':{dir:'up',maxRiseTotal:3.5},
+   'Foundation':{dir:'flat',maxRiseTotal:2},'Strength':{dir:'flat',maxRiseTotal:2.5},'Performance':{dir:'flat',maxRiseTotal:1.5}},
+ muscle:{kind:'pts',window:84,minSpan:14,
+   'Fat loss':{dir:'hold',maxDropTotal:1.2},
+   'Strength':{dir:'up',maxDropTotal:1.5},'Hypertrophy':{dir:'up',maxDropTotal:1.5},'Recomposition':{dir:'up',maxDropTotal:1.5}}};
+const MC_WLABEL={weight:'Scale weight',waist:'Waist',bf:'Body-fat %',muscle:'Muscle mass'};
+function mcSeries(plan,id){const ms=(plan&&plan.milestones)||{};
+  if(id==='weight')return (Array.isArray(ms.weightLog)?ms.weightLog:[]).filter(e=>e&&+e.value>0&&e.date).map(e=>({date:e.date,value:+e.value}));
+  if(id==='waist'){const logs=(ms.measurements&&Array.isArray(ms.measurements.logs))?ms.measurements.logs:[];return logs.map(l=>{if(!l||!l.date||!l.values)return null;const v=l.values.waistMin!=null?+l.values.waistMin:(l.values.waist!=null?+l.values.waist:(l.values.waistWide!=null?+l.values.waistWide:null));return (v!=null&&v>0)?{date:l.date,value:v}:null;}).filter(Boolean);}
+  const tests=(ms.composition&&Array.isArray(ms.composition.tests))?ms.composition.tests:[];
+  if(id==='bf')return tests.filter(t=>t&&t.date&&t.fat!=null&&t.fat!=='').map(t=>({date:t.date,value:+t.fat}));
+  if(id==='muscle')return tests.filter(t=>t&&t.date&&t.muscle!=null&&t.muscle!=='').map(t=>({date:t.date,value:+t.muscle}));
+  return [];}
+function mcTrend(plan,id,windowDays,minSpan){
+  const s=mcSeries(plan,id).slice().sort((a,b)=>a.date<b.date?-1:1);if(s.length<2)return null;
+  const lastDate=s[s.length-1].date,cut=addDaysISO(lastDate,-(windowDays||28));
+  let pts=s.filter(e=>e.date>=cut);if(pts.length<2)pts=s.slice(-6);if(pts.length<2)return null;
+  const first=pts[0],last=pts[pts.length-1];const days=(new Date(last.date+'T00:00:00')-new Date(first.date+'T00:00:00'))/86400000;
+  if(days<(minSpan||5))return null;const w0=+first.value,w1=+last.value;if(!(w0>0))return null;const weeks=days/7;
+  return {pctRate:((w1-w0)/w0)*100/weeks,delta:(w1-w0),weeks:Math.round(weeks*10)/10,spanDays:days,w0:w0,w1:w1};}
+function mcEvalMetric(label,kind,rule,tr,phase){const spanDays=tr.spanDays,wk=Math.max(1,Math.round(spanDays/7));
+  if(kind==='pct'){const r=tr.pctRate,rr=(r>=0?'+':'')+(Math.round(r*100)/100)+'%/wk';
+    if(rule.dir==='down'){if(rule.maxRise!=null&&r>rule.maxRise)return {metric:label,sev:'amber',msg:'rising ('+rr+') in '+phase+' — should be falling'};
+      if(rule.stallDays&&r>-0.03&&spanDays>=rule.stallDays)return {metric:label,sev:'amber',msg:'flat for ~'+wk+'wk in '+phase+' — should be falling'};}
+    else if(rule.dir==='up'){if(rule.maxRate!=null&&r>rule.maxRate)return {metric:label,sev:'amber',msg:'growing fast ('+rr+') in '+phase+' — watch fat gain'};}
+    else if(rule.dir==='flat'){if(rule.maxUp!=null&&r>rule.maxUp)return {metric:label,sev:'amber',msg:'climbing ('+rr+') in '+phase+' — expected steady'};}
+    return null;}
+  const d=Math.round(tr.delta*10)/10,dd=(d>=0?'+':'')+d+'pts';
+  if(rule.dir==='down'){if(rule.maxRiseTotal!=null&&tr.delta>rule.maxRiseTotal)return {metric:label,sev:'amber',msg:'up '+dd+' over ~'+wk+'wk in '+phase+' — should be falling'};
+    if(rule.stallDays&&Math.abs(tr.delta)<0.3&&spanDays>=rule.stallDays)return {metric:label,sev:'amber',msg:'flat ~'+wk+'wk in '+phase+' — should be falling'};}
+  else if(rule.dir==='up'){if(rule.maxRiseTotal!=null&&tr.delta>rule.maxRiseTotal)return {metric:label,sev:'amber',msg:'up '+dd+' in '+phase+' — bulk adding too much fat'};
+    if(rule.maxDropTotal!=null&&tr.delta<-rule.maxDropTotal)return {metric:label,sev:'amber',msg:'down '+dd+' in a '+phase+' (build) phase'};}
+  else if(rule.dir==='hold'){if(rule.maxDropTotal!=null&&tr.delta<-rule.maxDropTotal)return {metric:label,sev:'red',msg:'down '+dd+' in '+phase+' — losing muscle'};}
+  else if(rule.dir==='flat'){if(rule.maxRiseTotal!=null&&tr.delta>rule.maxRiseTotal)return {metric:label,sev:'amber',msg:'up '+dd+' in '+phase+' — expected steady'};}
+  return null;}
 function mcEvalClient(plan){
   const phase=(plan&&plan.phase)||'Foundation';const flags=[];
-  const rule=(mcById('weight').ph[phase]||{}).rule;const wr=mcWeeklyRate(plan);
-  if(rule&&wr){const r=wr.ratePct,rr=(r>=0?'+':'')+(Math.round(r*100)/100)+'%/wk';
+  // 1) scale weight — its own rule shape (lives on MC_DATA)
+  const rule=(mcById('weight').ph[phase]||{}).rule;const wr=mcTrend(plan,'weight',28,5);
+  if(rule&&wr){const r=wr.pctRate,rr=(r>=0?'+':'')+(Math.round(r*100)/100)+'%/wk';
     if(rule.dir==='down'){
       if(r<-(rule.maxRate||99))flags.push({metric:'Scale weight',sev:'red',msg:'losing fast ('+rr+') in '+phase+' — muscle-loss risk'});
       else if(rule.stallWeeks&&r>-0.1&&wr.weeks>=rule.stallWeeks)flags.push({metric:'Scale weight',sev:'amber',msg:'weight flat ('+rr+') ~'+wr.weeks+'wk in '+phase+' — should be falling'});
@@ -11012,6 +11047,10 @@ function mcEvalClient(plan){
       else if(rule.maxDown&&r<-rule.maxDown)flags.push({metric:'Scale weight',sev:'amber',msg:'weight dropping ('+rr+') in '+phase+' — expected steady'});
     }
   }
+  // 2) waist / body-fat / muscle
+  ['waist','bf','muscle'].forEach(id=>{const def=MC_WATCH[id];if(!def)return;const r2=def[phase];if(!r2)return;
+    const tr=mcTrend(plan,id,def.window,def.minSpan);if(!tr)return;
+    const f=mcEvalMetric(MC_WLABEL[id],def.kind,r2,tr,phase);if(f)flags.push(f);});
   return flags;
 }
 /* dashboard Client-cell chips: phase (click to change) + metric-watch flag count (click to open board) */
@@ -11026,7 +11065,7 @@ function mcWatchOpen(){const m=$('mc-watch-modal');if(!m)return;mcWatchRender();
 function mcWatchClose(){const m=$('mc-watch-modal');if(m)m.classList.remove('open');}
 function mcWatchRender(){const host=$('mc-watch-host');if(!host)return;const rows=mcWatchRows();
   const red=rows.reduce((a,r)=>a+r.mcFlags.filter(f=>f.sev==='red').length,0),amber=mcWatchCount()-red;
-  host.innerHTML='<div class="small" style="color:var(--muted);margin:0 0 12px">Clients whose tracked metrics are moving against what’s expected for their current phase.'+(rows.length?(' <b style="color:var(--red)">'+red+'</b> red · <b style="color:var(--gold,#f5c842)">'+amber+'</b> amber'):'')+'<br><span class="funit">Currently watches scale-weight trend vs phase; more metrics coming.</span></div>'+
+  host.innerHTML='<div class="small" style="color:var(--muted);margin:0 0 12px">Clients whose tracked metrics are moving against what’s expected for their current phase.'+(rows.length?(' <b style="color:var(--red)">'+red+'</b> red · <b style="color:var(--gold,#f5c842)">'+amber+'</b> amber'):'')+'<br><span class="funit">Watches weight, waist, body-fat % and muscle % trends vs phase. (Strength &amp; cardio coming.)</span></div>'+
     (rows.length?rows.map(r=>'<div class="card" style="margin-bottom:10px;border-left:3px solid '+(r.mcFlags.some(f=>f.sev==='red')?'var(--red)':'var(--gold,#f5c842)')+'"><div class="card-body" style="padding:11px 13px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b>👤 '+esc(r.name)+'</b><span class="pill" style="background:rgba(74,158,232,.12);color:var(--prot);border-color:rgba(74,158,232,.35)">📈 '+esc(r.phase||'Foundation')+'</span><div style="flex:1"></div><button class="btn-xxs" onclick="mcWatchClose();editClient(\''+r.id+'\')">Open client</button></div>'+
       r.mcFlags.map(f=>'<div style="display:flex;gap:8px;align-items:flex-start;margin-top:8px"><span>'+(f.sev==='red'?'🔴':'🟠')+'</span><div class="small" style="flex:1"><b>'+esc(f.metric)+':</b> '+esc(f.msg)+'</div><button class="btn-xxs" onclick="mcWatchTask(\''+r.id+'\',this.getAttribute(\'data-n\'),this.getAttribute(\'data-m\'))" data-n="'+esc(r.name)+'" data-m="'+esc(f.metric+' — '+f.msg)+'">＋ Task</button></div>').join('')+
       '</div></div>').join(''):'<div class="empty">✓ Everyone’s metrics are tracking with their phase. Nice work.</div>');
