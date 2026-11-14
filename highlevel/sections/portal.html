@@ -4919,7 +4919,8 @@ img,svg,canvas,video{max-width:100%}
                   <div class="row"><div class="field"><label class="lab">Task</label><input id="tk-title" placeholder="e.g. Update Alex's macros"></div>
                     <div class="field"><label class="lab">For client (optional)</label><select id="tk-client"></select></div>
                     <div class="field"><label class="lab">Assign to coach (optional)</label><select id="tk-coach"><option value="">— no coach (general) —</option></select></div>
-                    <div class="field"><label class="lab">Project (optional)</label><select id="tk-proj"><option value="">— no project —</option></select></div></div>
+                    <div class="field"><label class="lab">Project (optional)</label><select id="tk-proj"><option value="">— no project —</option></select></div>
+                    <div class="field"><label class="lab">Visibility</label><select id="tk-priv"><option value="">👥 Team (shared)</option><option value="private">🔒 Private — only me</option></select></div></div>
                   <div class="row"><div class="field"><label class="lab">Deadline</label><input id="tk-due" type="date"></div>
                     <div class="field"><label class="lab">Priority</label><select id="tk-priority"><option value="high">🔴 High</option><option value="medium" selected>🟠 Medium</option><option value="low">🔵 Low</option></select></div>
                     <div class="field"><label class="lab">Repeat</label><select id="tk-recur" onchange="tkRecurChange()"><option value="none">One-off</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="days">Specific days</option></select></div></div>
@@ -6351,7 +6352,7 @@ img,svg,canvas,video{max-width:100%}
     <div style="display:flex;gap:6px"><input id="adt-title" placeholder="New task…" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();adtAdd()}"><select id="adt-priority" style="max-width:92px"><option value="high">🔴 High</option><option value="medium" selected>🟠 Med</option><option value="low">🔵 Low</option></select></div>
     <div style="display:flex;gap:6px;margin-top:6px"><input id="adt-client" placeholder="For client (optional)" list="adt-clients" style="flex:1"><input id="adt-due" type="date" style="max-width:132px" title="Date / deadline — also places it on the Team calendar"></div>
     <div style="display:flex;gap:6px;margin-top:6px"><select id="adt-coach" style="flex:1" title="Allocate to a coach (optional)"><option value="">— no coach (general) —</option></select><select id="adt-proj" style="flex:1" title="Add to a Team &amp; Calendar project (optional)"><option value="">— no project —</option></select></div>
-    <button class="btn-sm solid" style="width:100%;margin-top:6px" onclick="adtAdd()">Add</button>
+    <div style="display:flex;gap:6px;margin-top:6px"><select id="adt-priv" style="flex:1" title="Who can see this task"><option value="">👥 Team (shared)</option><option value="private">🔒 Private — only me</option></select><button class="btn-sm solid" style="flex:none" onclick="adtAdd()">Add</button></div>
     <datalist id="adt-clients"></datalist>
   </div>
   <div id="drawer-tasks" style="overflow-y:auto;padding:6px 10px 12px;flex:1"></div>
@@ -6720,7 +6721,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04qg';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04qh';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -18994,12 +18995,15 @@ const PRI_RANK={high:0,medium:1,low:2};
    completes it there too (true sync — no duplicated task). */
 function tkProjName(id){try{const p=((typeof TEAM!=='undefined'&&TEAM&&TEAM.projects)||[]).find(x=>x.id===id);return p?(p.name||''):'';}catch(e){return '';}}
 function tkTeamDone(ev){return (typeof teamTaskIsDone==='function')?teamTaskIsDone(ev):(ev&&ev.status==='done');}
+/* a PRIVATE task is visible only to its creator; shared/team tasks are visible to everyone */
+function teamVisible(ev){return !(ev&&ev.private)||(ev.owner===((typeof teamStaffId==='function')?teamStaffId():'owner'));}
 async function tkEnsureTeam(){try{if(typeof teamLoad==='function')await teamLoad();}catch(e){}
   try{if(typeof teamStaffList==='function'&&(typeof TEAM_STAFF==='undefined'||!TEAM_STAFF||!TEAM_STAFF.length))TEAM_STAFF=await teamStaffList();}catch(e){}
-  return ((typeof TEAM!=='undefined'&&TEAM&&TEAM.events)||[]).filter(e=>e&&e.kind==='task');}
+  return ((typeof TEAM!=='undefined'&&TEAM&&TEAM.events)||[]).filter(e=>e&&e.kind==='task'&&teamVisible(e));}
 function tkTeamRow(ev,compact){const done=tkTeamDone(ev);const pri=ev.priority||'medium';
   const who=ev.assignee?teamStaffNameById(ev.assignee):'';const proj=tkProjName(ev.projectId);
-  const meta=(who?'<div class="funit">👤 '+esc(who)+'</div>':'')+
+  const meta=(ev.private?'<div class="funit">🔒 Private to you</div>':'')+
+    (who?'<div class="funit">👤 '+esc(who)+'</div>':'')+
     (proj?'<div class="funit">📁 '+esc(proj)+'</div>':'')+
     (ev.notes?'<div class="funit" style="white-space:pre-wrap">'+esc(ev.notes)+'</div>':'')+
     (ev.deadline?'<div class="funit">🏁 '+esc(fmtDate(ev.deadline))+'</div>':'')+
@@ -19040,7 +19044,8 @@ async function tkAddTeamTask(fld){
   if(typeof TEAM==='undefined'||!TEAM)return false;
   let staff=[];try{staff=(typeof TEAM_STAFF!=='undefined'&&TEAM_STAFF&&TEAM_STAFF.length)?TEAM_STAFF:((typeof teamStaffList==='function')?await teamStaffList():[]);}catch(e){}
   const nm=(staff.find(s=>s.id===fld.assignee)||{}).name||'';
-  const ev={id:uid(),kind:'task',title:fld.title,projectId:fld.projectId||null,parentId:null,date:fld.date||'',start:'',end:'',allDay:true,assignee:fld.assignee||'',assigneeName:nm,category:'',priority:fld.priority||'medium',deadline:fld.deadline||'',estimate:0,stage:'To do',blockedBy:[],recur:'none',recurDays:[],notes:fld.notes||'',status:'todo',createdAt:new Date().toISOString(),_src:'tasks-panel'};
+  const meId=(typeof teamStaffId==='function')?teamStaffId():'owner';
+  const ev={id:uid(),kind:'task',title:fld.title,projectId:fld.projectId||null,parentId:null,date:fld.date||'',start:'',end:'',allDay:true,assignee:(fld.private?'':(fld.assignee||'')),assigneeName:(fld.private?'':nm),category:'',priority:fld.priority||'medium',deadline:fld.deadline||'',estimate:0,stage:'To do',blockedBy:[],recur:'none',recurDays:[],notes:fld.notes||'',status:'todo',private:!!fld.private,owner:(fld.private?meId:(fld.owner||'')),createdBy:meId,createdAt:new Date().toISOString(),_src:'tasks-panel'};
   TEAM.events=TEAM.events||[];TEAM.events.push(ev);
   try{if(typeof teamSave==='function')await teamSave('events');}catch(e){return false;}
   return true;}
@@ -19074,9 +19079,10 @@ async function fillAdtClients(){try{const cs=await DB.listClients();const dl=$('
 async function adtAdd(){const title=($('adt-title').value||'').trim();if(!title){toast('Type a task',true);return;}
   const coach=($('adt-coach')&&$('adt-coach').value)||'';
   const proj=($('adt-proj')&&$('adt-proj').value)||'';
-  if(coach||proj){const cl=($('adt-client').value||'').trim();const due=$('adt-due').value||'';
-    const okT=await tkAddTeamTask({title,assignee:coach,projectId:proj,date:due,deadline:due,priority:$('adt-priority').value||'medium',notes:cl?('Client: '+cl):''});
-    if(okT){$('adt-title').value='';$('adt-client').value='';$('adt-due').value='';$('adt-coach').value='';if($('adt-proj'))$('adt-proj').value='';toast('Task added to Team & Calendar ✓');renderDrawerTasks();if(typeof renderTasks==='function')renderTasks();}else toast('Could not add — try again',true);return;}
+  const priv=(($('adt-priv')&&$('adt-priv').value)||'')==='private';
+  if(coach||proj||priv){const cl=($('adt-client').value||'').trim();const due=$('adt-due').value||'';
+    const okT=await tkAddTeamTask({title,assignee:coach,projectId:proj,private:priv,date:due,deadline:due,priority:$('adt-priority').value||'medium',notes:cl?('Client: '+cl):''});
+    if(okT){$('adt-title').value='';$('adt-client').value='';$('adt-due').value='';$('adt-coach').value='';if($('adt-proj'))$('adt-proj').value='';if($('adt-priv'))$('adt-priv').value='';toast(priv?'Private task added 🔒':'Task added to Team & Calendar ✓');renderDrawerTasks();if(typeof renderTasks==='function')renderTasks();}else toast('Could not add — try again',true);return;}
   const t={id:uid(),client_id:null,client_name:($('adt-client').value||'').trim(),title,details:'',due_date:$('adt-due').value||null,recurrence:'none',priority:$('adt-priority').value||'medium',status:'open',created_at:new Date().toISOString()};
   try{await DB.saveTask(t);$('adt-title').value='';$('adt-client').value='';$('adt-due').value='';renderDrawerTasks();if(typeof renderTasks==='function')renderTasks();}catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);}}
 /* prominent, attention-grabbing notification */
@@ -21409,7 +21415,7 @@ function tkDayToggle(d){const i=TK_DAYS.indexOf(d);if(i>=0)TK_DAYS.splice(i,1);e
 function tkRecurChange(){const v=$('tk-recur')?$('tk-recur').value:'none';const w=$('tk-days-wrap');if(w)w.style.display=(v==='days')?'':'none';if(v==='days'&&!TK_DAYS.length)TK_DAYS=[1,3,5];tkRenderDays();}
 function recurLabel(t){if(!t||!t.recurrence||t.recurrence==='none')return '';if(t.recurrence==='days'){const ds=(t.recur_days||[]).slice().sort((a,b)=>((a===0?7:a)-(b===0?7:b)));return ds.length?ds.map(d=>TK_DAYNAME[d]).join('/'):'days';}return t.recurrence;}
 function tkNextDate(due,days){if(!days||!days.length)return addDaysISO(due,7);let d=new Date(due+'T00:00:00');for(let i=0;i<7;i++){d.setDate(d.getDate()+1);if(days.includes(d.getDay())){const p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());}}return addDaysISO(due,1);}
-function taskResetForm(){if($('tk-editid'))$('tk-editid').value='';['tk-title','tk-details','tk-due'].forEach(id=>{if($(id))$(id).value='';});if($('tk-client'))$('tk-client').value='';if($('tk-coach'))$('tk-coach').value='';if($('tk-proj'))$('tk-proj').value='';try{tkFillCoachSelects();}catch(e){}if($('tk-recur'))$('tk-recur').value='none';if($('tk-priority'))$('tk-priority').value='medium';TK_DAYS=[];tkRecurChange();try{PEND['task']=null;renderPendPreview('task');}catch(e){}if($('tk-form-title'))$('tk-form-title').textContent='New task';if($('tk-save-btn'))$('tk-save-btn').textContent='Save task';}
+function taskResetForm(){if($('tk-editid'))$('tk-editid').value='';['tk-title','tk-details','tk-due'].forEach(id=>{if($(id))$(id).value='';});if($('tk-client'))$('tk-client').value='';if($('tk-coach'))$('tk-coach').value='';if($('tk-proj'))$('tk-proj').value='';if($('tk-priv'))$('tk-priv').value='';try{tkFillCoachSelects();}catch(e){}if($('tk-recur'))$('tk-recur').value='none';if($('tk-priority'))$('tk-priority').value='medium';TK_DAYS=[];tkRecurChange();try{PEND['task']=null;renderPendPreview('task');}catch(e){}if($('tk-form-title'))$('tk-form-title').textContent='New task';if($('tk-save-btn'))$('tk-save-btn').textContent='Save task';}
 function toggleTaskForm(){const f=$('task-form');if(!f)return;f.classList.toggle('hidden');if(!f.classList.contains('hidden')){taskResetForm();setTimeout(()=>{try{$('tk-title').focus();}catch(e){}},10);}}
 function taskCancelForm(){taskResetForm();const f=$('task-form');if(f)f.classList.add('hidden');}
 function taskEdit(id){const t=(TASKS||[]).find(x=>x.id===id);if(!t){toast('Task not found',true);return;}
@@ -21431,9 +21437,10 @@ async function addTask(){const title=($('tk-title').value||'').trim();if(!title)
   const editId=$('tk-editid')?$('tk-editid').value:'';
   const coachId=($('tk-coach')&&$('tk-coach').value)||'';
   const projId=($('tk-proj')&&$('tk-proj').value)||'';
-  if((coachId||projId)&&!editId){const notes=[($('tk-details').value||'').trim(),cName?('Client: '+cName):''].filter(Boolean).join(' — ');const due=$('tk-due').value||'';
-    const okT=await tkAddTeamTask({title,assignee:coachId,projectId:projId,date:due,deadline:due,priority:($('tk-priority')?$('tk-priority').value:'medium'),notes:notes});
-    if(okT){toast('Task added to Team & Calendar ✓');taskCancelForm();renderTasks();renderDrawerTasks();}else toast('Could not add — try again',true);return;}
+  const privC=(($('tk-priv')&&$('tk-priv').value)||'')==='private';
+  if((coachId||projId||privC)&&!editId){const notes=[($('tk-details').value||'').trim(),cName?('Client: '+cName):''].filter(Boolean).join(' — ');const due=$('tk-due').value||'';
+    const okT=await tkAddTeamTask({title,assignee:coachId,projectId:projId,private:privC,date:due,deadline:due,priority:($('tk-priority')?$('tk-priority').value:'medium'),notes:notes});
+    if(okT){toast(privC?'Private task added 🔒':'Task added to Team & Calendar ✓');taskCancelForm();renderTasks();renderDrawerTasks();}else toast('Could not add — try again',true);return;}
   const existing=editId?(TASKS||[]).find(x=>x.id===editId):null;
   const recur=$('tk-recur').value||'none';
   if(recur==='days'&&!TK_DAYS.length){toast('Pick at least one day to repeat on',true);return;}
@@ -22978,7 +22985,7 @@ function teamStopTick(){if(TEAM_TICK){clearInterval(TEAM_TICK);TEAM_TICK=null;}}
 function teamNotify(title,body){try{if(window.Notification&&Notification.permission==='granted'){new Notification(title,{body:body||''});return;}}catch(e){}try{if(typeof bigNotify==='function'){bigNotify(title+(body?' — '+body:''));return;}}catch(e){}try{toast(title);}catch(e){}}
 function teamCheckReminders(){const now=Date.now();if(now-TEAM_REM_LAST<15000)return;TEAM_REM_LAST=now;
   const iso=todayISO(),sid=teamStaffId();
-  (TEAM.events||[]).forEach(ev=>{if(ev.kind!=='task'||!ev.start)return;if(ev.assignee&&ev.assignee!==sid)return;if(!teamOccursOn(ev,iso))return;if(teamDoneOn(ev,iso))return;
+  (TEAM.events||[]).forEach(ev=>{if(ev.kind!=='task'||!ev.start)return;if(!teamVisible(ev))return;if(ev.assignee&&ev.assignee!==sid)return;if(!teamOccursOn(ev,iso))return;if(teamDoneOn(ev,iso))return;
     const key=ev.id+'@'+iso;if(TEAM_ALERTED[key])return;
     const parts=String(ev.start).split(':');const due=new Date();due.setHours(+parts[0]||0,+parts[1]||0,0,0);const diff=now-due.getTime();
     if(diff>=0&&diff<10*60000){TEAM_ALERTED[key]=1;teamNotify('⏰ '+ev.title,'Scheduled for '+ev.start+(ev.category?' · '+ev.category:''));}
@@ -23034,7 +23041,7 @@ function teamOccursOn(ev,iso){if(!ev.date||ev.date>iso)return false;if(ev.until&
   if(r==='none')return ev.date===iso;if(r==='daily')return true;
   if(r==='weekly'){const days=(ev.recurDays&&ev.recurDays.length)?ev.recurDays:[teamDow(ev.date)];return days.indexOf(teamDow(iso))>=0;}return false;}
 function teamDoneOn(ev,iso){if((ev.recur||'none')==='none')return ev.status==='done';return (ev.doneDates||[]).indexOf(iso)>=0;}
-function teamEventsOn(iso){return TEAM.events.filter(ev=>{if(TEAM_CAL_SCOPE==='mine'&&ev.assignee&&ev.assignee!==teamStaffId())return false;return teamOccursOn(ev,iso);}).sort((a,b)=>String(a.start||'99:99').localeCompare(String(b.start||'99:99')));}
+function teamEventsOn(iso){return TEAM.events.filter(ev=>{if(!teamVisible(ev))return false;if(TEAM_CAL_SCOPE==='mine'&&ev.assignee&&ev.assignee!==teamStaffId())return false;return teamOccursOn(ev,iso);}).sort((a,b)=>String(a.start||'99:99').localeCompare(String(b.start||'99:99')));}
 function teamTaskLoggedToday(taskId,iso){return TEAM.logs.filter(l=>l.taskId===taskId&&l.dateISO===iso).reduce((a,l)=>a+(l.seconds||0),0);}
 /* ---- calendar render ---- */
 function teamSetScope(s){TEAM_CAL_SCOPE=s;teamRenderCalendar();}
@@ -23220,7 +23227,7 @@ async function teamRenderForm(){const host=$('team-cal-host');if(!host||!TEAM_FO
         '<div class="field" style="max-width:160px"><label class="lab">Stage</label><select id="tf-stage">'+TEAM_STAGES.map(s=>'<option value="'+s+'"'+(teamStageOf(f)===s?' selected':'')+'>'+s+'</option>').join('')+'</select></div></div>'+
       '<div class="row"><div class="field"><label class="lab">Deadline (hard)</label><input id="tf-deadline" type="date" value="'+esc(f.deadline||'')+'"></div>'+
         '<div class="field" style="max-width:150px"><label class="lab">Estimate / ETA</label><input id="tf-est" value="'+esc(teamDurText(f.estimate))+'" placeholder="e.g. 45m or 1h 30m"></div></div>'+
-      '<div class="field"><label class="lab">Blocked by</label><select id="tf-blocked" multiple size="3" style="height:auto">'+(TEAM.events||[]).filter(e=>e.kind==='task'&&e.id!==f.id).map(e=>'<option value="'+e.id+'"'+(((f.blockedBy||[]).indexOf(e.id)>=0)?' selected':'')+'>'+esc(e.title)+'</option>').join('')+'</select><div class="small" style="color:var(--muted);margin-top:3px">Pick tasks that must finish first (⌘/Ctrl-click for more than one).</div></div>'+
+      '<div class="field"><label class="lab">Blocked by</label><select id="tf-blocked" multiple size="3" style="height:auto">'+(TEAM.events||[]).filter(e=>e.kind==='task'&&e.id!==f.id&&teamVisible(e)).map(e=>'<option value="'+e.id+'"'+(((f.blockedBy||[]).indexOf(e.id)>=0)?' selected':'')+'>'+esc(e.title)+'</option>').join('')+'</select><div class="small" style="color:var(--muted);margin-top:3px">Pick tasks that must finish first (⌘/Ctrl-click for more than one).</div></div>'+
     '</div>'+
     '<div class="field"><label class="lab">Repeat</label><select id="tf-recur" onchange="teamFormRecur(this.value)"><option value="none"'+(f.recur==='none'?' selected':'')+'>Does not repeat</option><option value="daily"'+(f.recur==='daily'?' selected':'')+'>Every day</option><option value="weekly"'+(f.recur==='weekly'?' selected':'')+'>Weekly</option></select></div>'+
     '<div id="tf-wdays" style="margin:4px 0 10px;'+(f.recur==='weekly'?'':'display:none')+'">'+wd.map((d,i)=>'<label class="team-chip" style="cursor:pointer;display:inline-flex;gap:5px;align-items:center;margin:2px 4px 2px 0"><input type="checkbox" class="tf-wd" value="'+i+'"'+((f.recurDays||[]).indexOf(i)>=0?' checked':'')+'>'+d+'</label>').join('')+'</div>'+
@@ -23244,7 +23251,7 @@ async function teamToggleDone(id,iso){const ev=TEAM.events.find(e=>e.id===id);if
   await teamSave('events');teamTab(TEAM_TAB);tkRefreshPanels();}   // keep the Tasks panel in sync
 /* ---- my day ---- */
 function teamRenderDay(){const host=$('team-day-host');if(!host)return;const iso=todayISO();const sid=teamStaffId();
-  const mine=TEAM.events.filter(ev=>teamOccursOn(ev,iso)&&(ev.assignee===sid||!ev.assignee));const act=teamMyActive();
+  const mine=TEAM.events.filter(ev=>teamVisible(ev)&&teamOccursOn(ev,iso)&&(ev.assignee===sid||!ev.assignee));const act=teamMyActive();
   let h='<div class="team-cal-head"><b>Today · '+esc(fmtDate(iso))+'</b><span class="sp" style="flex:1"></span><button class="btn-sm solid" onclick="teamNewEvent(\''+iso+'\')">＋ Add task</button></div>';
   if(act)h+='<div class="team-clockbar on"><span class="tcb-dot"></span><span class="tcb-txt">Working on '+esc(act.title)+' · <span data-livetimer="'+act.startAt+'" class="team-timer-live">0:00</span></span><span class="tcb-sp"></span><button class="btn-sm btn-danger" onclick="teamTimerStop(false)">⏹ Stop</button><button class="btn-sm solid" onclick="teamTimerStop(true)">✓ Done</button></div>';
   const tasks=mine.filter(e=>e.kind==='task'),events=mine.filter(e=>e.kind==='event');
@@ -23301,7 +23308,7 @@ function teamPrioChip(p){const m=teamPrioMeta(p);return '<span class="team-chip"
 function teamDeadlineChip(iso){if(!iso)return '';const today=todayISO();const over=iso<today;const soon=iso<=addDaysISO(today,2);return '<span class="team-chip" style="'+(over?'color:var(--red);border-color:var(--red)':soon?'color:var(--gold);border-color:var(--gold)':'')+'">📅 '+esc(fmtDate(iso))+(over?' · overdue':'')+'</span>';}
 function teamStaffNameById(id){if(!id||id==='owner')return (typeof OWNER_NAME!=='undefined'?OWNER_NAME:'Owner');const s=(TEAM_STAFF||[]).find(x=>x.id===id);if(s)return s.name;const c=(typeof COACHES_CACHE!=='undefined'&&COACHES_CACHE||[]).find(x=>x.id===id);return c?(c.name||'Coach'):id;}
 function teamProjGet(id){return (TEAM.projects||[]).find(p=>p.id===id)||null;}
-function teamProjTasks(pid){return (TEAM.events||[]).filter(e=>e.projectId===pid);}
+function teamProjTasks(pid){return (TEAM.events||[]).filter(e=>e.projectId===pid&&teamVisible(e));}
 function teamProjTopTasks(pid){return teamProjTasks(pid).filter(e=>!e.parentId);}
 function teamTaskSubs(taskId){return (TEAM.events||[]).filter(e=>e.parentId===taskId);}
 function teamTaskIsDone(t){if(!t)return false;if((t.recur||'none')==='none')return t.status==='done';return (t.doneDates||[]).length>0;}
@@ -23448,7 +23455,7 @@ var TEAM_TASK_VIEW='list', TEAM_TASK_SCOPE='team', TEAM_KB=null, TEAM_KB_SUPPRES
 function teamStageColor(s){return {'Backlog':'var(--muted)','To do':'var(--prot)','In progress':'var(--gold)','Review':'#8b5cf6','Done':'var(--good)'}[s]||'var(--muted)';}
 function teamSetTaskView(v){TEAM_TASK_VIEW=v;teamRenderTasks();}
 function teamSetTaskScope(s){TEAM_TASK_SCOPE=s;teamRenderTasks();}
-function teamTasksList(){const sid=teamStaffId();return (TEAM.events||[]).filter(e=>e.kind==='task'&&(TEAM_TASK_SCOPE!=='mine'||!e.assignee||e.assignee===sid));}
+function teamTasksList(){const sid=teamStaffId();return (TEAM.events||[]).filter(e=>e.kind==='task'&&teamVisible(e)&&(TEAM_TASK_SCOPE!=='mine'||!e.assignee||e.assignee===sid));}
 function teamTaskOpen(id){const ev=TEAM.events.find(e=>e.id===id);teamTab('calendar');teamOpenEventDetail(id,(ev&&ev.date)||todayISO());}
 function teamNewTaskFromTab(){teamTab('calendar');teamNewEvent();}
 function teamTaskMetaChips(ev){const proj=ev.projectId?teamProjGet(ev.projectId):null;let s=teamPrioChip(ev.priority);
