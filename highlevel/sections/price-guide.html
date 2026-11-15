@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-version="v2026-11-15d">
+<html lang="en" data-version="v2026-11-16a">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -860,7 +860,7 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
         <div class="prow"><span class="k">Onboarding <small>(one-time)</small></span><span class="v" id="pc-onboard">$200</span></div>
         <div class="prow"><span class="k">Weekly coaching</span><span class="v" id="pc-weekly">$125<small>/wk</small></span></div>
         <div class="prow"><span class="k" id="pc-weeks-k">Coaching (16 wks)</span><span class="v" id="pc-coaching">$2,000</span></div>
-        <label class="vsl-toggle"><input type="checkbox" id="vsl-chk" onchange="renderPricing();renderFinal();renderWait();">
+        <label class="vsl-toggle" id="vsl-toggle"><input type="checkbox" id="vsl-chk" onchange="renderPricing();renderFinal();renderWait();">
           <span><span class="lt" id="vsl-lt">Completed the strategy call / VSL — $500 off</span><br><span class="ls">Discount applies to coaching only, spread across the commitment.</span></span></label>
         <div class="total-row"><span class="k">Total plan cost</span><span class="v" id="pc-total">$2,200</span></div>
         <div class="save-note" id="pc-save" style="display:none"></div>
@@ -1111,10 +1111,12 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
           <label>Typical sessions / mo<input type="number" id="adm-ptmonth" min="0" step="1"></label>
         </div>
         <div class="admin-note" id="adm-margin" style="color:var(--green)"></div>
-        <div class="admin-sec">Returning-member loyalty discount</div>
+        <div class="admin-sec">Returning-member reactivation offer</div>
         <div class="admin-row">
-          <label>Loyalty % off coaching<input type="number" id="adm-olddisc" min="0" max="100" step="1"></label>
+          <label>$ credit (split across program)<input type="number" id="adm-reactcredit" min="0" step="50"></label>
+          <label>Free bounce-back weeks<input type="number" id="adm-reactweeks" min="0" step="1"></label>
         </div>
+        <div class="admin-note">Returning members: credit off coaching + free foundation weeks. Onboarding &amp; the 16-week commitment still apply. (No % discount, no VSL checkbox for them.)</div>
         <div class="admin-sec">Alt-plan prices ($) — Momentum &amp; Blueprint</div>
         <div class="admin-row">
           <label>Momentum $/month<input type="number" id="adm-mommonthly" min="0" step="5"></label>
@@ -1241,7 +1243,7 @@ async function sbDelete(table,id){await sec('table.delete',{table,id});}
 
 /* ═══════════ PRICING CONFIG ═══════════ */
 const DEFAULT_CFG={onboard:200,weekly:125,weeks:16,vsl:500,one2one:50,ptRate:80,ptPerWeek:3,ptDeliverCost:15,ptMonth:8,wasteMonthly:120,rewardPct:20,
-  oldDiscPct:10, momMonthly:150, bpPrice:500, bpMonths:6,
+  momMonthly:150, bpPrice:500, bpMonths:6, reactCredit:500, reactFreeWeeks:4,
   fb1Title:'Momentum Plan',fb1Desc:'Our full app + community on your own schedule, with a once-a-month check-in from your coach. More freedom, lower cost — less hands-on than full coaching.',fb1Bullets:'Full app + community access\nOnce-a-month 1:1 follow-up\nYour training & nutrition in the app\nLighter updates than full coaching\nCancel anytime',fb1Cta:'Start Momentum →',fb1Url:'',
   fb2Title:'6-Month Blueprint',fb2Desc:'We design your complete 6-month training + nutrition plan up front and load it into the app with your allocation. Yours to run independently — no check-ins, no ongoing updates.',fb2Bullets:'Your full 6-month plan, built up front\nTraining + nutrition, done for you\nApp access with your allocation\nNo follow-ups or updates\nOne-time payment',fb2Cta:'Get the Blueprint →',fb2Url:''};
 const CFG_TXT=['fb1Title','fb1Desc','fb1Bullets','fb1Cta','fb1Url','fb2Title','fb2Desc','fb2Bullets','fb2Cta','fb2Url'];
@@ -1253,7 +1255,7 @@ function loadCFG(){
   let c={...DEFAULT_CFG};
   try{const s=JSON.parse(localStorage.getItem('s2s_cfg2'));if(s)c={...c,...s};}catch(e){}
   const p=new URLSearchParams(location.search);
-  ['onboard','weekly','weeks','vsl','one2one','ptRate','ptPerWeek','wasteMonthly','rewardPct','oldDiscPct','momMonthly','bpPrice','bpMonths'].forEach(k=>{if(p.has(k))c[k]=clampN(p.get(k),0,99999);});
+  ['onboard','weekly','weeks','vsl','one2one','ptRate','ptPerWeek','wasteMonthly','rewardPct','momMonthly','bpPrice','bpMonths','reactCredit','reactFreeWeeks'].forEach(k=>{if(p.has(k))c[k]=clampN(p.get(k),0,99999);});
   return c;
 }
 let CFG=loadCFG();
@@ -1268,7 +1270,7 @@ async function loadCloud(){
   try{
     const rows=await sbGet('pricing_config?id=eq.1&select=data');
     const d=rows&&rows[0]&&rows[0].data;
-    if(d){['onboard','weekly','weeks','vsl','one2one','ptRate','ptPerWeek','ptDeliverCost','ptMonth','wasteMonthly','rewardPct','oldDiscPct','momMonthly','bpPrice','bpMonths'].forEach(k=>{if(typeof d[k]==='number')CFG[k]=d[k];});CFG_TXT.forEach(k=>{if(typeof d[k]==='string')CFG[k]=d[k];});saveCFG();}
+    if(d){['onboard','weekly','weeks','vsl','one2one','ptRate','ptPerWeek','ptDeliverCost','ptMonth','wasteMonthly','rewardPct','momMonthly','bpPrice','bpMonths','reactCredit','reactFreeWeeks'].forEach(k=>{if(typeof d[k]==='number')CFG[k]=d[k];});CFG_TXT.forEach(k=>{if(typeof d[k]==='string')CFG[k]=d[k];});saveCFG();}
   }catch(e){}
   renderPricing();
 }
@@ -1332,22 +1334,30 @@ function renderSolutions(){
 }
 
 /* ═══════════ PRICING (guide) ═══════════ */
-function loyaltyOn(){return CLIENT_MODE==='returning'&&Number(CFG.oldDiscPct)>0;}
+function isReturning(){return CLIENT_MODE==='returning';}
 function pricing(vslOn){
   const coachingFull=CFG.weekly*CFG.weeks;
-  let coaching=vslOn?Math.max(0,coachingFull-CFG.vsl):coachingFull;
-  let loyaltyOff=0;
-  if(loyaltyOn()){loyaltyOff=Math.round(coaching*Number(CFG.oldDiscPct)/100);coaching=Math.max(0,coaching-loyaltyOff);}
+  let coaching=coachingFull, creditOff=0, creditLabel='';
+  if(isReturning()){
+    // Reactivation: a $credit split across the program. Onboarding + the full commitment still apply.
+    creditOff=Math.min(coachingFull,Number(CFG.reactCredit)||0);
+    coaching=coachingFull-creditOff; creditLabel='reactivation credit';
+  } else if(vslOn){
+    creditOff=Math.min(coachingFull,CFG.vsl);
+    coaching=coachingFull-creditOff; creditLabel='voucher';
+  }
   const effWeekly=coaching/CFG.weeks;
   const nPay=4, coachingPer=coaching/nPay;
-  return {coachingFull,coaching,effWeekly,total:CFG.onboard+coaching,nPay,coachingPer,p1:CFG.onboard+coachingPer,loyaltyOff};
+  return {coachingFull,coaching,effWeekly,total:CFG.onboard+coaching,nPay,coachingPer,p1:CFG.onboard+coachingPer,creditOff,creditLabel};
 }
 function renderPricing(){
-  const vslOn=(document.getElementById('vsl-chk')||{}).checked||false;
+  const vslOn=isReturning()?false:((document.getElementById('vsl-chk')||{}).checked||false);
   const pr=pricing(vslOn);
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.innerHTML=v;};
+  // returning members get the reactivation offer, not the VSL voucher — hide that checkbox for them
+  const vtog=document.getElementById('vsl-toggle');if(vtog)vtog.style.display=isReturning()?'none':'';
   set('pc-onboard',money(CFG.onboard));
-  set('pc-weekly',money(vslOn?pr.effWeekly:CFG.weekly)+'<small>/wk</small>');
+  set('pc-weekly',money(pr.creditOff>0?pr.effWeekly:CFG.weekly)+'<small>/wk</small>');
   set('pc-weeks-k','Coaching ('+CFG.weeks+' wks)');
   set('pc-coaching',money(pr.coaching));
   set('pc-total',money(pr.total));
@@ -1355,17 +1365,17 @@ function renderPricing(){
   const vlt=document.getElementById('vsl-lt');if(vlt)vlt.textContent='Completed the strategy call / VSL — '+money(CFG.vsl)+' off';
   // rewards + discount summary on the price page
   const pr2=document.getElementById('pc-reward');if(pr2)pr2.textContent=money(REWARDS.redeemLimit*REWARDS.perPoint);
-  // loyalty (returning members) note on the plan card
+  // returning-member reactivation note on the plan card
   const loy=document.getElementById('pc-loyalty');
-  if(loy){if(loyaltyOn()&&pr.loyaltyOff>0){loy.style.display='';loy.innerHTML='🔁 Welcome-back loyalty — <b>'+CFG.oldDiscPct+'% off</b> coaching ('+money(pr.loyaltyOff)+' off), already in your total.';}else loy.style.display='none';}
+  if(loy){if(isReturning()){loy.style.display='';loy.innerHTML='🔁 Reactivation — <b>'+money(pr.creditOff)+' credit</b> split across your program'+(Number(CFG.reactFreeWeeks)>0?(' + <b>'+CFG.reactFreeWeeks+' weeks free</b> foundation coaching'):'')+'.';}else loy.style.display='none';}
   const dh=document.getElementById('pc-disc-h'), dt=document.getElementById('pc-disc-txt');
   if(dh&&dt){
-    if(loyaltyOn()){dh.textContent='🔁 Returning-member loyalty';dt.innerHTML='Welcome back — <b>'+CFG.oldDiscPct+'% off</b> your coaching'+(pr.loyaltyOff>0?(' ('+money(pr.loyaltyOff)+' off)'):'')+', as a thank-you for restarting with us.';}
+    if(isReturning()){dh.textContent='🔁 Welcome-back reactivation offer';dt.innerHTML='Restart with us: a <b>'+money(CFG.reactCredit)+' credit</b> split across your program'+(Number(CFG.reactFreeWeeks)>0?(', plus a <b>'+CFG.reactFreeWeeks+'-week free foundation</b> period of full coaching to bounce back'):'')+'. Onboarding and your '+CFG.weeks+'-week commitment still apply.';}
     else if(vslOn){dh.textContent='🎟️ Discount applied';dt.innerHTML='✓ Your <b>'+money(CFG.vsl)+' strategy-call voucher</b> is applied — coaching discounted, spread across the plan.';}
     else{dh.textContent='🎟️ Strategy-call discount';dt.innerHTML='Complete your strategy call / VSL for <b>'+money(CFG.vsl)+' off</b> your coaching.';}
   }
   const saveEl=document.getElementById('pc-save');
-  if(saveEl){if(vslOn){saveEl.style.display='';saveEl.textContent='You save '+money(CFG.vsl)+' — effective '+money(pr.effWeekly)+'/wk';}else saveEl.style.display='none';}
+  if(saveEl){if(pr.creditOff>0){saveEl.style.display='';saveEl.textContent='You save '+money(pr.creditOff)+' — effective '+money(pr.effWeekly)+'/wk';}else saveEl.style.display='none';}
   set('sched-t','Payment plan — '+pr.nPay+' payments (every '+(CFG.weeks/pr.nPay)+' weeks)');
   let h='';
   for(let i=1;i<=pr.nPay;i++){
@@ -1453,7 +1463,7 @@ function selectWait(m){WAIT_MONTHS=m;renderWait();}
 function renderWait(){
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   const W=CFG.weeks||16, m=WAIT_MONTHS;
-  const vslOn=(document.getElementById('vsl-chk')||{}).checked||false;
+  const vslOn=isReturning()?false:((document.getElementById('vsl-chk')||{}).checked||false);
   const pr=pricing(vslOn), allIn=ourAllIn(vslOn), hasAddon=o2oAddon()>0;
   // 1 — broken down small (program + any hands-on added, so it matches the comparison)
   set('wo-total',money(allIn));
@@ -1469,7 +1479,7 @@ function renderWait(){
   set('wo-s2s-l',o2oAddon()>0?'The S2S Hybrid — program + hands-on':'The S2S Hybrid — done & yours to keep');
   set('wo-save',money(save));
   let vtxt=vslOn?('your '+money(CFG.vsl)+' voucher is already applied, '):'';
-  if(loyaltyOn()&&pr.loyaltyOff>0)vtxt='your '+CFG.oldDiscPct+'% loyalty discount is already applied, ';
+  if(isReturning()&&pr.creditOff>0)vtxt='your '+money(CFG.reactCredit)+' reactivation credit is already applied, ';
   set('wo-voucher',vtxt);
   // 5 — rewards (real points system from the portal): max redeemable = 25,000 pts × $0.01 = $250
   const maxReward=REWARDS.redeemLimit*REWARDS.perPoint;
@@ -1507,11 +1517,13 @@ function renderPlanGrid(){
   const el=document.getElementById('plan-grid');if(!el)return;
   const W=CFG.weeks||16;
   const mom=esc(CFG.fb1Title||'Momentum'), bp=esc(CFG.fb2Title||'Blueprint');
-  // Online Coaching investment reflects the SAME discounted total shown everywhere else (loyalty + VSL voucher)
-  const vslOn=(document.getElementById('vsl-chk')||{}).checked||false;
+  // Online Coaching investment reflects the SAME discounted total shown everywhere else (reactivation credit / VSL voucher)
+  const vslOn=isReturning()?false:((document.getElementById('vsl-chk')||{}).checked||false);
   const pr=pricing(vslOn);
   let onlineInvest=money(pr.total)+' total · '+W+' wks';
-  const disc=[]; if(loyaltyOn()&&pr.loyaltyOff>0)disc.push(CFG.oldDiscPct+'% loyalty'); if(vslOn&&CFG.vsl>0)disc.push(money(CFG.vsl)+' voucher');
+  const disc=[];
+  if(isReturning()&&pr.creditOff>0){disc.push(money(CFG.reactCredit)+' credit');if(Number(CFG.reactFreeWeeks)>0)disc.push(CFG.reactFreeWeeks+' wks free');}
+  else if(vslOn&&CFG.vsl>0)disc.push(money(CFG.vsl)+' voucher');
   if(disc.length)onlineInvest+='<span class="pg-disc">'+disc.join(' + ')+' applied</span>';
   const cols=[
     {name:'Online Coaching',tag:'Best results',cls:'rec'},
@@ -1667,7 +1679,8 @@ async function openAdmin(){
   document.getElementById('adm-ptweek').value=CFG.ptPerWeek;
   document.getElementById('adm-ptcost').value=CFG.ptDeliverCost;
   document.getElementById('adm-ptmonth').value=CFG.ptMonth;
-  document.getElementById('adm-olddisc').value=CFG.oldDiscPct;
+  document.getElementById('adm-reactcredit').value=CFG.reactCredit;
+  document.getElementById('adm-reactweeks').value=CFG.reactFreeWeeks;
   document.getElementById('adm-mommonthly').value=CFG.momMonthly;
   document.getElementById('adm-bpprice').value=CFG.bpPrice;
   document.getElementById('adm-bpmonths').value=CFG.bpMonths;
@@ -1689,7 +1702,8 @@ function livePricing(){
   CFG.ptPerWeek=clampN(document.getElementById('adm-ptweek').value,0,21);
   CFG.ptDeliverCost=clampN(document.getElementById('adm-ptcost').value,0,99999);
   CFG.ptMonth=clampN(document.getElementById('adm-ptmonth').value,0,200);
-  CFG.oldDiscPct=clampN(document.getElementById('adm-olddisc').value,0,100);
+  CFG.reactCredit=clampN(document.getElementById('adm-reactcredit').value,0,99999);
+  CFG.reactFreeWeeks=clampN(document.getElementById('adm-reactweeks').value,0,52);
   CFG.momMonthly=clampN(document.getElementById('adm-mommonthly').value,0,99999);
   CFG.bpPrice=clampN(document.getElementById('adm-bpprice').value,0,99999);
   CFG.bpMonths=clampN(document.getElementById('adm-bpmonths').value,1,60);
@@ -1719,10 +1733,10 @@ function renderMargin(){
 }
 function resetPricing(){CFG={...DEFAULT_CFG};saveCFG();openAdmin();renderPricing();syncURL();}
 function syncURL(){try{const p=new URLSearchParams(location.search);
-  ['onboard','weekly','weeks','vsl','one2one','ptRate','ptPerWeek','wasteMonthly','rewardPct','oldDiscPct','momMonthly','bpPrice','bpMonths'].forEach(k=>{CFG[k]!==DEFAULT_CFG[k]?p.set(k,CFG[k]):p.delete(k);});
+  ['onboard','weekly','weeks','vsl','one2one','ptRate','ptPerWeek','wasteMonthly','rewardPct','momMonthly','bpPrice','bpMonths','reactCredit','reactFreeWeeks'].forEach(k=>{CFG[k]!==DEFAULT_CFG[k]?p.set(k,CFG[k]):p.delete(k);});
   const qs=p.toString();history.replaceState(null,'',location.pathname+(qs?'?'+qs:'')+location.hash);}catch(e){}}
 function copyAdminLink(){const p=new URLSearchParams();
-  ['onboard','weekly','weeks','vsl','one2one','ptRate','ptPerWeek','wasteMonthly','rewardPct','oldDiscPct','momMonthly','bpPrice','bpMonths'].forEach(k=>{if(CFG[k]!==DEFAULT_CFG[k])p.set(k,CFG[k]);});
+  ['onboard','weekly','weeks','vsl','one2one','ptRate','ptPerWeek','wasteMonthly','rewardPct','momMonthly','bpPrice','bpMonths','reactCredit','reactFreeWeeks'].forEach(k=>{if(CFG[k]!==DEFAULT_CFG[k])p.set(k,CFG[k]);});
   const qs=p.toString(),url=location.href.split('#')[0].split('?')[0]+(qs?'?'+qs:'');
   const b=document.getElementById('adm-copy');
   const fallback=()=>{try{prompt('Copy this link:',url);}catch(e){const m=document.getElementById('adm-cloudmsg');if(m){m.textContent=url;m.style.color='var(--text)';}}};
@@ -1737,7 +1751,7 @@ async function saveCloud(){
 }
 async function mergeCfg(){
   let cur={};try{const r=await sbGet('pricing_config?id=eq.1&select=data');cur=(r[0]&&r[0].data)||{};}catch(e){}
-  const out={...cur,onboard:CFG.onboard,weekly:CFG.weekly,weeks:CFG.weeks,vsl:CFG.vsl,one2one:CFG.one2one,ptRate:CFG.ptRate,ptPerWeek:CFG.ptPerWeek,ptDeliverCost:CFG.ptDeliverCost,ptMonth:CFG.ptMonth,wasteMonthly:CFG.wasteMonthly,rewardPct:CFG.rewardPct,oldDiscPct:CFG.oldDiscPct,momMonthly:CFG.momMonthly,bpPrice:CFG.bpPrice,bpMonths:CFG.bpMonths};
+  const out={...cur,onboard:CFG.onboard,weekly:CFG.weekly,weeks:CFG.weeks,vsl:CFG.vsl,one2one:CFG.one2one,ptRate:CFG.ptRate,ptPerWeek:CFG.ptPerWeek,ptDeliverCost:CFG.ptDeliverCost,ptMonth:CFG.ptMonth,wasteMonthly:CFG.wasteMonthly,rewardPct:CFG.rewardPct,momMonthly:CFG.momMonthly,bpPrice:CFG.bpPrice,bpMonths:CFG.bpMonths,reactCredit:CFG.reactCredit,reactFreeWeeks:CFG.reactFreeWeeks};
   CFG_TXT.forEach(k=>out[k]=CFG[k]);return out;
 }
 
@@ -2019,7 +2033,7 @@ async function delClient(id){if(!confirm('Delete this client record?'))return;tr
 
 /* ----- admin triggers ----- */
 function initAdmin(){
-  ['adm-onboard','adm-weekly','adm-weeks','adm-vsl','adm-o2o','adm-ptrate','adm-ptweek','adm-ptcost','adm-ptmonth','adm-olddisc','adm-mommonthly','adm-bpprice','adm-bpmonths','adm-fb1title','adm-fb1desc','adm-fb1bul','adm-fb1cta','adm-fb1url','adm-fb2title','adm-fb2desc','adm-fb2bul','adm-fb2cta','adm-fb2url'].forEach(id=>{const e=document.getElementById(id);if(e)e.addEventListener('input',livePricing);});
+  ['adm-onboard','adm-weekly','adm-weeks','adm-vsl','adm-o2o','adm-ptrate','adm-ptweek','adm-ptcost','adm-ptmonth','adm-reactcredit','adm-reactweeks','adm-mommonthly','adm-bpprice','adm-bpmonths','adm-fb1title','adm-fb1desc','adm-fb1bul','adm-fb1cta','adm-fb1url','adm-fb2title','adm-fb2desc','adm-fb2bul','adm-fb2cta','adm-fb2url'].forEach(id=>{const e=document.getElementById(id);if(e)e.addEventListener('input',livePricing);});
   let taps=0,timer=null;
   document.getElementById('admin-hotspot').addEventListener('click',()=>{taps++;clearTimeout(timer);timer=setTimeout(()=>taps=0,2500);if(taps>=5){taps=0;openAdmin();}});
   document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(e.key==='E'||e.key==='e')){e.preventDefault();openAdmin();}});
