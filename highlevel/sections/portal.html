@@ -956,8 +956,8 @@ body{overflow-x:hidden}
 .ed-tab:hover{color:var(--text)}
 .ed-tab.active{background:var(--red);border-color:var(--red);color:#fff}
 /* Client-switcher side rail inside the editor — jump between client profiles without going back to the dashboard */
-#admin-editor.has-switch{display:grid;grid-template-columns:230px minmax(0,1fr);gap:16px;align-items:start}
-#admin-editor.has-switch>#ed-switch{grid-column:1;grid-row:1 / 9999}
+#admin-editor.has-switch{display:grid;grid-template-columns:230px minmax(0,1fr);column-gap:16px;row-gap:0;align-items:start}
+#admin-editor.has-switch>#ed-switch{grid-column:1;grid-row:1 / 200}
 #admin-editor.has-switch>:not(#ed-switch){grid-column:2;min-width:0}
 #ed-switch{position:sticky;top:6px;align-self:start;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:10px;max-height:calc(100dvh - 120px);display:flex;flex-direction:column;gap:8px}
 #ed-switch .edsw-head{font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.03em;font-size:12.5px;color:var(--muted);padding:2px 4px;display:flex;align-items:center;gap:6px}
@@ -7042,7 +7042,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04rz';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04sa';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -25763,7 +25763,9 @@ async function edRenderSwitchRail(){
   }).join(''):'<div class="edsw-none">'+(q?'No clients match.':'No clients yet.')+'</div>';
   try{const act=host.querySelector('.edsw-row.active');if(act&&!q)act.scrollIntoView({block:'nearest'});}catch(e){}
 }
-async function edSwitchTo(id){if(!id||(edClient&&id===edClient.id))return;const t=(typeof ED_TAB!=='undefined')?ED_TAB:'client';await editClient(id);if(t&&t!=='client'){try{edTab(t);}catch(e){}}try{const _mb=$('admin').querySelector('.modal-body');if(_mb)_mb.scrollTop=0;}catch(e){}}
+async function edSwitchTo(id){if(!id||(edClient&&id===edClient.id))return;const t=(typeof ED_TAB!=='undefined')?ED_TAB:'client';await editClient(id);if(t&&t!=='client'){try{edTab(t);}catch(e){}}try{edScrollEditorTop();}catch(e){}}
+/* reset the admin editor to the top — #admin (the .overlay) is the scroller (overflow-y:auto), with .modal-body + window as fallbacks; run now and after layout */
+function edScrollEditorTop(){const z=()=>{try{const a=$('admin');if(a)a.scrollTop=0;const m=a&&a.querySelector('.modal-body');if(m)m.scrollTop=0;const ed=$('admin-editor');if(ed&&ed.scrollTo)ed.scrollTop=0;try{window.scrollTo(0,0);}catch(e){}}catch(e){}};z();setTimeout(z,0);setTimeout(z,60);}
 /* Traffic-light risk status per client: none → 🟢 → 🟡 → 🔴 → none. Saved to the plan (internal). */
 async function ovCycleTraffic(ev,clientId){
   if(ev){if(ev.stopPropagation)ev.stopPropagation();if(ev.preventDefault)ev.preventDefault();}
@@ -25918,7 +25920,7 @@ function fillEditor(plan){
   edRenderDayTypes();edRenderSchedule();edRenderSupps();clearSuppForm();
   edRenderGoals();edRenderGoalPlan();edRenderTraining();edRenderSop('nutrition');edRenderClientSections();edRenderNotes();edRenderHabits();edTasksInit();edRenderDocs();edRenderVersions('training','ed-tr-history',true);edRenderVersions('nutrition','ed-nutri-history',true);try{availRerender('admin');}catch(e){}loadOnboardTpl().then(()=>edRenderOnboardBadge());edRenderOnboardBadge();try{edRenderOnbStages();}catch(e){}edRenderPauseBtn();try{edRenderArchiveBtn();}catch(e){}try{edRenderSwitchRail();}catch(e){}ED_CLIMB_LOADED_ID=null;try{edWmRender();edWmLoadCfg();}catch(e){}try{edMpRender();edMpLoadCfg();}catch(e){}try{edCustLoad();}catch(e){}edTab('client');
   renderAuditAdmin(edClient&&edClient.created_at?edClient.id:null);
-  try{const _mb=$('admin').querySelector('.modal-body');if(_mb)_mb.scrollTop=0;}catch(e){}   // open every client from the top (no leftover scroll from the list / previous client)
+  try{edScrollEditorTop();}catch(e){}   // open every client from the top — #admin (overlay) is the scroll container, not .modal-body
   DB.listClients().then(cs=>{const others=cs.filter(c=>c.id!==edClient.id);$('ed-dupe').innerHTML='<option value="">— select a client —</option>'+others.map(c=>'<option value="'+c.id+'">'+esc(c.name||c.email)+'</option>').join('');});
 }
 
