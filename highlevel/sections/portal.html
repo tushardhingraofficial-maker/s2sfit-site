@@ -5174,6 +5174,7 @@ img,svg,canvas,video{max-width:100%}
               <span class="sp"></span><span class="pill" id="tasks-count"></span>
               <button class="btn-sm solid" style="margin-left:8px" onclick="toggleTaskForm()">＋ Add task</button></div>
               <div class="card-body">
+                <div id="gcal-bar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--card2);border:1px solid var(--border);border-radius:11px;padding:9px 12px;margin-bottom:12px"></div>
                 <div id="task-form" class="hidden" style="background:var(--card2);border:1px solid var(--border);border-radius:11px;padding:12px;margin-bottom:12px">
                   <input id="tk-editid" type="hidden">
                   <div class="uline" id="tk-form-title" style="margin:0 0 8px">New task</div>
@@ -7022,6 +7023,7 @@ const VAPID_PUBLIC  = 'BFYyDtgiEsQ1cGZLNnmkt9nSYXz-fytzBWviiPw0GGD81DjANCXktL9zs
 const TRIAGE_URL    = 'https://iiaqezfiqkonajqqcrcj.supabase.co/functions/v1/s2s-checkin-triage';
 /* AI weekly coach performance report (owner → weekend head-coach briefing). */
 const PERF_URL      = 'https://iiaqezfiqkonajqqcrcj.supabase.co/functions/v1/s2s-perf-report';
+const GCAL_URL      = 'https://iiaqezfiqkonajqqcrcj.supabase.co/functions/v1/s2s-gcal';
 /* Demo-only fallback admin password (used when API_URL is blank; the real one lives
    as a secret inside the Edge Function in secure mode). */
 const ADMIN_PASSWORD    = 'demo-only';   // demo mode (this device) only — the live owner password is the ADMIN_PASSWORD secret on super-api; never put it here
@@ -7033,7 +7035,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04ro';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04rp';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -22488,6 +22490,39 @@ function gcalTaskFromDp(id){const t=(TASKS||[]).find(x=>x.id===id);if(!t){toast(
   gcalOpenEvent(t.title,t.due_date,det,t.recurrence,t.recur_days);}
 function gcalTaskFromTeam(id){const ev=((typeof TEAM!=='undefined'&&TEAM&&TEAM.events)||[]).find(e=>e.id===id);if(!ev){toast('Task not found',true);return;}
   gcalOpenEvent(ev.title,ev.deadline,ev.notes,ev.recur,ev.recurDays||ev.recur_days);}
+/* ── Direct Google link (OAuth): coach connects once, tasks/events sync to Google Calendar + Tasks ── */
+function gcalCoachId(){try{return (typeof teamStaffId==='function')?teamStaffId():((typeof COACH!=='undefined'&&COACH&&COACH.id)||'owner');}catch(e){return 'owner';}}
+async function gcalApi(route,body){
+  const r=await fetch(GCAL_URL+route,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(DB.token||'')},body:JSON.stringify(body||{})});
+  return r.json().catch(()=>({}));
+}
+let GCAL_CONN=null;
+async function gcalRenderBar(){
+  const bar=$('gcal-bar');if(!bar)return;
+  if(DB.mode!=='api'){bar.style.display='none';return;}
+  bar.style.display='flex';
+  bar.innerHTML='<span style="font-size:16px">📅</span><span class="small" style="color:var(--muted)">Checking Google…</span>';
+  let st={};try{st=await gcalApi('/status',{coach_id:gcalCoachId()});}catch(e){st={error:1};}
+  GCAL_CONN=st||{};
+  if(st&&st.connected){
+    bar.innerHTML='<span style="font-size:16px">📅</span><span class="small" style="flex:1;min-width:120px">Google connected'+(st.email?' · <b>'+esc(st.email)+'</b>':'')+'</span>'+
+      '<button class="btn-xxs" onclick="gcalDisconnect()">Disconnect</button>';
+  }else{
+    bar.innerHTML='<span style="font-size:16px">📅</span><span class="small" style="flex:1;min-width:120px;color:var(--muted)">Sync your tasks &amp; events to Google Calendar + Tasks</span>'+
+      '<button class="btn-sm solid" style="flex:none" onclick="gcalConnect()">Connect Google</button>';
+  }
+}
+async function gcalConnect(){
+  if(DB.mode!=='api'){toast('Available on the live app only',true);return;}
+  const r=await gcalApi('/begin',{coach_id:gcalCoachId()});
+  if(r&&r.authUrl){try{window.open(r.authUrl,'_blank','noopener');}catch(e){location.href=r.authUrl;}toast('Opening Google…');}
+  else toast((r&&r.error)||'Could not start Google connect',true);
+}
+async function gcalDisconnect(){
+  if(!confirm('Disconnect Google? Your tasks will stop syncing. Entries already in your Google Calendar/Tasks stay as they are.'))return;
+  await gcalApi('/disconnect',{coach_id:gcalCoachId()});toast('Google disconnected');gcalRenderBar();
+}
+try{window.addEventListener('message',function(ev){try{if(ev&&ev.data&&ev.data.s2sGcal==='connected'){toast('✅ Google connected');gcalRenderBar();}}catch(e){}});}catch(e){}
 async function renderTasks(){
   const host=$('tasks-host');if(!host)return;
   try{TASKS=await DB.listTasks();}catch(e){host.innerHTML='<div class="empty">Could not load tasks.</div>';return;}
@@ -22535,6 +22570,7 @@ async function renderTasks(){
     if(done.length){dWrap.style.display='';dHost.innerHTML=done.map(row).join('');if(dCnt)dCnt.textContent='('+done.length+')';}
     else{dWrap.style.display='none';dHost.innerHTML='';if(dCnt)dCnt.textContent='';}
   }
+  try{gcalRenderBar();}catch(e){}
 }
 let TK_DAYS=[];   // getDay() numbers: 0=Sun .. 6=Sat
 const TK_WK7=[['Mon',1],['Tue',2],['Wed',3],['Thu',4],['Fri',5],['Sat',6],['Sun',0]];
