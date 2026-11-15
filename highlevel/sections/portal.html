@@ -7035,7 +7035,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04rp';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04rq';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -22503,7 +22503,7 @@ async function gcalRenderBar(){
   bar.style.display='flex';
   bar.innerHTML='<span style="font-size:16px">📅</span><span class="small" style="color:var(--muted)">Checking Google…</span>';
   let st={};try{st=await gcalApi('/status',{coach_id:gcalCoachId()});}catch(e){st={error:1};}
-  GCAL_CONN=st||{};
+  GCAL_CONN=st||{};GCAL_STATUS_AT=Date.now();
   if(st&&st.connected){
     bar.innerHTML='<span style="font-size:16px">📅</span><span class="small" style="flex:1;min-width:120px">Google connected'+(st.email?' · <b>'+esc(st.email)+'</b>':'')+'</span>'+
       '<button class="btn-xxs" onclick="gcalDisconnect()">Disconnect</button>';
@@ -22522,7 +22522,39 @@ async function gcalDisconnect(){
   if(!confirm('Disconnect Google? Your tasks will stop syncing. Entries already in your Google Calendar/Tasks stay as they are.'))return;
   await gcalApi('/disconnect',{coach_id:gcalCoachId()});toast('Google disconnected');gcalRenderBar();
 }
-try{window.addEventListener('message',function(ev){try{if(ev&&ev.data&&ev.data.s2sGcal==='connected'){toast('✅ Google connected');gcalRenderBar();}}catch(e){}});}catch(e){}
+try{window.addEventListener('message',function(ev){try{if(ev&&ev.data&&ev.data.s2sGcal==='connected'){toast('✅ Google connected');gcalRenderBar();gcalSyncTasks(true);gcalSyncEvents(true);}}catch(e){}});}catch(e){}
+/* ── Auto-push: reconcile portal tasks → Google Tasks, team events → Google Calendar.
+   We send the FULL current set each time so the server can delete what's gone (present=keep, absent=deleted). ── */
+let GCAL_STATUS_AT=0, GCAL_SYNC_LAST={tasks:0,events:0}, GCAL_SYNC_SIG={tasks:'',events:''};
+function gcalConnected(){return !!(GCAL_CONN&&GCAL_CONN.connected);}
+async function gcalEnsureStatus(){
+  if(GCAL_CONN&&(Date.now()-GCAL_STATUS_AT<300000))return GCAL_CONN;
+  try{GCAL_CONN=await gcalApi('/status',{coach_id:gcalCoachId()});GCAL_STATUS_AT=Date.now();}catch(e){}
+  return GCAL_CONN;
+}
+async function gcalSyncTasks(force){
+  if(DB.mode!=='api')return;
+  await gcalEnsureStatus();if(!gcalConnected())return;
+  try{
+    const items=(TASKS||[]).filter(t=>t&&t.id).map(t=>({id:t.id,title:t.title,details:t.details,client_name:t.client_name,due_date:(/^\d{4}-\d{2}-\d{2}$/.test(t.due_date||'')?t.due_date:null),status:t.status,recurrence:t.recurrence}));
+    const sig=JSON.stringify(items);
+    if(!force&&sig===GCAL_SYNC_SIG.tasks&&(Date.now()-GCAL_SYNC_LAST.tasks<45000))return;
+    GCAL_SYNC_SIG.tasks=sig;GCAL_SYNC_LAST.tasks=Date.now();
+    await gcalApi('/sync',{coach_id:gcalCoachId(),kind:'tasks',items});
+  }catch(e){}
+}
+async function gcalSyncEvents(force){
+  if(DB.mode!=='api')return;
+  await gcalEnsureStatus();if(!gcalConnected())return;
+  try{
+    const src=((typeof TEAM!=='undefined'&&TEAM&&TEAM.events)||[]);
+    const items=src.filter(e=>e&&e.id&&/^\d{4}-\d{2}-\d{2}$/.test(e.date||'')).map(e=>({id:e.id,title:e.title,notes:e.notes,category:e.category,deadline:e.deadline,assigneeName:e.assigneeName,date:e.date,start:e.start,end:e.end,recur:e.recur,recurDays:e.recurDays,until:e.until}));
+    const sig=JSON.stringify(items);
+    if(!force&&sig===GCAL_SYNC_SIG.events&&(Date.now()-GCAL_SYNC_LAST.events<45000))return;
+    GCAL_SYNC_SIG.events=sig;GCAL_SYNC_LAST.events=Date.now();
+    await gcalApi('/sync',{coach_id:gcalCoachId(),kind:'events',items});
+  }catch(e){}
+}
 async function renderTasks(){
   const host=$('tasks-host');if(!host)return;
   try{TASKS=await DB.listTasks();}catch(e){host.innerHTML='<div class="empty">Could not load tasks.</div>';return;}
@@ -22571,6 +22603,7 @@ async function renderTasks(){
     else{dWrap.style.display='none';dHost.innerHTML='';if(dCnt)dCnt.textContent='';}
   }
   try{gcalRenderBar();}catch(e){}
+  try{gcalSyncTasks();}catch(e){}
 }
 let TK_DAYS=[];   // getDay() numbers: 0=Sun .. 6=Sat
 const TK_WK7=[['Mon',1],['Tue',2],['Wed',3],['Thu',4],['Fri',5],['Sat',6],['Sun',0]];
@@ -24186,6 +24219,7 @@ async function teamSave(key){
   const kv=map[key];if(!kv)return;const val=TEAM[key];
   try{await DB.setKV(kv+'_bak',val);}catch(e){}
   try{await DB.setKV(kv,val);}catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);}
+  if(key==='events'){try{if(typeof gcalSyncEvents==='function')gcalSyncEvents();}catch(e){}}
 }
 async function openTeam(){
   if(typeof ADMIN_OK==='undefined'||!ADMIN_OK){toast('Admins only',true);return;}
@@ -24197,6 +24231,7 @@ async function openTeam(){
   try{TEAM_STAFF=await teamStaffList();}catch(e){TEAM_STAFF=[];}
   if(!TEAM_CAL_REF)TEAM_CAL_REF=todayISO();
   teamStartTick();teamRenderClockbar();teamTab(TEAM_TAB||'calendar');
+  try{if(typeof gcalSyncEvents==='function')gcalSyncEvents();}catch(e){}
 }
 function closeTeam(){$('team-modal').classList.remove('open');teamStopTick();}
 function teamTab(name){TEAM_TAB=name;TEAM_FORM=null;
