@@ -7033,7 +7033,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04rl';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04rm';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -18201,6 +18201,8 @@ function edRenderOnboardBadge(){const b=$('ed-onboard-badge');if(!b)return;if(!O
 const ONB_STAGES=[
   {id:'strategy',t:'Fitness strategy call',sub:'Sale · onboarding link sent',who:'Tushar',
     points:['Sale closed & deposit taken','Onboarding link sent to the client','Welcome message sent']},
+  {id:'payment',t:'Payment / Subscription',sub:'Recurring payment · subscription set up',who:'Tushar',
+    points:['Set up the subscription / recurring payment','Confirm the billing amount & cycle','Send payment confirmation to the client']},
   {id:'setup',t:'Setup call',sub:'Set up apps · tracking tasks · 7-Day Priority Planner',who:'Shubham',
     points:['Install & sign into the Transformation Portal','Allocate the daily tracking tasks','Create the client’s 7-Day Priority Planner']},
   {id:'assess',t:'Assessment & expectations call',sub:'Progress panel · profile · goals · expectations',who:'Shubham',
