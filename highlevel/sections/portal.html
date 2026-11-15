@@ -7033,7 +7033,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04rn';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04ro';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -20106,6 +20106,7 @@ function tkTeamRow(ev,compact){const done=tkTeamDone(ev);const pri=ev.priority||
   const cls=compact?'dtask':'task-item';
   return '<div class="'+cls+' pri-'+pri+'"'+(done?' style="opacity:.6"':'')+'><input type="checkbox"'+(done?' checked':'')+' onchange="drawerTeamToggle(\''+ev.id+'\')" style="width:auto;margin-top:'+(compact?'2px':'3px')+'">'+
     '<div style="flex:1;min-width:0"><div style="font-weight:'+(compact?'600':'700')+';overflow-wrap:anywhere'+(done?';text-decoration:line-through;color:var(--muted)':'')+'"><span class="pri-dot '+pri+'" style="margin-right:5px"></span>'+esc(ev.title||'Task')+'</div>'+meta+'</div>'+
+    '<button class="icon-x" style="font-size:15px" title="Add to Google Calendar" onclick="gcalTaskFromTeam(\''+ev.id+'\')">📅</button>'+
     '<button class="icon-x" style="font-size:15px" title="Open in Team & Calendar" onclick="openTeam()">↗</button></div>';}
 /* Toggle a team task from the Tasks panel → updates the shared store + both Tasks views + the open Team modal */
 async function drawerTeamToggle(id){const ev=((typeof TEAM!=='undefined'&&TEAM&&TEAM.events)||[]).find(e=>e.id===id);if(!ev)return;
@@ -22463,6 +22464,30 @@ let TK_AUDIO_MAP={},TK_AUDIO_OK=false;
 async function tkLoadAudio(force){if(TK_AUDIO_OK&&!force)return;try{const v=await DB.getKV('task_audio');TK_AUDIO_MAP=(v&&typeof v==='object'&&!Array.isArray(v))?v:{};TK_AUDIO_OK=true;}catch(e){TK_AUDIO_OK=false;}}
 async function tkSaveAudio(){if(!TK_AUDIO_OK)await tkLoadAudio();if(!TK_AUDIO_OK)return false;try{await DB.setKV('task_audio_bak',TK_AUDIO_MAP);}catch(e){}try{await DB.setKV('task_audio',TK_AUDIO_MAP);return true;}catch(e){return false;}}
 function tkPlayAudio(id){const d=TK_AUDIO_MAP[id];if(!d){toast('No voice note saved',true);return;}try{if(window._tkAud){window._tkAud.pause();}window._tkAud=new Audio(d);window._tkAud.play();toast('▶ Playing voice note');}catch(e){toast('Could not play the clip',true);}}
+/* ── Add a task to Google Calendar — opens a prefilled all-day event the coach just saves (no backend / OAuth) ── */
+function gcalDateStr(iso){return String(iso||'').slice(0,10).replace(/-/g,'');}
+function gcalRRULE(rec,days){
+  if(!rec||rec==='none')return '';
+  if(rec==='daily')return 'RRULE:FREQ=DAILY';
+  if(rec==='weekly')return 'RRULE:FREQ=WEEKLY';
+  if(rec==='monthly')return 'RRULE:FREQ=MONTHLY';
+  if(rec==='days'){const M={0:'SU',1:'MO',2:'TU',3:'WE',4:'TH',5:'FR',6:'SA'};const by=(days||[]).map(d=>M[d]).filter(Boolean);return by.length?('RRULE:FREQ=WEEKLY;BYDAY='+by.join(',')):'RRULE:FREQ=WEEKLY';}
+  return '';
+}
+function gcalOpenEvent(title,dateISO,details,rec,days){
+  let u='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(title||'Task');
+  const iso=String(dateISO||'').slice(0,10);
+  if(/^\d{4}-\d\d-\d\d$/.test(iso)){u+='&dates='+gcalDateStr(iso)+'/'+gcalDateStr(addDaysISO(iso,1));}   // all-day: end date is exclusive (next day)
+  if(details)u+='&details='+encodeURIComponent(details);
+  const rr=gcalRRULE(rec,days);if(rr)u+='&recur='+encodeURIComponent(rr);
+  try{window.open(u,'_blank','noopener,noreferrer');}catch(e){location.href=u;}
+  toast('📅 Opening Google Calendar…');
+}
+function gcalTaskFromDp(id){const t=(TASKS||[]).find(x=>x.id===id);if(!t){toast('Task not found',true);return;}
+  const det=[t.details||'',t.client_name?('Client: '+t.client_name):''].filter(Boolean).join('\n');
+  gcalOpenEvent(t.title,t.due_date,det,t.recurrence,t.recur_days);}
+function gcalTaskFromTeam(id){const ev=((typeof TEAM!=='undefined'&&TEAM&&TEAM.events)||[]).find(e=>e.id===id);if(!ev){toast('Task not found',true);return;}
+  gcalOpenEvent(ev.title,ev.deadline,ev.notes,ev.recur,ev.recurDays||ev.recur_days);}
 async function renderTasks(){
   const host=$('tasks-host');if(!host)return;
   try{TASKS=await DB.listTasks();}catch(e){host.innerHTML='<div class="empty">Could not load tasks.</div>';return;}
@@ -22488,6 +22513,7 @@ async function renderTasks(){
       (t.details?'<div class="small" style="margin-top:2px;white-space:pre-wrap">'+esc(t.details)+'</div>':'')+
       (TK_AUDIO_MAP[t.id]?'<button class="btn-xxs" style="margin-top:5px" onclick="tkPlayAudio(\''+t.id+'\')" title="Play voice note">🎙 Play voice note</button>':'')+'</div>'+
       '<div style="text-align:right;white-space:nowrap;flex:none">'+(t.status==='done'?(t.done_at?'<span class="funit">done '+esc(fmtDate((t.done_at||'').slice(0,10)))+'</span>':''):(t.due_date?'<span class="pill '+(od?'crit':'')+'">'+(od?'⏰ ':'')+esc(fmtDate(t.due_date))+'</span>':'<span class="funit">no date</span>'))+
+      (t.status==='done'?'':' <button class="icon-x" style="font-size:14px" title="Add to Google Calendar" onclick="gcalTaskFromDp(\''+t.id+'\')">📅</button>')+
       (t.status==='done'?'':' <button class="icon-x" style="font-size:14px" title="Edit task" onclick="taskEdit(\''+t.id+'\')">✏️</button>')+
       ' <button class="icon-x" style="font-size:16px" title="Delete task" onclick="taskDelete(\''+t.id+'\')">×</button></div></div>';};
   // ----- team / project tasks from Team & Calendar (shared objects → completing here syncs there) -----
