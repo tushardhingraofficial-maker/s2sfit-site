@@ -7030,7 +7030,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04rf';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04rg';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -15819,19 +15819,20 @@ function renderDayLog(){
 /* one journaled meal card (rendered inside its meal group); comments come from the day's maps */
 function jmealCardHTML(e){
   const n=(e.nutrition&&typeof e.nutrition==='object')?e.nutrition:null;const ph=jrPhotos(e);
-  const items=(n&&Array.isArray(n.items))?n.items.filter(function(it){return it&&(it.name||it.cal);}):[];
-  const sugg=(n&&Array.isArray(n.suggestions))?n.suggestions.filter(Boolean):[];
-  const macro=n?('<span style="margin-left:auto;font-weight:700;font-size:12.5px;color:var(--text)">'+fmtMac(+n.p||0)+'P · '+fmtMac(+n.c||0)+'C · '+fmtMac(+n.f||0)+'F · '+lcNum(+n.cal||0)+'k</span>'):'';
-  return '<div class="jmeal"><div class="jmeal-head"><span class="jmeal-tag">📸 journaled'+(n?' · estimate':'')+'</span>'+(e.time?'<span class="jmeal-time">'+esc(e.time)+'</span>':'')+macro+'<button class="icon-x" style="font-size:17px;'+(macro?'margin-left:8px':'margin-left:auto')+'" onclick="jrDel(\''+e.id+'\')" title="Delete">×</button></div>'+
+  const skip=!!(n&&n.skipped);const est=skip?null:n;
+  const items=(est&&Array.isArray(est.items))?est.items.filter(function(it){return it&&(it.name||it.cal);}):[];
+  const sugg=(est&&Array.isArray(est.suggestions))?est.suggestions.filter(Boolean):[];
+  const macro=est?('<span style="margin-left:auto;font-weight:700;font-size:12.5px;color:var(--text)">'+fmtMac(+est.p||0)+'P · '+fmtMac(+est.c||0)+'C · '+fmtMac(+est.f||0)+'F · '+lcNum(+est.cal||0)+'k</span>'):'';
+  return '<div class="jmeal"><div class="jmeal-head"><span class="jmeal-tag">📸 journaled'+(skip?' · skipped':(est?' · estimate':''))+'</span>'+(e.time?'<span class="jmeal-time">'+esc(e.time)+'</span>':'')+macro+'<button class="icon-x" style="font-size:17px;'+(macro?'margin-left:8px':'margin-left:auto')+'" onclick="jrDel(\''+e.id+'\')" title="Delete">×</button></div>'+
     '<div class="jmeal-body">'+(ph.length?'<a href="'+esc(ph[0])+'" target="_blank" rel="noopener"><img class="jmeal-photo" src="'+esc(ph[0])+'"></a>':'')+
-      '<div style="flex:1;min-width:0">'+(n?'<div class="jr-nutri-macros"><span class="jn-cal">🔥 '+lcNum(+n.cal||0)+' kcal</span><span class="jn-m p">P '+fmtMac(+n.p||0)+'g</span><span class="jn-m c">C '+fmtMac(+n.c||0)+'g</span><span class="jn-m f">F '+fmtMac(+n.f||0)+'g</span></div>':'<span class="small" style="color:var(--muted)">No estimate — delete &amp; re-journal with an estimate to count it.</span>')+
+      '<div style="flex:1;min-width:0">'+(skip?'<span class="small" style="font-weight:700;color:var(--muted)">⏭️ Skipped — not counted toward macros.</span>':(est?'<div class="jr-nutri-macros"><span class="jn-cal">🔥 '+lcNum(+est.cal||0)+' kcal</span><span class="jn-m p">P '+fmtMac(+est.p||0)+'g</span><span class="jn-m c">C '+fmtMac(+est.c||0)+'g</span><span class="jn-m f">F '+fmtMac(+est.f||0)+'g</span></div>':'<span class="small" style="color:var(--muted)">No estimate — delete &amp; re-journal with an estimate to count it.</span>'))+
         (e.description?'<div class="small" style="color:var(--muted);font-style:italic;margin-top:5px">“'+esc(e.description)+'”</div>':'')+
         (items.length?'<details class="jr-nutri-items" style="margin-top:6px"><summary>🧾 What\'s in it ('+items.length+', estimates)</summary><div>'+items.map(function(it){return esc(it.name||'')+(it.qty?' <span style="color:var(--muted)">('+esc(it.qty)+')</span>':'')+' — <b>'+lcNum(+it.cal||0)+'</b> kcal · P'+(+it.p||0)+' C'+(+it.c||0)+' F'+(+it.f||0);}).join('<br>')+'</div></details>':'')+
         (n&&n.reco?'<div class="jr-nutri-tip" style="margin-top:6px">💡 '+esc(n.reco)+'</div>':'')+
         (sugg.length?'<div class="cheat-sugg" style="margin-top:8px"><div class="cheat-sugg-h">💡 Make it a smarter meal</div>'+sugg.map(function(s){return '<div class="cheat-sugg-i">'+esc(s)+'</div>';}).join('')+'</div>':'')+
-        (n?'<div style="margin-top:8px"><button class="btn-sm" style="border-color:var(--prot);color:var(--prot);padding:4px 10px" onclick="jrShareCard(\''+e.id+'\')">🖼 Share card</button></div>':'')+
+        (est?'<div style="margin-top:8px"><button class="btn-sm" style="border-color:var(--prot);color:var(--prot);padding:4px 10px" onclick="jrShareCard(\''+e.id+'\')">🖼 Share card</button></div>':'')+
       '</div></div>'+
-    (n?jrEntryDayHTML(e):'')+
+    (est?jrEntryDayHTML(e):'')+
     '<div class="log-cmts" style="margin-top:9px">'+clientCmtBlockInnerHTML('journal',e.id,DAY_JR_CMT[e.id]||[],DAY_JR_LIKE[e.id]||[])+'</div>'+
   '</div>';
 }
@@ -15843,7 +15844,7 @@ function mealHideTrack(key){const w=$('logaddwrap-'+key),c=$('mealchoose-'+key);
 function foodAddOpen(){try{const s=$('log-sections');if(s)s.scrollIntoView({behavior:'smooth',block:'start'});const first=document.querySelector('#log-sections .meal-add-choose');if(first){try{first.open=true;}catch(e){}first.classList.add('flash');setTimeout(function(){try{first.classList.remove('flash');}catch(e){}},1200);}}catch(e){}}
 function foodAddJournal(mealName,focus){
   const cap=$('jr-capture');if(!cap)return;
-  JR_PHOTOS=[];JR_NUTRI=null;
+  JR_PHOTOS=[];JR_NUTRI=null;JR_NUTRI_SKIPPED=false;JR_NUTRI_SKIP_RECO='';
   const dd=$('jr-date');if(dd)dd.value=(($('log-date')&&$('log-date').value)||todayISO());
   const tt=$('jr-time');if(tt)tt.value=nowHM();
   const ds=$('jr-desc');if(ds)ds.value='';
@@ -15855,7 +15856,7 @@ function foodAddJournal(mealName,focus){
   if(focus==='photo'){const pf=$('jr-photo');if(pf){try{pf.click();}catch(e){}}}
   else{const d2=$('jr-desc');if(d2)setTimeout(function(){try{d2.focus();}catch(e){}},320);}
 }
-function foodJournalCancel(){const cap=$('jr-capture');if(cap)cap.style.display='none';JR_PHOTOS=[];JR_NUTRI=null;const pv=$('jr-preview');if(pv)pv.innerHTML='';}
+function foodJournalCancel(){const cap=$('jr-capture');if(cap)cap.style.display='none';JR_PHOTOS=[];JR_NUTRI=null;JR_NUTRI_SKIPPED=false;JR_NUTRI_SKIP_RECO='';const pv=$('jr-preview');if(pv)pv.innerHTML='';}
 function foodLogRefresh(){try{if(NUTRI_SUB==='log'&&$('log-date'))loadDayLog();}catch(e){}try{dpLoadToday();}catch(e){}}   // keep the Diet-plan Today ring + meal check-offs in sync with any food change
 /* Comment thread on the client's own day log (coach ↔ client). */
 async function renderLogComments(date){
@@ -16227,7 +16228,12 @@ function downloadDietPlanPDF(){
 
 /* ═══════════════ 10c · FOOD JOURNAL (photos) ═══════════════ */
 let JR_PHOTOS=[];
-let JR_NUTRI=null, JR_NUTRI_BUSY=false;   // AI nutrition estimate for the entry being added
+let JR_NUTRI=null, JR_NUTRI_BUSY=false, JR_NUTRI_SKIPPED=false, JR_NUTRI_SKIP_RECO='';   // AI nutrition estimate for the entry being added; SKIPPED = client said they didn't eat this meal
+/* Does the note itself say this meal wasn't eaten? Conservative (mirrors the s2s-cheat-analyze guard) — never matches a real meal like "no mayo, had a wrap". Used to guard the OFFLINE/local-estimate fallback so it can't fabricate a skipped meal. */
+function jrLooksSkipped(d){var s=((d||'')+'').toLowerCase().trim();if(!s)return false;
+  if(/^(skip(ped)?|nothing|none|nil|n\/?a|fasting|fasted|no meal|no food|didn'?t eat|did not eat|ate nothing|had nothing)[\s.!,-]*$/.test(s))return true;
+  if(/\b(no|skip(?:ped)?|didn'?t|did not|had no|ate no|ate nothing|had nothing)\b[\s\w']{0,24}\b(meal|breakfast|lunch|dinner|snack|brunch|food|anything)\b/.test(s))return true;
+  return false;}
 function compressImage(file,maxDim,quality){maxDim=maxDim||800;quality=quality||0.6;
   return new Promise((resolve,reject)=>{const reader=new FileReader();
     reader.onload=ev=>{const img=new Image();img.onload=()=>{
@@ -16293,13 +16299,15 @@ function jrBudgetCtx(){try{
 async function jrAnalyse(){
   const desc=($('jr-desc').value||'').trim();const img=JR_PHOTOS[0]||'';
   if(!desc&&!img){toast('Add a description of the meal first',true);try{const d=$('jr-desc');if(d)d.focus();}catch(e){}return;}
-  JR_NUTRI_BUSY=true;jrRenderNutri();
-  let res=null;
-  if(DB.mode==='api'){try{const d=await cheatAnalyzeApi(Object.assign({imageUrl:img,description:desc,plan:true},jrBudgetCtx()));res=jrNormNutri(d,'ai');}catch(e){}}
-  if(!res&&desc){try{const est=cheatLocalEstimate(desc,'',{target:0,lo:0,hi:0});res=jrNormNutri({name:est.name,items:est.items,cal:est.cal,p:est.p,c:est.c,f:est.f,reco:'',suggestions:[]},'estimate');}catch(e){}}
+  JR_NUTRI_BUSY=true;JR_NUTRI_SKIPPED=false;jrRenderNutri();
+  let res=null,skipped=false,skipReco='';
+  if(DB.mode==='api'){try{const d=await cheatAnalyzeApi(Object.assign({imageUrl:img,description:desc,plan:true},jrBudgetCtx()));if(d&&d.skipped){skipped=true;skipReco=(d.reco||'').toString();}else{res=jrNormNutri(d,'ai');}}catch(e){}}
+  // offline / AI-unavailable fallback: a clear skip note must NOT be fabricated into a meal
+  if(!res&&!skipped&&desc){if(jrLooksSkipped(desc)){skipped=true;}else{try{const est=cheatLocalEstimate(desc,'',{target:0,lo:0,hi:0});res=jrNormNutri({name:est.name,items:est.items,cal:est.cal,p:est.p,c:est.c,f:est.f,reco:'',suggestions:[]},'estimate');}catch(e){}}}
   if(res&&(!res.suggestions||!res.suggestions.length))res.suggestions=jrLocalSugg(res);
-  JR_NUTRI=res;JR_NUTRI_BUSY=false;jrRenderNutri();
-  if(!res)toast('Could not estimate — add a clearer photo or a few words about the meal',true);
+  JR_NUTRI=res;JR_NUTRI_SKIPPED=skipped;JR_NUTRI_SKIP_RECO=skipped?(skipReco||'No worries — logged as skipped, so it won’t count toward today’s macros. Re-journal with what you ate if you’d like it counted.'):'';JR_NUTRI_BUSY=false;jrRenderNutri();
+  if(skipped)toast('Noted as skipped — this won’t count toward today’s macros');
+  else if(!res)toast('Could not estimate — add a clearer photo or a few words about the meal',true);
 }
 /* ONE-TAP: estimate the nutrition (unless the client already reviewed it) then save the entry. */
 async function jrEstimateAndAdd(){
@@ -16313,7 +16321,7 @@ async function jrEstimateAndAdd(){
   }catch(e){}
   finally{const b=$('jr-addbtn');if(b){b.disabled=false;b.innerHTML=orig||'✨ Estimate &amp; add meal';}}
 }
-function jrNutriClear(){JR_NUTRI=null;jrRenderNutri();}
+function jrNutriClear(){JR_NUTRI=null;JR_NUTRI_SKIPPED=false;JR_NUTRI_SKIP_RECO='';jrRenderNutri();}
 /* ── editable per-item breakdown for the entry being added (same UX as the cheat-meal challenge) ── */
 function jrRecalc(){if(!JR_NUTRI)return;const a=JR_NUTRI;const items=a.items||[];
   if(items.length){a.cal=items.reduce((s,i)=>s+(+i.cal||0),0);a.p=items.reduce((s,i)=>s+(+i.p||0),0);a.c=items.reduce((s,i)=>s+(+i.c||0),0);a.f=items.reduce((s,i)=>s+(+i.f||0),0);}
@@ -16363,6 +16371,7 @@ function jrNutriEditHTML(n){
 }
 function jrNutriCardHTML(n){
   if(!n||typeof n!=='object')return '';
+  if(n.skipped)return '<div class="jr-nutri" style="border-color:var(--warn)"><div style="font-weight:800;font-size:12.5px;margin-bottom:2px">⏭️ Skipped — not counted</div>'+(n.reco?'<div class="small" style="color:var(--muted)">'+esc(n.reco)+'</div>':'')+'</div>';
   const cal=Math.round(+n.cal||0),p=Math.round(+n.p||0),c=Math.round(+n.c||0),f=Math.round(+n.f||0);
   if(!(cal>0||p>0||c>0||f>0))return '';
   const items=Array.isArray(n.items)?n.items:[];
@@ -16378,6 +16387,7 @@ function jrNutriCardHTML(n){
 function jrRenderNutri(){
   const host=$('jr-nutri');if(!host)return;
   if(JR_NUTRI_BUSY){host.innerHTML='<div class="jr-nutri"><div class="small" style="color:var(--muted)">✨ Estimating the nutrition…</div></div>';return;}
+  if(JR_NUTRI_SKIPPED){host.innerHTML='<div class="jr-nutri" style="border-color:var(--warn)"><div style="font-weight:800;font-size:13px;margin-bottom:3px">⏭️ Skipped — not counted</div><div class="small" style="color:var(--muted)">'+esc(JR_NUTRI_SKIP_RECO||'Logged as skipped — this won’t count toward today’s macros.')+'</div><div class="small" style="margin-top:6px"><button type="button" class="btn-sm" style="padding:3px 9px" onclick="jrAnalyse()">↺ Re-check</button></div></div>';return;}
   if(!JR_NUTRI){host.innerHTML='';return;}
   host.innerHTML=jrNutriEditHTML(JR_NUTRI)+jrRemainingHTML(JR_NUTRI)+   // ← flexible-dieting / remaining-day guidance
     '<div class="small" style="color:var(--muted);margin-top:5px">Your edits save with this entry and count toward today\'s macros. <button type="button" class="btn-sm" style="padding:3px 9px" onclick="jrAnalyse()">↺ Re-estimate</button> <button type="button" class="btn-sm" style="padding:3px 9px" onclick="jrNutriClear()">Clear</button> <button type="button" class="btn-sm" style="padding:3px 9px;border-color:var(--prot);color:var(--prot)" onclick="jrSharePreview()">🖼 Preview card</button></div>';
@@ -16637,9 +16647,13 @@ async function jrAdd(){
   if(!desc){toast('Please add a description of the meal',true);try{const d=$('jr-desc');if(d){d.focus();d.scrollIntoView({block:'center',behavior:'smooth'});}}catch(e){}return;}
   // store in the existing `photo` text column: a single data URL, or a JSON array when there are several (no schema change needed)
   const photoField=JR_PHOTOS.length>1?JSON.stringify(JR_PHOTOS):(JR_PHOTOS[0]||'');
-  const entry={id:uid(),client_id:SESSION.id,date:$('jr-date').value||todayISO(),time:$('jr-time').value||'',description:desc,photo:photoField,nutrition:jrNutriClean(JR_NUTRI),meal:(($('jr-meal')&&$('jr-meal').value)||''),created_at:new Date().toISOString()};
-  try{await DB.addJournal(entry);toast('Meal added ✓');
-    $('jr-desc').value='';$('jr-photo').value='';$('jr-preview').innerHTML='';JR_PHOTOS=[];JR_NUTRI=null;jrRenderNutri();
+  const cleanN=jrNutriClean(JR_NUTRI);
+  // skip marker lives INSIDE the existing nutrition jsonb (no schema change) — macros are absent so it never counts toward totals
+  const nutriField=cleanN||((JR_NUTRI_SKIPPED&&!cleanN)?{skipped:true,reco:(JR_NUTRI_SKIP_RECO||'').toString().slice(0,300),source:'skip'}:null);
+  const isSkip=!!(nutriField&&nutriField.skipped);
+  const entry={id:uid(),client_id:SESSION.id,date:$('jr-date').value||todayISO(),time:$('jr-time').value||'',description:desc,photo:photoField,nutrition:nutriField,meal:(($('jr-meal')&&$('jr-meal').value)||''),created_at:new Date().toISOString()};
+  try{await DB.addJournal(entry);toast(isSkip?'Noted as skipped ✓':'Meal added ✓');
+    $('jr-desc').value='';$('jr-photo').value='';$('jr-preview').innerHTML='';JR_PHOTOS=[];JR_NUTRI=null;JR_NUTRI_SKIPPED=false;JR_NUTRI_SKIP_RECO='';jrRenderNutri();
     try{foodJournalCancel();}catch(e){}
     try{await rwSyncFoodReward('journal');}catch(_){}
     try{foodLogRefresh();}catch(e){}
