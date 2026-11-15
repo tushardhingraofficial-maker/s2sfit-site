@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome to S2S Fit — Let's Get You Started</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* All styles scoped under #s2sob so they never leak into the HighLevel host page */
+  #s2sob {
+    --red: #E8170D;
+    --red-hover: #C81209;
+    --ink: #0A0A0A;
+    --surface: #141414;
+    --card: #1C1C1C;
+    --border: #2A2A2A;
+    --text: #F2EFEA;
+    --muted: #999690;
+    --faint: #252525;
+    --gold: #F5A623;
+    --green: #22C55E;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --transition: 0.34s cubic-bezier(.4,0,.2,1);
+
+    background: var(--ink);
+    color: var(--text);
+    font-family: 'Barlow', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  #s2sob *, #s2sob *::before, #s2sob *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ── HEADER ── */
+  #s2sob .ob-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,10,10,0.92);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    backdrop-filter: blur(16px);
+    padding: 18px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  #s2sob .ob-logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: white;
+  }
+  #s2sob .ob-logo span { color: var(--red); }
+
+  #s2sob .ob-header-badge {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--green);
+    background: rgba(34,197,94,.1);
+    border: 1px solid rgba(34,197,94,.25);
+    border-radius: 3px;
+    padding: 6px 14px;
+  }
+
+  /* ── HERO ── */
+  #s2sob .ob-hero {
+    text-align: center;
+    padding: 80px 24px 64px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #s2sob .ob-hero::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 400px;
+    background: radial-gradient(ellipse, rgba(232,23,13,.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  #s2sob .ob-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 24px;
+    padding: 8px 20px;
+    border: 1px solid rgba(232,23,13,.38);
+    border-radius: 3px;
+    background: rgba(232,23,13,.09);
+  }
+
+  #s2sob .eyebrow-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: s2sob-pulse-dot 1.8s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes s2sob-pulse-dot {
+    0%,100%{transform:scale(1);opacity:1}
+    50%{transform:scale(1.7);opacity:.4}
+  }
+
+  #s2sob .ob-hero h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(42px, 8vw, 80px);
+    font-weight: 800;
+    line-height: .95;
+    text-transform: uppercase;
+    letter-spacing: -.01em;
+    color: white;
+    margin-bottom: 20px;
+  }
+
+  #s2sob .ob-hero h1 em {
+    font-style: normal;
+    color: var(--red);
+  }
+
+  #s2sob .ob-hero-sub {
+    font-size: clamp(15px, 2vw, 17px);
+    color: rgba(255,255,255,.6);
+    max-width: 480px;
+    margin: 0 auto 40px;
+    line-height: 1.65;
+  }
+
+  /* ── PROGRESS TRACKER ── */
+  #s2sob .progress-wrap {
+    max-width: 640px;
+    margin: 0 auto 64px;
+    padding: 0 24px;
+  }
+
+  #s2sob .progress-bar-outer {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  #s2sob .progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--red);
+    border-radius: 2px;
+    transition: width 0.6s cubic-bezier(.4,0,.2,1);
+  }
+
+  #s2sob .progress-steps {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  #s2sob .progress-step-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    transition: color var(--transition);
+  }
+
+  #s2sob .progress-step-label.done { color: var(--green); }
+  #s2sob .progress-step-label.active { color: var(--text); }
+
+  /* ── MAIN CONTENT ── */
+  #s2sob .ob-main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 24px 100px;
+  }
+
+  /* ── STEP CARD ── */
+  #s2sob .step-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    margin-bottom: 20px;
+    overflow: hidden;
+    transition: border-color var(--transition), box-shadow var(--transition);
+  }
+
+  #s2sob .step-card:hover {
+    border-color: rgba(232,23,13,.3);
+    box-shadow: 0 0 0 1px rgba(232,23,13,.1), 0 8px 32px rgba(0,0,0,.4);
+  }
+
+  #s2sob .step-card.completed {
+    border-color: rgba(34,197,94,.25);
+  }
+
+  #s2sob .step-header {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 24px 28px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  #s2sob .step-num {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--faint);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--muted);
+    transition: all var(--transition);
+    position: relative;
+  }
+
+  #s2sob .step-card.active .step-num {
+    background: rgba(232,23,13,.15);
+    border-color: var(--red);
+    color: var(--red);
+  }
+
+  #s2sob .step-card.completed .step-num {
+    background: rgba(34,197,94,.12);
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  #s2sob .step-num-check {
+    display: none;
+    position: absolute;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #s2sob .step-card.completed .step-num-check { display: flex; }
+  #s2sob .step-card.completed .step-num-digit { display: none; }
+
+  #s2sob .step-meta { flex: 1; min-width: 0; }
+
+  #s2sob .step-eyebrow {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  #s2sob .step-card.active .step-eyebrow { color: rgba(232,23,13,.8); }
+  #s2sob .step-card.completed .step-eyebrow { color: rgba(34,197,94,.7); }
+
+  #s2sob .step-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #s2sob .step-chevron {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-right: 2px solid var(--muted);
+    border-bottom: 2px solid var(--muted);
+    transform: rotate(-45deg) translateY(-3px);
+    transition: transform var(--transition), border-color var(--transition);
+  }
+
+  #s2sob .step-card.active .step-chevron {
+    transform: rotate(45deg) translateY(-3px);
+    border-color: var(--red);
+  }
+
+  #s2sob .step-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s cubic-bezier(.4,0,.2,1);
+  }
+
+  #s2sob .step-card.active .step-body { max-height: 1200px; }
+
+  #s2sob .step-body-inner {
+    padding: 0 28px 28px;
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+  }
+
+  #s2sob .step-desc {
+    font-size: 15px;
+    line-height: 1.7;
+    color: rgba(255,255,255,.65);
+    margin-bottom: 22px;
+  }
+
+  /* ── ACTION BUTTON ── */
+  #s2sob .btn-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    background: var(--red);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 13px 26px;
+    cursor: pointer;
+    transition: background .18s, transform .18s;
+    text-decoration: none;
+  }
+
+  #s2sob .btn-action:hover { background: var(--red-hover); transform: translateY(-1px); }
+
+  #s2sob .btn-action svg { flex-shrink: 0; }
+
+  #s2sob .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    background: transparent;
+    color: rgba(255,255,255,.55);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 4px;
+    padding: 11px 22px;
+    cursor: pointer;
+    transition: all .18s;
+    text-decoration: none;
+  }
+
+  #s2sob .btn-ghost:hover { color: white; border-color: rgba(255,255,255,.35); }
+
+  #s2sob .btn-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 22px;
+  }
+
+  /* ── LINK PILL ── */
+  #s2sob .link-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--faint);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+
+  #s2sob .link-pill-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    background: rgba(232,23,13,.12);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #s2sob .link-pill-text { flex: 1; min-width: 0; }
+
+  #s2sob .link-pill-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+
+  #s2sob .link-pill-url {
+    font-size: 13px;
+    color: rgba(255,255,255,.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ── VIDEO CALLOUT ── */
+  #s2sob .video-callout {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(245,166,35,.07);
+    border: 1px solid rgba(245,166,35,.2);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-bottom: 20px;
+  }
+
+  #s2sob .video-callout-icon {
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    background: rgba(245,166,35,.15);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #s2sob .video-callout-text {
+    font-size: 14px;
+    color: rgba(255,255,255,.7);
+    line-height: 1.5;
+  }
+
+  #s2sob .video-callout-text strong {
+    color: var(--gold);
+    font-weight: 600;
+  }
+
+  /* ── CALENDAR EMBED ── */
+  #s2sob .cal-embed {
+    background: var(--faint);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+
+  #s2sob .cal-embed iframe {
+    width: 100%;
+    min-height: 650px;
+    border: none;
+    border-radius: 6px;
+    display: block;
+  }
+
+  /* ── COMPLETE BUTTON ── */
+  #s2sob .btn-complete {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    background: transparent;
+    color: var(--green);
+    border: 1px solid rgba(34,197,94,.3);
+    border-radius: 4px;
+    padding: 11px 22px;
+    cursor: pointer;
+    transition: all .18s;
+  }
+
+  #s2sob .btn-complete:hover {
+    background: rgba(34,197,94,.1);
+    border-color: rgba(34,197,94,.5);
+  }
+
+  #s2sob .step-card.completed .btn-complete {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  /* ── FINISH BANNER ── */
+  #s2sob .finish-banner {
+    background: linear-gradient(135deg, rgba(34,197,94,.12) 0%, rgba(232,23,13,.08) 100%);
+    border: 1px solid rgba(34,197,94,.25);
+    border-radius: var(--radius-lg);
+    padding: 36px 28px;
+    text-align: center;
+    margin-top: 32px;
+    display: none;
+  }
+
+  #s2sob .finish-banner.visible { display: block; }
+
+  #s2sob .finish-banner h2 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+    color: white;
+    margin: 16px 0 10px;
+  }
+
+  #s2sob .finish-banner h2 em { font-style: normal; color: var(--green); }
+
+  #s2sob .finish-banner p {
+    font-size: 15px;
+    color: rgba(255,255,255,.6);
+    max-width: 380px;
+    margin: 0 auto;
+    line-height: 1.65;
+  }
+
+  #s2sob .finish-icon {
+    font-size: 48px;
+    line-height: 1;
+    display: block;
+  }
+
+  /* ── FOOTER ── */
+  #s2sob .ob-footer {
+    text-align: center;
+    padding: 30px 24px 50px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  #s2sob .ob-footer a { color: var(--red); text-decoration: none; }
+  #s2sob .ob-footer a:hover { color: var(--text); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    #s2sob .ob-header { padding: 14px 18px; }
+    #s2sob .ob-hero { padding: 60px 18px 48px; }
+    #s2sob .step-header { padding: 18px 18px; gap: 12px; }
+    #s2sob .step-body-inner { padding: 20px 18px; }
+    #s2sob .step-title { font-size: 17px; }
+    #s2sob .step-chevron { width: 16px; height: 16px; }
+    #s2sob .btn-row { flex-direction: column; align-items: flex-start; }
+    #s2sob .btn-action, #s2sob .btn-ghost, #s2sob .btn-complete { width: 100%; justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- S2S Fit onboarding page. Scoped under #s2sob so it is safe to embed in a HighLevel page via the loader. -->
+<div id="s2sob" data-version="2026-11-15a">
+
+<!-- HEADER -->
+<header class="ob-header">
+  <div class="ob-logo">S2S<span>FIT</span></div>
+  <span class="ob-header-badge">✓ Enrolled</span>
+</header>
+
+<!-- HERO -->
+<section class="ob-hero">
+  <div class="ob-eyebrow">
+    <span class="eyebrow-dot"></span>
+    Your Transformation Starts Now
+  </div>
+  <h1>Welcome to<br><em>S2S Fit</em></h1>
+  <p class="ob-hero-sub">You've made the decision. Now let's get you fully set up — three quick steps and you'll be ready to train on Day 1.</p>
+</section>
+
+<!-- PROGRESS -->
+<div class="progress-wrap">
+  <div class="progress-bar-outer">
+    <div class="progress-bar-fill" id="progressFill"></div>
+  </div>
+  <div class="progress-steps">
+    <span class="progress-step-label active" id="pl1">01 Everfit</span>
+    <span class="progress-step-label" id="pl2">02 Portal</span>
+    <span class="progress-step-label" id="pl3">03 Call</span>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="ob-main">
+
+  <!-- STEP 1 -->
+  <div class="step-card active" id="card1">
+    <div class="step-header" onclick="toggleStep(1)">
+      <div class="step-num">
+        <span class="step-num-digit">01</span>
+        <span class="step-num-check">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M3.5 9.5L7 13L14.5 5.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      </div>
+      <div class="step-meta">
+        <div class="step-eyebrow">Step 1 · App Setup</div>
+        <div class="step-title">Set Up Everfit</div>
+      </div>
+      <div class="step-chevron"></div>
+    </div>
+    <div class="step-body">
+      <div class="step-body-inner">
+        <p class="step-desc">Everfit is where your training programme lives — your workouts, progress logs, and direct line to Tushar. Use your invite link to register and get the app running before your first session.</p>
+
+        <div class="link-pill">
+          <div class="link-pill-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E8170D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            </svg>
+          </div>
+          <div class="link-pill-text">
+            <div class="link-pill-label">Your Invite Link</div>
+            <div class="link-pill-url">invite.everfit.io/9J6LUE75EE</div>
+          </div>
+        </div>
+
+        <div class="video-callout">
+          <div class="video-callout-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5A623" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+          </div>
+          <div class="video-callout-text">
+            <strong>Watch the tutorial first.</strong> After registering, check out the walkthrough video inside the app so you know exactly where to find your workouts, log sessions, and message Tushar.
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <a href="https://invite.everfit.io/9J6LUE75EE" target="_blank" class="btn-action">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+            Register on Everfit
+          </a>
+          <button class="btn-complete" onclick="markDone(1)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Mark Complete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step-card" id="card2">
+    <div class="step-header" onclick="toggleStep(2)">
+      <div class="step-num">
+        <span class="step-num-digit">02</span>
+        <span class="step-num-check">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M3.5 9.5L7 13L14.5 5.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      </div>
+      <div class="step-meta">
+        <div class="step-eyebrow">Step 2 · Portal Setup</div>
+        <div class="step-title">Transformation Portal</div>
+      </div>
+      <div class="step-chevron"></div>
+    </div>
+    <div class="step-body">
+      <div class="step-body-inner">
+        <p class="step-desc">The Transformation Portal is your home base for tracking progress, check-ins, and everything that keeps your journey on course. Register yourself using the link below to get set up.</p>
+
+        <div class="link-pill">
+          <div class="link-pill-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E8170D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            </svg>
+          </div>
+          <div class="link-pill-text">
+            <div class="link-pill-label">Registration Link</div>
+            <div class="link-pill-url">s2sfit.com/transformation-portal#register</div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <a href="https://s2sfit.com/transformation-portal#register" target="_blank" class="btn-action">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+            Register on the Portal
+          </a>
+          <button class="btn-complete" onclick="markDone(2)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Mark Complete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step-card" id="card3">
+    <div class="step-header" onclick="toggleStep(3)">
+      <div class="step-num">
+        <span class="step-num-digit">03</span>
+        <span class="step-num-check">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M3.5 9.5L7 13L14.5 5.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      </div>
+      <div class="step-meta">
+        <div class="step-eyebrow">Step 3 · Let's Talk</div>
+        <div class="step-title">Book Your Onboarding Call</div>
+      </div>
+      <div class="step-chevron"></div>
+    </div>
+    <div class="step-body">
+      <div class="step-body-inner">
+        <p class="step-desc">Lock in your onboarding call with Tushar so we can walk through your goals, answer your questions, and set you up for a strong start. Pick a time that works for you below.</p>
+
+        <div class="cal-embed">
+          <iframe src="https://api.leadconnectorhq.com/widget/booking/nXFVogWhuJIpofNXKqZH" allow="payment" scrolling="no" id="nXFVogWhuJIpofNXKqZH_1791807739183"></iframe>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn-complete" onclick="markDone(3)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Mark Complete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FINISH BANNER -->
+  <div class="finish-banner" id="finishBanner">
+    <span class="finish-icon">🔥</span>
+    <h2>Setup <em>Complete!</em></h2>
+    <p>You're all set. Tushar will be in touch shortly to confirm your first session. Let's get to work.</p>
+  </div>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="ob-footer">
+  Questions? Reach out at <a href="mailto:support@s2sfit.com">support@s2sfit.com</a> &nbsp;·&nbsp; <a href="tel:+61485016661">+61485016661</a>
+</footer>
+
+</div><!-- /#s2sob -->
+
+<script>
+  const completed = new Set();
+  let activeStep = 1;
+  const TOTAL_STEPS = 3;
+
+  function toggleStep(n) {
+    const card = document.getElementById('card' + n);
+    if (activeStep === n) {
+      card.classList.remove('active');
+      activeStep = null;
+    } else {
+      if (activeStep) document.getElementById('card' + activeStep)?.classList.remove('active');
+      card.classList.add('active');
+      activeStep = n;
+    }
+  }
+
+  function markDone(n) {
+    completed.add(n);
+    const card = document.getElementById('card' + n);
+    card.classList.add('completed');
+    card.classList.remove('active');
+    if (activeStep === n) activeStep = null;
+
+    // auto-open next
+    if (n < TOTAL_STEPS && !completed.has(n + 1)) {
+      const next = document.getElementById('card' + (n + 1));
+      if (activeStep) document.getElementById('card' + activeStep)?.classList.remove('active');
+      next.classList.add('active');
+      activeStep = n + 1;
+      next.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const pct = (completed.size / TOTAL_STEPS) * 100;
+    document.getElementById('progressFill').style.width = pct + '%';
+
+    const nextActive = [...Array(TOTAL_STEPS).keys()]
+      .map(i => i + 1)
+      .filter(i => !completed.has(i));
+    const activeIdx = nextActive.length ? Math.min(...nextActive) : null;
+
+    for (let i = 1; i <= TOTAL_STEPS; i++) {
+      const label = document.getElementById('pl' + i);
+      if (!label) continue;
+      if (completed.has(i)) {
+        label.className = 'progress-step-label done';
+      } else if (i === activeIdx) {
+        label.className = 'progress-step-label active';
+      } else {
+        label.className = 'progress-step-label';
+      }
+    }
+
+    if (completed.size === TOTAL_STEPS) {
+      document.getElementById('finishBanner').classList.add('visible');
+      document.getElementById('finishBanner').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+</script>
+
+<!-- LeadConnector booking widget embed script -->
+<script src="https://link.msgsndr.com/js/form_embed.js" type="text/javascript"></script>
+
+</body>
+</html>
