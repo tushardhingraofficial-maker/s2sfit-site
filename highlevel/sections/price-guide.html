@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-version="v2026-11-15b">
+<html lang="en" data-version="v2026-11-15c">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -566,6 +566,20 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
 .fb-cta{margin-top:auto;align-self:flex-start;background:var(--red);color:#fff;text-decoration:none;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:13px;padding:9px 14px;border-radius:7px;cursor:pointer}
 .fb-card.step .fb-cta{background:transparent;border:1px solid var(--green);color:var(--green)}
 .fb-cta:hover{filter:brightness(1.08)}
+/* plan comparison grid */
+.pg-scroll{overflow-x:auto;margin-top:12px;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:12px}
+.pg{min-width:620px;display:grid;background:var(--ink)}
+.pg-r{display:grid;grid-template-columns:1.15fr 1fr 1fr 1fr;border-bottom:1px solid var(--border)}
+.pg-r:last-child{border-bottom:none}
+.pg-lbl{padding:11px 12px;font-size:12px;font-weight:700;color:var(--muted);background:rgba(255,255,255,.015)}
+.pg-c{padding:11px 12px;font-size:12.5px;color:var(--text);line-height:1.4;border-left:1px solid var(--border)}
+.pg-c.rec{background:rgba(232,23,13,.06)}
+.pg-head .pg-lbl{background:transparent}
+.pg-head .pg-c{padding:12px}
+.pg-pn{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;text-transform:uppercase;letter-spacing:.02em;color:var(--white);line-height:1.05}
+.pg-head .pg-c.rec .pg-pn{color:var(--red)}
+.pg-tag{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.pg-head .pg-c.rec .pg-tag{color:var(--gold)}
 </style>
 </head>
 <body>
@@ -1028,6 +1042,8 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
 
       <div class="po-wait" id="po-fallback" style="display:none"></div>
 
+      <div class="po-wait" id="plan-grid"></div>
+
       <div class="cmp-punch" style="margin-top:22px">The most expensive choice isn't the program.<br><b>It's another year of staying exactly where you are.</b></div>
       <div style="text-align:center;margin-top:20px"><button class="go-inline" onclick="goTo('s-close')">Okay — I'm in. Let's start →</button></div>
     </div>
@@ -1097,19 +1113,24 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
         <div class="admin-row">
           <label>Loyalty % off coaching<input type="number" id="adm-olddisc" min="0" max="100" step="1"></label>
         </div>
-        <div class="admin-sec">Fallback offer A — paid product (“not ready” page)</div>
-        <input class="admin-in" id="adm-fb1title" placeholder="Title (e.g. Self-Guided Plan) — blank hides it">
-        <input class="admin-in" id="adm-fb1price" placeholder="Price (e.g. $49 / month)">
+        <div class="admin-sec">Alt-plan prices ($) — Momentum &amp; Blueprint</div>
+        <div class="admin-row">
+          <label>Momentum $/month<input type="number" id="adm-mommonthly" min="0" step="5"></label>
+          <label>Blueprint price<input type="number" id="adm-bpprice" min="0" step="10"></label>
+          <label>Blueprint months<input type="number" id="adm-bpmonths" min="1" step="1"></label>
+        </div>
+        <div class="admin-note">Onboarding (above) is also charged on Momentum. Blueprint has no onboarding.</div>
+        <div class="admin-sec">Fallback A — Momentum plan (“not ready” page)</div>
+        <input class="admin-in" id="adm-fb1title" placeholder="Plan name (e.g. Momentum Plan) — blank hides it">
         <input class="admin-in" id="adm-fb1desc" placeholder="One-line description">
         <textarea class="admin-in" id="adm-fb1bul" rows="3" placeholder="What's included — one per line"></textarea>
-        <input class="admin-in" id="adm-fb1cta" placeholder="Button label (e.g. Get started →)">
+        <input class="admin-in" id="adm-fb1cta" placeholder="Button label (e.g. Start Momentum →)">
         <input class="admin-in" id="adm-fb1url" placeholder="Button link URL (optional)">
-        <div class="admin-sec">Fallback offer B — low-commitment step</div>
-        <input class="admin-in" id="adm-fb2title" placeholder="Title (e.g. Free Game-Plan Call) — blank hides it">
-        <input class="admin-in" id="adm-fb2price" placeholder="Price (e.g. Free)">
+        <div class="admin-sec">Fallback B — 6-Month Blueprint</div>
+        <input class="admin-in" id="adm-fb2title" placeholder="Plan name (e.g. 6-Month Blueprint) — blank hides it">
         <input class="admin-in" id="adm-fb2desc" placeholder="One-line description">
         <textarea class="admin-in" id="adm-fb2bul" rows="3" placeholder="What's included — one per line"></textarea>
-        <input class="admin-in" id="adm-fb2cta" placeholder="Button label (e.g. Book the call →)">
+        <input class="admin-in" id="adm-fb2cta" placeholder="Button label (e.g. Get the Blueprint →)">
         <input class="admin-in" id="adm-fb2url" placeholder="Button link URL (optional)">
         <div class="admin-actions">
           <button class="admin-btn admin-ghost" onclick="resetPricing()">Reset</button>
@@ -1218,10 +1239,10 @@ async function sbDelete(table,id){await sec('table.delete',{table,id});}
 
 /* ═══════════ PRICING CONFIG ═══════════ */
 const DEFAULT_CFG={onboard:200,weekly:125,weeks:16,vsl:500,one2one:50,ptRate:80,ptPerWeek:3,ptDeliverCost:15,ptMonth:8,wasteMonthly:120,rewardPct:20,
-  oldDiscPct:10,
-  fb1Title:'Self-Guided Plan',fb1Price:'$49 / month',fb1Desc:'The full S2S training & nutrition system in the app — self-paced, without 1-on-1 coaching.',fb1Bullets:'Personalised training plan\nNutrition targets & food logging\nProgress tracking + rewards points\nCancel anytime',fb1Cta:'Get started →',fb1Url:'',
-  fb2Title:'Free 15-Min Game-Plan Call',fb2Price:'Free',fb2Desc:'Not sure where to start? Book a quick call and we’ll map your first move — zero pressure.',fb2Bullets:'A clear next step for your goal\nNo commitment, no hard sell\nAsk us anything',fb2Cta:'Book the call →',fb2Url:''};
-const CFG_TXT=['fb1Title','fb1Price','fb1Desc','fb1Bullets','fb1Cta','fb1Url','fb2Title','fb2Price','fb2Desc','fb2Bullets','fb2Cta','fb2Url'];
+  oldDiscPct:10, momMonthly:150, bpPrice:500, bpMonths:6,
+  fb1Title:'Momentum Plan',fb1Desc:'Our full app + community on your own schedule, with a once-a-month check-in from your coach. More freedom, lower cost — less hands-on than full coaching.',fb1Bullets:'Full app + community access\nOnce-a-month 1:1 follow-up\nYour training & nutrition in the app\nLighter updates than full coaching\nCancel anytime',fb1Cta:'Start Momentum →',fb1Url:'',
+  fb2Title:'6-Month Blueprint',fb2Desc:'We design your complete 6-month training + nutrition plan up front and load it into the app with your allocation. Yours to run independently — no check-ins, no ongoing updates.',fb2Bullets:'Your full 6-month plan, built up front\nTraining + nutrition, done for you\nApp access with your allocation\nNo follow-ups or updates\nOne-time payment',fb2Cta:'Get the Blueprint →',fb2Url:''};
+const CFG_TXT=['fb1Title','fb1Desc','fb1Bullets','fb1Cta','fb1Url','fb2Title','fb2Desc','fb2Bullets','fb2Cta','fb2Url'];
 let CLIENT_MODE='new';   // 'new' | 'returning' — chosen on the start slide; returning gets the loyalty discount
 /* real rewards system — mirrors the Transformation Portal's rewards_config (kv:rewards_config) */
 const REWARDS={perPoint:0.01,redeemLimit:25000,checkin:75,compliance:150,measurements:150,photos:200,weight:10,journal:5,journalDailyCap:15};
@@ -1230,7 +1251,7 @@ function loadCFG(){
   let c={...DEFAULT_CFG};
   try{const s=JSON.parse(localStorage.getItem('s2s_cfg2'));if(s)c={...c,...s};}catch(e){}
   const p=new URLSearchParams(location.search);
-  ['onboard','weekly','weeks','vsl','one2one','ptRate','ptPerWeek','wasteMonthly','rewardPct','oldDiscPct'].forEach(k=>{if(p.has(k))c[k]=clampN(p.get(k),0,99999);});
+  ['onboard','weekly','weeks','vsl','one2one','ptRate','ptPerWeek','wasteMonthly','rewardPct','oldDiscPct','momMonthly','bpPrice','bpMonths'].forEach(k=>{if(p.has(k))c[k]=clampN(p.get(k),0,99999);});
   return c;
 }
 let CFG=loadCFG();
@@ -1245,7 +1266,7 @@ async function loadCloud(){
   try{
     const rows=await sbGet('pricing_config?id=eq.1&select=data');
     const d=rows&&rows[0]&&rows[0].data;
-    if(d){['onboard','weekly','weeks','vsl','one2one','ptRate','ptPerWeek','ptDeliverCost','ptMonth','wasteMonthly','rewardPct','oldDiscPct'].forEach(k=>{if(typeof d[k]==='number')CFG[k]=d[k];});CFG_TXT.forEach(k=>{if(typeof d[k]==='string')CFG[k]=d[k];});saveCFG();}
+    if(d){['onboard','weekly','weeks','vsl','one2one','ptRate','ptPerWeek','ptDeliverCost','ptMonth','wasteMonthly','rewardPct','oldDiscPct','momMonthly','bpPrice','bpMonths'].forEach(k=>{if(typeof d[k]==='number')CFG[k]=d[k];});CFG_TXT.forEach(k=>{if(typeof d[k]==='string')CFG[k]=d[k];});saveCFG();}
   }catch(e){}
   renderPricing();
 }
@@ -1468,13 +1489,52 @@ function renderWait(){
         +(desc?'<p class="fb-desc">'+esc(desc)+'</p>':'')
         +(bl?'<ul class="fb-list">'+bl+'</ul>':'')+ctaHtml+'</div>';
     };
+    const momPrice=money(CFG.onboard)+' onboarding, then '+money(CFG.momMonthly)+' / month';
+    const bpPrice=money(CFG.bpPrice)+' · '+CFG.bpMonths+'-month plan (one-time)';
     let fhtml='';
-    if(String(CFG.fb1Title||'').trim())fhtml+=card(CFG.fb1Title,CFG.fb1Price,CFG.fb1Desc,CFG.fb1Bullets,CFG.fb1Cta,CFG.fb1Url,'paid');
-    if(String(CFG.fb2Title||'').trim())fhtml+=card(CFG.fb2Title,CFG.fb2Price,CFG.fb2Desc,CFG.fb2Bullets,CFG.fb2Cta,CFG.fb2Url,'step');
+    if(String(CFG.fb1Title||'').trim())fhtml+=card(CFG.fb1Title,momPrice,CFG.fb1Desc,CFG.fb1Bullets,CFG.fb1Cta,CFG.fb1Url,'paid');
+    if(String(CFG.fb2Title||'').trim())fhtml+=card(CFG.fb2Title,bpPrice,CFG.fb2Desc,CFG.fb2Bullets,CFG.fb2Cta,CFG.fb2Url,'step');
     fbEl.innerHTML=fhtml?('<div class="po-h gold">6 · Not ready for full coaching? Start smaller.</div><p class="po-sub">You don’t have to do nothing. Pick a lighter way in — and step up to full coaching whenever you’re ready.</p><div class="fb-wrap">'+fhtml+'</div>'):'';
     fbEl.style.display=fhtml?'':'none';
   }
+  renderPlanGrid();
   document.querySelectorAll('#s-wait .wp-b').forEach(b=>b.classList.toggle('on',+b.dataset.m===WAIT_MONTHS));
+}
+/* ---- side-by-side plan comparison (Premium vs Momentum vs Blueprint) ---- */
+function renderPlanGrid(){
+  const el=document.getElementById('plan-grid');if(!el)return;
+  const W=CFG.weeks||16;
+  const mom=esc(CFG.fb1Title||'Momentum'), bp=esc(CFG.fb2Title||'Blueprint');
+  const cols=[
+    {name:'Online Coaching',tag:'Best results',cls:'rec'},
+    {name:mom,tag:'Lighter touch',cls:''},
+    {name:bp,tag:'Do-it-yourself',cls:''}
+  ];
+  const rows=[
+    ['Investment',
+      money(CFG.onboard)+' + '+money(CFG.weekly)+'/wk · '+W+' wks',
+      money(CFG.onboard)+' + '+money(CFG.momMonthly)+'/mo',
+      money(CFG.bpPrice)+' / '+CFG.bpMonths+' months'],
+    ['Onboarding fee','✓ '+money(CFG.onboard),'✓ '+money(CFG.onboard),'✗ none'],
+    ['Coach follow-ups','Every week','Once a month','None'],
+    ['Plan updates','Continuous — adjusted as you go','Lighter / periodic','Fixed 6-month plan'],
+    ['App access','✓ Full','✓ Full','✓ Your allocation'],
+    ['Community','✓','✓','✓'],
+    ['Best for','You want a coach guiding every step','Self-motivated — want the tools at a lower monthly cost','Disciplined & independent — you just want the plan'],
+    ['Solves','No plan, no accountability, keep falling off','Price / commitment worry, but still want support','You can execute — you just need the right plan'],
+    ['The trade-off','Highest commitment','Less 1:1 time than full coaching','You’re on your own — no feedback']
+  ];
+  let h='<div class="pg">';
+  h+='<div class="pg-r pg-head"><div class="pg-lbl"></div>';
+  cols.forEach(c=>{h+='<div class="pg-c '+c.cls+'"><div class="pg-pn">'+esc(c.name)+'</div><div class="pg-tag">'+esc(c.tag)+'</div></div>';});
+  h+='</div>';
+  rows.forEach(r=>{
+    h+='<div class="pg-r"><div class="pg-lbl">'+esc(r[0])+'</div>';
+    for(let i=1;i<=3;i++){h+='<div class="pg-c '+(cols[i-1].cls)+'">'+r[i]+'</div>';}
+    h+='</div>';
+  });
+  h+='</div>';
+  el.innerHTML='<div class="po-h">7 · Every option, side by side</div><p class="po-sub">Same team, same app — different levels of hands-on. Here’s what each one costs, commits you to, and who it suits.</p><div class="pg-scroll">'+h+'</div>';
 }
 
 /* ═══════════ TRILEMMA — pick two ═══════════ */
@@ -1600,9 +1660,12 @@ async function openAdmin(){
   document.getElementById('adm-ptcost').value=CFG.ptDeliverCost;
   document.getElementById('adm-ptmonth').value=CFG.ptMonth;
   document.getElementById('adm-olddisc').value=CFG.oldDiscPct;
+  document.getElementById('adm-mommonthly').value=CFG.momMonthly;
+  document.getElementById('adm-bpprice').value=CFG.bpPrice;
+  document.getElementById('adm-bpmonths').value=CFG.bpMonths;
   const sv=(id,v)=>{const e=document.getElementById(id);if(e)e.value=(v==null?'':v);};
-  sv('adm-fb1title',CFG.fb1Title);sv('adm-fb1price',CFG.fb1Price);sv('adm-fb1desc',CFG.fb1Desc);sv('adm-fb1bul',CFG.fb1Bullets);sv('adm-fb1cta',CFG.fb1Cta);sv('adm-fb1url',CFG.fb1Url);
-  sv('adm-fb2title',CFG.fb2Title);sv('adm-fb2price',CFG.fb2Price);sv('adm-fb2desc',CFG.fb2Desc);sv('adm-fb2bul',CFG.fb2Bullets);sv('adm-fb2cta',CFG.fb2Cta);sv('adm-fb2url',CFG.fb2Url);
+  sv('adm-fb1title',CFG.fb1Title);sv('adm-fb1desc',CFG.fb1Desc);sv('adm-fb1bul',CFG.fb1Bullets);sv('adm-fb1cta',CFG.fb1Cta);sv('adm-fb1url',CFG.fb1Url);
+  sv('adm-fb2title',CFG.fb2Title);sv('adm-fb2desc',CFG.fb2Desc);sv('adm-fb2bul',CFG.fb2Bullets);sv('adm-fb2cta',CFG.fb2Cta);sv('adm-fb2url',CFG.fb2Url);
   renderMargin();
   renderAdminSolutions();renderAdminChallenges();renderAdminPhases();
   document.getElementById('admin-overlay').classList.add('open');
@@ -1619,9 +1682,12 @@ function livePricing(){
   CFG.ptDeliverCost=clampN(document.getElementById('adm-ptcost').value,0,99999);
   CFG.ptMonth=clampN(document.getElementById('adm-ptmonth').value,0,200);
   CFG.oldDiscPct=clampN(document.getElementById('adm-olddisc').value,0,100);
+  CFG.momMonthly=clampN(document.getElementById('adm-mommonthly').value,0,99999);
+  CFG.bpPrice=clampN(document.getElementById('adm-bpprice').value,0,99999);
+  CFG.bpMonths=clampN(document.getElementById('adm-bpmonths').value,1,60);
   const gv=(id)=>{const e=document.getElementById(id);return e?e.value:'';};
-  CFG.fb1Title=gv('adm-fb1title');CFG.fb1Price=gv('adm-fb1price');CFG.fb1Desc=gv('adm-fb1desc');CFG.fb1Bullets=gv('adm-fb1bul');CFG.fb1Cta=gv('adm-fb1cta');CFG.fb1Url=gv('adm-fb1url');
-  CFG.fb2Title=gv('adm-fb2title');CFG.fb2Price=gv('adm-fb2price');CFG.fb2Desc=gv('adm-fb2desc');CFG.fb2Bullets=gv('adm-fb2bul');CFG.fb2Cta=gv('adm-fb2cta');CFG.fb2Url=gv('adm-fb2url');
+  CFG.fb1Title=gv('adm-fb1title');CFG.fb1Desc=gv('adm-fb1desc');CFG.fb1Bullets=gv('adm-fb1bul');CFG.fb1Cta=gv('adm-fb1cta');CFG.fb1Url=gv('adm-fb1url');
+  CFG.fb2Title=gv('adm-fb2title');CFG.fb2Desc=gv('adm-fb2desc');CFG.fb2Bullets=gv('adm-fb2bul');CFG.fb2Cta=gv('adm-fb2cta');CFG.fb2Url=gv('adm-fb2url');
   saveCFG();renderPricing();renderFinal();renderMargin();renderWait();syncURL();
   autoCloudSave();   // prices sync to all devices automatically when you edit them
 }
@@ -1645,10 +1711,10 @@ function renderMargin(){
 }
 function resetPricing(){CFG={...DEFAULT_CFG};saveCFG();openAdmin();renderPricing();syncURL();}
 function syncURL(){try{const p=new URLSearchParams(location.search);
-  ['onboard','weekly','weeks','vsl','one2one','ptRate','ptPerWeek','wasteMonthly','rewardPct','oldDiscPct'].forEach(k=>{CFG[k]!==DEFAULT_CFG[k]?p.set(k,CFG[k]):p.delete(k);});
+  ['onboard','weekly','weeks','vsl','one2one','ptRate','ptPerWeek','wasteMonthly','rewardPct','oldDiscPct','momMonthly','bpPrice','bpMonths'].forEach(k=>{CFG[k]!==DEFAULT_CFG[k]?p.set(k,CFG[k]):p.delete(k);});
   const qs=p.toString();history.replaceState(null,'',location.pathname+(qs?'?'+qs:'')+location.hash);}catch(e){}}
 function copyAdminLink(){const p=new URLSearchParams();
-  ['onboard','weekly','weeks','vsl','one2one','ptRate','ptPerWeek','wasteMonthly','rewardPct','oldDiscPct'].forEach(k=>{if(CFG[k]!==DEFAULT_CFG[k])p.set(k,CFG[k]);});
+  ['onboard','weekly','weeks','vsl','one2one','ptRate','ptPerWeek','wasteMonthly','rewardPct','oldDiscPct','momMonthly','bpPrice','bpMonths'].forEach(k=>{if(CFG[k]!==DEFAULT_CFG[k])p.set(k,CFG[k]);});
   const qs=p.toString(),url=location.href.split('#')[0].split('?')[0]+(qs?'?'+qs:'');
   const b=document.getElementById('adm-copy');
   const fallback=()=>{try{prompt('Copy this link:',url);}catch(e){const m=document.getElementById('adm-cloudmsg');if(m){m.textContent=url;m.style.color='var(--text)';}}};
@@ -1663,7 +1729,7 @@ async function saveCloud(){
 }
 async function mergeCfg(){
   let cur={};try{const r=await sbGet('pricing_config?id=eq.1&select=data');cur=(r[0]&&r[0].data)||{};}catch(e){}
-  const out={...cur,onboard:CFG.onboard,weekly:CFG.weekly,weeks:CFG.weeks,vsl:CFG.vsl,one2one:CFG.one2one,ptRate:CFG.ptRate,ptPerWeek:CFG.ptPerWeek,ptDeliverCost:CFG.ptDeliverCost,ptMonth:CFG.ptMonth,wasteMonthly:CFG.wasteMonthly,rewardPct:CFG.rewardPct,oldDiscPct:CFG.oldDiscPct};
+  const out={...cur,onboard:CFG.onboard,weekly:CFG.weekly,weeks:CFG.weeks,vsl:CFG.vsl,one2one:CFG.one2one,ptRate:CFG.ptRate,ptPerWeek:CFG.ptPerWeek,ptDeliverCost:CFG.ptDeliverCost,ptMonth:CFG.ptMonth,wasteMonthly:CFG.wasteMonthly,rewardPct:CFG.rewardPct,oldDiscPct:CFG.oldDiscPct,momMonthly:CFG.momMonthly,bpPrice:CFG.bpPrice,bpMonths:CFG.bpMonths};
   CFG_TXT.forEach(k=>out[k]=CFG[k]);return out;
 }
 
@@ -1945,7 +2011,7 @@ async function delClient(id){if(!confirm('Delete this client record?'))return;tr
 
 /* ----- admin triggers ----- */
 function initAdmin(){
-  ['adm-onboard','adm-weekly','adm-weeks','adm-vsl','adm-o2o','adm-ptrate','adm-ptweek','adm-ptcost','adm-ptmonth','adm-olddisc','adm-fb1title','adm-fb1price','adm-fb1desc','adm-fb1bul','adm-fb1cta','adm-fb1url','adm-fb2title','adm-fb2price','adm-fb2desc','adm-fb2bul','adm-fb2cta','adm-fb2url'].forEach(id=>{const e=document.getElementById(id);if(e)e.addEventListener('input',livePricing);});
+  ['adm-onboard','adm-weekly','adm-weeks','adm-vsl','adm-o2o','adm-ptrate','adm-ptweek','adm-ptcost','adm-ptmonth','adm-olddisc','adm-mommonthly','adm-bpprice','adm-bpmonths','adm-fb1title','adm-fb1desc','adm-fb1bul','adm-fb1cta','adm-fb1url','adm-fb2title','adm-fb2desc','adm-fb2bul','adm-fb2cta','adm-fb2url'].forEach(id=>{const e=document.getElementById(id);if(e)e.addEventListener('input',livePricing);});
   let taps=0,timer=null;
   document.getElementById('admin-hotspot').addEventListener('click',()=>{taps++;clearTimeout(timer);timer=setTimeout(()=>taps=0,2500);if(taps>=5){taps=0;openAdmin();}});
   document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(e.key==='E'||e.key==='e')){e.preventDefault();openAdmin();}});
