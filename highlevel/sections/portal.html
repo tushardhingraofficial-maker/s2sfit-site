@@ -7033,7 +7033,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04rk';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04rl';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -21215,15 +21215,15 @@ async function edFcImport(){
 }
 async function edFcAddNote(id){const note=(($('ed-fc-note-'+id)||{}).value||'').trim();const corr=(($('ed-fc-corr-'+id)||{}).value||'').trim();if(!note&&!corr){toast('Write an instruction or corrective action first',true);return;}
   await edFcSave(function(fc){const t=edFcFind(fc,id);if(!t)return;t.entries.push({id:uid(),by:'coach',kind:'note',text:note,corrective:corr||undefined,at:new Date().toISOString()});t.updatedAt=new Date().toISOString();});
-  toast('Instruction added ✓');edRenderFormCheck();
+  toast('Instruction added ✓');try{pushFireEvent('formcheck_reviewed',edClient&&edClient.id,{name:(((edClient&&edClient.name)||'').trim().split(/\s+/)[0]||'')});}catch(e){}edRenderFormCheck();
 }
 async function edFcReupload(id){const note=(($('ed-fc-note-'+id)||{}).value||'').trim();
   await edFcSave(function(fc){const t=edFcFind(fc,id);if(!t)return;t.entries.push({id:uid(),by:'coach',kind:'request',text:note,at:new Date().toISOString()});t.status='reupload';t.updatedAt=new Date().toISOString();});
-  toast('Re-upload requested 🔁 — the client can upload a new video in this thread');edRenderFormCheck();
+  toast('Re-upload requested 🔁 — the client can upload a new video in this thread');try{pushFireEvent('formcheck_reviewed',edClient&&edClient.id,{name:(((edClient&&edClient.name)||'').trim().split(/\s+/)[0]||'')});}catch(e){}edRenderFormCheck();
 }
 async function edFcApprove(id){const note=(($('ed-fc-note-'+id)||{}).value||'').trim();
   await edFcSave(function(fc){const t=edFcFind(fc,id);if(!t)return;t.entries.push({id:uid(),by:'coach',kind:'approve',text:note,at:new Date().toISOString()});t.status='approved';t.updatedAt=new Date().toISOString();});
-  toast('🟢 Green flag given — movement approved');edRenderFormCheck();
+  toast('🟢 Green flag given — movement approved');try{pushFireEvent('formcheck_reviewed',edClient&&edClient.id,{name:(((edClient&&edClient.name)||'').trim().split(/\s+/)[0]||'')});}catch(e){}edRenderFormCheck();
 }
 async function edFcTask(id){const fc=edFcData();const t=edFcFind(fc,id);if(!t)return;const note=(($('ed-fc-note-'+id)||{}).value||'').trim();const cname=(edClient&&(edClient.name||edClient.email))||'';
   try{await DB.saveTask({id:uid(),client_id:edClient.id,client_name:cname,title:'Form check: '+t.exName,details:note||('Review / follow up on the '+t.exName+' form check'),due_date:null,recurrence:'none',priority:'medium',status:'open',created_at:new Date().toISOString()});toast('Task created ✓');try{if(typeof renderTasks==='function')renderTasks();}catch(e){}try{if(typeof renderDrawerTasks==='function')renderDrawerTasks();}catch(e){}}catch(e){toast('Could not create task',true);}
@@ -27438,6 +27438,7 @@ async function notifyClientSend(){
   try{ plan.plan_update=pu; await DB.savePlanRow(plan);
     await DB.addAudit({client_id:plan.client_id,actor:'admin',action:'Notified client of plan changes',detail:String(changes).slice(0,140)});
     if(edPlan&&edClient&&edClient.id===plan.client_id)edPlan.plan_update=pu;
+    try{pushFireEvent('plan_update',plan.client_id,{name:((name||'').trim().split(/\s+/)[0]||'')});}catch(e){}
     toast('📣 '+(name||'Client')+' will see the changes on their next visit');
   }catch(e){console.error(e);toast('Could not queue the notification — '+((e&&e.message)||'error'),true);}
   PENDING_NOTIFY=null;$('notify-modal').classList.remove('open');
