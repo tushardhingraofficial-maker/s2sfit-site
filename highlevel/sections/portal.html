@@ -7033,7 +7033,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04rm';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04rn';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -18363,7 +18363,7 @@ function onbRender(){
     return '<div class="onb-grow"><div class="onb-gname"><button type="button" class="onb-gcli" onclick="onbOpenClient(\''+cid+'\')" title="Open client">'+esc(r.c.name||r.c.email||'Client')+'</button>'+
       '<span class="onb-gstage">'+label+'</span><span class="onb-minis">'+minis+(sm.complete?'':'<button type="button" class="onb-alldone" onclick="onbAllDone(\''+cid+'\')" title="Mark every stage done (e.g. clients onboarded before this tracker)">all done</button>')+'</span></div>'+
       '<div class="onb-gtrack" style="width:'+W+'px;'+grid+'">'+todayL+track+'</div></div>';}).join('');
-  h+='</div><div class="onb-legend"><span><i style="background:var(--good)"></i>Done</span><span><i style="background:var(--gold,#f5c842)"></i>Pending / booked</span><span><i style="background:var(--crit);border-radius:1px;width:3px"></i>Today</span><span>Numbers = stage: 1 Strategy · 2 Setup · 3 Assessment · 4 Allocation · 5 Demo · 6 Portal tour</span></div>';
+  h+='</div><div class="onb-legend"><span><i style="background:var(--good)"></i>Done</span><span><i style="background:var(--gold,#f5c842)"></i>Pending / booked</span><span><i style="background:var(--crit);border-radius:1px;width:3px"></i>Today</span><span>Numbers = stage: 1 Strategy · 2 Payment · 3 Setup · 4 Assessment · 5 Allocation · 6 Demo · 7 Portal tour</span></div>';
   host.innerHTML=h;}
 /* ---- admin: onboarding template editor ---- */
 let OBT=[];
