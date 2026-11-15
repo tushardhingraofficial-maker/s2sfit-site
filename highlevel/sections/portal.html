@@ -5113,6 +5113,7 @@ img,svg,canvas,video{max-width:100%}
               <button class="adash-navbtn" onclick="openCalls()" title="Log and review every coaching / sales call — who, when, purpose, outcome and actions"><svg class="nav-ic"><use href="#ic-phone"/></svg> Call logs</button>
               <button class="adash-navbtn" onclick="openAlloc()" title="Training &amp; nutrition plan updates — record when each client was last updated, set the review cycle (e.g. 4 weeks) and see who's overdue"><svg class="nav-ic"><use href="#ic-refresh"/></svg> Plan updates</button>
               <button class="adash-navbtn" onclick="openOnb()" title="Onboarding tracker — every client's onboarding stage (strategy call → setup → assessment → allocation → demo → portal tour) on a timeline"><svg class="nav-ic"><use href="#ic-compass"/></svg> Onboarding tracker</button>
+              <button class="adash-navbtn" onclick="openTimeline()" title="Client timeline — every client's time with you (days &amp; weeks) on a Gantt, with custom phases that flag when it's time to act (offers, check-ins, milestones)"><svg class="nav-ic"><use href="#ic-cal-week"/></svg> Client timeline <span id="tl-nav-badge" class="pill warn hidden" style="margin-left:4px"></span></button>
               <button class="adash-navbtn" onclick="mcWatchOpen()" title="Metric watch — clients whose tracked metrics are moving against their current training phase">📊 Metric watch <span id="mc-watch-badge" class="pill warn hidden" style="margin-left:4px"></span></button>
               <button class="adash-navbtn" onclick="openIngLib()" title="Ingredient library — the master food + macro list the whole app uses. Import your list, add/edit ingredients &amp; macros, set diet type (veg / vegan / non-veg)."><svg class="nav-ic"><use href="#ic-bowl"/></svg> Ingredient library</button>
               <button class="adash-navbtn" onclick="openRecipeMod()" title="Moderate the shared community recipe book — review every recipe clients have added (macros, author, Smart vs personal) and remove anything inappropriate for everyone."><svg class="nav-ic"><use href="#ic-pot"/></svg> Recipes</button>
@@ -5848,6 +5849,12 @@ img,svg,canvas,video{max-width:100%}
   <div class="modal">
     <div class="modal-head"><div class="brand-logo admin-logo" role="img" aria-label="S2S Fit"></div><h2><svg class="hd-ic"><use href="#ic-compass"/></svg>Onboarding tracker</h2><span class="sync"><span class="small">every client's onboarding stage on a timeline</span></span><span class="sp"></span><button class="icon-x" onclick="closeOnb()">×</button></div>
     <div class="modal-body"><div id="onb-host"><div class="empty">Loading…</div></div></div>
+  </div>
+</div>
+<div class="overlay" id="timeline-modal">
+  <div class="modal">
+    <div class="modal-head"><div class="brand-logo admin-logo" role="img" aria-label="S2S Fit"></div><h2><svg class="hd-ic"><use href="#ic-cal-week"/></svg>Client timeline</h2><span class="sync"><span class="small">time with you · phases · action flags</span></span><span class="sp"></span><button class="icon-x" onclick="closeTimeline()">×</button></div>
+    <div class="modal-body"><div id="tl-host"><div class="empty">Loading…</div></div></div>
   </div>
 </div>
 <!-- ============ ADMIN · BUSINESS HEALTH (sign-ups · churn · referrals) ============ -->
@@ -7035,7 +7042,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04rq';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04rr';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -18391,6 +18398,186 @@ function obtSeedDefaults(){const S=(text,subs)=>({id:uid(),text,subs:(subs||[]).
 async function saveOnboardTpl(){const clean=OBT.map(it=>({id:it.id||uid(),text:(it.text||'').trim(),subs:(it.subs||[]).map(s=>({id:s.id||uid(),text:(s.text||'').trim()})).filter(s=>s.text)})).filter(it=>it.text);
   try{await DB.saveOnboarding(clean);ONBOARD_TPL=clean;toast('Onboarding checklist saved');closeOnboardAdmin();}catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);}}
 
+/* ═══════════════ CLIENT TIMELINE (tenure Gantt + phases) ═══════════════ */
+const TL_DEFAULTS=[
+ {id:'p_welcome',wk:1,label:'Welcome call',icon:'📞'},
+ {id:'p_checkin',wk:4,label:'Check-in',icon:'✅'},
+ {id:'p_review',wk:8,label:'Progress review',icon:'📈'},
+ {id:'p_renew',wk:12,label:'Renewal offer',icon:'🎁'},
+ {id:'p_milestone',wk:24,label:'Milestone reward',icon:'🏆'}
+];
+let TL_PHASES=null, TL_UNIT='wk', TL_FILTER='all';
+async function tlEnsurePhases(force){
+  if(TL_PHASES&&!force)return TL_PHASES;
+  let v=null;try{v=await DB.getKV('timeline_phases');}catch(e){}
+  if(Array.isArray(v)&&v.length)TL_PHASES=v.map(p=>({id:p.id||uid(),wk:Math.max(0,+p.wk||0),label:p.label||'Phase',icon:p.icon||'⭐',enabled:p.enabled!==false}));
+  else TL_PHASES=TL_DEFAULTS.map(p=>Object.assign({enabled:true},p));
+  return TL_PHASES;
+}
+async function tlSavePhases(){try{await DB.setKV('timeline_phases',TL_PHASES);}catch(e){toast('Could not save phases — '+((e&&e.message)||'error'),true);}}
+function tlDaysOf(sd){if(!sd)return null;const s=new Date(String(sd).slice(0,10)+'T00:00:00');if(isNaN(s))return null;const d=Math.floor((new Date(todayISO()+'T00:00:00')-s)/86400000);return d>=0?d:0;}
+function tlIni(n){return String(n||'?').trim().split(/\s+/).map(w=>w[0]||'').join('').slice(0,2).toUpperCase();}
+function tlClients(){return (OV_ROWS||[]).filter(r=>!r.archived).map(r=>({id:r.id,name:r.name||r.email||'Client',sd:r.startDate||'',days:tlDaysOf(r.startDate),tl:r.tl||null,paused:!!r.paused}));}
+function tlPhasesFor(c){
+  const base=(TL_PHASES||[]).filter(p=>p.enabled!==false).map(p=>({id:p.id,wk:p.wk,label:p.label,icon:p.icon,custom:false}));
+  const cust=((c.tl&&c.tl.custom)||[]).map(p=>({id:p.id,wk:p.wk,label:p.label,icon:p.icon||'📌',custom:true}));
+  return base.concat(cust).sort((a,b)=>a.wk-b.wk);
+}
+function tlDone(c){return (c.tl&&c.tl.done)||{};}
+function tlDismiss(c){return (c.tl&&c.tl.dismiss)||{};}
+function tlActioned(c,p){return !!(tlDone(c)[p.id]||tlDismiss(c)[p.id]);}
+function tlReached(c,p){return c.days!=null&&c.days>=p.wk*7;}
+function tlNeedsAction(c,p){return tlReached(c,p)&&!tlActioned(c,p);}
+/* action items for the notification centre + badge (operates on an OV_ROWS row) */
+function tlActionItems(r){
+  if(!TL_PHASES||!r||r.archived||r.paused)return [];
+  const c={id:r.id,name:r.name,days:tlDaysOf(r.startDate),tl:r.tl||null};
+  if(c.days==null)return [];
+  return tlPhasesFor(c).filter(p=>tlNeedsAction(c,p)).map(p=>{
+    const reachedISO=addDaysISO(String(r.startDate).slice(0,10),p.wk*7);
+    const ago=tlDaysOf(reachedISO);
+    return {pid:p.id,label:p.label,wk:p.wk,at:reachedISO,daysWord:(ago<=0?'reached today':('reached '+ago+' day'+(ago===1?'':'s')+' ago'))};
+  });
+}
+function tlActionCount(){return (OV_ROWS||[]).reduce((n,r)=>n+(tlActionItems(r).length?1:0),0);}
+function tlNavBadge(){const b=$('tl-nav-badge');if(!b)return;const n=tlActionCount();if(n>0){b.textContent=n;b.classList.remove('hidden');}else b.classList.add('hidden');}
+/* per-client persistence (lazy: load the plan, patch milestones.timeline, save) */
+async function tlPatch(cid,fn){
+  try{const p=await DB.getPlan(cid);if(!p)return;p.milestones=p.milestones||{goals:[]};p.milestones.timeline=p.milestones.timeline||{};fn(p.milestones.timeline);
+    await DB.saveMilestones(cid,p.milestones);
+    const row=(OV_ROWS||[]).find(x=>x.id===cid);if(row)row.tl=p.milestones.timeline;
+  }catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);}
+}
+async function tlMarkDone(cid,pid){await tlPatch(cid,tl=>{tl.done=tl.done||{};tl.done[pid]=todayISO();});tlRender();tlNavBadge();try{renderNotifications();}catch(e){}}
+async function tlReopen(cid,pid){await tlPatch(cid,tl=>{if(tl.done)delete tl.done[pid];if(tl.dismiss)delete tl.dismiss[pid];});tlRender();tlNavBadge();try{renderNotifications();}catch(e){}}
+function notifTlDone(cid,pid){tlMarkDone(cid,pid);}
+async function tlAddCustom(cid){
+  const label=prompt('Custom phase for this client (e.g. Holiday pause, Rebook call):');if(!label||!label.trim())return;
+  const wkS=prompt('At how many weeks with you should it appear? (number)','');const wk=Math.round(parseFloat(wkS));
+  if(isNaN(wk)||wk<0){toast('Enter a number of weeks',true);return;}
+  await tlPatch(cid,tl=>{tl.custom=tl.custom||[];tl.custom.push({id:uid(),wk:wk,label:label.trim(),icon:'📌'});});
+  tlRender();tlNavBadge();
+}
+async function tlDelCustom(cid,pid){
+  await tlPatch(cid,tl=>{if(Array.isArray(tl.custom))tl.custom=tl.custom.filter(p=>p.id!==pid);if(tl.done)delete tl.done[pid];if(tl.dismiss)delete tl.dismiss[pid];});
+  tlRender();tlNavBadge();
+}
+/* phase-template editor (coach-wide KV) */
+function tlPhaseAdd(){TL_PHASES=TL_PHASES||[];TL_PHASES.push({id:uid(),wk:1,label:'New phase',icon:'⭐',enabled:true});tlSavePhases();tlRender();}
+function tlPhaseDel(pid){if(!confirm('Remove this phase for every client?'))return;TL_PHASES=(TL_PHASES||[]).filter(p=>p.id!==pid);tlSavePhases();tlRender();}
+function tlPhaseField(pid,f,val){const p=(TL_PHASES||[]).find(x=>x.id===pid);if(!p)return;
+  if(f==='wk')p.wk=Math.max(0,Math.round(parseFloat(val))||0);else if(f==='enabled')p.enabled=!!val;else p[f]=String(val||'').trim()||(f==='icon'?'⭐':'Phase');
+  tlSavePhases();tlRender();}
+function tlSetUnit(u){TL_UNIT=u;tlRender();}
+function tlSetFilter(f){TL_FILTER=f;tlRender();}
+function tlOpenClient(cid){closeTimeline();try{editClient(cid);}catch(e){}}
+const TL_CSS='#tl-host .cltl-sub{font-size:13px;color:var(--muted);margin:0 0 14px}'
++'#tl-host .cltl-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}'
++'#tl-host .cltl-mc{background:var(--card2);border-radius:10px;padding:12px 14px}'
++'#tl-host .cltl-mc .k{font-size:12px;color:var(--muted);margin-bottom:5px}'
++'#tl-host .cltl-mc .v{font-weight:800;font-size:21px;letter-spacing:-.3px}'
++'#tl-host .cltl-mc .v small{font-size:12px;font-weight:600;color:var(--muted)}'
++'#tl-host .cltl-alert{display:flex;align-items:flex-start;gap:9px;background:rgba(255,107,94,.12);border:1px solid var(--crit);border-radius:10px;padding:10px 13px;margin-bottom:14px;font-size:13px;color:var(--crit);line-height:1.5}'
++'#tl-host .cltl-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}'
++'#tl-host .cltl-seg{display:inline-flex;border:1px solid var(--border);border-radius:9px;overflow:hidden}'
++'#tl-host .cltl-seg button{border:0;background:transparent;color:var(--muted);padding:6px 15px;font-size:13px;cursor:pointer;font-weight:600}'
++'#tl-host .cltl-seg button.on{background:var(--accent);color:#fff}'
++'#tl-host .cltl-filters{display:flex;gap:6px;flex-wrap:wrap}'
++'#tl-host .cltl-panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;overflow-x:auto}'
++'#tl-host .cltl-inner{min-width:560px}'
++'#tl-host .cltl-rail{position:relative;height:42px;border-bottom:1px solid var(--border);margin-left:150px}'
++'#tl-host .cltl-node{position:absolute;top:3px;transform:translateX(-50%);width:30px;height:30px;border-radius:50%;background:var(--card2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:15px}'
++'#tl-host .cltl-tick{position:absolute;bottom:2px;transform:translateX(-50%);font-size:11px;color:var(--muted)}'
++'#tl-host .cltl-row{display:grid;grid-template-columns:150px 1fr;align-items:center;border-bottom:1px solid var(--border)}'
++'#tl-host .cltl-row:last-child{border-bottom:0}'
++'#tl-host .cltl-who{display:flex;align-items:center;gap:9px;padding:9px 10px 9px 0}'
++'#tl-host .cltl-av{width:32px;height:32px;border-radius:50%;background:var(--card2);color:var(--text);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex:none}'
++'#tl-host .cltl-nm{font-size:13px;font-weight:700;cursor:pointer}#tl-host .cltl-nm:hover{color:var(--accent)}'
++'#tl-host .cltl-tn{font-size:12px;color:var(--muted);margin-top:1px}'
++'#tl-host .cltl-cchip{display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--muted);background:var(--card2);border-radius:999px;padding:1px 6px;margin:3px 3px 0 0}'
++'#tl-host .cltl-cchip b{cursor:pointer;color:var(--crit)}'
++'#tl-host .cltl-addc{font-size:11px;color:var(--muted);background:transparent;border:1px dashed var(--border);border-radius:6px;padding:1px 6px;cursor:pointer;margin-top:3px}'
++'#tl-host .cltl-track{position:relative;height:46px}'
++'#tl-host .cltl-guide{position:absolute;top:0;bottom:0;width:1px;background:var(--border)}'
++'#tl-host .cltl-tbg{position:absolute;top:50%;left:0;right:0;height:5px;transform:translateY(-50%);background:var(--border);border-radius:999px}'
++'#tl-host .cltl-fill{position:absolute;top:50%;left:0;height:7px;transform:translateY(-50%);background:var(--accent);border-radius:999px;min-width:4px}'
++'#tl-host .cltl-dot{position:absolute;top:50%;transform:translate(-50%,-50%);width:15px;height:15px;border-radius:50%;border:2px solid var(--card);cursor:pointer;z-index:2}'
++'#tl-host .cltl-dot.rc{background:var(--good)}#tl-host .cltl-dot.cu{background:#8b5cf6}'
++'#tl-host .cltl-dot.al{width:22px;height:22px;background:var(--crit);box-shadow:0 0 0 4px rgba(255,107,94,.2);display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff}'
++'#tl-host .cltl-pend{position:absolute;top:50%;transform:translate(-50%,-50%);width:11px;height:11px;border-radius:50%;border:2px dashed var(--muted);opacity:.65;z-index:1}'
++'#tl-host .cltl-leg{display:flex;gap:15px;flex-wrap:wrap;margin:12px 2px 2px;font-size:12px;color:var(--muted)}'
++'#tl-host .cltl-leg span{display:inline-flex;align-items:center;gap:6px}'
++'#tl-host .cltl-lg{width:11px;height:11px;border-radius:50%;flex:none}'
++'#tl-host .cltl-sect{font-size:13px;color:var(--muted);margin:20px 2px 10px;font-weight:600;display:flex;align-items:center;gap:6px}'
++'#tl-host .cltl-tpl{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:var(--card);margin-bottom:7px;flex-wrap:wrap}'
++'#tl-host .cltl-tpl input{padding:6px 8px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--text);font-size:13px}'
++'#tl-host .cltl-tpl input.ic{width:44px;text-align:center}#tl-host .cltl-tpl input.lab{flex:1;min-width:90px}#tl-host .cltl-tpl input.wk{width:60px}';
+function tlRender(){
+  const host=$('tl-host');if(!host)return;
+  const cls=tlClients();
+  const withSd=cls.filter(c=>c.days!=null), noSd=cls.filter(c=>c.days==null);
+  let WKX=26;
+  withSd.forEach(c=>{WKX=Math.max(WKX,Math.ceil(c.days/7)+1);((c.tl&&c.tl.custom)||[]).forEach(p=>WKX=Math.max(WKX,(+p.wk||0)+1));});
+  (TL_PHASES||[]).forEach(p=>{if(p.enabled!==false)WKX=Math.max(WKX,p.wk+1);});
+  const pctW=wk=>Math.min(wk,WKX)/WKX*100;
+  const avgD=withSd.length?Math.round(withSd.reduce((a,c)=>a+c.days,0)/withSd.length):0;
+  const actionCl=withSd.filter(c=>tlPhasesFor(c).some(p=>tlNeedsAction(c,p)));
+  let h='<style>'+TL_CSS+'</style>';
+  h+='<div class="cltl-sub">How long each client has been with you, in weeks and days — with phases that flag when it’s time to act. Red marker = action needed (tap to mark handled).</div>';
+  h+='<div class="cltl-cards"><div class="cltl-mc"><div class="k">Active clients</div><div class="v">'+withSd.length+'</div></div>'
+    +'<div class="cltl-mc"><div class="k">Average tenure</div><div class="v">Wk '+Math.floor(avgD/7)+' <small>· '+avgD+'d</small></div></div>'
+    +'<div class="cltl-mc"><div class="k">Action needed</div><div class="v" style="color:var(--crit)">'+actionCl.length+'</div></div></div>';
+  if(actionCl.length){
+    const names=actionCl.slice(0,6).map(c=>{const ps=tlPhasesFor(c).filter(p=>tlNeedsAction(c,p)).map(p=>p.label);return esc(c.name)+' ('+ps.map(esc).join(', ')+')';});
+    h+='<div class="cltl-alert"><span style="font-size:16px">🔔</span><span><b>'+actionCl.length+' client'+(actionCl.length>1?'s':'')+' reached a phase</b> — '+names.join(' · ')+(actionCl.length>6?' · +'+(actionCl.length-6)+' more':'')+'</span></div>';
+  }
+  const FILT=[['all','All'],['action','Action needed'],['new','New (<4 wk)'],['estab','Established (12 wk+)']];
+  h+='<div class="cltl-bar"><div class="cltl-seg"><button class="'+(TL_UNIT==='wk'?'on':'')+'" onclick="tlSetUnit(\'wk\')">Weeks</button><button class="'+(TL_UNIT==='dy'?'on':'')+'" onclick="tlSetUnit(\'dy\')">Days</button></div>'
+    +'<div class="cltl-filters">'+FILT.map(f=>'<button class="btn-sm'+(TL_FILTER===f[0]?' on':'')+'" onclick="tlSetFilter(\''+f[0]+'\')">'+f[1]+'</button>').join('')+'</div></div>';
+  let list=withSd.slice();
+  if(TL_FILTER==='action')list=list.filter(c=>tlPhasesFor(c).some(p=>tlNeedsAction(c,p)));
+  else if(TL_FILTER==='new')list=list.filter(c=>c.days<28);
+  else if(TL_FILTER==='estab')list=list.filter(c=>c.days>=84);
+  list.sort((a,b)=>b.days-a.days);
+  const enabled=(TL_PHASES||[]).filter(p=>p.enabled!==false);
+  const step=Math.max(1,Math.ceil(WKX/6));
+  let rail='';enabled.forEach(p=>{rail+='<div class="cltl-node" style="left:'+pctW(p.wk)+'%" title="'+esc(p.label)+' · week '+p.wk+'">'+esc(p.icon||'⭐')+'</div>';});
+  for(let t=0;t<=WKX;t+=step){rail+='<div class="cltl-tick" style="left:'+pctW(t)+'%">'+(TL_UNIT==='wk'?('W'+t):(t*7+'d'))+'</div>';}
+  let rows='';
+  if(!list.length)rows='<div class="empty" style="padding:24px">No clients in this view.</div>';
+  else rows=list.map(c=>{
+    const wkNum=Math.floor(c.days/7);
+    const ten=TL_UNIT==='wk'?('Wk '+wkNum):(c.days+' days');
+    const sub=TL_UNIT==='wk'?(c.days+'d with you'):('week '+wkNum);
+    const guides=enabled.map(p=>'<div class="cltl-guide" style="left:'+pctW(p.wk)+'%"></div>').join('');
+    let dots='';
+    tlPhasesFor(c).forEach(p=>{
+      const x=pctW(p.wk);
+      if(tlReached(c,p)){
+        if(tlNeedsAction(c,p))dots+='<span class="cltl-dot al" style="left:'+x+'%" title="'+esc(p.label)+' — reached, tap to mark handled" onclick="tlMarkDone(\''+c.id+'\',\''+p.id+'\')">!</span>';
+        else dots+='<span class="cltl-dot '+(p.custom?'cu':'rc')+'" style="left:'+x+'%" title="'+esc(p.label)+' — handled, tap to reopen" onclick="tlReopen(\''+c.id+'\',\''+p.id+'\')"></span>';
+      } else dots+='<span class="cltl-pend'+(p.custom?' cu':'')+'" style="left:'+x+'%'+(p.custom?';border-color:#8b5cf6':'')+'" title="'+esc(p.label)+' — upcoming at week '+p.wk+'"></span>';
+    });
+    const custChips=((c.tl&&c.tl.custom)||[]).map(p=>'<span class="cltl-cchip">'+esc(p.icon||'📌')+' '+esc(p.label)+' W'+p.wk+' <b onclick="tlDelCustom(\''+c.id+'\',\''+p.id+'\')" title="Remove">✕</b></span>').join('');
+    return '<div class="cltl-row"><div class="cltl-who"><div class="cltl-av">'+tlIni(c.name)+'</div><div style="min-width:0"><div class="cltl-nm" onclick="tlOpenClient(\''+c.id+'\')">'+esc(c.name)+(c.paused?' <span class="cltl-tn" style="color:var(--gold)">· paused</span>':'')+'</div><div class="cltl-tn">'+ten+' <span style="opacity:.7">· '+sub+'</span></div>'+custChips+' <button class="cltl-addc" onclick="tlAddCustom(\''+c.id+'\')" title="Add a custom phase for this client">＋ phase</button></div></div>'
+      +'<div class="cltl-track">'+guides+'<div class="cltl-tbg"></div><div class="cltl-fill" style="width:'+pctW(c.days/7)+'%"></div>'+dots+'</div></div>';
+  }).join('');
+  h+='<div class="cltl-panel"><div class="cltl-inner"><div class="cltl-rail">'+rail+'</div>'+rows+'</div></div>';
+  h+='<div class="cltl-leg"><span><span class="cltl-lg" style="background:var(--good)"></span>Phase reached</span><span><span class="cltl-lg" style="background:var(--crit)"></span>Action needed</span><span><span class="cltl-lg" style="background:#8b5cf6"></span>Custom (per-client)</span><span><span class="cltl-lg" style="background:var(--accent)"></span>Time with you</span><span><span class="cltl-lg" style="border:2px dashed var(--muted);background:transparent"></span>Upcoming</span></div>';
+  if(noSd.length)h+='<div class="cltl-sub" style="margin:12px 2px 0">⚠ '+noSd.length+' client'+(noSd.length>1?'s have':' has')+' no start date set (add it on their profile to place them on the timeline): '+noSd.slice(0,8).map(c=>esc(c.name)).join(', ')+(noSd.length>8?'…':'')+'</div>';
+  h+='<div class="cltl-sect">⚙️ Phase templates — apply to every client by tenure (override per client with ＋ phase on a row)</div>';
+  h+=(TL_PHASES||[]).map(p=>'<div class="cltl-tpl"><input class="ic" value="'+esc(p.icon||'⭐')+'" onchange="tlPhaseField(\''+p.id+'\',\'icon\',this.value)" aria-label="Icon"><input class="lab" value="'+esc(p.label)+'" onchange="tlPhaseField(\''+p.id+'\',\'label\',this.value)" placeholder="Phase name"><label class="cltl-tn" style="display:flex;align-items:center;gap:5px">Week <input class="wk" type="number" min="0" value="'+p.wk+'" onchange="tlPhaseField(\''+p.id+'\',\'wk\',this.value)"></label><label class="cltl-tn" style="display:flex;align-items:center;gap:5px"><input type="checkbox" '+(p.enabled!==false?'checked':'')+' onchange="tlPhaseField(\''+p.id+'\',\'enabled\',this.checked)">On</label><button class="icon-x" style="font-size:17px" onclick="tlPhaseDel(\''+p.id+'\')" title="Delete phase">×</button></div>').join('');
+  h+='<button class="btn-sm" style="margin-top:4px" onclick="tlPhaseAdd()">＋ Add phase</button>';
+  host.innerHTML=h;
+}
+async function openTimeline(){
+  $('timeline-modal').classList.add('open');const host=$('tl-host');if(host)host.innerHTML='<div class="empty" style="padding:30px">Loading…</div>';
+  await tlEnsurePhases();
+  if(!(OV_ROWS&&OV_ROWS.length)){if(host)host.innerHTML='<div class="empty" style="padding:30px">Open this from your dashboard so client data is loaded.</div>';return;}
+  tlRender();tlNavBadge();
+}
+function closeTimeline(){$('timeline-modal').classList.remove('open');}
+
 /* ═══════════════ 10f · WEEKLY CHECK-INS ═══════════════ */
 const CI_PERF=['Excellent','Good','Average','Below average','Poor / missed sessions'];
 const CI_COMPL=['On point (90–100%)','Good (75–90%)','Okay (50–75%)','Struggled (<50%)'];
@@ -22723,6 +22910,7 @@ async function renderOverview(){
       archived:!!(plan&&plan.archived),archivedAt:(plan&&plan.archived_at)||'',
       lastCall:lastCallBy[c.id]||null,
       trainDays:((tr.days||[]).length),startDate:pf.startDate||'',traffic:(plan&&plan.staff_feedback&&plan.staff_feedback.traffic)||'',
+      tl:((plan&&plan.milestones&&plan.milestones.timeline)||null),
       redeemReq:!!(plan&&plan.milestones&&plan.milestones.rewards&&plan.milestones.rewards.request&&plan.milestones.rewards.request.at),
       pointReq:((plan&&plan.milestones&&plan.milestones.rewards&&Array.isArray(plan.milestones.rewards.claims))?plan.milestones.rewards.claims.filter(c=>c&&c.status==='pending').length:0),
       claims:((plan&&plan.milestones&&plan.milestones.rewards&&Array.isArray(plan.milestones.rewards.claims))?plan.milestones.rewards.claims.filter(c=>c&&c.status==='pending'):[]),
@@ -22739,6 +22927,7 @@ async function renderOverview(){
   try{refreshActivityBadge();}catch(e){}
   try{if(DB.mode==='api')slReload(false);}catch(e){}
   try{renderNotifications();}catch(e){}
+  try{tlEnsurePhases().then(function(){try{renderNotifications();tlNavBadge();}catch(e){}});}catch(e){}   // client-timeline alerts + nav badge
   try{onbDeadlineCheck();}catch(e){}   // 7-day onboarding warning pop-up (once per session)
 }
 /* ═══════════════ ADMIN NOTIFICATION CENTRE (top of dashboard) ═══════════════ */
@@ -22787,6 +22976,7 @@ function notifBuild(){
         body:'Day '+o.elapsed+' of 7 · '+o.done+'/'+o.total+' stages done · <b>'+o.daysLeft+' day'+(o.daysLeft===1?'':'s')+' left</b> to finish all 6 stages',
         actions:'<button class="btn-sm solid" onclick="notifOpenClient(\''+r.id+'\')">Open client</button> <button class="btn-sm" onclick="notifDismiss(\''+k+'\')">Dismiss</button>'});}
     }
+    if(!r.archived&&!r.paused){try{tlActionItems(r).forEach(function(a){items.push({type:'timeline',key:'tl:'+r.id+':'+a.pid,cid:r.id,name:r.name,at:a.at,title:'🏁 '+esc(r.name)+' reached '+esc(a.label),body:'Week '+a.wk+' with you · '+a.daysWord,actions:'<button class="btn-sm solid" onclick="notifTlDone(\''+r.id+'\',\''+a.pid+'\')">Mark handled</button> <button class="btn-sm" onclick="openTimeline()">Timeline</button> <button class="btn-sm" onclick="notifOpenClient(\''+r.id+'\')">Open client</button>'});});}catch(e){}}
   });
   // Strategy Call page — new lead activity (opened the VSL page, watched the video, downloaded the
   // guide, finished the 7-Level assessment). SL is loaded by slReload(false) on every dashboard refresh.
