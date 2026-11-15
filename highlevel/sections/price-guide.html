@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-version="v2026-11-15c">
+<html lang="en" data-version="v2026-11-15d">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -580,6 +580,8 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
 .pg-head .pg-c.rec .pg-pn{color:var(--red)}
 .pg-tag{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-top:3px}
 .pg-head .pg-c.rec .pg-tag{color:var(--gold)}
+.pg-disc{display:block;font-size:10.5px;font-weight:600;color:var(--gold);margin-top:3px}
+.pg-sub{font-size:10.5px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -1505,6 +1507,12 @@ function renderPlanGrid(){
   const el=document.getElementById('plan-grid');if(!el)return;
   const W=CFG.weeks||16;
   const mom=esc(CFG.fb1Title||'Momentum'), bp=esc(CFG.fb2Title||'Blueprint');
+  // Online Coaching investment reflects the SAME discounted total shown everywhere else (loyalty + VSL voucher)
+  const vslOn=(document.getElementById('vsl-chk')||{}).checked||false;
+  const pr=pricing(vslOn);
+  let onlineInvest=money(pr.total)+' total · '+W+' wks';
+  const disc=[]; if(loyaltyOn()&&pr.loyaltyOff>0)disc.push(CFG.oldDiscPct+'% loyalty'); if(vslOn&&CFG.vsl>0)disc.push(money(CFG.vsl)+' voucher');
+  if(disc.length)onlineInvest+='<span class="pg-disc">'+disc.join(' + ')+' applied</span>';
   const cols=[
     {name:'Online Coaching',tag:'Best results',cls:'rec'},
     {name:mom,tag:'Lighter touch',cls:''},
@@ -1512,10 +1520,10 @@ function renderPlanGrid(){
   ];
   const rows=[
     ['Investment',
-      money(CFG.onboard)+' + '+money(CFG.weekly)+'/wk · '+W+' wks',
+      onlineInvest,
       money(CFG.onboard)+' + '+money(CFG.momMonthly)+'/mo',
       money(CFG.bpPrice)+' / '+CFG.bpMonths+' months'],
-    ['Onboarding fee','✓ '+money(CFG.onboard),'✓ '+money(CFG.onboard),'✗ none'],
+    ['Onboarding fee','✓ '+money(CFG.onboard)+' <span class="pg-sub">(in total)</span>','✓ '+money(CFG.onboard),'✗ none'],
     ['Coach follow-ups','Every week','Once a month','None'],
     ['Plan updates','Continuous — adjusted as you go','Lighter / periodic','Fixed 6-month plan'],
     ['App access','✓ Full','✓ Full','✓ Your allocation'],
