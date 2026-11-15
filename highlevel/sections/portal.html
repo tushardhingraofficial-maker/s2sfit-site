@@ -2525,7 +2525,7 @@ details.meal-add-choose[open]>summary{background:none;color:var(--muted);box-sha
 
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);z-index:1400;display:none;align-items:flex-start;justify-content:center;padding:calc(24px + env(safe-area-inset-top)) 14px calc(40px + env(safe-area-inset-bottom));overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .overlay.open{display:flex}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:0 20px 60px rgba(0,0,0,.6);width:100%;max-width:960px;margin:auto 0}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:0 20px 60px rgba(0,0,0,.6);width:100%;max-width:960px;margin:0 auto}
 .modal-head{display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;z-index:70}
 .modal-head h2{font-size:18px;margin:0;flex:1}
 .modal-body{padding:18px}
@@ -7042,7 +7042,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04ru';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04rv';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -12395,8 +12395,9 @@ function wkoFocusHTML(en,ei,noNav){
       '<button class="wko-toggle" onclick="wkoToggleEffort('+ei+')">'+effLbl+' ⇄</button>'+
       '<button class="wko-toggle" onclick="wkoAddClientCol()">＋ Column</button>'+colChips+'</div>';
   const cardFld=(s,si,key,ph,lbl)=>'<label class="wko-set-fld"><input type="number" inputmode="decimal" min="0" step="any" value="'+esc(s[key]||'')+'" placeholder="'+ph+'" onchange="wkoSet('+ei+','+si+',\''+key+'\',this.value)"><span>'+lbl+'</span></label>';
-  const sets=en.sets.map((s,si)=>{const _tc=s.tech==='drop'?'var(--gold)':(s.tech==='rp'?'#8b5cf6':'');const _tl=s.tech==='drop'?'↓D':(s.tech==='rp'?'RP':(si+1));return '<div class="wko-set'+(s.done?' done':'')+(s.tech?' wko-sub':'')+'"'+(s.tech?' style="border-left:3px solid '+_tc+';padding-left:5px"':'')+'>'+
-    '<span class="wko-set-n"'+(s.tech?' style="color:'+_tc+';font-weight:800" title="'+(s.tech==='drop'?'Drop set':'Rest-pause')+'"':'')+'>'+_tl+'</span>'+
+  let _mainN=0;
+  const sets=en.sets.map((s,si)=>{const _sub=!!s.tech;if(!_sub)_mainN++;const _tc=s.tech==='drop'?'var(--gold)':(s.tech==='rp'?'#8b5cf6':'');const _tl=s.tech==='drop'?'↓ Drop':(s.tech==='rp'?'↺ RP':_mainN);return '<div class="wko-set'+(s.done?' done':'')+(_sub?' wko-sub':'')+'"'+(_sub?' style="margin-left:22px;border-left:3px solid '+_tc+';padding-left:8px"':'')+'>'+
+    '<span class="wko-set-n"'+(_sub?' style="color:'+_tc+';font-weight:800;font-size:11px" title="'+(s.tech==='drop'?'Drop set':'Rest-pause')+' — part of set '+_mainN+'"':'')+'>'+_tl+'</span>'+
     '<div class="wko-set-flds">'+
       (aerobic
         ? cardFld(s,si,'dur','min','MIN')+cardFld(s,si,'dist','km','KM')+cardFld(s,si,'cal','kcal','CAL')+cardFld(s,si,'hr','bpm','AVG HR')
@@ -17523,7 +17524,7 @@ function renderTrainingV2(){
       const w=t2cWorkout(id);if(!w)return '';
       const dn=done.has(today);
       let exCount=0,setCount=0;const flat=[];
-      (w.sections||[]).forEach(s=>(s.exercises||[]).forEach(e=>{flat.push(e);exCount++;setCount+=wdExSets(e).length;}));
+      (w.sections||[]).forEach(s=>(s.exercises||[]).forEach(e=>{flat.push(e);exCount++;setCount+=wdExSets(e).filter(x=>!x.tech).length;}));
       const mins=Math.max(10,Math.round(setCount*2.6));
       const musc=[];flat.forEach(e=>{const lib=e.exId?exById(e.exId):null;const bp=lib&&lib.bodyPart;if(bp&&musc.indexOf(bp)<0)musc.push(bp);});
       const circ=163.4,dash=Math.max(0,Math.min(circ,circ*(wkPlan?wkDoneN/wkPlan:0)));
@@ -27099,7 +27100,7 @@ let WD_VIEW='workouts', WD_CAL_DAYS=7, WD_CAL_START=null, WD_CAL_PICK=null, WD_C
 function t2(){edPlan.training=edPlan.training||{};const v=edPlan.training.v2=edPlan.training.v2||{active:false,workouts:[],calendar:{}};if(!Array.isArray(v.workouts))v.workouts=[];if(!v.calendar||typeof v.calendar!=='object')v.calendar={};return v;}
 function wdWorkout(id){return t2().workouts.find(w=>w.id===id)||null;}
 let WD_CLIENTLOGS=[];
-async function wdOpen(){ if(!edClient||!edClient.id){toast('Open a client first',true);return;} try{await loadExLib();}catch(e){} try{await wlibLoad();}catch(e){} try{WD_CLIENTLOGS=await DB.listWorkoutLogs(edClient.id)||[];}catch(e){WD_CLIENTLOGS=[];} WD_CUR=null; const m=$('wd-modal'); if(m){document.body.appendChild(m);m.classList.add('open');} wdRender(); }
+async function wdOpen(){ if(!edClient||!edClient.id){toast('Open a client first',true);return;} try{await loadExLib();}catch(e){} try{await setTplLoad();}catch(e){} try{await wlibLoad();}catch(e){} try{WD_CLIENTLOGS=await DB.listWorkoutLogs(edClient.id)||[];}catch(e){WD_CLIENTLOGS=[];} WD_CUR=null; const m=$('wd-modal'); if(m){document.body.appendChild(m);m.classList.add('open');} wdRender(); }
 function wdClose(){const m=$('wd-modal');if(m)m.classList.remove('open');}
 async function wdSave(silent){ if(!edClient||!edClient.id){if(!silent)toast('Open a client first',true);return;} try{ const raw=(await DB.getPlan(edClient.id))||{client_id:edClient.id}; raw.training=raw.training||{}; raw.training.v2=t2(); await DB.savePlanRow(raw); if(!silent)toast('Saved ✓'); }catch(e){if(!silent)toast('Could not save — '+((e&&e.message)||'error'),true);} }
 function wdRender(){ const host=$('wd-host'); if(!host)return; const sub=$('wd-sub'); if(WD_CUR){ wdRenderDesigner(host); return; } if(WD_VIEW==='calendar'){ wdRenderCalendar(host); if(sub)sub.textContent=((edClient&&edClient.name)||'')+' · calendar'; return; } if(WD_VIEW==='library'){ wdRenderLibrary(host); if(sub)sub.textContent=((edClient&&edClient.name)||'')+' · library'; return; } wdRenderList(host); if(sub)sub.textContent=((edClient&&edClient.name)||'')+' · '+t2().workouts.length+' workouts'; }
@@ -27175,6 +27176,72 @@ function wdFlush(){
 }
 function wdAddSetRow(sid,eid,tech){wdFlush();const e=wdEx(sid,eid);if(!e)return;const sets=wdExSets(e);const base=Object.assign({},sets[sets.length-1]||{});if(tech)base.tech=tech;else delete base.tech;sets.push(base);wdSave(true);wdRenderDesigner($('wd-host'));}
 function wdSetTech(sid,eid,si){wdFlush();const e=wdEx(sid,eid);if(!e)return;const sets=wdExSets(e);const s=sets[si];if(!s)return;const order=['','drop','rp'];s.tech=order[(order.indexOf(s.tech||'')+1)%order.length];wdSave(true);wdRenderDesigner($('wd-host'));}
+/* ── Set-type templates: reusable rep / RIR / rest / weight-selection ranges (coach-wide KV) ── */
+let SET_TPLS=null;
+async function setTplLoad(force){if(SET_TPLS&&!force)return SET_TPLS;try{const v=await DB.getKV('set_templates');SET_TPLS=Array.isArray(v)?v:[];}catch(e){SET_TPLS=[];}return SET_TPLS;}
+async function setTplSave(){try{await DB.setKV('set_templates',SET_TPLS);}catch(e){toast('Could not save templates — '+((e&&e.message)||'error'),true);}}
+async function setTplOpen(){
+  await setTplLoad();
+  let m=$('settpl-modal');
+  if(!m){m=document.createElement('div');m.id='settpl-modal';m.className='overlay';}
+  m.innerHTML='<div class="modal" style="max-width:600px"><div class="modal-head"><h2>⚙️ Set templates</h2><span class="sync"><span class="small">reusable rep / RIR / rest / weight ranges</span></span><span class="sp"></span><button class="icon-x" onclick="setTplClose()">×</button></div><div class="modal-body"><div id="settpl-body"></div></div></div>';
+  document.body.appendChild(m);m.classList.add('open');setTplRender();
+}
+function setTplClose(){const m=$('settpl-modal');if(m)m.classList.remove('open');}
+function setTplRender(){
+  const body=$('settpl-body');if(!body)return;
+  let h='<p class="small" style="color:var(--muted);margin:0 0 10px">Save set schemes once (as ranges) and apply them to any exercise in the Workout Builder — no retyping. Applying fills the set count with these values.</p>';
+  h+=(SET_TPLS||[]).map((t,i)=>'<div class="dt-block" style="margin-bottom:8px;padding:8px 10px"><div class="row" style="gap:6px;align-items:flex-end"><div class="field" style="flex:2;margin:0"><label class="lab">Name</label><input value="'+esc(t.name||'')+'" oninput="SET_TPLS['+i+'].name=this.value" placeholder="e.g. Hypertrophy"></div><div class="field" style="margin:0;max-width:64px"><label class="lab">Sets</label><input value="'+esc(t.sets||'')+'" oninput="SET_TPLS['+i+'].sets=this.value" placeholder="3"></div><button class="icon-x" onclick="setTplDel('+i+')" title="Delete">×</button></div>'+
+    '<div class="row" style="gap:6px;margin-top:4px">'+
+      '<div class="field" style="margin:0"><label class="lab">Rep range</label><input value="'+esc(t.reps||'')+'" oninput="SET_TPLS['+i+'].reps=this.value" placeholder="8-12"></div>'+
+      '<div class="field" style="margin:0"><label class="lab">RIR / RPE range</label><input value="'+esc(t.rir||'')+'" oninput="SET_TPLS['+i+'].rir=this.value" placeholder="1-2"></div>'+
+      '<div class="field" style="margin:0"><label class="lab">Rest range (s)</label><input value="'+esc(t.rest||'')+'" oninput="SET_TPLS['+i+'].rest=this.value" placeholder="60-90"></div>'+
+      '<div class="field" style="margin:0"><label class="lab">Weight selection</label><input value="'+esc(t.weight||'')+'" oninput="SET_TPLS['+i+'].weight=this.value" placeholder="70-80% / RPE8"></div>'+
+    '</div></div>').join('');
+  if(!(SET_TPLS||[]).length)h+='<div class="empty">No templates yet — add one, or load the starter pack.</div>';
+  h+='<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn-sm solid" onclick="setTplAdd()">＋ New template</button><button class="btn-sm" onclick="setTplSeed()">Starter pack</button><span style="flex:1"></span><button class="btn-sm solid" onclick="setTplSaveClose()">Save</button></div>';
+  body.innerHTML=h;
+}
+function setTplAdd(){SET_TPLS=SET_TPLS||[];SET_TPLS.push({id:uid(),name:'',sets:'3',reps:'',rir:'',rest:'',weight:''});setTplRender();}
+function setTplDel(i){SET_TPLS.splice(i,1);setTplRender();}
+function setTplSeed(){SET_TPLS=(SET_TPLS||[]).concat([{id:uid(),name:'Strength',sets:'4',reps:'3-5',rir:'2-3',rest:'150-180',weight:'85-90%'},{id:uid(),name:'Hypertrophy',sets:'3',reps:'8-12',rir:'1-2',rest:'60-90',weight:'70-80%'},{id:uid(),name:'Metabolic / burn',sets:'3',reps:'15-20',rir:'1',rest:'30-45',weight:'50-60%'}]);setTplRender();}
+async function setTplSaveClose(){SET_TPLS=(SET_TPLS||[]).filter(t=>(t.name||'').trim());await setTplSave();toast('Set templates saved ✓');setTplClose();try{if(WD_CUR&&typeof wdRenderDesigner==='function')wdRenderDesigner($('wd-host'));}catch(e){}}
+function wdApplyTpl(sid,eid,tid){
+  if(tid==='__manage'){setTplOpen();return;}
+  if(!tid)return;
+  const t=(SET_TPLS||[]).find(x=>x.id===tid);if(!t){toast('Template not found',true);return;}
+  wdFlush();const e=wdEx(sid,eid);if(!e)return;
+  const n=Math.max(1,Math.min(20,parseInt(t.sets)||3));
+  const track=(e.track&&e.track.length)?e.track.slice():WD_DEFAULT_TRACK.slice();
+  ['reps','weight','rir','rest'].forEach(k=>{if(String(t[k]||'').trim()&&track.indexOf(k)<0)track.push(k);});
+  e.track=track;
+  e.sets=Array.from({length:n},()=>({reps:t.reps||'',weight:t.weight||'',rir:t.rir||'',rest:t.rest||''}));
+  wdSave(true);wdRenderDesigner($('wd-host'));
+  toast('Applied “'+t.name+'” — '+n+' sets filled');
+}
+/* inline ✨ generate from a Workout Builder exercise: type a name → generate, save to library, link */
+async function wdExGen(sid,eid){
+  wdFlush();const e=wdEx(sid,eid);if(!e)return;
+  const name=(e.name||'').trim();
+  if(!name){toast('Type the exercise name first',true);return;}
+  try{await loadExLib();}catch(_){}
+  const pickV=(v,l)=>{v=(v||'').trim();if(!v)return (l&&l[0])||'';const mm=(l||[]).find(x=>String(x).toLowerCase()===v.toLowerCase());return mm||v;};
+  const existing=(EX_LIB||[]).find(x=>(x.name||'').trim().toLowerCase()===name.toLowerCase());
+  if(existing){e.exId=existing.id;e.name=existing.name;wdSave(true);wdRenderDesigner($('wd-host'));toast('Linked “'+existing.name+'” from your library');return;}
+  toast('✨ Generating “'+name+'”…');
+  let g;
+  try{ g=await exGenFetch(name,{}); }
+  catch(err){
+    if((err&&err.message)==='no-webhook'){toast('Set the Smart generation webhook first — in the exercise library (🏋 From library → ⚙ webhook)',true);return;}
+    toast('Could not generate — '+((err&&err.message)||'error'),true);return;
+  }
+  const ex={id:uid(),name:name,bodyPart:pickV(g.bodyPart,EX_BODYPARTS),category:pickV(g.category,EX_CATEGORIES),equipment:pickV(g.equipment,EX_EQUIPMENT),video:(g.video||'').trim(),videoFile:'',images:(Array.isArray(g.images)?g.images:[]),howto:(g.howto||'').trim(),mistakes:(g.mistakes||'').trim(),cues:(g.cues||'').trim(),breathing:(g.breathing||'').trim()};
+  EX_LIB=EX_LIB||[];EX_LIB.push(ex);
+  try{await DB.saveExercises(EX_LIB);if(typeof refreshExNameList==='function')refreshExNameList();}catch(_){toast('Generated, but could not save to library',true);return;}
+  e.exId=ex.id;e.name=ex.name;
+  wdSave(true);wdRenderDesigner($('wd-host'));
+  toast('✨ “'+ex.name+'” generated, saved to your library & linked');
+}
 function wdDelSetRow(sid,eid,si){wdFlush();const e=wdEx(sid,eid);if(!e)return;const sets=wdExSets(e);if(sets.length<=1)return;sets.splice(si,1);wdSave(true);wdRenderDesigner($('wd-host'));}
 function wdToggleVar(sid,eid,v){wdFlush();const e=wdEx(sid,eid);if(!e)return;e.track=Array.isArray(e.track)?e.track:[];if(e.track.includes(v))e.track=e.track.filter(x=>x!==v);else e.track.push(v);wdSave(true);wdRenderDesigner($('wd-host'));}
 function wdDelEx(sid,eid){wdFlush();const s=wdSecById(sid);if(!s)return;s.exercises=(s.exercises||[]).filter(e=>e.id!==eid);wdSave(true);wdRenderDesigner($('wd-host'));}
@@ -27188,7 +27255,7 @@ function wdRenderDesigner(host){
   if(!host)host=$('wd-host');if(!host)return;const w=wdWorkout(WD_CUR);if(!w){wdRenderList(host);return;}
   const sub=$('wd-sub');if(sub)sub.textContent=(edClient&&edClient.name)||'';
   let h='<div class="wd-cols"><div class="wd-main">';
-  h+='<div class="wd-top"><button class="btn-xxs" onclick="wdBackToList()">‹ All workouts</button></div>';
+  h+='<div class="wd-top" style="display:flex;align-items:center;gap:6px"><button class="btn-xxs" onclick="wdBackToList()">‹ All workouts</button><span style="flex:1"></span><button class="btn-xxs" onclick="setTplOpen()" title="Create reusable set schemes (rep / RIR / rest / weight-selection ranges) to apply to exercises with one tap">⚙️ Set templates</button></div>';
   h+='<div class="field"><label class="lab">Workout name</label><input value="'+esc(w.name||'')+'" oninput="wdWSet(\'name\',this.value)"></div>';
   h+='<div class="field"><label class="lab">Focus / tag (optional)</label><input value="'+esc(w.focus||'')+'" placeholder="e.g. Push, Lower, Full body" oninput="wdWSet(\'focus\',this.value)"></div>';
   (w.sections||[]).forEach(s=>{h+=wdSectionHTML(s);});
@@ -27209,11 +27276,14 @@ function wdExHTML(s,e,i,n){
   let h='<div class="wd-ex'+(e.linkNext?' link':'')+'" onclick="event.stopPropagation()">';
   h+='<div class="wd-ex-top"><span class="wd-ex-move"><button class="btn-xxs" onclick="wdMoveEx(\''+sid+'\',\''+eid+'\',-1)"'+(i===0?' disabled':'')+'>▲</button><button class="btn-xxs" onclick="wdMoveEx(\''+sid+'\',\''+eid+'\',1)"'+(i===n-1?' disabled':'')+'>▼</button></span>';
   h+='<input class="wd-ex-name" list="ex-namelist" value="'+esc(e.name||'')+'" placeholder="Exercise name" oninput="wdExSet(\''+sid+'\',\''+eid+'\',\'name\',this.value)">';
+  h+=((!e.exId&&(e.name||'').trim())?'<button class="btn-xxs" style="color:var(--brand);flex:none;white-space:nowrap" title="✨ Generate this exercise (execution, mistakes, cues, media) with Smart automation, save it to your library and link it here" onclick="wdExGen(\''+sid+'\',\''+eid+'\')">✨ gen</button>':'');
   h+='<button class="icon-x" onclick="wdDelEx(\''+sid+'\',\''+eid+'\')">×</button></div>';
   h+='<div class="wd-track"><span class="wd-mini">Track:</span>'+WD_VARS.map(vd=>'<button class="wd-chip'+(((e.track||[]).includes(vd[0]))?' on':'')+'" onclick="wdToggleVar(\''+sid+'\',\''+eid+'\',\''+vd[0]+'\')">'+esc(vd[1])+'</button>').join('')+'</div>';
+  h+='<div style="margin:5px 0"><select onchange="wdApplyTpl(\''+sid+'\',\''+eid+'\',this.value);this.value=\'\'" title="Fill these sets from a saved set template (rep / RIR / rest / weight ranges)" style="font-size:12px;padding:4px 7px;border-radius:7px;background:var(--card);color:var(--text);border:1px solid var(--border);max-width:230px"><option value="">⚡ Fill from set template…</option>'+((SET_TPLS||[]).map(t=>'<option value="'+esc(t.id)+'">'+esc(t.name)+'</option>').join(''))+'<option value="__manage">⚙️ Manage templates…</option></select></div>';
   const cols=(e.track&&e.track.length)?e.track:WD_DEFAULT_TRACK;const sets=wdExSets(e);const gt='34px repeat('+cols.length+',1fr) 28px';
   h+='<div class="wd-setgrid"><div class="wd-setrow wd-setrow-h" style="grid-template-columns:'+gt+'"><span class="wd-mini">Set</span>'+cols.map(v=>{const d=WD_VARS.find(x=>x[0]===v);return '<span class="wd-mini">'+esc(d?d[1].replace(' (kg)','').replace(' (s)','').replace(' (m)','').replace(' (cm)',''):v)+'</span>';}).join('')+'<span></span></div>';
-  sets.forEach((st,si)=>{const _tt=st.tech==='drop'?'drop':(st.tech==='rp'?'rp':'');const _tc=_tt==='drop'?'var(--gold)':(_tt==='rp'?'#8b5cf6':'');const _tl=_tt==='drop'?'↓D':(_tt==='rp'?'RP':(si+1));h+='<div class="wd-setrow" style="grid-template-columns:'+gt+(_tt?(';border-left:3px solid '+_tc):'')+'"><button title="Tag this set: normal → drop set → rest-pause → normal" onclick="wdSetTech(\''+sid+'\',\''+eid+'\','+si+')" style="border:none;background:transparent;cursor:pointer;font-size:12px;font-weight:800;padding:0;color:'+(_tt?_tc:'var(--muted)')+'">'+_tl+'</button>'+cols.map(v=>{const d=WD_VARS.find(x=>x[0]===v);return '<input type="text" value="'+esc(st[v]||'')+'" placeholder="'+esc(d?d[2]:'')+'" oninput="wdSetVal(\''+sid+'\',\''+eid+'\','+si+',\''+v+'\',this.value)">';}).join('')+'<button class="icon-x" onclick="wdDelSetRow(\''+sid+'\',\''+eid+'\','+si+')">×</button></div>';});
+  let _mn=0;
+  sets.forEach((st,si)=>{const _tt=st.tech==='drop'?'drop':(st.tech==='rp'?'rp':'');if(!_tt)_mn++;const _tc=_tt==='drop'?'var(--gold)':(_tt==='rp'?'#8b5cf6':'');const _tl=_tt==='drop'?'↓D':(_tt==='rp'?'RP':_mn);h+='<div class="wd-setrow" style="grid-template-columns:'+gt+(_tt?(';border-left:3px solid '+_tc+';margin-left:16px'):'')+'"><button title="'+(_tt?((_tt==='drop'?'Drop set':'Rest-pause')+' — part of set '+_mn+'. Tap to change.'):'Tap to tag this set: normal → drop set → rest-pause')+'" onclick="wdSetTech(\''+sid+'\',\''+eid+'\','+si+')" style="border:none;background:transparent;cursor:pointer;font-size:'+(_tt?'10':'12')+'px;font-weight:800;padding:0;color:'+(_tt?_tc:'var(--muted)')+'">'+_tl+'</button>'+cols.map(v=>{const d=WD_VARS.find(x=>x[0]===v);return '<input type="text" value="'+esc(st[v]||'')+'" placeholder="'+esc(d?d[2]:'')+'" oninput="wdSetVal(\''+sid+'\',\''+eid+'\','+si+',\''+v+'\',this.value)">';}).join('')+'<button class="icon-x" onclick="wdDelSetRow(\''+sid+'\',\''+eid+'\','+si+')">×</button></div>';});
   h+='</div><div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;align-items:center"><button class="btn-xxs" onclick="wdAddSetRow(\''+sid+'\',\''+eid+'\')">＋ set</button><button class="btn-xxs" title="Add a drop set — lower the weight and go again; the client logs it as its own set" onclick="wdAddSetRow(\''+sid+'\',\''+eid+'\',\'drop\')" style="color:var(--gold)">＋ drop</button><button class="btn-xxs" title="Add a rest-pause burst — short rest then a few more reps; logged as its own set" onclick="wdAddSetRow(\''+sid+'\',\''+eid+'\',\'rp\')" style="color:#8b5cf6">＋ rest-pause</button><span class="wd-mini" style="color:var(--muted)">tip: tap a set’s number to tag ↓D / RP</span></div>';
   h+='<div class="wd-alts"><span class="wd-mini">Alt:</span>'+((e.alts||[]).map((a,ai)=>'<span class="wd-altchip">'+esc(a)+' <button onclick="wdDelAlt(\''+sid+'\',\''+eid+'\','+ai+')">×</button></span>').join(''))+'<button class="btn-xxs" onclick="wdAddAlt(\''+sid+'\',\''+eid+'\')">＋ alt</button></div>';
   h+='<div class="wd-ex-foot"><button class="btn-xxs'+(e.linkNext?' solid':'')+'" onclick="wdToggleLink(\''+sid+'\',\''+eid+'\')"'+(i===n-1?' disabled':'')+'>⛓ superset w/ next</button>'+(lib&&lib.video?'<a class="btn-xxs" href="'+esc(lib.video)+'" target="_blank" rel="noopener">▶ demo</a>':'')+'<input class="wd-note" placeholder="note (optional)" value="'+esc(e.notes||'')+'" oninput="wdExSet(\''+sid+'\',\''+eid+'\',\'notes\',this.value)"></div>';
