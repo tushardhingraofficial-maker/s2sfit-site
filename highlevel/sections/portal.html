@@ -7002,7 +7002,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04rc';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04rd';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -24333,7 +24333,7 @@ async function teamRenderPerf(){const host=$('team-perf-host');if(!host)return;c
      '<div class="wko-sumtile"><div class="v">'+(output.woCreated+output.woUpdated)+'</div><div class="k">Workouts</div></div>'+
      '<div class="wko-sumtile"><div class="v">'+(output.dietCreated+output.dietUpdated)+'</div><div class="k">Diet plans</div></div></div>';
   h+='<div class="small" style="color:var(--muted);margin:8px 2px 0;line-height:1.6">📞 '+calls.onboarding+' onboarding · '+calls.revision+' revision · '+calls.checkin+' check-in · '+calls.normal+' normal &nbsp;|&nbsp; 📦 '+output.woCreated+' WO new / '+output.woUpdated+' upd · '+output.dietCreated+' diet new / '+output.dietUpdated+' upd &nbsp;|&nbsp; 🚩 '+issuesFlagged+' flagged / '+output.issuesResolved+' resolved</div>';
-  h+='<div style="margin:14px 0 2px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" style="flex:1;min-width:160px" onclick="teamPerfOpen(\'mine\')">📊 My weekly report</button><button class="btn-sm" style="flex:1;min-width:140px" onclick="teamPerfOpen(\'library\')">📚 Saved reports</button></div><div class="small" style="color:var(--muted);text-align:center;margin-top:5px">Generate your week, edit it, download a PPT · saved reports are shared for team comparison</div>';
+  h+='<div style="margin:14px 0 2px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" style="flex:1;min-width:160px" onclick="teamPerfOpen(\'mine\')">📊 My weekly report</button><button class="btn-sm" style="flex:1;min-width:140px" onclick="teamPerfOpen(\'library\')">📚 Saved reports</button></div><div class="small" style="color:var(--muted);text-align:center;margin-top:5px">Generate your week, edit it &amp; save · saved reports are shared for team comparison</div>';
   if(cats.length){const max=Math.max.apply(null,cats.map(c=>byCat[c]))||1;h+='<div class="uline" style="margin:14px 0 6px">Time by category</div>'+cats.map(c=>'<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>'+esc(c)+'</span><b>'+teamHM(byCat[c])+'</b></div><div style="height:8px;background:var(--card2);border-radius:5px;overflow:hidden;margin-top:3px"><i style="display:block;height:100%;width:'+Math.round(byCat[c]/max*100)+'%;background:var(--red)"></i></div></div>').join('');}
   if(owner&&TEAM_PERF_WHO==='all'){const per={};staff.forEach(s=>per[s.id]={name:s.name,worked:0,tracked:0,points:0,calls:0});
     TEAM.shifts.filter(s=>s.dateISO>=from).forEach(s=>{if(per[s.staffId]){per[s.staffId].worked+=teamShiftSeconds(s);if(s.debrief&&s.debrief.at)per[s.staffId].points+=(+s.debrief.points||0);}});
@@ -24343,7 +24343,7 @@ async function teamRenderPerf(){const host=$('team-perf-host');if(!host)return;c
     if(rows.length)h+='<div class="uline" style="margin:16px 0 6px">By staff · this range</div><div class="tbl-scroll"><table class="itbl"><thead><tr><th style="text-align:left">Staff</th><th>Pts</th><th>Worked</th><th>Calls</th></tr></thead><tbody>'+rows.map((k,i)=>'<tr><td style="text-align:left">'+(i===0&&per[k].points>0?'🏆 ':'')+esc(per[k].name)+'</td><td style="color:var(--gold);font-weight:800">'+per[k].points+'</td><td class="wk-1rm">'+teamHM(per[k].worked)+'</td><td>'+per[k].calls+'</td></tr>').join('')+'</tbody></table></div>';}
   if(!logs.length&&!shifts.length)h+='<div class="small" style="color:var(--muted);margin-top:14px">No activity in this range yet — clock a shift and run a task timer to populate this.</div>';
   host.innerHTML=h;}
-/* ═══════════ TEAM — weekly PER-COACH performance report (generate · edit · save · compare · PPT) ═══════════ */
+/* ═══════════ TEAM — weekly PER-COACH performance report (generate · edit · save · compare) ═══════════ */
 let TEAM_RPT=null, TEAM_RPT_VIEW='mine', TEAM_PERF_LIB=[];
 async function perfReportApi(payload){
   const headers={'Content-Type':'application/json'};
@@ -24434,10 +24434,10 @@ function teamMyReportHTML(rpt,editable){
       '<div class="field"><label class="lab">Highlights (one per line)</label><textarea id="rpt-highlights" rows="4">'+esc((n.highlights||[]).join('\n'))+'</textarea></div>'+
       '<div class="field"><label class="lab">Concerns / watch (one per line)</label><textarea id="rpt-concerns" rows="3">'+esc((n.concerns||[]).join('\n'))+'</textarea></div>'+
       '<div class="field"><label class="lab">Recommendations — next week (one per line)</label><textarea id="rpt-recs" rows="3">'+esc((n.recommendations||[]).join('\n'))+'</textarea></div>'+
-      '<div class="field"><label class="lab">➕ Manual extras / notes (added to the deck)</label><textarea id="rpt-extras" rows="3" placeholder="Anything you want to add to the report…">'+esc(n.extras||'')+'</textarea></div>'+
-      '<div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn btn-primary" onclick="teamSavePerfReport()">💾 Save (team can see)</button><button class="btn-sm" onclick="teamDownloadPPT()">⬇ Download PPT</button><button class="btn-sm" onclick="teamGenMyReport(true)">🔄 Regenerate</button></div></div>';
+      '<div class="field"><label class="lab">➕ Manual extras / notes (added to the report)</label><textarea id="rpt-extras" rows="3" placeholder="Anything you want to add to the report…">'+esc(n.extras||'')+'</textarea></div>'+
+      '<div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn btn-primary" onclick="teamSavePerfReport()">💾 Save (team can see)</button><button class="btn-sm" onclick="teamGenMyReport(true)">🔄 Regenerate</button></div></div>';
   } else {
-    h+='<div class="pr-slide">'+(n.summary?'<p class="pr-p">'+esc(n.summary)+'</p>':'')+chip(n.highlights,'good','✅')+chip(n.concerns,'warn','⚠️')+((n.recommendations&&n.recommendations.length)?('<div class="pr-subh">Next week</div>'+chip(n.recommendations,'rec','→')):'')+(n.extras?('<div class="pr-subh">Notes</div><p class="pr-p" style="white-space:pre-wrap">'+esc(n.extras)+'</p>'):'')+'<div class="row" style="gap:8px;margin-top:10px"><button class="btn-sm" onclick="teamDownloadPPT()">⬇ Download PPT</button></div></div>';
+    h+='<div class="pr-slide">'+(n.summary?'<p class="pr-p">'+esc(n.summary)+'</p>':'')+chip(n.highlights,'good','✅')+chip(n.concerns,'warn','⚠️')+((n.recommendations&&n.recommendations.length)?('<div class="pr-subh">Next week</div>'+chip(n.recommendations,'rec','→')):'')+(n.extras?('<div class="pr-subh">Notes</div><p class="pr-p" style="white-space:pre-wrap">'+esc(n.extras)+'</p>'):'')+'</div>';
   }
   h+='</div>';return h;
 }
