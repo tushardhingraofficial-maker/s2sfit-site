@@ -7042,7 +7042,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04rv';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04rw';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -27242,6 +27242,9 @@ async function wdExGen(sid,eid){
   wdSave(true);wdRenderDesigner($('wd-host'));
   toast('✨ “'+ex.name+'” generated, saved to your library & linked');
 }
+/* show/hide the ✨ gen button live as the coach types — instant, no re-render. Shows when the
+   typed name is non-empty and NOT already an exact match in the library (so it returns after edits). */
+function wdGenSync(eid,val){const b=document.getElementById('wdgen-'+eid);if(!b)return;const n=(val||'').trim();const show=!!n&&!(EX_LIB||[]).some(x=>(x.name||'').trim().toLowerCase()===n.toLowerCase());b.style.display=show?'':'none';}
 function wdDelSetRow(sid,eid,si){wdFlush();const e=wdEx(sid,eid);if(!e)return;const sets=wdExSets(e);if(sets.length<=1)return;sets.splice(si,1);wdSave(true);wdRenderDesigner($('wd-host'));}
 function wdToggleVar(sid,eid,v){wdFlush();const e=wdEx(sid,eid);if(!e)return;e.track=Array.isArray(e.track)?e.track:[];if(e.track.includes(v))e.track=e.track.filter(x=>x!==v);else e.track.push(v);wdSave(true);wdRenderDesigner($('wd-host'));}
 function wdDelEx(sid,eid){wdFlush();const s=wdSecById(sid);if(!s)return;s.exercises=(s.exercises||[]).filter(e=>e.id!==eid);wdSave(true);wdRenderDesigner($('wd-host'));}
@@ -27275,8 +27278,9 @@ function wdExHTML(s,e,i,n){
   const sid=s.id,eid=e.id,lib=e.exId?exById(e.exId):null;
   let h='<div class="wd-ex'+(e.linkNext?' link':'')+'" onclick="event.stopPropagation()">';
   h+='<div class="wd-ex-top"><span class="wd-ex-move"><button class="btn-xxs" onclick="wdMoveEx(\''+sid+'\',\''+eid+'\',-1)"'+(i===0?' disabled':'')+'>▲</button><button class="btn-xxs" onclick="wdMoveEx(\''+sid+'\',\''+eid+'\',1)"'+(i===n-1?' disabled':'')+'>▼</button></span>';
-  h+='<input class="wd-ex-name" list="ex-namelist" value="'+esc(e.name||'')+'" placeholder="Exercise name" oninput="wdExSet(\''+sid+'\',\''+eid+'\',\'name\',this.value)">';
-  h+=((!e.exId&&(e.name||'').trim())?'<button class="btn-xxs" style="color:var(--brand);flex:none;white-space:nowrap" title="✨ Generate this exercise (execution, mistakes, cues, media) with Smart automation, save it to your library and link it here" onclick="wdExGen(\''+sid+'\',\''+eid+'\')">✨ gen</button>':'');
+  const _genShow=((e.name||'').trim()&&!(EX_LIB||[]).some(x=>(x.name||'').trim().toLowerCase()===(e.name||'').trim().toLowerCase()));
+  h+='<input class="wd-ex-name" list="ex-namelist" value="'+esc(e.name||'')+'" placeholder="Exercise name" oninput="wdExSet(\''+sid+'\',\''+eid+'\',\'name\',this.value);wdGenSync(\''+eid+'\',this.value)">';
+  h+='<button id="wdgen-'+eid+'" class="btn-xxs" style="color:var(--brand);flex:none;white-space:nowrap;display:'+(_genShow?'':'none')+'" title="✨ Generate this exercise (execution, mistakes, cues, media), save it to your library and link it here" onclick="wdExGen(\''+sid+'\',\''+eid+'\')">✨ gen</button>';
   h+='<button class="icon-x" onclick="wdDelEx(\''+sid+'\',\''+eid+'\')">×</button></div>';
   h+='<div class="wd-track"><span class="wd-mini">Track:</span>'+WD_VARS.map(vd=>'<button class="wd-chip'+(((e.track||[]).includes(vd[0]))?' on':'')+'" onclick="wdToggleVar(\''+sid+'\',\''+eid+'\',\''+vd[0]+'\')">'+esc(vd[1])+'</button>').join('')+'</div>';
   h+='<div style="margin:5px 0"><select onchange="wdApplyTpl(\''+sid+'\',\''+eid+'\',this.value);this.value=\'\'" title="Fill these sets from a saved set template (rep / RIR / rest / weight ranges)" style="font-size:12px;padding:4px 7px;border-radius:7px;background:var(--card);color:var(--text);border:1px solid var(--border);max-width:230px"><option value="">⚡ Fill from set template…</option>'+((SET_TPLS||[]).map(t=>'<option value="'+esc(t.id)+'">'+esc(t.name)+'</option>').join(''))+'<option value="__manage">⚙️ Manage templates…</option></select></div>';
