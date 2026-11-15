@@ -7042,7 +7042,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04ry';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04rz';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -11923,7 +11923,7 @@ function exGenExtract(d){
   const pick=(k,alts)=>{const keys=[k].concat(alts||[]);for(let i=0;i<keys.length;i++){const kk=keys[i];if(o&&o[kk]!=null&&String(o[kk]).trim())return String(o[kk]).trim();}return '';};
   const pickArr=(k,alts)=>{const keys=[k].concat(alts||[]);for(let i=0;i<keys.length;i++){const v=o&&o[keys[i]];if(Array.isArray(v))return v.map(x=>String(x).trim()).filter(Boolean);if(v!=null&&String(v).trim())return String(v).split(/[\n,]+/).map(x=>x.trim()).filter(Boolean);}return [];};
   return {howto:pick('howto',['how_to','execution','steps','instructions']),mistakes:pick('mistakes',['avoid','common_mistakes','things_to_avoid','mistakes_to_avoid']),cues:pick('cues',['posture','posture_guidance','perfect','form_cues','perfect_form_cues']),breathing:pick('breathing',['breath','breathing_pattern','core_bracing','bracing']),
-    bodyPart:pick('bodyPart',['body_part','bodypart','muscle','muscle_group','target']),category:pick('category',['cat','type','movement_type']),equipment:pick('equipment',['equip','gear','machine']),video:pick('video',['videoUrl','video_url','youtube','youtube_url','url']),images:pickArr('images',['image','img','photos','image_urls'])};
+    bodyPart:pick('bodyPart',['body_part','bodypart','muscle','muscle_group','target']),category:pick('category',['cat','type','movement_type']),equipment:pick('equipment',['equip','gear','machine']),video:(function(){const v=pick('video',['videoUrl','video_url','youtube','youtube_url','url']);return (v&&ytId(v))?v:'';})(),images:pickArr('images',['image','img','photos','image_urls'])};
 }
 function exGenSetSelect(id,val){val=(val||'').trim();if(!val)return;const el=$(id);if(!el||!el.options)return;const opts=[...el.options];const lv=val.toLowerCase();const m=opts.find(o=>o.value.toLowerCase()===lv)||opts.find(o=>o.value.toLowerCase().indexOf(lv)>=0||lv.indexOf(o.value.toLowerCase())>=0);if(m)el.value=m.value;}
 async function exGenerate(){
@@ -12030,7 +12030,9 @@ async function saveExForm(){
   const name=($('ex-name').value||'').trim();if(!name){toast('Name the exercise',true);return;}
   const id=$('ex-id').value||uid();
   const images=(($('ex-images')&&$('ex-images').value)||'').split(/[\n,]+/).map(s=>s.trim()).filter(Boolean);
-  const ex={id,name,bodyPart:$('ex-body').value,category:$('ex-cat').value,equipment:$('ex-equip').value,video:($('ex-video').value||'').trim(),videoFile:(($('ex-videofile')&&$('ex-videofile').value)||'').trim(),images:images,howto:($('ex-howto').value||'').trim(),mistakes:($('ex-mistakes').value||'').trim(),cues:($('ex-cues').value||'').trim(),breathing:(($('ex-breathing')&&$('ex-breathing').value)||'').trim()};
+  let vid=($('ex-video').value||'').trim();
+  if(vid&&!ytId(vid)){toast('⚠ That video isn’t a real YouTube video link (looks like a search/other URL) — not saved. Paste a youtube.com/watch or youtu.be link.',true);vid='';try{if($('ex-video')){$('ex-video').value='';renderExVideoPreview();}}catch(e){}}
+  const ex={id,name,bodyPart:$('ex-body').value,category:$('ex-cat').value,equipment:$('ex-equip').value,video:vid,videoFile:(($('ex-videofile')&&$('ex-videofile').value)||'').trim(),images:images,howto:($('ex-howto').value||'').trim(),mistakes:($('ex-mistakes').value||'').trim(),cues:($('ex-cues').value||'').trim(),breathing:(($('ex-breathing')&&$('ex-breathing').value)||'').trim()};
   const i=EX_LIB.findIndex(x=>x.id===id);if(i>=0)EX_LIB[i]=ex;else EX_LIB.push(ex);
   try{await DB.saveExercises(EX_LIB);refreshExNameList();
     if(EXLIB_LINK){const L=EXLIB_LINK;EXLIB_LINK=null;try{const row=edTrSecs(L.di)[L.si].exercises[L.xi];if(row){row.exId=id;row.name=name;}}catch(e){}toast('✓ Saved to library & linked to this movement');closeExLib();if(typeof edRenderTraining==='function')edRenderTraining();return;}
