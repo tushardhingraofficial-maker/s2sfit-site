@@ -5831,7 +5831,7 @@ img,svg,canvas,video{max-width:100%}
   </div>
 </div>
 <!-- ============ PLAN UPDATES · next-review follow-up prompt (after a diet/training save) ============ -->
-<div class="overlay" id="plan-fu-modal">
+<div class="overlay" id="plan-fu-modal" style="z-index:1520">
   <div class="modal" style="max-width:440px">
     <div class="modal-head"><div class="brand-logo admin-logo" role="img" aria-label="S2S Fit"></div><h2>📅 Schedule the next review</h2><span class="sp"></span><button class="icon-x" onclick="planFuClose()">×</button></div>
     <div class="modal-body">
@@ -7042,7 +7042,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04sa';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04sb';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -11433,7 +11433,7 @@ const MR_METRICS=[
   {id:'photos',ic:'📸',name:'Progress photos',branch:'photos',last:function(){try{const a=ppSorted();return a.length?String(a[a.length-1].date||'').slice(0,10):'';}catch(e){return '';}}},
   {id:'health',ic:'🩺',name:'Health markers',branch:'health',last:function(){try{const a=(healthData().logs||[]).slice().sort((x,y)=>((x.date||'')<(y.date||'')?-1:1));return a.length?String(a[a.length-1].date||'').slice(0,10):'';}catch(e){return '';}}}
 ];
-const MR_FREQ_OPTS=[[0,'Off'],[7,'Weekly'],[14,'Fortnightly'],[28,'Every 4 weeks'],[56,'Every 8 weeks'],[84,'Every 12 weeks']];
+const MR_FREQ_OPTS=[[0,'Off'],[1,'Daily'],[2,'Every 2 days'],[3,'Every 3 days'],[7,'Weekly'],[14,'Fortnightly'],[28,'Every 4 weeks'],[56,'Every 8 weeks'],[84,'Every 12 weeks']];
 const MR_LEAD=2;   // days before the due date to start a gentle reminder
 function mrMetaById(id){return MR_METRICS.find(m=>m.id===id);}
 function mrSched(plan){const p=plan||(typeof PLAN!=='undefined'?PLAN:null);return (p&&p.milestones&&p.milestones.metricSchedule)||{};}
@@ -11442,7 +11442,7 @@ function mrStatusAll(){const sched=mrSched();const out=[];const today=todayISO()
     let daysSince=null,state='due',nextDue=today;
     if(!lastISO){state='due';}
     else{nextDue=addDaysISO(lastISO,freq);daysSince=Math.floor((new Date(today+'T00:00:00')-new Date(lastISO+'T00:00:00'))/86400000);
-      if(daysSince>=freq)state=(daysSince>freq?'overdue':'due');else if(daysSince>=freq-MR_LEAD)state='soon';else state='ok';}
+      if(daysSince>=freq)state=(daysSince>freq?'overdue':'due');else if(freq>MR_LEAD&&daysSince>=freq-MR_LEAD)state='soon';else state='ok';}
     out.push({id:m.id,ic:m.ic,name:m.name,branch:m.branch,freq,lastISO,daysSince,nextDue,state,overBy:(daysSince!=null?Math.max(0,daysSince-freq):0)});});
   return out;}
 function mrDueList(){return mrStatusAll().filter(x=>x.state==='due'||x.state==='overdue'||!x.lastISO);}
@@ -11479,9 +11479,23 @@ function mrDashCardHTML(){
 function edMrScheduleHTML(){
   const sched=(typeof edPlan!=='undefined'&&edPlan&&edPlan.milestones&&edPlan.milestones.metricSchedule)||{};
   return '<div style="margin-bottom:14px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--card2)"><div class="uline" style="margin:0 0 4px">📅 Metric update schedule</div><div class="small" style="color:var(--muted);margin-bottom:8px">How often this client should log each metric. They get reminders when one is due; logging it clears the reminder until the next is due.</div>'+
-    MR_METRICS.map(m=>'<div class="mr-srow"><span class="mr-sic">'+m.ic+'</span><span class="mr-snm">'+esc(m.name)+'</span><select onchange="edMrSet(\''+m.id+'\',this.value)">'+MR_FREQ_OPTS.map(o=>'<option value="'+o[0]+'"'+((+sched[m.id]||0)===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></div>').join('')+'</div>';
+    MR_METRICS.map(m=>'<div class="mr-srow"><span class="mr-sic">'+m.ic+'</span><span class="mr-snm">'+esc(m.name)+'</span><select onchange="edMrSet(\''+m.id+'\',this.value)">'+mrFreqOptionsHTML(+sched[m.id]||0)+'</select></div>').join('')+'</div>';
 }
-function edMrSet(id,days){if(typeof edPlan==='undefined'||!edPlan)return;edPlan.milestones=edPlan.milestones||{goals:[]};edPlan.milestones.metricSchedule=edPlan.milestones.metricSchedule||{};edPlan.milestones.metricSchedule[id]=Math.max(0,parseInt(days,10)||0);}
+function mrFreqOptionsHTML(cur){
+  const std=MR_FREQ_OPTS.map(o=>o[0]);
+  let out=MR_FREQ_OPTS.map(o=>'<option value="'+o[0]+'"'+(cur===o[0]?' selected':'')+'>'+esc(o[1])+'</option>').join('');
+  if(cur>0&&std.indexOf(cur)<0)out+='<option value="'+cur+'" selected>Custom: every '+cur+' days</option>';
+  out+='<option value="custom">✎ Custom — times / week…</option>';
+  return out;
+}
+function edMrSet(id,days){if(typeof edPlan==='undefined'||!edPlan)return;edPlan.milestones=edPlan.milestones||{goals:[]};edPlan.milestones.metricSchedule=edPlan.milestones.metricSchedule||{};
+  if(days==='custom'){
+    const n=prompt('How many times per week should they log this?\n\n(e.g. 3 ≈ every 2 days · 7 = daily)','3');
+    if(n!=null){const pw=Math.max(1,Math.min(14,Math.round(parseFloat(n))||0));if(pw){const iv=Math.max(1,Math.round(7/pw));edPlan.milestones.metricSchedule[id]=iv;toast('Set to ~'+pw+'× a week (reminder every '+iv+' day'+(iv===1?'':'s')+')');}}
+    try{if(typeof edRenderPhase==='function')edRenderPhase();}catch(e){}
+    return;
+  }
+  edPlan.milestones.metricSchedule[id]=Math.max(0,parseInt(days,10)||0);}
 
 /* ═══════════ ROADMAP — long-term vision → macro blocks (phase + LIVE metric goals + micro goals) ═══════════
    Mainly for bodybuilding clients. Coach builds it; client sees it read-only and can tick manual micros.
@@ -23513,7 +23527,8 @@ async function planUpdateAfterSave(cid,name,tracks){
   try{if(!(await allocEnsureLoaded()))return;}catch(e){return;}
   let any=false;(tracks||[]).forEach(tr=>{if(tr!=='nutrition'&&tr!=='training')return;allocEnsure(cid)[tr].on=todayISO();PLAN_FU_QUEUE.push({cid:cid,name:name||'client',track:tr});any=true;});
   if(any){try{await allocSave();}catch(e){}if($('alloc-modal')&&$('alloc-modal').classList.contains('open'))allocRender();}
-  if(!PLAN_FU)planFuNext();
+  // Always surface the prompt when a program is updated — don't let a stuck PLAN_FU (e.g. closed oddly) block it.
+  const _fm=$('plan-fu-modal');if(!(_fm&&_fm.classList.contains('open'))){PLAN_FU=null;planFuNext();}
 }
 function planFuNext(){const item=PLAN_FU_QUEUE.shift();if(!item){PLAN_FU=null;return;}planFuOpen(item.cid,item.name,item.track,(allocGet(item.cid,item.track).weeks||4));}
 function planFuOpen(cid,name,track,weeks){PLAN_FU={cid:cid,name:name||'client',track:track};const m=$('plan-fu-modal');if(!m)return;
