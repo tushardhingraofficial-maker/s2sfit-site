@@ -2185,6 +2185,9 @@ details.mcx-map .mapwrap{padding-bottom:12px}
 .rtpl-save{border:1px solid var(--border);border-radius:13px;padding:13px;background:var(--card)}
 .rtpl-sect{font-weight:800;font-size:12.5px;margin:16px 2px 9px;display:flex;align-items:center;gap:8px;color:var(--muted)}
 .rtpl-sect::before,.rtpl-sect::after{content:"";flex:1;height:1px;background:var(--border)}
+/* push notifications control-center */
+.pnc-chip{font-size:10.5px;font-weight:700;color:var(--muted);background:var(--card2);border-radius:6px;padding:3px 8px;border:none;cursor:default;font-family:inherit}
+.pnc-edit{color:var(--red);background:transparent;border:1px solid var(--red);cursor:pointer}
 /* ── weekend performance report deck ── */
 .pr-deck{display:flex;flex-direction:column;gap:14px}
 .pr-slide{border:1px solid var(--border);border-radius:16px;background:var(--card);padding:16px}
@@ -5116,7 +5119,7 @@ img,svg,canvas,video{max-width:100%}
               <button class="adash-navbtn" onclick="openSL()" title="Strategy Call leads — who opened your VSL page, watched the video, downloaded the guide and did the 7-Level assessment, with a call-prep report for each" style="position:relative"><svg class="nav-ic"><use href="#ic-phone"/></svg> Strategy leads <span class="chat-badge hidden" id="sl-nav-badge" style="position:absolute;top:6px;right:8px"></span></button>
               <button class="adash-navbtn" id="bh-navbtn" onclick="openBH()" title="Business health (private)" style="display:none"><svg class="nav-ic"><use href="#ic-trending"/></svg> Business health</button>
               <button class="adash-navbtn" onclick="updAnnounce()" title="Announce an update — every client &amp; coach sees an in-app notice telling them what changed, so they refresh to the latest version."><svg class="nav-ic"><use href="#ic-megaphone"/></svg> Announce update</button>
-              <button class="adash-navbtn" onclick="pushAdminOpen()" title="Send a push notification to clients' phones — a broadcast to everyone or just those who've gone quiet. (Clients choose to receive these.)"><svg class="nav-ic"><use href="#ic-bell"/></svg> Send a reminder</button>
+              <button class="adash-navbtn" onclick="pushCenterOpen()" title="Notifications control-center — choose what automated push notifications clients receive (experience, compliance, retention), set schedules & messages, or send a one-off broadcast."><svg class="nav-ic"><use href="#ic-bell"/></svg> Notifications</button>
               <button class="adash-navbtn" onclick="openCheckinTriage()" title="Check-in triage — every client's latest check-in read &amp; ranked red/amber/green, with suggested actions you can turn into tasks in one tap."><svg class="nav-ic"><use href="#ic-triage"/></svg> Check-in triage</button>
               <button class="adash-navbtn master-only" id="coaches-navbtn" onclick="openCoaches()" title="Create & manage coach logins (owner only)"><svg class="nav-ic"><use href="#ic-users"/></svg> Coaches</button>
               <button class="adash-navbtn" onclick="openActivity()" title="A live timeline of everything every client has logged or posted"><svg class="nav-ic"><use href="#ic-book"/></svg> Activity feed <span class="chat-badge hidden" id="act-nav-badge" style="position:absolute;top:6px;right:8px"></span></button>
@@ -7030,7 +7033,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04rh';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04ri';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -27513,8 +27516,64 @@ async function seedDemo(){
 function F0(name,time,items){return {id:uid(),name,time,items};}
 
 /* ═══════════════ Push notifications (client opt-in + coach broadcast) ═══════════════ */
-const PUSH_PREF_DEFAULT={meal:true,checkin:true,streak:true,coach:true};
-const PUSH_PREF_META=[['meal','🍽','Log your meals','if nothing\'s logged by evening'],['checkin','📋','Weekly check-in due','the morning it\'s time'],['streak','🔥','Streak at risk','don\'t break the chain'],['coach','💬','Coach messages','reply faster']];
+/* ---- Notification catalog (admin control-center) ---- */
+const PUSH_GROUPS=[['exp','💚 Experience','Timely, helpful — makes the app feel responsive.'],['comp','✅ Compliance','Nudges to keep clients on-protocol & logging.'],['ret','📈 Retention','Re-engage, celebrate, prevent drop-off.']];
+/* each: {id, g(group), pref(client opt-out category), icon, name, desc, kind:'event'|'sched', schedLabel, title, body, on(default)} — message tokens: {name} {preview} {points} {streak} {pct} {milestone} {challenge} {when} {date} */
+const PUSH_CATALOG=[
+  // EXPERIENCE
+  {id:'coach',g:'exp',pref:'coach',icon:'💬',name:'Coach message',desc:'Instant ping when their coach messages them.',kind:'event',schedLabel:'Instant',on:true,title:'💬 Message from your coach',body:'{preview}'},
+  {id:'plan_update',g:'exp',pref:'updates',icon:'📝',name:'Plan updated',desc:'Their training or nutrition plan was changed by the coach.',kind:'event',schedLabel:'On change',on:false,title:'📝 Your plan was updated',body:'Hi {name}, your coach just updated your plan — tap to see what changed.'},
+  {id:'checkin_reviewed',g:'exp',pref:'coach',icon:'✅',name:'Check-in reviewed · feedback ready',desc:'Coach read their weekly check-in and left feedback.',kind:'event',schedLabel:'On review',on:false,title:'✅ Your check-in has feedback',body:'{name}, your coach reviewed your check-in — tap to read their notes.'},
+  {id:'formcheck_reviewed',g:'exp',pref:'coach',icon:'🎥',name:'Form-check reviewed',desc:'Coach reviewed their uploaded lift video.',kind:'event',schedLabel:'On review',on:false,title:'🎥 Form check reviewed',body:'{name}, your coach reviewed your lift video — tap for feedback.'},
+  {id:'reward',g:'exp',pref:'rewards',icon:'🏆',name:'Reward / points milestone',desc:'They earned a reward or crossed a points milestone.',kind:'event',schedLabel:'On earn',on:false,title:'🏆 You earned points!',body:'Nice work {name} — you just earned points. Keep it going!'},
+  {id:'session',g:'exp',pref:'sessions',icon:'📅',name:'Session / call reminder',desc:'Heads-up before a booked PT session or strategy call.',kind:'sched',schedLabel:'1 day + 1 hr before',on:false,title:'📅 Session coming up',body:'{name}, you have a session {when}. See you there!'},
+  {id:'content',g:'exp',pref:'content',icon:'📚',name:'New knowledge / lesson',desc:'A new course lesson or guide is available.',kind:'event',schedLabel:'On publish',on:false,title:'📚 New lesson available',body:'Fresh content just dropped — tap to learn something new.'},
+  // COMPLIANCE
+  {id:'meal',g:'comp',pref:'meal',icon:'🍽',name:'Log your meals',desc:"Evening nudge if nothing's been logged today.",kind:'sched',schedLabel:'Daily · 7pm',on:true,title:'🍽 Log your meals',body:"{name}, don't forget to log today's food to stay on your macros."},
+  {id:'weight',g:'comp',pref:'weight',icon:'⚖️',name:"Log today's weight",desc:'Morning reminder on weigh-in days.',kind:'sched',schedLabel:'Daily · 7am',on:false,title:'⚖️ Morning weigh-in',body:'Good morning {name} — a quick weigh-in keeps your trend moving.'},
+  {id:'checkin',g:'comp',pref:'checkin',icon:'📋',name:'Weekly check-in due',desc:'The morning their check-in is due.',kind:'sched',schedLabel:'Weekly · Mon 8am',on:true,title:'📋 Check-in time',body:'{name}, your weekly check-in is ready — 2 minutes keeps your coach in the loop.'},
+  {id:'workout',g:'comp',pref:'training',icon:'🏋️',name:"Today's workout",desc:'Reminder on scheduled training days if not logged.',kind:'sched',schedLabel:'Training days',on:false,title:'🏋️ Training today',body:"{name}, your workout is waiting — let's get it done 💪"},
+  {id:'cardio',g:'comp',pref:'cardio',icon:'👟',name:'Steps / cardio target',desc:'Afternoon nudge if behind the daily step/cardio goal.',kind:'sched',schedLabel:'Daily · 5pm',on:false,title:'👟 Move a little more',body:"{name}, a short walk now gets you to today's step goal."},
+  {id:'habits',g:'comp',pref:'habits',icon:'🔗',name:"Tick today's habits",desc:'Keep the habit chain going.',kind:'sched',schedLabel:'Daily · 8pm',on:false,title:"🔗 Today's habits",body:"{name}, tick off today's habits before bed — keep the chain alive."},
+  {id:'sleep',g:'comp',pref:'sleep',icon:'😴',name:'Log sleep',desc:"Morning prompt to log last night's sleep.",kind:'sched',schedLabel:'Daily · 9am',on:false,title:'😴 How did you sleep?',body:"Log last night's sleep, {name} — recovery matters as much as training."},
+  {id:'metrics',g:'comp',pref:'metrics',icon:'📏',name:'Measurements / photos due',desc:"When a metric's update cycle comes round (uses your metric schedule).",kind:'sched',schedLabel:'Per schedule',on:false,title:'📏 Time to measure up',body:"{name}, your measurements/photos are due — they show progress the scale can't."},
+  {id:'streak',g:'comp',pref:'streak',icon:'🔥',name:'Streak at risk',desc:"Don't break a 2+ day logging streak.",kind:'sched',schedLabel:'Evening',on:true,title:"🔥 Don't break your streak!",body:"{name}, you're on a {streak}-day streak — log today to keep it alive."},
+  // RETENTION
+  {id:'inactive',g:'ret',pref:'retention',icon:'👋',name:'We miss you (inactivity)',desc:'Win-back nudge after 3+ days of no activity.',kind:'sched',schedLabel:'After 3 days quiet',on:false,title:'👋 We miss you, {name}',body:'It\'s been a few days — hop back in, even a quick log keeps your momentum.'},
+  {id:'milestone',g:'ret',pref:'retention',icon:'🎉',name:'Milestone celebration',desc:'Hit a weight %, a PR, or a body-composition win → auto-congrats.',kind:'event',schedLabel:'On milestone',on:false,title:'🎉 Milestone unlocked!',body:'Huge, {name} — {milestone}. Proud of you 👏'},
+  {id:'recap',g:'ret',pref:'retention',icon:'📊',name:'Weekly progress recap',desc:'"Your week in review" — logged days, weight trend, wins.',kind:'sched',schedLabel:'Weekly · Sun 6pm',on:false,title:'📊 Your week in review',body:"{name}, here's how your week went — tap to see your progress."},
+  {id:'streak_milestone',g:'ret',pref:'streak',icon:'🥇',name:'Streak milestone',desc:'Celebrate 7 / 30 / 100-day streaks.',kind:'event',schedLabel:'On milestone',on:false,title:'🥇 {streak}-day streak!',body:"{streak} days straight, {name} — that's how results are built 🔥"},
+  {id:'goal_progress',g:'ret',pref:'retention',icon:'🎯',name:'Goal progress nudge',desc:'"You\'re 80% to your goal — keep going."',kind:'event',schedLabel:'On threshold',on:false,title:'🎯 Almost there, {name}',body:"You're {pct}% of the way to your goal — the finish line is close!"},
+  {id:'challenge',g:'ret',pref:'challenges',icon:'🏅',name:'Challenge updates',desc:'New live challenge, leaderboard moves, or "ends tomorrow".',kind:'event',schedLabel:'On event',on:false,title:'🏅 Challenge update',body:'{name}, {challenge} — tap to jump in.'},
+  {id:'birthday',g:'ret',pref:'retention',icon:'🎂',name:'Birthday / anniversary',desc:'Birthday wish + "X months with S2S".',kind:'sched',schedLabel:'On date',on:false,title:'🎂 Happy birthday, {name}!',body:'Wishing you a brilliant day from the whole S2S team 🎉'},
+  {id:'renewal',g:'ret',pref:'billing',icon:'💳',name:'Membership / renewal reminder',desc:'Heads-up before their plan renews or lapses.',kind:'sched',schedLabel:'Before expiry',on:false,title:'💳 Membership renewing soon',body:'{name}, your membership renews on {date} — reach out with any questions.'}
+];
+/* client opt-out categories (grouped) — one toggle per category covers all notifications that use that pref key */
+const PUSH_PREF_CATS=[
+  ['coach','exp','💬','Coach messages & reviews','replies, check-in & form-check feedback'],
+  ['updates','exp','📝','Plan updates','when your plan changes'],
+  ['rewards','exp','🏆','Rewards & points','when you earn points'],
+  ['sessions','exp','📅','Session reminders','before a booked session/call'],
+  ['content','exp','📚','New lessons','new course content'],
+  ['meal','comp','🍽','Meal logging',"if you haven't logged food"],
+  ['weight','comp','⚖️','Weigh-in reminders','morning weigh-in'],
+  ['checkin','comp','📋','Weekly check-in','when it\'s due'],
+  ['training','comp','🏋️','Workout reminders','on training days'],
+  ['cardio','comp','👟','Steps & cardio','if behind your goal'],
+  ['habits','comp','🔗','Habit reminders','to keep your streak'],
+  ['sleep','comp','😴','Sleep logging','morning prompt'],
+  ['metrics','comp','📏','Measurements & photos','when due'],
+  ['streak','comp','🔥','Streaks','at risk + milestones'],
+  ['retention','ret','📈','Progress & celebrations','milestones, recaps, check-ins'],
+  ['challenges','ret','🏅','Challenges','updates & leaderboards'],
+  ['billing','ret','💳','Membership reminders','before renewal']
+];
+const PUSH_PREF_DEFAULT=(function(){var d={};PUSH_PREF_CATS.forEach(function(c){d[c[0]]=true;});return d;})();
+/* admin catalog config (shared KV 'push_catalog' = {id:{on,title,body}} overrides merged over PUSH_CATALOG defaults) */
+let PUSH_CAT_CFG=null;
+async function pushCatLoad(force){if(PUSH_CAT_CFG&&!force)return PUSH_CAT_CFG;try{const d=await kvLoad('push_catalog',null);PUSH_CAT_CFG=(d&&typeof d==='object')?d:{};}catch(e){PUSH_CAT_CFG={};}return PUSH_CAT_CFG;}
+function pushCatEff(id){const base=PUSH_CATALOG.find(function(x){return x.id===id;});if(!base)return null;const o=(PUSH_CAT_CFG&&PUSH_CAT_CFG[id])||{};return Object.assign({},base,{on:(o.on!=null?!!o.on:!!base.on),title:(o.title!=null?o.title:base.title),body:(o.body!=null?o.body:base.body)});}
+async function pushCatSave(){if(!kvGuard('push_catalog'))return false;try{await DB.setKV('push_catalog_bak',{cfg:PUSH_CAT_CFG,at:new Date().toISOString()});}catch(e){}try{await DB.setKV('push_catalog',PUSH_CAT_CFG||{});return true;}catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);return false;}}
 function pushSupported(){return ('serviceWorker' in navigator)&&('PushManager' in window)&&('Notification' in window);}
 function pushIsStandalone(){try{return window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;}catch(e){return false;}}
 function pushIsIOS(){return /iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);}
@@ -27558,15 +27617,19 @@ async function pushOpenCard(){
   } else if(iosBlocked){
     body='<div style="background:var(--card2,rgba(0,0,0,.04));border:1px solid var(--border);border-radius:12px;padding:12px;font-size:13px;line-height:1.55">On iPhone, reminders only work once the app is on your home screen.<br><br><b>1.</b> Tap the Share button in Safari.<br><b>2.</b> Choose <b>Add to Home Screen</b>.<br><b>3.</b> Open S2S from the new icon, then turn on reminders here.</div>';
   } else {
-    body=PUSH_PREF_META.map(function(m){var k=m[0],checked=prefs[k]!==false;
-      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--border)"><div style="flex:1"><div style="font-size:14px;font-weight:700">'+m[1]+' '+m[2]+'</div><div style="font-size:11px;color:var(--muted)">'+m[3]+'</div></div><button type="button" data-pk="'+k+'" class="push-sw" onclick="pushToggle(this)" style="width:44px;height:26px;border:none;border-radius:14px;background:'+(checked?'var(--prot)':'var(--border)')+';position:relative;flex:none;cursor:pointer"><i style="position:absolute;top:3px;left:'+(checked?'21px':'3px')+';width:20px;height:20px;border-radius:50%;background:#fff;transition:.15s"></i></button></div>';
+    body=PUSH_GROUPS.map(function(g){
+      var cats=PUSH_PREF_CATS.filter(function(c){return c[1]===g[0];});if(!cats.length)return '';
+      return '<div style="margin-top:10px"><div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">'+esc(g[1])+'</div>'+
+        cats.map(function(c){var k=c[0],checked=prefs[k]!==false;
+          return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--border)"><div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700">'+c[2]+' '+esc(c[3])+'</div><div style="font-size:11px;color:var(--muted)">'+esc(c[4])+'</div></div><button type="button" data-pk="'+k+'" class="push-sw" onclick="pushToggle(this)" style="width:44px;height:26px;border:none;border-radius:14px;background:'+(checked?'var(--prot)':'var(--border)')+';position:relative;flex:none;cursor:pointer"><i style="position:absolute;top:3px;left:'+(checked?'21px':'3px')+';width:20px;height:20px;border-radius:50%;background:#fff;transition:.15s"></i></button></div>';
+        }).join('')+'</div>';
     }).join('');
     body+='<div style="margin-top:14px">'+(on
       ? '<div style="text-align:center;color:var(--good);font-weight:700;font-size:14px;margin-bottom:8px">✓ Reminders are on</div><button class="btn-sm" style="width:100%" onclick="pushTurnOff()">Turn reminders off</button>'
       : '<button class="btn btn-primary" style="width:100%" onclick="pushTurnOn()">🔔 Turn on reminders</button>')+'</div>';
   }
-  ov.innerHTML='<div style="background:var(--card);width:100%;max-width:460px;border-radius:18px 18px 0 0;padding:18px 16px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.4)">'+
-    '<div style="display:flex;align-items:center;gap:9px;margin-bottom:6px"><div style="font-family:var(--disp);font-weight:900;font-size:18px">🔔 Daily reminders</div><span style="flex:1"></span><button class="icon-x" style="font-size:20px" onclick="pushCloseCard()">×</button></div>'+
+  ov.innerHTML='<div style="background:var(--card);width:100%;max-width:460px;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;border-radius:18px 18px 0 0;padding:18px 16px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.4)">'+
+    '<div style="display:flex;align-items:center;gap:9px;margin-bottom:6px;position:sticky;top:-18px;background:var(--card);padding-top:4px;z-index:2"><div style="font-family:var(--disp);font-weight:900;font-size:18px">🔔 Notifications</div><span style="flex:1"></span><button class="icon-x" style="font-size:20px" onclick="pushCloseCard()">×</button></div>'+
     '<p class="small" style="margin:0 0 10px;color:var(--muted)">Gentle nudges so you stay on track — choose what you want, change anytime.</p>'+
     body+'</div>';
   document.body.appendChild(ov);
@@ -27599,6 +27662,74 @@ async function pushNotifyCoachMsg(cid,text,media){
   if(!cid)return;
   var preview=(text&&String(text).trim())?(String(text).length>90?String(text).slice(0,87)+'…':String(text)):'📎 Sent you a photo';
   try{await pushApi('send',{clientIds:[cid],prefKey:'coach',title:'💬 Message from your coach',body:preview,url:'/',tag:'s2s-chat'});}catch(e){}
+}
+
+/* ── ADMIN: Notifications control-center ── */
+const PUSH_MSG_TOKENS=['{name}','{streak}','{pct}','{date}'];
+async function pushCenterOpen(){
+  if(typeof ADMIN_OK==='undefined'||!ADMIN_OK){toast('Admins only',true);return;}
+  var ov=document.getElementById('pushcenter-modal');if(ov)ov.remove();
+  ov=document.createElement('div');ov.id='pushcenter-modal';
+  ov.style.cssText='position:fixed;inset:0;z-index:4000;background:var(--bg,#0e0e10);overflow-y:auto;-webkit-overflow-scrolling:touch;padding-top:env(safe-area-inset-top)';
+  ov.innerHTML='<div id="pushcenter-host" style="max-width:620px;margin:0 auto;padding:12px 14px calc(30px + env(safe-area-inset-bottom))"><div class="empty">Loading…</div></div>';
+  document.body.appendChild(ov);
+  try{await pushCatLoad(true);}catch(e){}
+  pushCenterRender();
+}
+function pushCenterClose(){var ov=document.getElementById('pushcenter-modal');if(ov)ov.remove();}
+function pushCenterRender(){
+  var host=document.getElementById('pushcenter-host');if(!host)return;
+  var activeN=PUSH_CATALOG.filter(function(x){return pushCatEff(x.id).on;}).length;
+  var h='<div style="display:flex;align-items:center;gap:8px;position:sticky;top:0;background:var(--bg,#0e0e10);padding:8px 0 10px;z-index:3"><div style="font-family:var(--disp);font-weight:900;font-size:20px">🔔 Notifications</div><span style="flex:1"></span><button class="icon-x" style="font-size:22px" onclick="pushCenterClose()">×</button></div>';
+  h+='<p class="small" style="color:var(--muted);margin:0 0 4px">Choose what automated notifications clients receive. Each is on/off for everyone, with its own schedule &amp; message; clients can still mute categories in their app.</p>';
+  h+='<p class="small" style="color:var(--muted);margin:0 0 10px"><b style="color:var(--text)">'+activeN+' of '+PUSH_CATALOG.length+' active.</b> Tokens like <b>{name}</b> fill in per client.</p>';
+  PUSH_GROUPS.forEach(function(g){
+    var items=PUSH_CATALOG.filter(function(x){return x.g===g[0];});if(!items.length)return;
+    h+='<div style="margin:14px 2px 7px;font-weight:800;font-size:13.5px">'+esc(g[1])+'</div>';
+    items.forEach(function(x){var e=pushCatEff(x.id);
+      h+='<div class="pnc-row" style="border:1px solid var(--border);border-radius:12px;padding:11px 12px;margin-bottom:8px;background:var(--card)'+(e.on?'':';opacity:.6')+'">'+
+        '<div style="display:flex;align-items:flex-start;gap:11px">'+
+          '<div style="width:30px;height:30px;border-radius:8px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:16px;flex:none">'+x.icon+'</div>'+
+          '<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:13.5px;overflow-wrap:anywhere">'+esc(x.name)+'</div><div style="font-size:11.5px;color:var(--muted);line-height:1.35;overflow-wrap:anywhere">'+esc(x.desc)+'</div>'+
+            '<div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap"><span class="pnc-chip">'+esc(x.schedLabel)+'</span><span class="pnc-chip">opt-out: '+esc(x.pref)+'</span><button class="pnc-chip pnc-edit" onclick="pushMsgEdit(\''+x.id+'\')">✎ Edit message</button></div>'+
+            '<div id="pnc-msg-'+x.id+'" style="display:none;margin-top:8px"></div>'+
+          '</div>'+
+          '<button type="button" class="push-sw" onclick="pushCatToggle(\''+x.id+'\',this)" style="width:44px;height:26px;border:none;border-radius:14px;background:'+(e.on?'var(--good)':'var(--border)')+';position:relative;flex:none;cursor:pointer;margin-top:2px"><i style="position:absolute;top:3px;left:'+(e.on?'21px':'3px')+';width:20px;height:20px;border-radius:50%;background:#fff;transition:.15s"></i></button>'+
+        '</div></div>';
+    });
+  });
+  h+='<div style="display:flex;gap:9px;margin-top:16px"><button class="btn-sm" style="flex:1" onclick="pushCenterTest()">🧪 Send a test to me</button><button class="btn-sm solid" style="flex:1" onclick="pushAdminOpen()">📣 One-off broadcast</button></div>';
+  host.innerHTML=h;
+}
+async function pushCatToggle(id,btn){
+  PUSH_CAT_CFG=PUSH_CAT_CFG||{};var cur=pushCatEff(id).on;var next=!cur;
+  PUSH_CAT_CFG[id]=Object.assign({},PUSH_CAT_CFG[id],{on:next});
+  btn.style.background=next?'var(--good)':'var(--border)';var i=btn.querySelector('i');if(i)i.style.left=next?'21px':'3px';
+  var row=btn.closest('.pnc-row');if(row)row.style.opacity=next?'1':'.6';
+  var ok=await pushCatSave();if(!ok){PUSH_CAT_CFG[id].on=cur;pushCenterRender();}
+}
+function pushMsgEdit(id){
+  var host=document.getElementById('pnc-msg-'+id);if(!host)return;
+  if(host.style.display==='block'){host.style.display='none';host.innerHTML='';return;}
+  var e=pushCatEff(id);host.style.display='block';
+  host.innerHTML='<div style="background:var(--card2);border-radius:10px;padding:10px"><div class="rdb-lab" style="margin:0 0 3px">Title</div><input id="pnc-t-'+id+'" class="rdb-in" style="margin:0 0 7px" maxlength="80" value="'+esc(e.title)+'">'+
+    '<div class="rdb-lab" style="margin:0 0 3px">Message</div><textarea id="pnc-b-'+id+'" class="rdb-in" style="margin:0" rows="2" maxlength="240">'+esc(e.body)+'</textarea>'+
+    '<div class="small" style="color:var(--muted);margin:5px 0 7px">Tokens: '+esc(PUSH_MSG_TOKENS.join(' '))+'</div>'+
+    '<div style="display:flex;gap:7px"><button class="btn-sm solid" style="flex:1" onclick="pushMsgSave(\''+id+'\')">Save message</button><button class="btn-sm" onclick="pushMsgReset(\''+id+'\')">Reset default</button></div></div>';
+}
+async function pushMsgSave(id){
+  var t=((document.getElementById('pnc-t-'+id)||{}).value||'').trim();var b=((document.getElementById('pnc-b-'+id)||{}).value||'').trim();
+  if(!t||!b){toast('Title and message can\'t be empty',true);return;}
+  PUSH_CAT_CFG=PUSH_CAT_CFG||{};PUSH_CAT_CFG[id]=Object.assign({},PUSH_CAT_CFG[id],{title:t,body:b});
+  var ok=await pushCatSave();if(ok){toast('Message saved ✓');pushCenterRender();}
+}
+async function pushMsgReset(id){
+  if(PUSH_CAT_CFG&&PUSH_CAT_CFG[id]){delete PUSH_CAT_CFG[id].title;delete PUSH_CAT_CFG[id].body;}
+  var ok=await pushCatSave();if(ok){toast('Reset to default');pushCenterRender();}
+}
+async function pushCenterTest(){
+  try{await pushApi('test',{title:'🔔 Test notification',body:'This is a test from your S2S admin Notifications panel.'});toast('Test sent to your device (if you\'ve turned reminders on)');}
+  catch(e){toast('Could not send test — '+((e&&e.message)||'error'),true);}
 }
 
 /* ── coach broadcast composer ── */
