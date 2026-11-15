@@ -7042,7 +7042,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04rr';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04rs';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -22692,7 +22692,11 @@ async function gcalRenderBar(){
   let st={};try{st=await gcalApi('/status',{coach_id:gcalCoachId()});}catch(e){st={error:1};}
   GCAL_CONN=st||{};GCAL_STATUS_AT=Date.now();
   if(st&&st.connected){
-    bar.innerHTML='<span style="font-size:16px">📅</span><span class="small" style="flex:1;min-width:120px">Google connected'+(st.email?' · <b>'+esc(st.email)+'</b>':'')+'</span>'+
+    await gcalLoadLists();
+    const cur=st.tasklist_id||'@default';
+    const opts='<option value="@default"'+(cur==='@default'?' selected':'')+'>Default (My Tasks)</option>'+(GCAL_LISTS||[]).map(l=>'<option value="'+esc(l.id)+'"'+(cur===l.id?' selected':'')+'>'+esc(l.title)+'</option>').join('');
+    bar.innerHTML='<span style="font-size:16px">📅</span><span class="small" style="flex:1;min-width:110px">Google connected'+(st.email?' · <b>'+esc(st.email)+'</b>':'')+' · <span style="color:var(--muted)">📥 push tasks per-row; events auto-sync</span></span>'+
+      '<label class="small" style="display:flex;align-items:center;gap:4px;color:var(--muted)">Tasks list <select onchange="gcalSetList(this.value)" style="padding:3px 6px;border-radius:7px;background:var(--card);color:var(--text);border:1px solid var(--border);font-size:12px;max-width:140px">'+opts+'</select></label>'+
       '<button class="btn-xxs" onclick="gcalDisconnect()">Disconnect</button>';
   }else{
     bar.innerHTML='<span style="font-size:16px">📅</span><span class="small" style="flex:1;min-width:120px;color:var(--muted)">Sync your tasks &amp; events to Google Calendar + Tasks</span>'+
@@ -22709,7 +22713,7 @@ async function gcalDisconnect(){
   if(!confirm('Disconnect Google? Your tasks will stop syncing. Entries already in your Google Calendar/Tasks stay as they are.'))return;
   await gcalApi('/disconnect',{coach_id:gcalCoachId()});toast('Google disconnected');gcalRenderBar();
 }
-try{window.addEventListener('message',function(ev){try{if(ev&&ev.data&&ev.data.s2sGcal==='connected'){toast('✅ Google connected');gcalRenderBar();gcalSyncTasks(true);gcalSyncEvents(true);}}catch(e){}});}catch(e){}
+try{window.addEventListener('message',function(ev){try{if(ev&&ev.data&&ev.data.s2sGcal==='connected'){toast('✅ Google connected');gcalRenderBar();gcalLoadLinks();gcalSyncEvents(true);try{if(typeof renderTasks==='function')renderTasks();}catch(e){}}}catch(e){}});}catch(e){}
 /* ── Auto-push: reconcile portal tasks → Google Tasks, team events → Google Calendar.
    We send the FULL current set each time so the server can delete what's gone (present=keep, absent=deleted). ── */
 let GCAL_STATUS_AT=0, GCAL_SYNC_LAST={tasks:0,events:0}, GCAL_SYNC_SIG={tasks:'',events:''};
@@ -22742,9 +22746,38 @@ async function gcalSyncEvents(force){
     await gcalApi('/sync',{coach_id:gcalCoachId(),kind:'events',items});
   }catch(e){}
 }
+/* ── Manual per-task push to Google Tasks + list picker (tasks are opt-in, one at a time) ── */
+let GCAL_TASK_LINKS=new Set(), GCAL_LISTS=null;
+async function gcalLoadLinks(){ if(DB.mode!=='api'||!gcalConnected()){GCAL_TASK_LINKS=new Set();return;} try{const r=await gcalApi('/links',{coach_id:gcalCoachId(),kind:'task'});GCAL_TASK_LINKS=new Set((r&&r.ids)||[]);}catch(e){} }
+async function gcalLoadLists(force){ if(!gcalConnected()){GCAL_LISTS=null;return;} if(GCAL_LISTS&&!force)return; try{const r=await gcalApi('/tasklists',{coach_id:gcalCoachId()});GCAL_LISTS=(r&&r.lists)||[];}catch(e){GCAL_LISTS=[];} }
+function gcalTaskBtn(t){
+  if(!t||t.status==='done')return '';
+  if(gcalConnected()){
+    if(GCAL_TASK_LINKS&&GCAL_TASK_LINKS.has(t.id))
+      return ' <button class="icon-x" style="font-size:14px;color:var(--good)" title="In your Google Tasks — tap to remove" onclick="gcalTaskRemove(\''+t.id+'\')">✅</button>';
+    return ' <button class="icon-x" style="font-size:14px" title="Push to Google Tasks" onclick="gcalTaskPush(\''+t.id+'\')">📥</button>';
+  }
+  return ' <button class="icon-x" style="font-size:14px" title="Add to Google Calendar" onclick="gcalTaskFromDp(\''+t.id+'\')">📅</button>';
+}
+async function gcalTaskPush(id){
+  const t=(TASKS||[]).find(x=>x.id===id);if(!t){toast('Task not found',true);return;}
+  if(!gcalConnected()){toast('Connect Google first',true);return;}
+  toast('Pushing to Google…');
+  const r=await gcalApi('/task',{coach_id:gcalCoachId(),action:'push',task:{id:t.id,title:t.title,details:t.details,client_name:t.client_name,due_date:(/^\d{4}-\d{2}-\d{2}$/.test(t.due_date||'')?t.due_date:null),status:t.status,recurrence:t.recurrence}});
+  if(r&&r.ok){GCAL_TASK_LINKS.add(id);toast('✓ Added to Google Tasks'+(GCAL_CONN&&GCAL_CONN.tasklist_id&&GCAL_CONN.tasklist_id!=='@default'?'':' (My Tasks)'));try{renderTasks();}catch(e){}}
+  else toast((r&&r.error)||'Could not push to Google',true);
+}
+async function gcalTaskRemove(id){
+  if(!confirm('Remove this task from your Google Tasks? It stays in the portal.'))return;
+  const r=await gcalApi('/task',{coach_id:gcalCoachId(),action:'remove',task:{id:id}});
+  if(r&&r.ok){GCAL_TASK_LINKS.delete(id);toast('Removed from Google Tasks');try{renderTasks();}catch(e){}}
+  else toast((r&&r.error)||'Could not remove',true);
+}
+async function gcalSetList(id){ if(GCAL_CONN)GCAL_CONN.tasklist_id=id; try{await gcalApi('/settings',{coach_id:gcalCoachId(),tasklist_id:id});toast('Google Tasks list updated');}catch(e){toast('Could not set list',true);} }
 async function renderTasks(){
   const host=$('tasks-host');if(!host)return;
   try{TASKS=await DB.listTasks();}catch(e){host.innerHTML='<div class="empty">Could not load tasks.</div>';return;}
+  try{await gcalEnsureStatus();if(gcalConnected())await gcalLoadLinks();}catch(e){}
   try{await tkLoadAudio();}catch(e){}
   try{const cs=await DB.listClients();const sel=$('tk-client');if(sel)sel.innerHTML='<option value="">— general / no client —</option>'+cs.map(c=>'<option value="'+c.id+'">'+esc(c.name||c.email)+'</option>').join('');}catch(e){}
   const today=todayISO();
@@ -22767,7 +22800,7 @@ async function renderTasks(){
       (t.details?'<div class="small" style="margin-top:2px;white-space:pre-wrap">'+esc(t.details)+'</div>':'')+
       (TK_AUDIO_MAP[t.id]?'<button class="btn-xxs" style="margin-top:5px" onclick="tkPlayAudio(\''+t.id+'\')" title="Play voice note">🎙 Play voice note</button>':'')+'</div>'+
       '<div style="text-align:right;white-space:nowrap;flex:none">'+(t.status==='done'?(t.done_at?'<span class="funit">done '+esc(fmtDate((t.done_at||'').slice(0,10)))+'</span>':''):(t.due_date?'<span class="pill '+(od?'crit':'')+'">'+(od?'⏰ ':'')+esc(fmtDate(t.due_date))+'</span>':'<span class="funit">no date</span>'))+
-      (t.status==='done'?'':' <button class="icon-x" style="font-size:14px" title="Add to Google Calendar" onclick="gcalTaskFromDp(\''+t.id+'\')">📅</button>')+
+      gcalTaskBtn(t)+
       (t.status==='done'?'':' <button class="icon-x" style="font-size:14px" title="Edit task" onclick="taskEdit(\''+t.id+'\')">✏️</button>')+
       ' <button class="icon-x" style="font-size:16px" title="Delete task" onclick="taskDelete(\''+t.id+'\')">×</button></div></div>';};
   // ----- team / project tasks from Team & Calendar (shared objects → completing here syncs there) -----
@@ -22790,7 +22823,6 @@ async function renderTasks(){
     else{dWrap.style.display='none';dHost.innerHTML='';if(dCnt)dCnt.textContent='';}
   }
   try{gcalRenderBar();}catch(e){}
-  try{gcalSyncTasks();}catch(e){}
 }
 let TK_DAYS=[];   // getDay() numbers: 0=Sun .. 6=Sat
 const TK_WK7=[['Mon',1],['Tue',2],['Wed',3],['Thu',4],['Fri',5],['Sat',6],['Sun',0]];
