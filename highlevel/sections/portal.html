@@ -3235,6 +3235,32 @@ body.gm-has-switch #custom-host{top:var(--gm-h,48px)}
 .wd-rail-list{display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow-y:auto;margin-top:6px}
 .wd-rail-ex{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:10px;padding:7px 9px;background:var(--card)}
 .wd-rail-exn{font-weight:700;font-size:13px}
+.wd-rail-seg{display:flex;gap:4px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:3px;margin-bottom:10px}
+.wd-rail-seg button{flex:1;border:none;background:transparent;color:var(--muted);font-weight:800;font-size:12.5px;padding:6px 4px;border-radius:7px;cursor:pointer}
+.wd-rail-seg button.on{background:var(--brand);color:#fff}
+.wd-out-hint{font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.4}
+.wd-out-list{display:flex;flex-direction:column;gap:10px;max-height:58vh;overflow-y:auto}
+.wd-out-sec{border:1px solid var(--border);border-radius:11px;background:var(--card);overflow:hidden}
+.wd-out-sec.foc{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand) inset}
+.wd-out-sec.drop{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 9%,var(--card))}
+.wd-out-sec-h{display:flex;align-items:center;gap:7px;padding:7px 9px;background:var(--card2);cursor:pointer;border-bottom:1px solid var(--border)}
+.wd-out-secmv{display:flex;flex-direction:column;gap:1px}
+.wd-out-secmv button{line-height:1;padding:0 3px;min-width:0}
+.wd-out-secn{flex:1;min-width:0;font-weight:800;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wd-out-cnt{flex:none;font-size:11px;font-weight:800;color:var(--muted);background:var(--card);border:1px solid var(--border);border-radius:999px;padding:1px 8px}
+.wd-out-empty{font-size:11.5px;color:var(--muted);padding:7px 11px}
+.wd-out-ex{display:flex;align-items:center;gap:7px;padding:7px 9px;border-top:1px solid var(--border);cursor:pointer;background:var(--card)}
+.wd-out-ex:first-of-type{border-top:none}
+.wd-out-ex:hover{background:var(--card2)}
+.wd-out-ex.dragging{opacity:.4}
+.wd-out-ex.drop{box-shadow:0 -2px 0 var(--brand) inset}
+.wd-out-grip{flex:none;color:var(--muted);cursor:grab;font-size:13px;letter-spacing:-2px}
+.wd-out-exn{flex:1;min-width:0;font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wd-out-sets{flex:none;font-size:11px;font-weight:700;color:var(--muted)}
+.wd-out-link{flex:none;font-size:11px}
+.wd-out-ex .icon-x{flex:none}
+.wd-ex.wd-flash{animation:wdFlash 1.3s ease}
+@keyframes wdFlash{0%,100%{box-shadow:none}25%,60%{box-shadow:0 0 0 2px var(--brand)}}
 .wd-setgrid{display:flex;flex-direction:column;gap:4px;margin-top:8px}
 .wd-setrow{display:grid;gap:5px;align-items:center}
 .wd-setrow input{min-width:0;padding:5px;text-align:center}
@@ -5393,7 +5419,7 @@ img,svg,canvas,video{max-width:100%}
         <div class="card" data-edtab="client"><div class="card-head"><span class="step-no">A3</span><h2>Macro auto-calculator</h2>
           <span class="sp"></span><span class="pill muted">estimate</span></div>
           <div class="card-body">
-            <p class="small" style="margin-bottom:10px">Uses the Key Details above (weight, height, age, sex, body-fat %, activity, goal). Pick a BMR formula — we recommend the best fit for this client — then see BMR, maintenance, deficit &amp; surplus, and apply the goal target to a day type.</p>
+            <p class="small" style="margin-bottom:10px">Uses the Key Details above (weight, height, age, sex, body-fat %, activity) plus the client’s <b>current training phase</b>. Pick a BMR formula — we recommend the best fit for this client — then see BMR, maintenance, deficit &amp; surplus, and apply the phase-based target to a day type. The phase-based direction follows the live phase (set under Progress / Phase &amp; metrics), <b>not</b> the static profile goal.</p>
             <div class="row" style="align-items:flex-end">
               <div class="field" style="margin:0;max-width:280px"><label class="lab">BMR method</label><select id="calc-method" onchange="calcMacros()"></select></div>
               <button class="btn-sm solid" style="flex:none" onclick="calcMacros()">Calculate</button>
@@ -5402,11 +5428,11 @@ img,svg,canvas,video{max-width:100%}
             <div id="calc-grid" class="macro-grid" style="margin-top:12px"></div>
             <div id="calc-macros" class="small" style="margin-top:10px"></div>
             <div class="row" style="align-items:flex-end;margin-top:12px">
-              <div class="field" style="margin:0;max-width:210px"><label class="lab">Target to apply</label><select id="calc-basis" onchange="calcSetBasis()"><option value="goal">Goal-based (recommended)</option><option value="maintenance">Maintenance</option><option value="deficit">Deficit (−20%)</option><option value="surplus">Surplus (+10%)</option></select></div>
+              <div class="field" style="margin:0;max-width:210px"><label class="lab">Target to apply</label><select id="calc-basis" onchange="calcSetBasis()"><option value="phase">Phase-based (recommended)</option><option value="maintenance">Maintenance</option><option value="deficit">Deficit (−20%)</option><option value="surplus">Surplus (+10%)</option></select></div>
               <div class="field" style="margin:0;max-width:220px"><label class="lab">Apply to day type</label><select id="calc-apply"></select></div>
               <button class="btn-sm" style="flex:none" onclick="applyCalc()">Apply macros</button>
             </div>
-            <p class="small" style="margin:6px 0 0;color:var(--muted)">Tip: pick maintenance, deficit or surplus above (or click a card), then apply — you’re not limited to the client’s goal.</p>
+            <p class="small" style="margin:6px 0 0;color:var(--muted)">Tip: “Phase-based” sets the direction from the client’s current training phase (Fat loss → deficit, Hypertrophy/Strength → surplus, Recomp/Performance/Foundation → maintenance). Or pick maintenance, deficit or surplus above (or click a card) to override.</p>
             <label class="calc-auto-wrap"><input type="checkbox" id="calc-auto" onchange="calcSetAuto(this.checked)"><span><b>Auto-update macros from current weight.</b> When on, each day-type target you <b>Apply</b> below is re-calculated automatically every time this client’s weight changes (their weigh-ins or yours), keeping macros matched to their current weight. Turn off to freeze the numbers as they are.</span></label>
             <div id="calc-auto-status" class="small" style="margin-top:8px"></div>
           </div></div>
@@ -7042,7 +7068,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04sb';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04sc';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -7062,6 +7088,15 @@ const PLANNER_HTML = "\u003C!DOCTYPE html>\n\u003Cmeta charset=\"utf-8\">\n\u003
 /* macro auto-calculator coefficients */
 const ACT_MULT = {'Sedentary':1.2,'Lightly active':1.375,'Moderately active':1.55,'Very active':1.725,'Extra active':1.9};
 const GOAL_ADJ = {'Fat loss':-0.20,'Maintenance':0,'Lean gain':0.10,'Muscle gain':0.15};
+/* calorie direction by CURRENT TRAINING PHASE (plan.phase) — the live state synced with the roadmap/metrics course,
+   unlike the static profile.goal. A real training phase drives deficit/maintenance/surplus; 'Foundation' (base/default)
+   defers to the client's goal so goal-only setups don't regress. */
+const PHASE_ADJ = {'Strength':0.05,'Hypertrophy':0.10,'Recomposition':0,'Fat loss':-0.20,'Performance':0,'Foundation':0};
+function phaseCalAdj(phase,goal){const p=(phase||'').trim();
+  if(p&&p!=='Foundation'&&PHASE_ADJ[p]!=null)return PHASE_ADJ[p];
+  if(goal&&GOAL_ADJ[goal]!=null)return GOAL_ADJ[goal];
+  return PHASE_ADJ[p]!=null?PHASE_ADJ[p]:0;}
+function phaseDirLabel(phase,goal){const a=phaseCalAdj(phase,goal);return a<0?'deficit':a>0?'surplus':'maintenance';}
 const PROT_KG  = {'Beginner':1.8,'Intermediate':2.0,'Advanced':2.2};
 const FAT_PCT  = {'Ectomorph':0.22,'Mesomorph':0.27,'Endomorph':0.33};
 const CALC_METHODS = ['Mifflin-St Jeor','Harris-Benedict','Katch-McArdle','Cunningham (athletic)'];
@@ -26048,24 +26083,25 @@ function calcMacros(){
       : 'No body-fat %, so Mifflin-St Jeor is the best-validated for general use. Add a body-fat % to unlock Katch-McArdle / Cunningham.')
     +(activity?'':' <span style="color:var(--warn)">Set an activity level for maintenance.</span>');
   $('calc-method').innerHTML=CALC_METHODS.map(n=>'<option value="'+n+'"'+(n===chosen?' selected':'')+(methods[n]?'':' disabled')+'>'+n+(n===rec?' (recommended)':'')+(methods[n]?'':' - needs data')+'</option>').join('');
-  const goalCals=Math.round(maint*(1+(GOAL_ADJ[goal]||0)));
-  CALC_BASE={w,training,bodyType,goal,maint,deficit,surplus,goalCals,chosen};
+  const phase=(typeof edPlan!=='undefined'&&edPlan&&edPlan.phase)||'Foundation';
+  const goalCals=Math.round(maint*(1+phaseCalAdj(phase,goal)));
+  CALC_BASE={w,training,bodyType,goal,phase,maint,deficit,surplus,goalCals,chosen};
   const card=(lbl,cls,val,basis)=>'<div class="macro '+cls+' calc-pick" data-basis="'+basis+'" title="Click to apply this target" onclick="calcPickBasis(\''+basis+'\')">'+'<div class="k">'+lbl+'</div><div class="v tnum">'+round(val)+'<small> kcal</small></div></div>';
   $('calc-grid').innerHTML=macroCard('BMR','k',bmr,'kcal')+card('Maintenance','c',maint,'maintenance')+card('Deficit (-20%)','f',deficit,'deficit')+card('Surplus (+10%)','p',surplus,'surplus');
   $('calc-apply').innerHTML=edPlan.dayTypes.map((dt,i)=>'<option value="'+i+'">'+esc(dt.name)+'</option>').join('');
   calcSetBasis();
 }
 /* build the P/C/F split for a given calorie number, using the current client details */
-function calcTargetFor(cals){const b=CALC_BASE||{};const w=b.w||0;let protPerKg=PROT_KG[b.training]||2.0;if(b.goal==='Fat loss')protPerKg+=0.2;
+function calcTargetFor(cals){const b=CALC_BASE||{};const w=b.w||0;let protPerKg=PROT_KG[b.training]||2.0;if(phaseCalAdj(b.phase,b.goal)<0||b.goal==='Fat loss')protPerKg+=0.2;
   const protein=Math.round(protPerKg*w),fatCals=cals*(FAT_PCT[b.bodyType]||0.27),fat=Math.round(fatCals/9),carbs=Math.max(0,Math.round((cals-protein*4-fatCals)/4));
   return {p:protein,c:carbs,f:fat,cal:Math.round(cals)};}
 /* recompute the target for the selected basis (goal / maintenance / deficit / surplus) */
 function calcSetBasis(){
   if(!CALC_BASE)return;
-  const basis=(($('calc-basis')||{}).value)||'goal';
+  const basis=(($('calc-basis')||{}).value)||'phase';
   const cals=basis==='maintenance'?CALC_BASE.maint:basis==='deficit'?CALC_BASE.deficit:basis==='surplus'?CALC_BASE.surplus:CALC_BASE.goalCals;
   CALC=calcTargetFor(cals);
-  const label=basis==='maintenance'?'Maintenance':basis==='deficit'?'Deficit (−20%)':basis==='surplus'?'Surplus (+10%)':('Goal-based'+(CALC_BASE.goal?' · '+CALC_BASE.goal:''));
+  const label=basis==='maintenance'?'Maintenance':basis==='deficit'?'Deficit (−20%)':basis==='surplus'?'Surplus (+10%)':('Phase-based'+(CALC_BASE.phase?' · '+CALC_BASE.phase+' → '+phaseDirLabel(CALC_BASE.phase,CALC_BASE.goal):''));
   document.querySelectorAll('#calc-grid .calc-pick').forEach(c=>c.classList.toggle('sel',c.getAttribute('data-basis')===basis));
   const el=$('calc-macros');if(el)el.innerHTML='<b style="color:var(--text)">'+esc(label)+' target: '+CALC.cal+' kcal → '+CALC.p+'g P · '+CALC.c+'g C · '+CALC.f+'g F</b> <span style="color:var(--muted)">(BMR via '+esc(CALC_BASE.chosen||'')+')</span>';
 }
@@ -26074,18 +26110,18 @@ function applyCalc(){
   if(!CALC){toast('Calculate first',true);return;}
   const i=parseInt($('calc-apply').value)||0;
   if(!edPlan.dayTypes[i])return;
-  const basis=(($('calc-basis')||{}).value)||'goal';
+  const basis=(($('calc-basis')||{}).value)||'phase';
   const auto=!!(edPlan.nutrition&&edPlan.nutrition.autoMacro&&edPlan.nutrition.autoMacro.on);
   const tgt={p:CALC.p,c:CALC.c,f:CALC.f,cal:CALC.cal};
   if(auto){tgt.auto=true;tgt.basis=basis;tgt.method=(CALC_BASE&&CALC_BASE.chosen)||'';}
   edPlan.dayTypes[i].target=tgt;
   if(auto)autoMacroWriteOverride(edPlan,edPlan.dayTypes[i]);
   edRenderDayTypes();calcAutoStatus();
-  toast('Applied '+(basis==='goal'?'goal':basis)+' target ('+CALC.cal+' kcal) to '+(edPlan.dayTypes[i].name||'day type')+(auto?' · auto-tracking current weight':''));
+  toast('Applied '+((basis==='goal'||basis==='phase')?'phase':basis)+' target ('+CALC.cal+' kcal) to '+(edPlan.dayTypes[i].name||'day type')+(auto?' · auto-tracking current weight':''));
 }
 /* ════ AUTO-MACRO: recompute applied day-type targets from the client's CURRENT weight (opt-in per client) ════ */
 /* pure BMR→macro calc (mirrors the coach calculator) so it can run for a plan object anywhere, incl. client side */
-function macroFromProfile(profile,basis,method){
+function macroFromProfile(profile,basis,method,phase){
   profile=profile||{};
   const w=parseKg(profile.weight),h=parseKg(profile.height),age=Math.round(parseKg(profile.age));
   const sex=profile.sex||'',bf=parseFloat(profile.bodyFat)||0;
@@ -26098,8 +26134,8 @@ function macroFromProfile(profile,basis,method){
   const rec=lbm>0?'Katch-McArdle':(methods['Mifflin-St Jeor']?'Mifflin-St Jeor':names[0]);
   const chosen=(method&&methods[method])?method:rec;
   const maint=Math.round(methods[chosen]*(ACT_MULT[activity]||1.375));
-  const cals=basis==='maintenance'?maint:basis==='deficit'?Math.round(maint*0.80):basis==='surplus'?Math.round(maint*1.10):Math.round(maint*(1+(GOAL_ADJ[goal]||0)));
-  let protPerKg=PROT_KG[training]||2.0;if(goal==='Fat loss')protPerKg+=0.2;
+  const cals=basis==='maintenance'?maint:basis==='deficit'?Math.round(maint*0.80):basis==='surplus'?Math.round(maint*1.10):Math.round(maint*(1+phaseCalAdj(phase,goal)));
+  let protPerKg=PROT_KG[training]||2.0;if(phaseCalAdj(phase,goal)<0||goal==='Fat loss')protPerKg+=0.2;
   const protein=Math.round(protPerKg*w),fatCals=cals*(FAT_PCT[bodyType]||0.27),fat=Math.round(fatCals/9),carbs=Math.max(0,Math.round((cals-protein*4-fatCals)/4));
   return {p:protein,c:carbs,f:fat,cal:Math.round(cals),method:chosen,basis:basis||'goal'};
 }
@@ -26111,7 +26147,7 @@ function autoMacroWriteOverride(plan,dt){try{if(!plan||!dt||!dt.target)return;pl
 function autoMacroRecompute(plan){
   if(!plan)return {changed:0,details:[]};const prof=plan.profile||{};let changed=0;const details=[];
   (plan.dayTypes||[]).forEach(dt=>{const t=dt&&dt.target;if(!t||!t.auto)return;
-    const m=macroFromProfile(prof,t.basis||'goal',t.method);if(!m)return;
+    const m=macroFromProfile(prof,t.basis||'phase',t.method,plan.phase);if(!m)return;
     if(t.p!==m.p||t.c!==m.c||t.f!==m.f||t.cal!==m.cal){t.p=m.p;t.c=m.c;t.f=m.f;t.cal=m.cal;t.method=m.method;changed++;details.push((dt.name||'Day')+' → '+m.cal+' kcal');}
     autoMacroWriteOverride(plan,dt);});
   return {changed:changed,details:details};
@@ -26150,7 +26186,7 @@ function calcAutoStatus(){
   if(cw){line='<span class="pill muted">Current '+round(cw,1)+' kg</span>';
     if(sw){const d=round(cw-sw,1);line+=' <span class="pill muted">Start '+round(sw,1)+' kg</span> <span class="pill '+(d<0?'good':d>0?'crit':'muted')+'">'+(d>0?'▲ +'+d:d<0?'▼ '+d:'– 0')+' kg</span>';}}
   const autoDts=(edPlan&&edPlan.dayTypes||[]).filter(dt=>dt&&dt.target&&dt.target.auto);
-  if(on&&autoDts.length)line+='<div style="margin-top:6px;color:var(--good)">↻ Auto-tracking '+autoDts.length+' day type'+(autoDts.length===1?'':'s')+': '+autoDts.map(dt=>esc(dt.name||'Day')+' ('+(dt.target.basis||'goal')+')').join(', ')+'. See every weigh-in in <b>Goals & milestones → Body weight</b>.</div>';
+  if(on&&autoDts.length)line+='<div style="margin-top:6px;color:var(--good)">↻ Auto-tracking '+autoDts.length+' day type'+(autoDts.length===1?'':'s')+': '+autoDts.map(dt=>{const bb=dt.target.basis||'phase';return esc(dt.name||'Day')+' ('+(bb==='goal'?'phase':bb)+')';}).join(', ')+'. See every weigh-in in <b>Goals & milestones → Body weight</b>.</div>';
   else if(on)line+='<div style="margin-top:6px;color:var(--muted)">No day types tracked yet — pick a basis above and click <b>Apply macros</b> for each day type.</div>';
   el.innerHTML=line;
 }
@@ -27116,6 +27152,7 @@ function edRenderCardioClientLog(){const host=$('ed-cardio-clientlog');if(!host)
 const WD_VARS=[['reps','Reps','e.g. 10'],['weight','Weight (kg)','kg'],['rir','RIR/RPE','e.g. 2'],['rest','Rest (s)','sec'],['tempo','Tempo','3-1-1'],['time','Time (s)','sec'],['distance','Distance (m)','m'],['height','Box/Height (cm)','cm']];
 const WD_DEFAULT_TRACK=['reps','weight','rir','rest'];
 let WD_CUR=null, WD_SEC=null, WD_EXFILTER={q:'',body:''};
+let WD_RAIL_VIEW='outline', WD_OUT_DRAG=null;
 let WD_VIEW='workouts', WD_CAL_DAYS=7, WD_CAL_START=null, WD_CAL_PICK=null, WD_CAL_DRAG=null, WD_CAL_MONTH=false, WD_WEEK_CLIP=null;
 function t2(){edPlan.training=edPlan.training||{};const v=edPlan.training.v2=edPlan.training.v2||{active:false,workouts:[],calendar:{}};if(!Array.isArray(v.workouts))v.workouts=[];if(!v.calendar||typeof v.calendar!=='object')v.calendar={};return v;}
 function wdWorkout(id){return t2().workouts.find(w=>w.id===id)||null;}
@@ -27322,7 +27359,7 @@ function wdSectionHTML(s){
 }
 function wdExHTML(s,e,i,n){
   const sid=s.id,eid=e.id,lib=e.exId?exById(e.exId):null;
-  let h='<div class="wd-ex'+(e.linkNext?' link':'')+'" onclick="event.stopPropagation()">';
+  let h='<div class="wd-ex'+(e.linkNext?' link':'')+'" id="wdex-'+eid+'" onclick="event.stopPropagation()">';
   h+='<div class="wd-ex-top"><span class="wd-ex-move"><button class="btn-xxs" onclick="wdMoveEx(\''+sid+'\',\''+eid+'\',-1)"'+(i===0?' disabled':'')+'>▲</button><button class="btn-xxs" onclick="wdMoveEx(\''+sid+'\',\''+eid+'\',1)"'+(i===n-1?' disabled':'')+'>▼</button></span>';
   const _nm=(e.name||'').trim();
   const _inLib=!!_nm&&(EX_LIB||[]).some(x=>(x.name||'').trim().toLowerCase()===_nm.toLowerCase());
@@ -27341,17 +27378,54 @@ function wdExHTML(s,e,i,n){
   h+='<div class="wd-ex-foot"><button class="btn-xxs'+(e.linkNext?' solid':'')+'" onclick="wdToggleLink(\''+sid+'\',\''+eid+'\')"'+(i===n-1?' disabled':'')+'>⛓ superset w/ next</button>'+(lib&&lib.video?'<a class="btn-xxs" href="'+esc(lib.video)+'" target="_blank" rel="noopener">▶ demo</a>':'')+(lib?'<button class="btn-xxs" title="Edit this exercise in your library — fix the video, cues, etc. (updates everywhere it’s used)" onclick="wdEditInLib(\''+e.exId+'\')">✎ lib</button>':'')+'<input class="wd-note" placeholder="note (optional)" value="'+esc(e.notes||'')+'" oninput="wdExSet(\''+sid+'\',\''+eid+'\',\'notes\',this.value)"></div>';
   h+='</div>';return h;
 }
+function wdRailView(v){WD_RAIL_VIEW=v;wdRenderRail();}
 function wdRenderRail(){
   const rail=$('wd-rail');if(!rail)return;
+  const seg='<div class="wd-rail-seg"><button class="'+(WD_RAIL_VIEW==='outline'?'on':'')+'" onclick="wdRailView(\'outline\')">🗂 Outline</button><button class="'+(WD_RAIL_VIEW==='library'?'on':'')+'" onclick="wdRailView(\'library\')">📚 Library</button></div>';
+  rail.innerHTML=seg+(WD_RAIL_VIEW==='outline'?wdOutlineHTML():wdLibraryHTML());
+}
+function wdLibraryHTML(){
   const bodyOpts='<option value="">All body parts</option>'+((typeof EX_BODYPARTS!=='undefined'?EX_BODYPARTS:[])||[]).map(b=>'<option value="'+esc(b)+'"'+(WD_EXFILTER.body===b?' selected':'')+'>'+esc(b)+'</option>').join('');
   const list=wdRailList();
-  let h='<div class="wd-rail-h">📚 Exercise library</div>';
-  h+='<div class="row" style="gap:6px"><input placeholder="Search…" value="'+esc(WD_EXFILTER.q||'')+'" oninput="wdExFilter(\'q\',this.value)" style="flex:1"><button class="btn-xxs" onclick="loadExLib(true).then(wdRenderRail)">↻</button></div>';
+  let h='<div class="row" style="gap:6px"><input placeholder="Search…" value="'+esc(WD_EXFILTER.q||'')+'" oninput="wdExFilter(\'q\',this.value)" style="flex:1"><button class="btn-xxs" onclick="loadExLib(true).then(wdRenderRail)">↻</button></div>';
   h+='<select onchange="wdExFilter(\'body\',this.value)" style="width:100%;margin:6px 0">'+bodyOpts+'</select>';
   h+='<div class="wd-rail-list">'+(list.length?list.map(e=>'<div class="wd-rail-ex"><div style="flex:1;min-width:0"><div class="wd-rail-exn">'+esc(e.name||'')+'</div><div class="funit">'+esc(e.bodyPart||'')+(e.equipment?(' · '+esc(e.equipment)):'')+'</div></div><button class="btn-xxs solid" onclick="wdAddFromLib(\''+e.id+'\')">＋</button></div>').join(''):'<div class="empty">No matches.</div>')+'</div>';
   h+='<button class="btn-sm" style="width:100%;margin-top:8px" onclick="openExLib()">＋ New / edit library exercise</button>';
-  rail.innerHTML=h;
+  return h;
 }
+/* Outline: the whole workout (sections + exercises) as a compact, drag-reorderable tree. Click to jump to that exercise in the editor; drag to move within or across sections. */
+function wdOutlineHTML(){
+  const w=wdWorkout(WD_CUR);if(!w)return '<div class="empty">No workout open.</div>';
+  const secs=w.sections||[];let total=0;secs.forEach(s=>total+=(s.exercises||[]).length);
+  let h='<div class="wd-out-hint">Drag to reorder · tap to jump · drop onto a section to move it there</div>';
+  h+='<div class="wd-out-list">';
+  if(!secs.length)h+='<div class="empty">Add a section to start.</div>';
+  secs.forEach((s,si)=>{
+    const exs=s.exercises||[];
+    h+='<div class="wd-out-sec'+(s.id===WD_SEC?' foc':'')+'" ondragover="wdOutSecOver(event)" ondragleave="this.classList.remove(\'drop\')" ondrop="wdOutDropSec(event,\''+s.id+'\')">';
+    h+='<div class="wd-out-sec-h" onclick="wdFocusSec(\''+s.id+'\')"><span class="wd-out-secmv"><button class="btn-xxs" onclick="event.stopPropagation();wdMoveSec(\''+s.id+'\',-1)"'+(si===0?' disabled':'')+'>▲</button><button class="btn-xxs" onclick="event.stopPropagation();wdMoveSec(\''+s.id+'\',1)"'+(si===secs.length-1?' disabled':'')+'>▼</button></span><span class="wd-out-secn">'+esc(s.name||'Section')+'</span><span class="wd-out-cnt">'+exs.length+'</span></div>';
+    if(!exs.length)h+='<div class="wd-out-empty">— empty —</div>';
+    exs.forEach((e,i)=>{
+      const nm=(e.name||'').trim()||'(unnamed)';const sets=wdExSets(e).length;
+      h+='<div class="wd-out-ex" draggable="true" ondragstart="wdOutDragStart(event,\''+s.id+'\',\''+e.id+'\')" ondragend="wdOutDragEnd(event)" ondragover="wdOutExOver(event)" ondragleave="this.classList.remove(\'drop\')" ondrop="wdOutDropEx(event,\''+s.id+'\',\''+e.id+'\')" onclick="wdOutFocus(\''+s.id+'\',\''+e.id+'\')">';
+      h+='<span class="wd-out-grip">⠿</span><span class="wd-out-exn">'+esc(nm)+'</span><span class="wd-out-sets">'+sets+'×</span>'+(e.linkNext?'<span class="wd-out-link" title="superset with next">⛓</span>':'')+'<button class="icon-x" title="Remove" onclick="event.stopPropagation();wdDelEx(\''+s.id+'\',\''+e.id+'\')">×</button></div>';
+    });
+    h+='</div>';
+  });
+  h+='</div>';
+  h+='<button class="btn-sm" style="width:100%;margin-top:8px" onclick="wdAddSection()">＋ Add section</button>';
+  return h;
+}
+function wdOutDragStart(ev,sid,eid){WD_OUT_DRAG={sid,eid};try{ev.dataTransfer.effectAllowed='move';ev.dataTransfer.setData('text/plain',eid);}catch(e){}try{ev.currentTarget.classList.add('dragging');}catch(e){}}
+function wdOutDragEnd(ev){try{ev.currentTarget.classList.remove('dragging');}catch(e){}document.querySelectorAll('.wd-out-ex.drop,.wd-out-sec.drop').forEach(x=>x.classList.remove('drop'));}
+function wdOutExOver(ev){if(!WD_OUT_DRAG)return;ev.preventDefault();ev.stopPropagation();try{ev.dataTransfer.dropEffect='move';}catch(e){}ev.currentTarget.classList.add('drop');}
+function wdOutSecOver(ev){if(!WD_OUT_DRAG)return;ev.preventDefault();try{ev.dataTransfer.dropEffect='move';}catch(e){}ev.currentTarget.classList.add('drop');}
+function wdOutDropEx(ev,dstSid,dstEid){ev.preventDefault();ev.stopPropagation();const d=WD_OUT_DRAG;document.querySelectorAll('.wd-out-ex.drop,.wd-out-sec.drop').forEach(x=>x.classList.remove('drop'));if(!d)return;const ds=wdSecById(dstSid);if(!ds)return;let idx=(ds.exercises||[]).findIndex(x=>x.id===dstEid);if(idx<0)idx=undefined;wdMoveExTo(d.sid,d.eid,dstSid,idx);}
+function wdOutDropSec(ev,dstSid){ev.preventDefault();const d=WD_OUT_DRAG;document.querySelectorAll('.wd-out-ex.drop,.wd-out-sec.drop').forEach(x=>x.classList.remove('drop'));if(!d)return;wdMoveExTo(d.sid,d.eid,dstSid,undefined);}
+function wdMoveExTo(srcSid,eid,dstSid,dstIdx){wdFlush();WD_OUT_DRAG=null;const ss=wdSecById(srcSid);if(!ss)return;const arr=ss.exercises||[];const i=arr.findIndex(e=>e.id===eid);if(i<0)return;const [ex]=arr.splice(i,1);const ds=wdSecById(dstSid);if(!ds){arr.splice(i,0,ex);return;}ds.exercises=ds.exercises||[];let idx=(dstIdx==null)?ds.exercises.length:dstIdx;if(srcSid===dstSid&&i<idx)idx--;idx=Math.max(0,Math.min(ds.exercises.length,idx));ds.exercises.splice(idx,0,ex);wdSave(true);wdRenderDesigner($('wd-host'));}
+function wdMoveSec(sid,dir){wdFlush();const w=wdWorkout(WD_CUR);if(!w||!w.sections)return;const i=w.sections.findIndex(s=>s.id===sid);const j=i+dir;if(i<0||j<0||j>=w.sections.length)return;const t=w.sections[i];w.sections[i]=w.sections[j];w.sections[j]=t;wdSave(true);wdRenderDesigner($('wd-host'));}
+/* Jump to the exercise in the main editor: focus its section, scroll it into view, flash it. */
+function wdOutFocus(sid,eid){try{WD_SEC=sid;}catch(e){}const el=document.getElementById('wdex-'+eid);if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.classList.add('wd-flash');setTimeout(()=>{try{el.classList.remove('wd-flash');}catch(e){}},1400);const nm=el.querySelector('.wd-ex-name');if(nm){try{nm.focus({preventScroll:true});}catch(e){}}}}
 
 /* ---- Workout Builder · calendar (assign templates to dates) ---- */
 function wdMonday(iso){const d=new Date(iso+'T00:00:00');const off=(d.getDay()+6)%7;return addDaysISO(iso,-off);}
