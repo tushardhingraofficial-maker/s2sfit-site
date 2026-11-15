@@ -7042,7 +7042,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04rs';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04rt';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -11953,6 +11953,45 @@ async function exGenerate(){
   }catch(e){
     if(st)st.innerHTML='<span style="color:var(--red)">Could not generate — '+esc((e&&e.message)||'error')+'. Check the webhook URL, and that your n8n “Respond to Webhook” returns JSON with an <b>Access-Control-Allow-Origin</b> header.</span>';
   }finally{if(btn){btn.disabled=false;btn.innerHTML='✨ Auto-generate execution, mistakes &amp; posture (Smart)';}}
+}
+/* shared Smart-generation call (used by the library form and the inline training-row ✨ button) */
+async function exGenFetch(name,meta){
+  let url=(EXGEN_URL||((($('ex-gen-url')||{}).value)||'')).trim();
+  if(!url){try{url=((await DB.getKV('exercise_gen_webhook_url'))||'').trim();EXGEN_URL=url;}catch(e){}}
+  if(!url)throw new Error('no-webhook');
+  const payload={name:name,bodyPart:(meta&&meta.bodyPart)||'',equipment:(meta&&meta.equipment)||'',category:(meta&&meta.category)||'',
+    allowed:{bodyParts:(typeof EX_BODYPARTS!=='undefined'?EX_BODYPARTS:[]),categories:(typeof EX_CATEGORIES!=='undefined'?EX_CATEGORIES:[]),equipment:(typeof EX_EQUIPMENT!=='undefined'?EX_EQUIPMENT:[])}};
+  const res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(payload)});
+  if(!res.ok)throw new Error('HTTP '+res.status);
+  const data=await res.json().catch(()=>{throw new Error('response was not JSON');});
+  const g=exGenExtract(data);
+  if(!(g.howto||g.mistakes||g.cues||g.breathing))throw new Error('no howto / mistakes / cues in the reply');
+  return g;
+}
+/* inline generate from a training-plan row: type a name → ✨ → generate, save to library, link here */
+async function edTrExGen(di,si,xi){
+  if(typeof edTrFlush==='function')edTrFlush();
+  const row=(edTrSecs(di)[si]||{}).exercises&&edTrSecs(di)[si].exercises[xi];if(!row)return;
+  const name=(row.name||'').trim();
+  if(!name){toast('Type the exercise name in the row first',true);return;}
+  try{await loadExLib();}catch(e){}
+  const pickV=(v,l)=>{v=(v||'').trim();if(!v)return (l&&l[0])||'';const m=(l||[]).find(x=>String(x).toLowerCase()===v.toLowerCase());return m||v;};
+  const existing=(EX_LIB||[]).find(e=>(e.name||'').trim().toLowerCase()===name.toLowerCase());
+  if(existing){row.exId=existing.id;row.name=existing.name;edRenderTraining();toast('Linked “'+existing.name+'” from your library');return;}
+  toast('✨ Generating “'+name+'”…');
+  let g;
+  try{ g=await exGenFetch(name,{}); }
+  catch(e){
+    if((e&&e.message)==='no-webhook'){toast('Set the Smart generation webhook first — opening the library so you can add it',true);try{edTrExEditLib(di,si,xi);}catch(_){}return;}
+    toast('Could not generate — '+((e&&e.message)||'error'),true);return;
+  }
+  const ex={id:uid(),name:name,bodyPart:pickV(g.bodyPart,EX_BODYPARTS),category:pickV(g.category,EX_CATEGORIES),equipment:pickV(g.equipment,EX_EQUIPMENT),
+    video:(g.video||'').trim(),videoFile:'',images:(Array.isArray(g.images)?g.images:[]),howto:(g.howto||'').trim(),mistakes:(g.mistakes||'').trim(),cues:(g.cues||'').trim(),breathing:(g.breathing||'').trim()};
+  EX_LIB=EX_LIB||[];EX_LIB.push(ex);
+  try{await DB.saveExercises(EX_LIB);if(typeof refreshExNameList==='function')refreshExNameList();}catch(e){toast('Generated, but could not save to library — '+((e&&e.message)||'error'),true);return;}
+  row.exId=ex.id;row.name=ex.name;
+  edRenderTraining();
+  toast('✨ “'+ex.name+'” generated, saved to your library & linked');
 }
 async function openExLibPick(di,si){await loadExLib();EX_PICK_TARGET={di,si:(si==null?0:si)};$('exlib-modal').classList.add('open');const af=$('exlib-adminform');if(af)af.style.display='';fillExSelects();resetExForm();renderExList();const b=$('ex-pick-banner');b.style.display='';b.textContent='Tap “Add” on an exercise to put it in this section. Click × when done.';}
 function closeExLib(){$('exlib-modal').classList.remove('open');EX_PICK_TARGET=null;EXLIB_LINK=null;if(ADMIN_OK&&typeof edPlan!=='undefined'&&edPlan&&typeof edRenderTraining==='function')edRenderTraining();}
@@ -26715,7 +26754,7 @@ function edRenderTraining(){
           '<td data-l="Tempo"><input value="'+esc(x.tempo||'')+'" oninput="edTrExSet('+di+','+si+','+xi+',\'tempo\',this.value)" style="width:56px"></td>'+
           '<td data-l="Rest (s)"><input value="'+esc(x.rest||'')+'" oninput="edTrExSet('+di+','+si+','+xi+',\'rest\',this.value)" style="width:56px" placeholder="sec"></td>'+
           '<td data-l="Notes" style="text-align:left"><textarea class="tr-exnote" rows="1" oninput="taGrow(this);edTrExSet('+di+','+si+','+xi+',\'notes\',this.value)" placeholder="Notes / cues">'+esc(x.notes||'')+'</textarea></td>'+
-          '<td class="rmcell" style="white-space:nowrap">'+((x.exId&&exById(x.exId)&&exById(x.exId).video)?'<button class="btn-xxs" title="Play tutorial" onclick="openExVideo(\''+x.exId+'\')">▶</button>':'')+'<button class="btn-xxs" title="'+(x.exId&&exById(x.exId)?'Edit this exercise in your library':'Create &amp; save this exercise to your library')+'" onclick="edTrExEditLib('+di+','+si+','+xi+')">'+(x.exId&&exById(x.exId)?'✎ lib':'＋ lib')+'</button><button class="btn-xxs" title="Copy specs from the movement above" onclick="edTrExCopyPrev('+di+','+si+','+xi+')">⤒</button><button class="btn-xxs" title="Duplicate this exercise" onclick="edTrExDup('+di+','+si+','+xi+')">⧉</button><button class="icon-x" style="font-size:18px" onclick="edTrExDel('+di+','+si+','+xi+')">×</button></td></tr>').join('')
+          '<td class="rmcell" style="white-space:nowrap">'+((x.exId&&exById(x.exId)&&exById(x.exId).video)?'<button class="btn-xxs" title="Play tutorial" onclick="openExVideo(\''+x.exId+'\')">▶</button>':'')+((!x.exId&&(x.name||'').trim())?'<button class="btn-xxs" style="color:var(--brand)" title="✨ Generate this exercise (execution, mistakes, cues, media) with Smart automation, save it to your library and link it here" onclick="edTrExGen('+di+','+si+','+xi+')">✨ gen</button>':'')+'<button class="btn-xxs" title="'+(x.exId&&exById(x.exId)?'Edit this exercise in your library':'Create &amp; save this exercise to your library')+'" onclick="edTrExEditLib('+di+','+si+','+xi+')">'+(x.exId&&exById(x.exId)?'✎ lib':'＋ lib')+'</button><button class="btn-xxs" title="Copy specs from the movement above" onclick="edTrExCopyPrev('+di+','+si+','+xi+')">⤒</button><button class="btn-xxs" title="Duplicate this exercise" onclick="edTrExDup('+di+','+si+','+xi+')">⧉</button><button class="icon-x" style="font-size:18px" onclick="edTrExDel('+di+','+si+','+xi+')">×</button></td></tr>').join('')
           ||'<tr><td colspan="10" class="empty" ondragover="trDragOver(event)" ondrop="trExDrop(event,'+di+','+si+',null)">Empty — add an exercise or drag one here.</td></tr>';
         const metaLine=[s.type,s.numEx&&('#'+s.numEx),s.capacity,s.repRange,s.liftTypes].filter(Boolean).map(esc).join(' · ');
         return '<div class="tr-sec" ondragover="trDragOver(event)" ondrop="trSecDrop(event,'+di+','+si+')">'+
