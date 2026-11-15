@@ -7033,7 +7033,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04rj';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04rk';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -9738,7 +9738,7 @@ async function rwApplyPoints(clientId,label,points,catId,cap,silent){
 async function rwAward(clientId,label,points,catId,cap){
   if(!clientId||!Math.round(+points||0)){toast('Enter points to award',true);return;}
   try{const applied=await rwApplyPoints(clientId,label,points,catId,cap,false);
-    if(applied)toast((applied>0?'+':'')+applied+' S2S pts → '+(label||'awarded'));
+    if(applied){toast((applied>0?'+':'')+applied+' S2S pts → '+(label||'awarded'));if(applied>0)try{pushFireEvent('reward',clientId,{});}catch(e){}}
     rwRenderAward();rwDashInvalidate();
   }catch(e){toast('Could not award — '+((e&&e.message)||'error'),true);}
 }
@@ -9754,7 +9754,7 @@ async function rwApproveClaim(clientId,claimId){
     c.status='approved';c.resolvedAt=new Date().toISOString();r.claims=claims;
     await DB.saveMilestones(clientId,raw.milestones);
     if(typeof edClient!=='undefined'&&edClient&&edClient.id===clientId&&typeof edPlan!=='undefined'&&edPlan)edPlan.milestones=raw.milestones;
-    toast('Approved +'+pts+' pts ✓');rwRenderAward();rwDashInvalidate();try{if(typeof renderOverview==='function')renderOverview();}catch(e){}
+    toast('Approved +'+pts+' pts ✓');try{if(pts>0)pushFireEvent('reward',clientId,{});}catch(e){}rwRenderAward();rwDashInvalidate();try{if(typeof renderOverview==='function')renderOverview();}catch(e){}
   }catch(e){toast('Could not approve — '+((e&&e.message)||'error'),true);}
 }
 async function rwDeclineClaim(clientId,claimId){
@@ -27662,6 +27662,20 @@ async function pushNotifyCoachMsg(cid,text,media){
   if(!cid)return;
   var preview=(text&&String(text).trim())?(String(text).length>90?String(text).slice(0,87)+'…':String(text)):'📎 Sent you a photo';
   try{await pushApi('send',{clientIds:[cid],prefKey:'coach',title:'💬 Message from your coach',body:preview,url:'/',tag:'s2s-chat'});}catch(e){}
+}
+
+/* ── EVENT-driven push: fire a catalog notification on an app event (coach/admin context only, so the pushApi('send') auth works) ── */
+function pushFillTokens(s,t){s=String(s||'');t=t||{};s=s.replace(/\{(\w+)\}/g,function(m,k){return (t[k]!=null&&t[k]!=='')?String(t[k]):'';});return s.replace(/\s{2,}/g,' ').replace(/\s+([,.!?;:])/g,'$1').trim();}
+async function pushFireEvent(notifId,cid,tokens){
+  if(!cid||typeof ADMIN_OK==='undefined'||!ADMIN_OK)return;   // event pushes are sent from the coach (admin) session
+  try{
+    await pushCatLoad(false);
+    var e=pushCatEff(notifId);if(!e||!e.on)return;
+    var t=tokens||{};
+    var title=pushFillTokens(e.title,t),bodyt=pushFillTokens(e.body,t);
+    if(!title||!bodyt)return;
+    await pushApi('send',{clientIds:[cid],prefKey:e.pref,title:title,body:bodyt,url:(t.url||'/'),tag:'s2s-'+notifId});
+  }catch(e){}
 }
 
 /* ── ADMIN: Notifications control-center ── */
