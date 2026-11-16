@@ -7038,7 +7038,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04se';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04sf';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -27171,14 +27171,50 @@ function edRenderCardioAdmin(){edPlan.cardio=edPlan.cardio||{};edPlan.cardio.fat
   const d=$('ed-cardio-days');if(d&&document.activeElement!==d)d.value=(fl.days!=null&&fl.days!==0)?fl.days:'';
   const box=$('ed-cardio-fl-box');if(box)box.style.display=fl.enabled?'':'none';
   const prev=$('ed-cardio-preview');if(prev){const wk=+fl.weeklyTarget||0,n=+fl.days||0;if(wk&&n){const r=trCardioPerDay(wk,n);prev.innerHTML='≈ <b>'+Math.round(r.cals)+'</b> kcal &amp; <b>'+Math.round(r.steps).toLocaleString()+'</b> steps per day × '+n+' days';}else prev.textContent='';}
-  try{edRenderCardioClientLog();}catch(e){}
+  try{edRenderCardioPreview();}catch(e){}
 }
-function edRenderCardioClientLog(){const host=$('ed-cardio-clientlog');if(!host)return;const cm=(edPlan.milestones&&edPlan.milestones.cardio)||{};const fl=(cm.fatloss&&cm.fatloss.logs)||[];const perf=(cm.performance&&cm.performance.sessions)||[];
-  const recent=fl.slice().sort((a,b)=>((a.date||'')<(b.date||'')?1:-1)).slice(0,7);
-  let h='<div class="uline" style="margin:0 0 8px">📊 What the client sees — logged cardio</div>';
-  if(!recent.length&&!perf.length){host.innerHTML=h+'<div class="small" style="color:var(--muted)">No cardio logged yet.</div>';return;}
-  if(recent.length)h+='<div class="tbl-scroll" style="margin-bottom:8px"><table class="itbl"><thead><tr><th style="text-align:left">Date</th><th>Steps</th><th>Formal kcal</th><th>Total burn</th></tr></thead><tbody>'+recent.map(l=>{const sk=Math.round((+l.steps||0)/STEPS_PER_KCAL);return '<tr><td style="text-align:left">'+esc(fmtDate(l.date))+'</td><td>'+((+l.steps||0).toLocaleString())+'</td><td>'+(+l.cals||0)+'</td><td>'+(sk+(+l.cals||0))+' kcal</td></tr>';}).join('')+'</tbody></table></div>';
-  if(perf.length)h+='<div class="small" style="color:var(--muted)">📈 '+perf.length+' performance session'+(perf.length===1?'':'s')+' logged.</div>';
+/* calorie targets from THIS client's profile (mirrors the client-side cardioTargets, but off edPlan) */
+function edCardioTargets(){const pr=(edPlan&&edPlan.profile)||{};const w=parseKg(pr.weight),h=parseKg(pr.height),age=Math.round(parseKg(pr.age)),sex=pr.sex||'',bf=parseFloat(pr.bodyFat)||0;const lbm=bf>0?w*(1-bf/100):0;let bmr=0;if(lbm>0)bmr=Math.round(370+21.6*lbm);else if(w&&h&&age)bmr=Math.round(10*w+6.25*h-5*age+(sex==='Female'?-161:5));if(!bmr)return null;const maint=Math.round(bmr*(ACT_MULT[pr.activity]||1.375));return {w:w,bmr:bmr,maint:maint,deficit:Math.round(maint*0.80)};}
+/* Rich preview that mirrors the client's Cardio screen (hero, daily-target maths, days table,
+   calorie targets, streak, 30-day burn chart, logged-cardio table, performance sessions). */
+async function edRenderCardioPreview(){
+  const host=$('ed-cardio-clientlog');if(!host)return;
+  const c=edPlan.cardio||{}, fl=c.fatloss||{}, pf=c.performance||{};
+  const cm=(edPlan.milestones&&edPlan.milestones.cardio)||{};
+  const flLogs=(cm.fatloss&&Array.isArray(cm.fatloss.logs))?cm.fatloss.logs:[];
+  const perfSess=(cm.performance&&Array.isArray(cm.performance.sessions))?cm.performance.sessions:[];
+  const colMap={};try{await cardioLibLoad();}catch(e){}(CARDIO_COLS||[]).forEach(col=>{colMap[col.id]=col;});
+  let h='';
+  if(fl.enabled){
+    const weekly=+fl.weeklyTarget||0, days=Math.max(1,Math.min(7,+fl.days||5));
+    h+='<div class="uline" style="margin:4px 0 8px">🔥 What the client sees — Fat-loss cardio</div>';
+    if(!weekly){h+='<div class="small" style="color:var(--muted);margin-bottom:14px">Set a weekly calorie-burn target above to preview the client’s screen.</div>';}
+    else{
+      const perDay=trCardioPerDay(weekly,days), perDayCals=Math.round(perDay.cals);
+      h+='<div class="cardio-hero" style="margin-bottom:12px"><div><div class="funit">Weekly burn target</div><div class="cardio-big">'+weekly.toLocaleString()+' <small>kcal</small></div></div><div><div class="funit">Split over</div><div class="cardio-big">'+days+' <small>days</small></div></div><div><div class="funit">Each day ≈</div><div class="cardio-big">'+Math.round(perDay.steps).toLocaleString()+' <small>steps</small></div></div></div>';
+      h+='<div class="cardio-calc" style="margin-bottom:12px"><div class="cc-step"><span class="cc-n">1</span>Weekly target<b>'+weekly.toLocaleString()+' <small style="font-size:11px;color:var(--muted)">kcal</small></b></div><div class="cc-op">÷</div><div class="cc-step"><span class="cc-n">2</span>Days / week<b>'+days+'</b></div><div class="cc-op">=</div><div class="cc-step hot">Each cardio day<b>'+perDayCals.toLocaleString()+' <small style="font-size:11px">kcal</small></b><span class="small" style="color:var(--muted)">≈ '+Math.round(perDay.steps).toLocaleString()+' steps</span></div></div>';
+      let rows='';for(let nn=1;nn<=7;nn++){const r=trCardioPerDay(weekly,nn);rows+='<tr'+(nn===days?' style="background:rgba(232,23,13,.12);font-weight:700"':'')+'><td style="text-align:left">'+nn+' day'+(nn>1?'s':'')+(nn===days?' ★':'')+'</td><td class="tnum">'+Math.round(r.cals)+'</td><td class="tnum">'+Math.round(r.steps).toLocaleString()+'</td></tr>';}
+      h+='<div class="tbl-scroll" style="margin-bottom:12px"><table class="itbl"><thead><tr><th style="text-align:left">Days / week</th><th>kcal / day</th><th>Steps / day</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+      const tg=edCardioTargets();
+      if(tg)h+='<div class="macro-grid" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr));margin-bottom:14px"><div class="macro"><div class="k">Maintenance</div><div class="v tnum">'+tg.maint.toLocaleString()+'<small> kcal</small></div></div><div class="macro"><div class="k">Deficit (−20%)</div><div class="v tnum" style="color:var(--good)">'+tg.deficit.toLocaleString()+'<small> kcal</small></div></div><div class="macro"><div class="k">Weekly burn</div><div class="v tnum" style="color:var(--prot)">'+weekly.toLocaleString()+'<small> kcal</small></div></div></div>';
+      else h+='<div class="small" style="color:var(--muted);margin-bottom:14px">Add weight / height / age in Key Details to show the client’s calorie targets.</div>';
+      const streak=cardioStreak(flLogs,perDayCals);
+      const today=todayISO();const pts=[];for(let i=29;i>=0;i--){const d=addDaysISO(today,-i);const l=flLogs.find(x=>x.date===d);pts.push({date:d,value:l?cardioDayBurn(l):0});}
+      h+='<div class="uline" style="margin:4px 0 8px;display:flex;align-items:center">📊 Logged cardio<span class="sp"></span><span class="pill '+(streak>0?'good':'muted')+'">🔥 '+streak+'-day streak</span></div>';
+      h+='<div class="trend" style="margin-bottom:10px">'+(flLogs.length?lineChartSVG([{label:'kcal burned / day',color:'var(--prot)',pts:pts}],{min:0,target:perDayCals}):'<div class="empty">No cardio logged yet.</div>')+'</div>';
+      const recent=flLogs.slice().sort((a,b)=>((a.date||'')<(b.date||'')?1:-1)).slice(0,8);
+      if(recent.length)h+='<div class="tbl-scroll"><table class="itbl"><thead><tr><th style="text-align:left">Date</th><th>Steps</th><th>Formal kcal</th><th>Total</th><th>vs target</th></tr></thead><tbody>'+recent.map(l=>{const sk=cardioStepsKcal(l.steps);const tot=sk+(+l.cals||0);const hit=perDayCals&&tot>=perDayCals;return '<tr><td style="text-align:left">'+esc(fmtDate(l.date))+'</td><td>'+((+l.steps||0).toLocaleString())+'</td><td>'+(+l.cals||0)+'</td><td class="tnum">'+tot.toLocaleString()+'</td><td>'+(perDayCals?('<span class="pill '+(hit?'good':'muted')+'">'+(hit?'✓ hit':Math.round(tot/perDayCals*100)+'%')+'</span>'):'—')+'</td></tr>';}).join('')+'</tbody></table></div>';
+    }
+  }
+  if(pf.enabled){
+    h+='<div class="uline" style="margin:16px 0 8px">📈 What the client sees — Performance cardio</div>';
+    if(perfSess.length){
+      const recent=perfSess.slice().sort((a,b)=>((a.date||'')<(b.date||'')?1:-1)).slice(0,8);
+      h+='<div class="small" style="color:var(--muted);margin-bottom:6px">'+perfSess.length+' session'+(perfSess.length===1?'':'s')+' logged against your cardio library.</div>';
+      h+='<div class="tbl-scroll"><table class="itbl"><thead><tr><th style="text-align:left">Date</th><th style="text-align:left">Exercise</th><th style="text-align:left">Metrics</th></tr></thead><tbody>'+recent.map(s=>{const mets=s.metrics?Object.keys(s.metrics).map(k=>{const col=colMap[k];return (col?col.label:k)+': '+s.metrics[k]+(col&&col.unit?(' '+col.unit):'');}).join(' · '):'';return '<tr><td style="text-align:left">'+esc(fmtDate(s.date))+'</td><td style="text-align:left">'+esc(s.exName||'—')+'</td><td style="text-align:left" class="funit">'+esc(mets)+'</td></tr>';}).join('')+'</tbody></table></div>';
+    } else h+='<div class="small" style="color:var(--muted)">No performance sessions logged yet.</div>';
+  }
+  if(!fl.enabled&&!pf.enabled)h+='<div class="small" style="color:var(--muted)">Enable Fat loss and/or Performance above to plan and preview what the client sees.</div>';
   host.innerHTML=h;
 }
 
