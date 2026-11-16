@@ -2508,6 +2508,44 @@ details.meal-add-choose[open]>summary{background:none;color:var(--muted);box-sha
 .week-sched .sd .d{width:46px;font-family:var(--disp);font-weight:700;text-transform:uppercase;font-size:12px;color:var(--muted);flex:none}
 
 .dt-block{border:1px solid var(--line-strong);border-radius:12px;padding:12px;margin-bottom:14px;background:var(--card)}
+/* redesigned diet-plan creation — day-type tabs + target card + cleaner meals */
+.dpt-tabs{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.dpt-tab{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--card);border-radius:999px;padding:8px 15px;font-size:13.5px;font-weight:700;cursor:pointer;color:var(--muted);font-family:var(--disp)}
+.dpt-tab.on{border-color:var(--red);color:var(--text);box-shadow:0 0 0 1px var(--red)}
+.dpt-dot{width:10px;height:10px;border-radius:50%;flex:none}
+.dpt-add{border:1px dashed var(--border);background:transparent;border-radius:999px;padding:8px 13px;font-size:13px;color:var(--muted);cursor:pointer;font-weight:700}
+.dpt-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.dpt-name{flex:1;min-width:140px;max-width:260px;font-family:var(--disp);font-weight:800;font-size:16px;padding:8px 11px}
+.dpt-color{max-width:130px;width:auto}
+.dpt-tgt{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:15px 16px;margin-bottom:16px}
+.dpt-tgt-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:13px}
+.dpt-tgt-title{font-family:var(--disp);font-weight:800;font-size:15px}
+.dpt-tgt-btns{display:flex;gap:8px;flex-wrap:wrap}
+.dpt-mts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.dpt-mt{border:1px solid var(--border);border-radius:12px;padding:10px 11px}
+.dpt-mt-h{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+.dpt-mt-pct{color:var(--text)}
+.dpt-mt-row{display:flex;align-items:baseline;gap:4px;margin:4px 0 7px}
+.dpt-mt-row input{width:100%;min-width:0;font-family:var(--disp);font-weight:800;font-size:19px;padding:3px 6px;border:1px solid transparent;background:transparent;border-radius:7px}
+.dpt-mt-row input:focus{border-color:var(--border);background:var(--card2)}
+.dpt-mt-row small{font-size:11px;color:var(--muted);font-weight:700}
+.dpt-bar{height:6px;border-radius:999px;background:var(--border);overflow:hidden}
+.dpt-bar>i{display:block;height:100%;border-radius:999px;transition:width .2s}
+.dpt-mt.p .dpt-mt-row input{color:var(--prot)}.dpt-mt.p .dpt-bar>i{background:var(--prot)}
+.dpt-mt.c .dpt-mt-row input{color:var(--carb)}.dpt-mt.c .dpt-bar>i{background:var(--carb)}
+.dpt-mt.f .dpt-mt-row input{color:var(--fat)}.dpt-mt.f .dpt-bar>i{background:var(--fat)}
+.dpt-mt.k .dpt-mt-row input{color:var(--text)}.dpt-mt.k .dpt-bar>i{background:var(--text)}
+.dpt-mt-sub{font-size:10.5px;color:var(--muted);margin-top:5px;font-weight:600}
+.dpt-cover{font-size:12.5px;color:var(--muted);margin-top:12px;line-height:1.5}
+.dpt-cover b{color:var(--text)}
+.dpt-pill{font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;margin-left:4px;white-space:nowrap}
+.dpt-pill.warn{background:rgba(245,166,35,.16);color:var(--carb)}
+.dpt-pill.over{background:rgba(255,107,94,.16);color:var(--fat)}
+.dpt-pill.ok{background:rgba(21,163,74,.14);color:var(--good)}
+.meal-extra{margin:8px 0 0;border-top:1px dashed var(--border);padding-top:8px}
+.meal-extra>summary{cursor:pointer;font-size:12px;font-weight:700;color:var(--muted);list-style:revert}
+.dpt-addmeal{width:100%;margin-top:4px}
+@media(max-width:560px){.dpt-mts{grid-template-columns:repeat(2,1fr)}}
 /* workout sections (training editor) */
 .tr-sec{border:1px solid var(--border);border-radius:10px;padding:10px;margin:8px 0;background:var(--card2)}
 .tr-sec-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
@@ -7061,7 +7099,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04si';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04sj';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -26128,61 +26166,103 @@ function edRefreshAlloc(i){
   const ac=$('dt-alloc-'+i);if(ac)ac.innerHTML=dtAllocHTML(dt);
   const {pool}=dtAllocPool(dt);
   (dt.meals||[]).forEach((m,mi)=>{if(m.flex){const el=$('dt-flexpool-'+i+'-'+mi);if(el)el.textContent=pool.p+'P · '+fmtMac(pool.c)+'C · '+fmtMac(pool.f)+'F · '+lcNum(pool.cal)+' kcal left';}});
+  try{edDtTargetSync(i);}catch(e){}   // keep the redesigned target card's %/bars/coverage in sync
 }
-function edRenderDayTypes(){
-  $('ed-daytypes').innerHTML=edPlan.dayTypes.map((dt,i)=>{
-    const t=dt.target||{},cal=dtCal(dt);
-    const colorOpts=DT_COLORS.map((c,ci)=>'<option value="'+c+'"'+(c===dt.color?' selected':'')+'>'+(DT_COLOR_NAMES[ci]||c)+'</option>').join('');
-    const pool=dtAllocPool(dt).pool;
-    const allocHTML=dt.flexMode?'<div class="alloc"><div class="small" style="color:var(--muted);padding:4px 2px">🔀 Flexible dieting — daily macro targets only. Per-meal allocation is hidden.</div></div>':'<div id="dt-alloc-'+i+'">'+dtAllocHTML(dt)+'</div>';
-    const dayTot=dtMealsTotal(dt);
-    const meals=(dt.meals||[]).map((m,mi)=>{const tot=sumItems(m.items);
-      const rowHTML=(it,ii)=>{const mm=itemMacros(it);
-        return '<tr><td class="fname" data-l="Food">'+esc(it.name)+'</td>'+
-          '<td class="qtycell" data-l="Qty"><input type="number" min="0" step="0.25" value="'+it.qty+'" class="qtyinp" style="width:62px;padding:5px 7px;text-align:right" onchange="edItemQty('+i+','+mi+','+ii+',this.value)"></td>'+
-          '<td class="ucell" style="text-align:left" data-l="Unit">'+uUnitSelectHTML(it,'edItemUnit('+i+','+mi+','+ii+',this.value)','max-width:96px;min-width:66px')+'</td>'+
-          '<td class="mm p" data-l="Protein">'+round(mm.p)+'</td><td class="mm c" data-l="Carbs">'+round(mm.c)+'</td><td class="mm f" data-l="Fat">'+round(mm.f)+'</td><td class="tnum" data-l="Calories">'+round(mm.cal)+'</td>'+
-          '<td class="rmcell"><button class="icon-x" style="font-size:18px;padding:0 4px" onclick="edItemRm('+i+','+mi+','+ii+')">×</button></td></tr>'+
-          '<tr class="itemnote-row"><td colspan="8" style="padding:0 6px 7px"><input value="'+esc(it.note||'')+'" placeholder="📝 Note for this food — optional, the client sees it" style="width:100%;padding:5px 9px;font-size:12px" onchange="edItemSet('+i+','+mi+','+ii+',\'note\',this.value)"></td></tr>';};
-      const foodRows=(m.items||[]).map((it,ii)=>it.prep?'':rowHTML(it,ii)).join('')||'<tr><td colspan="8" class="empty" style="padding:10px">No items</td></tr>';
-      const prepRows=(m.items||[]).map((it,ii)=>it.prep?rowHTML(it,ii):'').join('');
-      return '<div class="meal'+(m.flex?' flex-meal':'')+'" ondragover="edReorderOver(event)" ondrop="edReorderDrop(event,\'meal\','+i+','+mi+')"><div class="meal-head">'+
-        '<span class="drag-h" draggable="true" ondragstart="edReorderStart(event,\'meal\','+i+','+mi+')" title="Drag to reorder this meal">⠿</span>'+
-        '<input value="'+esc(m.name||'')+'" placeholder="Meal name" style="max-width:150px;padding:6px 9px;font-family:var(--disp);font-weight:800" onchange="edMealSet('+i+','+mi+',\'name\',this.value)">'+
-        '<input value="'+esc(m.time||'')+'" placeholder="Time" style="max-width:90px;padding:6px 9px" onchange="edMealSet('+i+','+mi+',\'time\',this.value)">'+
-        '<label class="flex-toggle" title="Client fills this meal freely from their remaining daily macros"><input type="checkbox"'+(m.flex?' checked':'')+' onchange="edMealSet('+i+','+mi+',\'flex\',this.checked);edRenderDayTypes()"> Flexible</label>'+
-        '<span class="mtot">'+round(tot.p)+'P · '+round(tot.c)+'C · '+round(tot.f)+'F · '+round(tot.cal)+'k</span>'+
-        '<button class="btn-sm btn-danger" onclick="edMealRm('+i+','+mi+')">Remove</button></div>'+
-        '<div class="field" style="margin:6px 0 0"><label class="lab">📝 Coach note for this meal <span class="small" style="text-transform:none;font-weight:400">(clients see it under the meal)</span></label><input value="'+esc(m.note||'')+'" placeholder="e.g. Have this within 2 hours of training" onchange="edMealSet('+i+','+mi+',\'note\',this.value)"></div>'+
-        (dayTot.cal>0?'<div style="padding:3px 2px 0">'+mealPctChips(tot,dayTot)+'</div>':'')+
-        (m.flex?'<div style="background:rgba(74,158,232,.12);border:1px solid rgba(74,158,232,.4);border-radius:10px;padding:8px 12px;margin:8px 0 0"><span class="lab" style="color:var(--prot)">Remaining flexible pool</span><div style="font-family:var(--disp);font-weight:800;font-size:16px;color:var(--prot)" id="dt-flexpool-'+i+'-'+mi+'">'+fmtMac(pool.p)+'P · '+fmtMac(pool.c)+'C · '+fmtMac(pool.f)+'F · '+lcNum(pool.cal)+' kcal left</div></div>'+
-          '<div class="field" style="margin:8px 0 0"><label class="lab">Flexible-meal instruction (shown to the client)</label><input value="'+esc(m.flexNote||'')+'" placeholder="e.g. Eat out or cook freely — just stay within the macros left" onchange="edMealSet('+i+','+mi+',\'flexNote\',this.value)"></div><p class="small" style="margin:6px 0 0">The client sees this remaining pool (day target − the fixed meals) and logs what they eat in Log &amp; Compliance. Any foods you add below are optional suggestions and are <b>not</b> counted.</p>':'')+
-        '<div class="meal-prep"><div class="mp-h">🧂 Prep ingredients — oil, curry, condiments (counted in the totals)</div>'+
+let ED_DT_TAB=0;
+function edDtTab(i){ED_DT_TAB=i;edRenderDayTypes();}
+/* set this day type's target from the client's profile + CURRENT TRAINING PHASE (deficit/surplus-aware) */
+function edTargetFromProfile(i){const dt=edPlan.dayTypes[i];if(!dt)return;
+  const m=(typeof macroFromProfile==='function')?macroFromProfile(edPlan.profile||{},'phase',null,edPlan.phase):null;
+  if(!m){toast('Add weight, height & age in Key Details first',true);return;}
+  dt.target={p:m.p,c:m.c,f:m.f,cal:m.cal};dt.calManual=false;edRenderDayTypes();
+  const ph=(edPlan.phase||'').trim();const dir=(typeof phaseDirLabel==='function')?phaseDirLabel(ph,(edPlan.profile&&edPlan.profile.goal)||''):'';
+  toast('Target set from profile'+(dir?(' · '+dir):'')+' → '+m.cal+' kcal');}
+/* plain-English "meals vs target" coverage line under the target card */
+function edDtCoverText(dt){const al=dtMealsTotal(dt);const tgt=dtCal(dt)||0;if(!tgt)return 'Set a calorie target above, or press <b>Σ Set from meals</b>.';
+  const diff=Math.round(tgt)-Math.round(al.cal);
+  if(Math.abs(diff)<=20)return 'Your meals match the target — <b>'+lcNum(al.cal)+' kcal</b> allocated. <span class="dpt-pill ok">balanced</span>';
+  if(diff>0)return 'Your meals add up to <b>'+lcNum(al.cal)+' kcal</b> of the <b>'+lcNum(tgt)+'</b> target<span class="dpt-pill warn">'+lcNum(diff)+' kcal to allocate</span>';
+  return 'Your meals are <b>'+lcNum(-diff)+' kcal over</b> the <b>'+lcNum(tgt)+'</b> target<span class="dpt-pill over">trim a meal</span>';}
+/* live-sync the target card's % + bars + coverage while the coach edits the target (no full re-render → keeps input focus) */
+function edDtTargetSync(i){const dt=edPlan.dayTypes[i];if(!dt)return;const al=dtMealsTotal(dt);
+  const gv=id=>{const el=$(id);return el?(+el.value||0):0;};
+  const tp=gv('dt-tp-'+i),tc=gv('dt-tc-'+i),tf=gv('dt-tf-'+i);const tk=gv('dt-tk-'+i)||calOf({p:tp,c:tc,f:tf});
+  const set=(key,tv,av)=>{const pct=tv>0?Math.min(100,Math.round(av/tv*100)):0;const ps=$('dt-pct-'+key+'-'+i);if(ps)ps.textContent=tv>0?pct+'%':'—';const bf=$('dt-bf-'+key+'-'+i);if(bf)bf.style.width=pct+'%';};
+  set('p',tp,al.p);set('c',tc,al.c);set('f',tf,al.f);set('k',tk,al.cal);
+  const cov=$('dt-cover-'+i);if(cov)cov.innerHTML=edDtCoverText(dt);}
+function edDtTargetCardHTML(dt,i){
+  const t=dt.target||{},cal=dtCal(dt),al=dtMealsTotal(dt);
+  const tile=(lbl,key,inpId,unit,av,cls,onin,auto)=>{const tv=(key==='k'?(t.cal||cal||0):(t[key]||0));const pct=tv>0?Math.min(100,Math.round(av/tv*100)):0;
+    return '<div class="dpt-mt '+cls+'"><div class="dpt-mt-h"><span>'+lbl+'</span><span class="dpt-mt-pct" id="dt-pct-'+key+'-'+i+'">'+(tv>0?pct+'%':'—')+'</span></div>'+
+      '<div class="dpt-mt-row"><input type="number" min="0" value="'+(tv||'')+'" id="'+inpId+'"'+(auto?(' data-auto="'+(dt.calManual?'no':'yes')+'"'):'')+' oninput="'+onin+'"><small>'+unit+'</small></div>'+
+      '<div class="dpt-bar"><i id="dt-bf-'+key+'-'+i+'" style="width:'+pct+'%"></i></div>'+
+      '<div class="dpt-mt-sub">'+fmtMac(av)+' from meals</div></div>';};
+  return '<div class="dpt-tgt">'+
+    '<div class="dpt-tgt-head"><div class="dpt-tgt-title">🎯 Daily target</div>'+
+      '<div class="dpt-tgt-btns"><button class="btn-sm" onclick="edTargetFromProfile('+i+')" title="Set macros from this client\'s profile + current training phase (deficit / surplus)">⚡ Calculate from profile</button><button class="btn-sm" onclick="edAutoTarget('+i+')" title="Set the target to the sum of the meals below">Σ Set from meals</button></div></div>'+
+    '<div class="dpt-mts">'+
+      tile('Protein','p','dt-tp-'+i,'g',al.p,'p','edTarget('+i+')',false)+
+      tile('Carbs','c','dt-tc-'+i,'g',al.c,'c','edTarget('+i+')',false)+
+      tile('Fat','f','dt-tf-'+i,'g',al.f,'f','edTarget('+i+')',false)+
+      tile('Calories','k','dt-tk-'+i,'kcal',al.cal,'k','edCalManual('+i+')',true)+
+    '</div>'+
+    (dt.flexMode?'':'<div class="dpt-cover" id="dt-cover-'+i+'">'+edDtCoverText(dt)+'</div>')+
+    (dt.flexMode?'<div class="small" style="color:var(--muted);margin-top:10px">🔀 Flexible dieting — the client just hits these daily totals; per-meal allocation is hidden.</div>':'')+
+  '</div>';
+}
+function edDtMealHTML(dt,i,m,mi){
+  const tot=sumItems(m.items),dayTot=dtMealsTotal(dt),pool=dtAllocPool(dt).pool;
+  const rowHTML=(it,ii)=>{const mm=itemMacros(it);
+    return '<tr><td class="fname" data-l="Food">'+esc(it.name)+'</td>'+
+      '<td class="qtycell" data-l="Qty"><input type="number" min="0" step="0.25" value="'+it.qty+'" class="qtyinp" style="width:62px;padding:5px 7px;text-align:right" onchange="edItemQty('+i+','+mi+','+ii+',this.value)"></td>'+
+      '<td class="ucell" style="text-align:left" data-l="Unit">'+uUnitSelectHTML(it,'edItemUnit('+i+','+mi+','+ii+',this.value)','max-width:96px;min-width:66px')+'</td>'+
+      '<td class="mm p" data-l="Protein">'+round(mm.p)+'</td><td class="mm c" data-l="Carbs">'+round(mm.c)+'</td><td class="mm f" data-l="Fat">'+round(mm.f)+'</td><td class="tnum" data-l="Calories">'+round(mm.cal)+'</td>'+
+      '<td class="rmcell"><button class="icon-x" style="font-size:18px;padding:0 4px" onclick="edItemRm('+i+','+mi+','+ii+')">×</button></td></tr>'+
+      '<tr class="itemnote-row"><td colspan="8" style="padding:0 6px 7px"><input value="'+esc(it.note||'')+'" placeholder="📝 Note for this food — optional, the client sees it" style="width:100%;padding:5px 9px;font-size:12px" onchange="edItemSet('+i+','+mi+','+ii+',\'note\',this.value)"></td></tr>';};
+  const foodRows=(m.items||[]).map((it,ii)=>it.prep?'':rowHTML(it,ii)).join('')||'<tr><td colspan="8" class="empty" style="padding:10px">No items</td></tr>';
+  const prepRows=(m.items||[]).map((it,ii)=>it.prep?rowHTML(it,ii):'').join('');
+  return '<div class="meal'+(m.flex?' flex-meal':'')+'" ondragover="edReorderOver(event)" ondrop="edReorderDrop(event,\'meal\','+i+','+mi+')"><div class="meal-head">'+
+    '<span class="drag-h" draggable="true" ondragstart="edReorderStart(event,\'meal\','+i+','+mi+')" title="Drag to reorder this meal">⠿</span>'+
+    '<input value="'+esc(m.name||'')+'" placeholder="Meal name" style="max-width:150px;padding:6px 9px;font-family:var(--disp);font-weight:800" onchange="edMealSet('+i+','+mi+',\'name\',this.value)">'+
+    '<input value="'+esc(m.time||'')+'" placeholder="Time" style="max-width:90px;padding:6px 9px" onchange="edMealSet('+i+','+mi+',\'time\',this.value)">'+
+    '<label class="flex-toggle" title="Client fills this meal freely from their remaining daily macros"><input type="checkbox"'+(m.flex?' checked':'')+' onchange="edMealSet('+i+','+mi+',\'flex\',this.checked);edRenderDayTypes()"> Flexible</label>'+
+    '<span class="mtot">'+round(tot.p)+'P · '+round(tot.c)+'C · '+round(tot.f)+'F · '+round(tot.cal)+'k</span>'+
+    '<span style="flex:1"></span>'+
+    '<button class="icon-x" title="Remove this meal" style="font-size:18px" onclick="edMealRm('+i+','+mi+')">×</button></div>'+
+    '<div style="padding:10px 12px 12px">'+
+      (dayTot.cal>0?'<div style="margin-bottom:7px">'+mealPctChips(tot,dayTot)+'</div>':'')+
+      (m.flex?'<div style="background:rgba(74,158,232,.12);border:1px solid rgba(74,158,232,.4);border-radius:10px;padding:8px 12px;margin:0 0 8px"><span class="lab" style="color:var(--prot)">Remaining flexible pool</span><div style="font-family:var(--disp);font-weight:800;font-size:16px;color:var(--prot)" id="dt-flexpool-'+i+'-'+mi+'">'+fmtMac(pool.p)+'P · '+fmtMac(pool.c)+'C · '+fmtMac(pool.f)+'F · '+lcNum(pool.cal)+' kcal left</div>'+
+        '<input value="'+esc(m.flexNote||'')+'" placeholder="Instruction, e.g. Eat out or cook freely — just stay within the macros left" style="width:100%;margin-top:8px;padding:6px 9px;font-size:12px" onchange="edMealSet('+i+','+mi+',\'flexNote\',this.value)"><p class="small" style="margin:6px 0 0">The client sees this pool and logs what they eat. Foods added below are optional suggestions and are <b>not</b> counted.</p></div>':'')+
+      '<div class="tbl-scroll"><table class="itbl"><thead><tr><th>Food'+(m.flex?' (suggestions)':'')+'</th><th>Qty</th><th style="text-align:left">Unit</th><th>P</th><th>C</th><th>F</th><th>kcal</th><th></th></tr></thead><tbody>'+foodRows+'</tbody></table></div>'+
+      '<div class="logadd"><div class="ac" style="flex:1;min-width:180px"><input id="edadd-'+i+'-'+mi+'" type="text" placeholder="🔍 Add ingredient…" oninput="edAc('+i+','+mi+')" onfocus="edAc('+i+','+mi+')" autocomplete="off"><div class="ac-menu" id="edac-'+i+'-'+mi+'"></div></div></div>'+
+      '<details class="meal-extra"'+((m.note||prepRows)?' open':'')+'><summary>🧂 Prep ingredients &amp; coach note</summary>'+
+        '<div class="field" style="margin:9px 0 0"><label class="lab">📝 Coach note for this meal <span class="small" style="text-transform:none;font-weight:400">(clients see it under the meal)</span></label><input value="'+esc(m.note||'')+'" placeholder="e.g. Have this within 2 hours of training" onchange="edMealSet('+i+','+mi+',\'note\',this.value)"></div>'+
+        '<div class="meal-prep" style="margin-top:9px"><div class="mp-h">🧂 Prep ingredients — oil, curry, condiments (counted in the totals)</div>'+
           '<div class="tbl-scroll"><table class="itbl"><thead><tr><th>Prep item</th><th>Qty</th><th style="text-align:left">Unit</th><th>P</th><th>C</th><th>F</th><th>kcal</th><th></th></tr></thead><tbody>'+(prepRows||'<tr><td colspan="8" class="empty" style="padding:8px">No prep ingredients</td></tr>')+'</tbody></table></div>'+
           '<div class="logadd"><div class="ac" style="flex:1;min-width:180px"><input id="edprepadd-'+i+'-'+mi+'" type="text" placeholder="🔍 Add prep ingredient…" oninput="edAc('+i+','+mi+',true)" onfocus="edAc('+i+','+mi+',true)" autocomplete="off"><div class="ac-menu" id="edprepac-'+i+'-'+mi+'"></div></div></div></div>'+
-        '<div class="tbl-scroll"><table class="itbl"><thead><tr><th>Food'+(m.flex?' (suggestions)':'')+'</th><th>Qty</th><th style="text-align:left">Unit</th><th>P</th><th>C</th><th>F</th><th>kcal</th><th></th></tr></thead><tbody>'+foodRows+'</tbody></table></div>'+
-        '<div class="logadd"><div class="ac" style="flex:1;min-width:180px"><input id="edadd-'+i+'-'+mi+'" type="text" placeholder="🔍 Add ingredient…" oninput="edAc('+i+','+mi+')" onfocus="edAc('+i+','+mi+')" autocomplete="off"><div class="ac-menu" id="edac-'+i+'-'+mi+'"></div></div></div></div>';}).join('');
-    return '<div class="dt-block" '+dropAttrs('dt','D',i)+'><div class="dt-top">'+
-      dragHandle('dt','D',i)+
-      '<span class="dt-swatch" style="background:'+dt.color+'"></span>'+
-      '<input value="'+esc(dt.name||'')+'" placeholder="Day type name" style="max-width:180px;font-family:var(--disp);font-weight:800" onchange="edDtSet('+i+',\'name\',this.value)">'+
-      '<select style="max-width:120px;width:auto" onchange="edDtSet('+i+',\'color\',this.value)">'+colorOpts+'</select>'+
-      '<label class="flex-toggle" style="margin-left:8px" title="Flexible dieting: daily macro targets only — hides the per-meal allocation panel"><input type="checkbox"'+(dt.flexMode?' checked':'')+' onchange="edDtSet('+i+',\'flexMode\',this.checked)"> Flexible dieting</label>'+
-      '<div style="flex:1"></div>'+
-      (edPlan.dayTypes.length>1?'<button class="btn-sm btn-danger" onclick="edRmDayType('+i+')">Delete day type</button>':'')+'</div>'+
-      '<div class="dt-cols">'+
-        '<div class="dt-main">'+meals+'<button class="btn-sm solid" onclick="edMealAdd('+i+')">＋ Add meal</button></div>'+
-        '<aside class="dt-side"><div class="dt-side-inner">'+
-          '<div class="uline" style="margin:0 0 10px">Target vs allocated</div>'+
-          '<div class="field" style="margin:0 0 8px"><label class="lab">Protein (g)</label><input type="number" min="0" value="'+(t.p||'')+'" oninput="edTarget('+i+')" id="dt-tp-'+i+'"></div>'+
-          '<div class="field" style="margin:0 0 8px"><label class="lab">Carbs (g)</label><input type="number" min="0" value="'+(t.c||'')+'" oninput="edTarget('+i+')" id="dt-tc-'+i+'"></div>'+
-          '<div class="field" style="margin:0 0 8px"><label class="lab">Fat (g)</label><input type="number" min="0" value="'+(t.f||'')+'" oninput="edTarget('+i+')" id="dt-tf-'+i+'"></div>'+
-          '<div class="field" style="margin:0 0 10px"><label class="lab">Calories <span class="small" style="text-transform:none;font-weight:400">— auto from macros; type to override</span></label><input type="number" min="0" value="'+(t.cal||cal||'')+'" id="dt-tk-'+i+'" data-auto="'+(dt.calManual?'no':'yes')+'" oninput="edCalManual('+i+')"></div>'+
-          '<button class="btn-sm" style="width:100%;margin-bottom:10px" onclick="edAutoTarget('+i+')" title="Sum meals into target">Target from meals</button>'+
-          allocHTML+
-        '</div></aside>'+
-      '</div></div>';
-  }).join('');
+      '</details>'+
+    '</div></div>';
+}
+function edRenderDayTypes(){
+  const host=$('ed-daytypes');if(!host)return;
+  const dts=edPlan.dayTypes||[];
+  if(ED_DT_TAB>=dts.length)ED_DT_TAB=Math.max(0,dts.length-1);
+  let h='<div class="dpt-tabs">'+dts.map((dt,i)=>'<button class="dpt-tab'+(i===ED_DT_TAB?' on':'')+'" onclick="edDtTab('+i+')"><span class="dpt-dot" style="background:'+dt.color+'"></span>'+esc(dt.name||('Day '+(i+1)))+'</button>').join('')+'<button class="dpt-add" onclick="edAddDayType()">＋ day type</button></div>';
+  const dt=dts[ED_DT_TAB];
+  if(!dt){host.innerHTML=h+'<div class="empty" style="padding:24px">Add a day type to start building the plan.</div>';return;}
+  const i=ED_DT_TAB;
+  const colorOpts=DT_COLORS.map((c,ci)=>'<option value="'+c+'"'+(c===dt.color?' selected':'')+'>'+(DT_COLOR_NAMES[ci]||c)+'</option>').join('');
+  h+='<div class="dpt-head">'+
+    '<input class="dpt-name" value="'+esc(dt.name||'')+'" placeholder="Day type name" onchange="edDtSet('+i+',\'name\',this.value)">'+
+    '<select class="dpt-color" onchange="edDtSet('+i+',\'color\',this.value)">'+colorOpts+'</select>'+
+    '<label class="flex-toggle" title="Flexible dieting: daily macro targets only — hides the per-meal allocation"><input type="checkbox"'+(dt.flexMode?' checked':'')+' onchange="edDtSet('+i+',\'flexMode\',this.checked)"> Flexible dieting</label>'+
+    '<span style="flex:1"></span>'+
+    (dts.length>1?'<button class="btn-sm btn-danger" onclick="edRmDayType('+i+')">Delete day type</button>':'')+'</div>';
+  h+=edDtTargetCardHTML(dt,i);
+  h+='<div class="uline" style="margin:0 0 10px">🍽 Meals</div>';
+  h+=(dt.meals||[]).map((m,mi)=>edDtMealHTML(dt,i,m,mi)).join('');
+  h+='<button class="btn-sm solid dpt-addmeal" onclick="edMealAdd('+i+')">＋ Add meal</button>';
+  host.innerHTML=h;
 }
 function edDtSet(i,key,v){edPlan.dayTypes[i][key]=v;if(key==='name'||key==='color'){edRenderDayTypes();edRenderSchedule();}else if(key==='flexMode'){edRenderDayTypes();}}
 function edTarget(i){const dt=edPlan.dayTypes[i];dt.target={p:+$('dt-tp-'+i).value||0,c:+$('dt-tc-'+i).value||0,f:+$('dt-tf-'+i).value||0};const auto=calOf(dt.target);const k=$('dt-tk-'+i);if(!k.value||k.dataset.auto!=='no')k.value=auto;dt.target.cal=+k.value||auto;edRefreshAlloc(i);}
@@ -26371,7 +26451,7 @@ function edAc(i,mi,prep){
   menu.classList.add('open');
 }
 function edItemAdd(i,mi,idx,prep){const f=INGREDIENTS[idx];if(!f)return;const pref=adminDiet();if(pref&&!dietAllows(pref,f))toast('⚠ '+f.name+' is not '+pref+' — added anyway',true);edPlan.dayTypes[i].meals[mi].items=edPlan.dayTypes[i].meals[mi].items||[];edPlan.dayTypes[i].meals[mi].items.push({name:f.name,units:f.units,qty:1,p:f.p,carb:f.carb,f:f.f,cal:f.cal,cat:f.cat,prep:!!prep});edRenderDayTypes();}
-function edAddDayType(){const c=DT_COLORS[edPlan.dayTypes.length%DT_COLORS.length];edPlan.dayTypes.push({id:uid(),name:'Day type '+(edPlan.dayTypes.length+1),color:c,target:{p:0,c:0,f:0,cal:0},meals:[]});edRenderDayTypes();edRenderSchedule();}
+function edAddDayType(){const c=DT_COLORS[edPlan.dayTypes.length%DT_COLORS.length];edPlan.dayTypes.push({id:uid(),name:'Day type '+(edPlan.dayTypes.length+1),color:c,target:{p:0,c:0,f:0,cal:0},meals:[]});ED_DT_TAB=edPlan.dayTypes.length-1;edRenderDayTypes();edRenderSchedule();}
 function edRmDayType(i){if(edPlan.dayTypes.length<=1){toast('Keep at least one day type',true);return;}const removed=edPlan.dayTypes[i].id;edPlan.dayTypes.splice(i,1);for(let d=0;d<7;d++){if(edPlan.schedule[d]===removed)edPlan.schedule[d]=edPlan.dayTypes[0].id;}edRenderDayTypes();edRenderSchedule();}
 
 function edRenderSchedule(){
