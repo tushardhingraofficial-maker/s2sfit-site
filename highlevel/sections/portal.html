@@ -2402,6 +2402,12 @@ body.as-open{overflow:hidden}
 .log-tools>summary{list-style:none;cursor:pointer;padding:11px 14px;font-weight:800;font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
 .log-tools>summary::-webkit-details-marker{display:none}
 .log-tools-body{display:flex;flex-direction:column;gap:7px;padding:0 12px 12px}
+/* visible meal-tools row under the meal list */
+.logtools-row{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 4px}
+.logtools-row .ltbtn{flex:1 1 44%;min-width:0;border:1px solid var(--border);background:var(--card);border-radius:11px;padding:12px 10px;font-size:13px;font-weight:700;color:var(--text);cursor:pointer;transition:border-color .12s,background .12s}
+.logtools-row .ltbtn:hover{border-color:var(--prot);background:var(--card2)}
+.logtools-row .ltbtn.danger{color:var(--red);border-color:color-mix(in srgb,var(--red) 35%,var(--border))}
+.logtools-row .ltbtn.danger:hover{border-color:var(--red);background:color-mix(in srgb,var(--red) 8%,transparent)}
 .meal-head .mrow-ring{flex:none}
 .meal-head .mrow-kc{margin-left:auto;text-align:right;line-height:1.1}
 .meal-head .mrow-kc b{font-family:var(--disp);font-weight:900;font-size:16px;line-height:1}
@@ -4971,15 +4977,16 @@ img,svg,canvas,video{max-width:100%}
               </div>
             </div>
           </div>
-          <details class="log-tools"><summary>⋯ More options</summary><div class="log-tools-body">
-            <button class="btn-sm" style="border-color:var(--prot);color:var(--prot)" onclick="foodPlanOpen()">🔮 Plan a meal — decide before you eat</button>
-            <button class="btn-sm solid" onclick="prefillFromPlan()">➕ Add planned meals</button>
-            <button class="btn-sm" style="border-color:var(--good);color:var(--good)" onclick="openMealTemplates()">📋 My saved meals</button>
-            <button class="btn-sm" style="border-color:var(--prot);color:var(--prot)" onclick="copyYesterday()">🗓 Copy yesterday</button>
-            <button class="btn-sm" style="border-style:dashed;border-color:var(--prot);color:var(--prot)" onclick="openIngredientReq()">🔎 Can't find a food? Find &amp; add it</button>
-            <button class="btn-sm btn-danger" onclick="clearDayLog()">🗑 Clear day</button>
-          </div></details>
           <div id="log-sections"></div>
+          <!-- meal tools (visible row, under the meals) -->
+          <div class="logtools-row">
+            <button class="ltbtn" onclick="foodPlanOpen()">🔮 Plan a meal</button>
+            <button class="ltbtn" onclick="prefillFromPlan()">➕ Add planned meals</button>
+            <button class="ltbtn" onclick="openMealTemplates()">📋 Saved meals</button>
+            <button class="ltbtn" onclick="copyYesterday()">🗓 Copy yesterday</button>
+            <button class="ltbtn" onclick="openIngredientReq()">🔎 Find a food</button>
+            <button class="ltbtn danger" onclick="clearDayLog()">🗑 Clear day</button>
+          </div>
           <div id="day-journal"></div>
           <div id="log-comments" class="log-cmts"></div>
         </div></div>
@@ -7220,7 +7227,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04sw';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04sx';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
