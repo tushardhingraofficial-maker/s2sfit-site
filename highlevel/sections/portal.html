@@ -4042,6 +4042,14 @@ tr.tr-gr td:first-child{border-left:3px solid var(--red)}
 .wko-rev-brand{font-size:11px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1px 7px;color:var(--muted);margin-left:4px}
 .wko-rev-sets{font-size:12px;color:var(--muted);white-space:nowrap;flex:none}
 .wk-perf-brand{background:rgba(232,23,13,.14);color:var(--red);border-radius:10px;padding:0 7px;font-size:10.5px}
+/* live in-workout stats strip (updates as the client types reps/weight) */
+.wko-live{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 8px}
+.wkl-tile{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:9px 8px 8px;text-align:center;min-width:0}
+.wkl-k{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-family:var(--disp)}
+.wkl-v{font-family:var(--disp);font-weight:900;font-size:22px;line-height:1.02;margin:2px 0 3px}
+.wkl-v small{font-size:11px;font-weight:700;color:var(--muted)}
+.wkl-d{font-size:10px;font-weight:800;color:var(--muted);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wkl-d.up{color:var(--good,#22c55e)}.wkl-d.down{color:var(--red)}.wkl-d.pr{color:var(--gold,#f5c842)}
 .wk-perf{margin-top:12px;border-top:1px dashed var(--border);padding-top:8px}
 .wk-perf-top{font-family:var(--disp);font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin-bottom:6px}
 .wk-perf-empty{font-size:12.5px;color:var(--muted)}
@@ -7038,7 +7046,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04sf';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04sg';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -12342,6 +12350,32 @@ function wkoStopClock(){if(WKO_CLOCK){clearInterval(WKO_CLOCK);WKO_CLOCK=null;}w
 function closeWorkout(){if(WKO&&!confirm('Close without finishing? Your entries won’t be saved.'))return;wkoStopClock();try{wkoHistClose();}catch(e){}$('workout-modal').classList.remove('open');WKO=null;}
 function wkoEntryBest1RM(en){let best=0;(en.sets||[]).forEach(s=>{const v=est1RM(s.weight,s.reps);if(v>best)best=v;});return best;}
 function wkoEntryStats(en){let sets=0,reps=0,vol=0,best=0;(en.sets||[]).forEach(s=>{const r=+s.reps||0,w=+s.weight||0;if(r>0){sets++;reps+=r;vol+=r*w;}const e=est1RM(w,r);if(e>best)best=e;});return {sets,reps,vol:Math.round(vol),best1:Math.round(best),aerobic:wkoIsAerobic(en),cardio:wkoCardioTotals(en.sets)};}
+/* Past-performance totals for THIS exercise (same brand+equipment setup), per past session, from WKO_HISTORY */
+function wkoPastExStats(en){const brand=(en.brand||''),equip=(en.equipment||'');const byDate={};
+  (WKO_HISTORY||[]).forEach(w=>{const d=(w.date||'').slice(0,10);(w.entries||[]).forEach(e=>{const idMatch=(en.exId&&e.exId===en.exId)||(e.name===en.name);if(!idMatch)return;if((e.brand||'')!==brand||(e.equipment||'')!==equip)return;let vol=0,best=0;(e.sets||[]).forEach(s=>{const r=+s.reps||0,wt=+s.weight||0;if(r>0)vol+=r*wt;const v=est1RM(wt,r);if(v>best)best=v;});const cur=byDate[d]||{vol:0,best:0};byDate[d]={vol:cur.vol+vol,best:Math.max(cur.best,best),date:d};});});
+  const arr=Object.keys(byDate).map(k=>byDate[k]).sort((a,b)=>a.date<b.date?-1:1);
+  if(!arr.length)return null;const last=arr[arr.length-1];
+  return {lastVol:Math.round(last.vol),last1:Math.round(last.best),lastDate:last.date,bestVol:Math.round(Math.max.apply(null,arr.map(x=>x.vol))),best1:Math.round(Math.max.apply(null,arr.map(x=>x.best))),sessions:arr.length};}
+/* Live stats strip shown while logging — volume + est 1RM + sets, each compared to past workouts. Non-aerobic only. */
+function wkoLiveStatsHTML(en,ei){
+  if(wkoIsAerobic(en))return '';
+  const st=wkoEntryStats(en),past=wkoPastExStats(en);
+  const doneN=(en.sets||[]).filter(s=>s.done).length,totN=(en.sets||[]).length;
+  let sessVol=0;(WKO.entries||[]).forEach(e=>{if(!wkoIsAerobic(e))sessVol+=wkoEntryStats(e).vol;});
+  let volD;
+  if(st.vol>0&&past&&past.lastVol>0){const d=st.vol-past.lastVol;volD='<div class="wkl-d '+(d>0?'up':d<0?'down':'')+'">'+(d>0?'▲ +'+d.toLocaleString():d<0?'▼ '+Math.abs(d).toLocaleString():'= ')+' vs last</div>';}
+  else if(st.vol>0)volD='<div class="wkl-d">first log</div>';else volD='<div class="wkl-d">—</div>';
+  let rmD;
+  if(st.best1>0&&past&&past.best1>0){if(st.best1>past.best1)rmD='<div class="wkl-d pr">▲ PR +'+(st.best1-past.best1)+'kg</div>';else{const d=st.best1-past.last1;rmD='<div class="wkl-d">best '+past.best1+' · last '+past.last1+'kg</div>';}}
+  else if(st.best1>0)rmD='<div class="wkl-d">first log</div>';else rmD='<div class="wkl-d">—</div>';
+  return '<div class="wko-live" id="wko-live-'+ei+'">'+
+    '<div class="wkl-tile"><div class="wkl-k">Volume</div><div class="wkl-v">'+(st.vol?st.vol.toLocaleString():'0')+'<small>kg</small></div>'+volD+'</div>'+
+    '<div class="wkl-tile"><div class="wkl-k">Est. 1RM</div><div class="wkl-v">'+(st.best1||0)+'<small>kg</small></div>'+rmD+'</div>'+
+    '<div class="wkl-tile"><div class="wkl-k">Sets</div><div class="wkl-v">'+doneN+'<small>/'+totN+'</small></div><div class="wkl-d">'+(sessVol?sessVol.toLocaleString()+' kg today':'session')+'</div></div>'+
+    '</div>';
+}
+/* in-place refresh of the live strip (called from wkoSet on every keystroke — no full re-render) */
+function wkoUpdateLive(ei){const en=WKO&&WKO.entries[ei];if(!en)return;const el=document.getElementById('wko-live-'+ei);if(el){const html=wkoLiveStatsHTML(en,ei);if(html)el.outerHTML=html;}}
 function wkoEntryStatBits(en){const st=wkoEntryStats(en);if(st.aerobic){return [st.cardio.dur?('⏱ '+st.cardio.dur+'m'):'',st.cardio.dist?(st.cardio.dist+' km'):'',st.cardio.cal?(st.cardio.cal+' kcal'):'',st.cardio.hr?(st.cardio.hr+' bpm'):''].filter(Boolean);}return [st.vol?('📊 '+lcNum(st.vol)+' kg vol'):'',st.best1?('💪 '+st.best1+' kg 1RM'):''].filter(Boolean);}
 function wkoTotals(){let sets=0,reps=0,vol=0;(WKO.entries||[]).forEach(en=>en.sets.forEach(s=>{const r=+s.reps||0,w=+s.weight||0;if(r>0){sets++;reps+=r;vol+=r*w;}}));return{sets,reps,vol:Math.round(vol)};}
 /* ── premium one-exercise-focus logger ── */
@@ -12422,8 +12456,8 @@ function wkoFocusHTML(en,ei,noNav){
     '<div class="wko-set-flds">'+
       (aerobic
         ? cardFld(s,si,'dur','min','MIN')+cardFld(s,si,'dist','km','KM')+cardFld(s,si,'cal','kcal','CAL')+cardFld(s,si,'hr','bpm','AVG HR')
-        : '<label class="wko-set-fld"><input type="number" inputmode="decimal" min="0" step="0.5" value="'+esc(s.weight)+'" placeholder="'+esc((s.target&&s.target.weight)||'0')+'" onchange="wkoSet('+ei+','+si+',\'weight\',this.value)"><span>kg</span></label>'+
-          '<label class="wko-set-fld"><input type="number" inputmode="decimal" min="0" step="'+rstep+'" value="'+esc(s.reps)+'" placeholder="'+esc((s.target&&s.target.reps)||'0')+'" onchange="wkoSet('+ei+','+si+',\'reps\',this.value)"><span>'+rpl+'</span></label>'+
+        : '<label class="wko-set-fld"><input type="number" inputmode="decimal" min="0" step="0.5" value="'+esc(s.weight)+'" placeholder="'+esc((s.target&&s.target.weight)||'0')+'" oninput="wkoSet('+ei+','+si+',\'weight\',this.value)"><span>kg</span></label>'+
+          '<label class="wko-set-fld"><input type="number" inputmode="decimal" min="0" step="'+rstep+'" value="'+esc(s.reps)+'" placeholder="'+esc((s.target&&s.target.reps)||'0')+'" oninput="wkoSet('+ei+','+si+',\'reps\',this.value)"><span>'+rpl+'</span></label>'+
           '<label class="wko-set-fld"><input inputmode="decimal" value="'+esc(s.rir||'')+'" placeholder="'+esc((s.target&&s.target.rir)||'–')+'" onchange="wkoSet('+ei+','+si+',\'rir\',this.value)"><span>'+effLbl+'</span></label>')+
       extra.map(c=>'<label class="wko-set-fld"><input value="'+esc(s[c.key]||'')+'" placeholder="'+esc((s.target&&s.target[c.key])||'–')+'" onchange="wkoSet('+ei+','+si+',\''+c.key+'\',this.value)"><span>'+esc((c.label||c.key).split(/[ (]/)[0])+'</span></label>').join('')+
     '</div>'+
@@ -12436,10 +12470,11 @@ function wkoFocusHTML(en,ei,noNav){
     (en.comment?'<div class="wko-comment-box">💬 <b>Your note:</b> '+esc(en.comment)+'</div>':'')+
     equipRow+brandRow+altRow+
     gridHead+
+    wkoLiveStatsHTML(en,ei)+
     '<div class="wko-sets">'+sets+'</div>'+
     '<div class="wko-set-add"><button class="btn-sm" onclick="wkoAddSet('+ei+')">＋ Add '+(aerobic?'interval':'set')+'</button>'+
       (en.sets.length?'<button class="btn-sm wko-markall'+(allDone?' solid':'')+'" onclick="wkoMarkAllDone('+ei+')">'+(allDone?'↺ Unmark all':'✓ Mark all done')+'</button>':'')+
-      (aerobic?wkoCardioSessionNote(en):(best>0?'<span class="wk-1rm">Est. 1RM ≈ '+best+' kg</span>':''))+'</div>'+
+      (aerobic?wkoCardioSessionNote(en):'')+'</div>'+
     wkoPerfHTML(en)+
     navBtns+
     '</div>';
@@ -12599,7 +12634,7 @@ function wkoAttachSwipe(stage,n){
     }
   },{passive:true});
 }
-function wkoSet(ei,si,f,v){WKO.entries[ei].sets[si][f]=v;/* no full re-render: keep focus & timers */}
+function wkoSet(ei,si,f,v){WKO.entries[ei].sets[si][f]=v;wkoUpdateLive(ei);/* live stats only — no full re-render, so focus & timers stay */}
 /* ---- rest timer (big clock) + bell + vibrate ---- */
 let WKO_REST=null;
 function wkoStartRest(ei,si){const en=WKO.entries[ei],s=en.sets[si];const secs=parseSecs(s.rest,0)||en.restTarget||90;wkoRestBegin(secs);}
