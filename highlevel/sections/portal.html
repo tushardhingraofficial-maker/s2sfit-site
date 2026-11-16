@@ -7110,7 +7110,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04sm';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04sn';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -14246,6 +14246,7 @@ const NUTRI_PROFILES=[
   [/protein\s*bar|granola bar|energy bar/i,[20,45,12]],
   [/fried chicken|kfc|chicken wing|nugget|popcorn chicken/i,[22,9,17]],
   [/butter chicken|chicken curry|chicken masala|chicken tikka masala|chicken korma/i,[10,6,10]],
+  [/biryani|pulao|pilaf|fried rice|jeera rice|pulav/i,[6,30,8]],
   [/chicken|turkey|tikka|kebab|kabab|tandoori|grilled chicken|breast/i,[29,1,6]],
   [/paneer|cottage cheese|halloumi/i,[18,4,20]],
   [/\bcheese|mozzarella|cheddar/i,[24,2,30]],
@@ -14257,7 +14258,6 @@ const NUTRI_PROFILES=[
   [/egg|omelet|omelette|anda|bhurji|scrambled|frittata/i,[13,2,11]],
   [/fish|salmon|tuna|prawn|shrimp|seafood|mackerel|sardine|cod|tilapia/i,[22,0,5]],
   [/quinoa/i,[4.4,21,1.9]],
-  [/biryani|pulao|pilaf|fried rice|jeera rice|pulav/i,[6,30,8]],
   [/\brice\b|basmati|steamed rice|boiled rice|cooked rice|rice bowl/i,[2.7,28,0.4]],
   [/oats|oat|porridge|dalia|daliya|overnight|muesli|granola/i,[5,15,3]],
   [/maggi|noodle|ramen|pasta|spaghetti|macaroni|chow ?mein|hakka/i,[8,55,15]],
@@ -14265,6 +14265,7 @@ const NUTRI_PROFILES=[
   [/bread|\broti\b|chapati|chapatti|wrap|\bbun\b|\bsub\b|sandwich|toast|tortilla|phulka|pita|bagel|roll/i,[9,48,5]],
   [/fries|chips|wedges|hash brown|crisps/i,[3.5,41,15]],
   [/potato|aloo|mashed/i,[2,18,1]],
+  [/\btea\b|chai|coffee|latte|cappuccino|espresso|mocha/i,[1,8,1]],
   [/yogurt|yoghurt|curd|dahi|greek|skyr|raita/i,[9,5,2]],
   [/milk|lassi|buttermilk|chaas|chaach/i,[3.4,7,3]],
   [/\bnuts?\b|almond|peanut|cashew|walnut|pecan|pistachio|nut butter|trail mix|seeds?/i,[20,20,50]],
