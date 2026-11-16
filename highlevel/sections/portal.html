@@ -4042,6 +4042,27 @@ tr.tr-gr td:first-child{border-left:3px solid var(--red)}
 .exvid-instr{padding:10px 12px;border-top:1px solid var(--border)}
 /* the exercise picker must sit ABOVE the workout modal when opened from a session */
 #exlib-modal{z-index:1400}
+/* exercise video audit panel */
+.exa-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#FF6B5E;color:#fff;font-size:11px;font-weight:800;line-height:1;margin-left:2px}
+.exa-intro{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+.exa-intro h3{margin:0 0 4px;font-size:15px}
+.exa-intro p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.5}
+.exa-sec-h{display:flex;align-items:center;gap:8px;margin:16px 0 8px;font-weight:800;font-size:13px}
+.exa-sec-h .exa-pill{font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px}
+.exa-pill.broken{background:rgba(255,107,94,.15);color:#FF6B5E}
+.exa-pill.missing{background:rgba(245,166,35,.15);color:#F5A623}
+.exa-row{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px}
+.exa-row.fixed{border-color:rgba(74,158,232,.5)}
+.exa-top{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.exa-nm{font-weight:800;font-size:14px}
+.exa-meta{font-size:11.5px;color:var(--muted);margin-top:1px}
+.exa-cur{font-size:11px;color:var(--muted);word-break:break-all;margin-top:6px;padding:6px 8px;background:rgba(127,127,127,.07);border-radius:8px}
+.exa-cur b{color:#FF6B5E}
+.exa-ctrls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:9px}
+.exa-ctrls input{flex:1;min-width:180px}
+.exa-find{font-size:12px;font-weight:700;white-space:nowrap;text-decoration:none;color:var(--accent);padding:6px 10px;border:1px solid var(--border);border-radius:8px}
+.exa-empty{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:26px 16px;text-align:center;color:var(--muted)}
+.exa-empty .exa-big{font-size:34px;display:block;margin-bottom:8px}
 /* workout session chrome */
 .wko-topbar{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:12px}
 .wko-dur{font-family:var(--mono);font-weight:800;font-size:16px;color:var(--good)}
@@ -6442,6 +6463,7 @@ img,svg,canvas,video{max-width:100%}
         <div class="field" style="max-width:240px;margin:0"><label class="lab">Search</label><input id="ex-search" placeholder="🔍 name…" oninput="renderExList()"></div>
         <div class="field" style="max-width:200px;margin:0"><label class="lab">Body part</label><select id="ex-filter-body" onchange="renderExList()"><option value="">All body parts</option></select></div>
         <span class="small" id="ex-count" style="align-self:center"></span>
+        <span id="ex-audit-wrap" style="align-self:center;margin-left:auto;display:none"><button class="btn-sm" id="ex-audit-btn" onclick="exAuditToggle()" title="Find and fix exercises whose demo video is a broken / search link, or that have no demo yet">🔎 Video audit <span id="ex-audit-badge" class="exa-badge" style="display:none"></span></button></span>
       </div>
       <div id="ex-list"></div>
     </div>
@@ -7088,7 +7110,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04sk';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04sl';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -12112,6 +12134,10 @@ function editEx(id){const e=exById(id);if(!e)return;$('ex-id').value=e.id;$('ex-
 async function deleteEx(id){if(!confirm('Delete this exercise from the library?'))return;EX_LIB=EX_LIB.filter(x=>x.id!==id);try{await DB.saveExercises(EX_LIB);renderExList();}catch(e){toast('Could not delete',true);}}
 function renderExList(){
   const host=$('ex-list');if(!host)return;
+  const canAudit=(typeof ADMIN_OK!=='undefined'&&ADMIN_OK)&&!EX_PICK_TARGET;
+  if(!canAudit)EX_AUDIT=false;
+  exAuditSyncBtn();
+  if(EX_AUDIT){renderExAudit();return;}
   const q=(($('ex-search')||{}).value||'').trim().toLowerCase();const fb=($('ex-filter-body')||{}).value||'';
   let list=EX_LIB.filter(e=>(!q||(e.name||'').toLowerCase().includes(q))&&(!fb||e.bodyPart===fb));
   list.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
@@ -12124,6 +12150,77 @@ function renderExList(){
       '<div style="flex:1;min-width:0"><div style="font-weight:800">'+esc(e.name)+'</div><div class="small">'+[e.bodyPart,e.equipment,e.category].filter(Boolean).map(esc).join(' · ')+'</div>'+((e.howto||e.instructions)?'<div class="small" style="color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:340px">'+esc(e.howto||e.instructions)+'</div>':'')+'</div>'+
       '<div style="white-space:nowrap;flex:none">'+actions+'</div></div>';
   }).join('');
+}
+/* ── Exercise video audit ───────────────────────────────────────────────
+   A demo is OK when e.video is a playable YouTube link (ytId matches) OR an
+   uploaded file is attached (e.videoFile). Otherwise it is "broken" (a link
+   that won't embed — e.g. the starter-pack search URLs) or "missing". */
+let EX_AUDIT=false;
+function exVideoState(e){
+  const vf=((e&&e.videoFile)||'').trim();
+  const v=((e&&e.video)||'').trim();
+  if(ytId(v)||vf)return 'ok';
+  if(v)return 'broken';
+  return 'missing';
+}
+function exAuditBroken(){return (EX_LIB||[]).filter(e=>exVideoState(e)==='broken');}
+function exAuditMissing(){return (EX_LIB||[]).filter(e=>exVideoState(e)==='missing');}
+function exAuditSyncBtn(){
+  const wrap=$('ex-audit-wrap');if(!wrap)return;
+  const canAudit=(typeof ADMIN_OK!=='undefined'&&ADMIN_OK)&&!EX_PICK_TARGET;
+  wrap.style.display=canAudit?'':'none';
+  const btn=$('ex-audit-btn');if(btn)btn.classList.toggle('solid',EX_AUDIT);
+  const badge=$('ex-audit-badge');if(badge){const n=exAuditBroken().length;badge.textContent=n;badge.style.display=n?'':'none';}
+}
+function exAuditToggle(){EX_AUDIT=!EX_AUDIT;renderExList();}
+function exFindUrl(e){return 'https://www.youtube.com/results?search_query='+encodeURIComponent(((e&&e.name)||'')+' proper form technique');}
+function exAuditRowHTML(e){
+  const st=exVideoState(e);
+  const meta=[e.bodyPart,e.equipment,e.category].filter(Boolean).map(esc).join(' · ');
+  const cur=st==='broken'?'<div class="exa-cur"><b>Won’t play:</b> '+esc(e.video)+'</div>':'';
+  return '<div class="exa-row" id="exa-row-'+e.id+'">'+
+    '<div class="exa-top"><div style="flex:1;min-width:0"><div class="exa-nm">'+esc(e.name)+'</div><div class="exa-meta">'+meta+'</div></div>'+
+      '<a class="exa-find" href="'+exFindUrl(e)+'" target="_blank" rel="noopener">🔍 Find on YouTube ↗</a></div>'+
+    cur+
+    '<div class="exa-ctrls"><input id="exa-in-'+e.id+'" placeholder="Paste youtube.com/watch or youtu.be link…" onkeydown="if(event.key===\'Enter\'){event.preventDefault();exAuditSave(\''+e.id+'\');}">'+
+      '<button class="btn-sm solid" onclick="exAuditSave(\''+e.id+'\')">Save video</button>'+
+      '<button class="btn-sm" onclick="editEx(\''+e.id+'\')" title="Open the full editor for this exercise">✎ Edit</button>'+
+      (st==='broken'?'<button class="btn-sm" onclick="exAuditBlank(\''+e.id+'\')" title="Remove the broken link — clients see a how-to link instead">Clear link</button>':'')+
+    '</div></div>';
+}
+function renderExAudit(){
+  const host=$('ex-list');if(!host)return;
+  const broken=exAuditBroken().sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  const missing=exAuditMissing().sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  let html='<div class="exa-intro"><h3>🔎 Video audit</h3><p>Exercises whose demo won’t play (a search or broken link) or that have no demo yet. Tap <b>🔍 Find on YouTube</b>, copy a good tutorial’s link, paste it and hit <b>Save video</b>. Fixes apply to every client’s plan instantly.</p></div>';
+  if(!broken.length&&!missing.length){
+    host.innerHTML=html+'<div class="exa-empty"><span class="exa-big">✅</span>Every exercise has a playable demo. Nothing to fix.</div>';return;
+  }
+  if(broken.length){
+    html+='<div class="exa-sec-h">Broken / search links <span class="exa-pill broken">'+broken.length+'</span></div>'+broken.map(exAuditRowHTML).join('');
+  }
+  if(missing.length){
+    html+='<div class="exa-sec-h">No demo yet <span class="exa-pill missing">'+missing.length+'</span></div>'+missing.map(exAuditRowHTML).join('');
+  }
+  host.innerHTML=html;
+}
+async function exAuditSave(id){
+  const inp=$('exa-in-'+id);const url=((inp&&inp.value)||'').trim();
+  if(!url){toast('Paste a YouTube link first',true);return;}
+  const vid=ytId(url);
+  if(!vid){toast('⚠ That isn’t a playable YouTube video link — paste a youtube.com/watch or youtu.be link',true);return;}
+  const e=exById(id);if(!e)return;
+  e.video='https://youtu.be/'+vid;
+  const row=$('exa-row-'+id);if(row)row.classList.add('fixed');
+  try{await DB.saveExercises(EX_LIB);if(typeof refreshExNameList==='function')refreshExNameList();toast('✓ Video fixed for '+e.name);renderExList();}
+  catch(err){toast('Could not save — '+((err&&err.message)||'error'),true);}
+}
+async function exAuditBlank(id){
+  const e=exById(id);if(!e)return;
+  if(!confirm('Remove the broken video link from “'+e.name+'”?\n\nClients will see a “watch a how-to on YouTube” link instead of an embedded player, until you add a real video.'))return;
+  e.video='';
+  try{await DB.saveExercises(EX_LIB);toast('Cleared the broken link for '+e.name);renderExList();}
+  catch(err){toast('Could not save — '+((err&&err.message)||'error'),true);}
 }
 function exPick(id){const e=exById(id);if(!e||!EX_PICK_TARGET)return;
   if(EX_PICK_TARGET.di!=null){edTrFlush();const secs=edTrSecs(EX_PICK_TARGET.di);const s=secs[EX_PICK_TARGET.si]||secs[0];if(s){s.exercises=s.exercises||[];s.exercises.push({id:uid(),exId:e.id,name:e.name,sets:'',reps:'',load:'',rir:'',tempo:'',rest:'',notes:''});toast('Added '+e.name);}return;}
