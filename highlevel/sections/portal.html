@@ -4872,6 +4872,18 @@ img,svg,canvas,video{max-width:100%}
             <div class="field"><label class="lab">Photos <span class="small" style="text-transform:none;font-weight:400">(optional)</span></label>
               <label class="updrop"><input type="file" id="jr-photo" accept="image/*" multiple onchange="jrPreview()"><div class="ud-ic">📷</div><div class="ud-t">Add photos of your meal</div><div class="ud-s">tap to choose from your gallery or take a photo — you can add several</div></label></div>
             <div id="jr-preview" style="margin-bottom:10px"></div>
+            <div style="margin-bottom:10px">
+              <button type="button" class="btn-sm" style="border-color:var(--carb);color:var(--carb)" onclick="jrBarcodeStart()">🏷️ Add a packaged item by barcode</button>
+              <div id="jr-bc" style="display:none;margin-top:8px;border:1px solid var(--border);border-radius:11px;padding:10px;background:var(--card2)">
+                <video id="jr-bc-video" playsinline muted style="display:none;width:100%;max-height:220px;border-radius:9px;background:#000;margin-bottom:8px"></video>
+                <div class="row" style="gap:6px;align-items:center;flex-wrap:nowrap">
+                  <input id="jr-bc-input" inputmode="numeric" placeholder="Barcode number from the pack" style="flex:1;min-width:0" onkeydown="if(event.key==='Enter'){event.preventDefault();jrBarcodeLookup();}">
+                  <button type="button" class="btn-sm solid" style="flex:none" onclick="jrBarcodeLookup()">Look up</button>
+                  <button type="button" id="jr-bc-scan" class="btn-sm" style="flex:none;display:none" onclick="jrBarcodeScan()">📷 Scan</button>
+                </div>
+                <div id="jr-bc-stat" class="small" style="color:var(--muted);margin-top:5px">Exact label macros for packaged foods (protein bars, yoghurts, etc.).</div>
+              </div>
+            </div>
             <div class="field"><label class="lab">What did you eat? <span class="small" style="text-transform:none;font-weight:400;color:var(--red)">· required</span></label>
               <textarea id="jr-desc" rows="4" placeholder="One item per line, with the amount — e.g.&#10;2 rotis&#10;1 bowl dal (150 g)&#10;100 g grilled paneer&#10;1 cup cooked rice"></textarea>
               <div class="jr-chips" aria-label="Tap to add a portion size">
@@ -7149,7 +7161,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04sp';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04sq';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -14382,6 +14394,8 @@ function bestIngMatch(name){
 function ngFracs(p,c,f){const pe=4*p,ce=4*c,fe=9*f,t=pe+ce+fe||1;return [pe/t,ce/t,fe/t];}
 // ground one item from the DB; keep AI calories when the portion disagrees (use DB composition). true if grounded.
 function nutriGroundItem(it){
+  const mem=fmMatch(it&&it.name);                  // 1) the client's own corrected value wins
+  if(mem){const g=foodGrams(it.qty,it.name);it.cal=Math.round(mem.cal*g);it.p=Math.round(mem.p*g);it.c=Math.round(mem.c*g);it.f=Math.round(mem.f*g);it._src='mem';return true;}
   const m=bestIngMatch(it&&it.name);if(!m)return false;
   const mg=ilParseGrams(m.units)||100;if(!(mg>0))return false;
   const grams=foodGrams(it.qty,it.name);
@@ -14410,6 +14424,16 @@ function nutriGround(n){
   });
   return n;
 }
+/* ── Correction-learning: remember a client's manually-corrected foods (stored per-gram in
+   milestones.foodMemory) so the same food logged again reuses the client's own numbers. ── */
+function fmNorm(s){return String(s||'').toLowerCase().replace(/\([^)]*\)/g,' ').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();}
+function fmStore(){try{if(typeof PLAN==='undefined'||!PLAN)return null;PLAN.milestones=PLAN.milestones||{goals:[]};if(!PLAN.milestones.foodMemory||typeof PLAN.milestones.foodMemory!=='object')PLAN.milestones.foodMemory={};return PLAN.milestones.foodMemory;}catch(e){return null;}}
+function fmMatch(name){const fm=fmStore();if(!fm)return null;const k=fmNorm(name);if(!k)return null;const e=fm[k];return (e&&+e.cal>0)?e:null;}
+function fmLearn(items){const fm=fmStore();if(!fm||!Array.isArray(items))return false;let changed=false;
+  items.forEach(function(it){if(!it||!it._edited)return;const g=foodGrams(it.qty,it.name);if(!(g>0))return;const k=fmNorm(it.name);if(k.length<2)return;
+    fm[k]={cal:(+it.cal||0)/g,p:(+it.p||0)/g,c:(+it.c||0)/g,f:(+it.f||0)/g,n:(((fm[k]||{}).n)||0)+1,at:Date.now()};changed=true;});
+  const keys=Object.keys(fm);if(keys.length>200){keys.sort(function(a,b){return ((fm[a]||{}).at||0)-((fm[b]||{}).at||0);});keys.slice(0,keys.length-200).forEach(function(k){delete fm[k];});}
+  return changed;}
 /* protein-add examples that respect the client's diet preference (used in the local cheat tip) */
 function cheatProteinEg(){const c=(typeof dietNorm==='function')?dietNorm(typeof clientDiet==='function'?clientDiet():''):'';
   if(c==='vegan')return 'a scoop of plant/pea protein, a tofu or soya-chunk side, a soy yoghurt, or a bowl of dal/legumes';
@@ -16355,6 +16379,44 @@ function jrChip(t){const el=$('jr-desc');if(!el)return;
   const ins=(needSp?' ':'')+t;
   el.value=before+ins+after;
   const pos=s+ins.length;try{el.focus();el.setSelectionRange(pos,pos);}catch(_){}}
+/* ── Barcode / brand lookup (Open Food Facts) → exact label macros for packaged foods ── */
+let JR_BC_STREAM=null;
+function jrBarcodeStart(){const p=$('jr-bc');if(!p)return;const show=p.style.display==='none';p.style.display=show?'':'none';
+  if(show){const sc=$('jr-bc-scan');if(sc)sc.style.display=('BarcodeDetector' in window && navigator.mediaDevices)?'':'none';const i=$('jr-bc-input');if(i)setTimeout(function(){try{i.focus();}catch(e){}},60);}
+  else{jrBarcodeStop();}}
+function jrBarcodeStop(){try{if(JR_BC_STREAM){JR_BC_STREAM.getTracks().forEach(function(t){t.stop();});JR_BC_STREAM=null;}}catch(e){}const v=$('jr-bc-video');if(v){v.style.display='none';try{v.srcObject=null;}catch(e){}}}
+async function jrBarcodeScan(){
+  if(!('BarcodeDetector' in window)){toast('Camera scanning isn’t supported here — type the number instead',true);return;}
+  try{const det=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128']});
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});JR_BC_STREAM=stream;
+    const v=$('jr-bc-video');v.srcObject=stream;v.style.display='';await v.play();
+    const st=$('jr-bc-stat');if(st)st.textContent='Point the camera at the barcode…';
+    const tick=async function(){if(!JR_BC_STREAM)return;
+      try{const codes=await det.detect(v);if(codes&&codes.length){const c=codes[0].rawValue;jrBarcodeStop();jrBarcodeLookup(c);return;}}catch(e){}
+      requestAnimationFrame(tick);};
+    requestAnimationFrame(tick);
+  }catch(e){toast('Couldn’t open the camera — type the number instead',true);jrBarcodeStop();}}
+async function jrBarcodeLookup(code){
+  code=String(code||($('jr-bc-input')&&$('jr-bc-input').value)||'').replace(/\D/g,'');
+  if(code.length<6){toast('Enter the barcode number (digits only)',true);return;}
+  const st=$('jr-bc-stat');if(st)st.textContent='Looking up…';
+  try{
+    const r=await fetch('https://world.openfoodfacts.org/api/v2/product/'+code+'.json?fields=product_name,brands,nutriments,serving_size');
+    const j=await r.json();
+    if(!j||j.status!==1||!j.product){if(st)st.textContent='';toast('That barcode isn’t in the food database — add it by description instead',true);return;}
+    const p=j.product,n=p.nutriments||{};
+    const kcal=Math.round(+n['energy-kcal_100g']||0),pro=Math.round(+n.proteins_100g||0),carb=Math.round(+n.carbohydrates_100g||0),fat=Math.round(+n.fat_100g||0);
+    if(!(kcal>0||pro>0||carb>0||fat>0)){if(st)st.textContent='';toast('No nutrition info listed for that product',true);return;}
+    const nm=([p.brands?String(p.brands).split(',')[0].trim():'',p.product_name||''].filter(Boolean).join(' ').trim().slice(0,60))||'Packaged item';
+    const item={name:nm,qty:'100 g',cal:kcal,p:pro,c:carb,f:fat,base:{cal:kcal,p:pro,c:carb,f:fat},_src:'barcode'};
+    if(!JR_NUTRI||typeof JR_NUTRI!=='object')JR_NUTRI={name:nm,items:[],cal:0,p:0,c:0,f:0,reco:'',suggestions:[],source:'barcode'};
+    JR_NUTRI.items=Array.isArray(JR_NUTRI.items)?JR_NUTRI.items:[];JR_NUTRI.items.push(item);JR_NUTRI_SKIPPED=false;
+    try{jrRecalc();}catch(e){}jrRenderNutri();
+    if(st)st.textContent='';const inp=$('jr-bc-input');if(inp)inp.value='';
+    try{const d=$('jr-desc');if(d&&!d.value.trim())d.value=nm;}catch(e){}
+    toast('Added '+nm+' (per 100 g) — set the amount you had');
+  }catch(e){if(st)st.textContent='';toast('Lookup failed — check your connection',true);}
+}
 /* ── Food Log "＋ Add a meal" chooser ── */
 function foodAddTrack(){try{const s=$('log-sections');if(s)s.scrollIntoView({behavior:'smooth',block:'start'});const first=document.querySelector('#log-sections .meal-add-choose');if(first){mealShowTrack(first.id.replace('mealchoose-',''));}}catch(e){}}
 /* reveal / collapse one meal's "add ingredients" columns (the chooser shows the two options first) */
@@ -16375,7 +16437,7 @@ function foodAddJournal(mealName,focus){
   if(focus==='photo'){const pf=$('jr-photo');if(pf){try{pf.click();}catch(e){}}}
   else{const d2=$('jr-desc');if(d2)setTimeout(function(){try{d2.focus();}catch(e){}},320);}
 }
-function foodJournalCancel(){const cap=$('jr-capture');if(cap)cap.style.display='none';JR_PHOTOS=[];JR_NUTRI=null;JR_NUTRI_SKIPPED=false;JR_NUTRI_SKIP_RECO='';const pv=$('jr-preview');if(pv)pv.innerHTML='';}
+function foodJournalCancel(){try{jrBarcodeStop();}catch(e){}const cap=$('jr-capture');if(cap)cap.style.display='none';JR_PHOTOS=[];JR_NUTRI=null;JR_NUTRI_SKIPPED=false;JR_NUTRI_SKIP_RECO='';const pv=$('jr-preview');if(pv)pv.innerHTML='';const bc=$('jr-bc');if(bc)bc.style.display='none';}
 function foodLogRefresh(){try{if(NUTRI_SUB==='log'&&$('log-date'))loadDayLog();}catch(e){}try{dpLoadToday();}catch(e){}}   // keep the Diet-plan Today ring + meal check-offs in sync with any food change
 /* Comment thread on the client's own day log (coach ↔ client). */
 async function renderLogComments(date){
@@ -16847,7 +16909,7 @@ function jrRecalc(){if(!JR_NUTRI)return;const a=JR_NUTRI;const items=a.items||[]
   const set=(id,v)=>{const el=$(id);if(el)el.textContent=v;};
   set('jr-tot-cal',lcNum(a.cal));set('jr-tot-p',a.p);set('jr-tot-c',a.c);set('jr-tot-f',a.f);}
 function jrItemCal(i,v){if(!JR_NUTRI||!JR_NUTRI.items)return;const it=JR_NUTRI.items[i];if(!it)return;
-  const nc=Math.max(0,Math.round(+v||0));const base=it.base||(it.base={cal:it.cal,p:it.p,c:it.c,f:it.f});it.cal=nc;
+  const nc=Math.max(0,Math.round(+v||0));const base=it.base||(it.base={cal:it.cal,p:it.p,c:it.c,f:it.f});it.cal=nc;it._edited=1;   // client correction → learned for next time
   if(base.cal>0){const k=nc/base.cal;it.p=Math.round((base.p||0)*k);it.c=Math.round((base.c||0)*k);it.f=Math.round((base.f||0)*k);}
   const set=(id,t)=>{const el=$(id);if(el)el.textContent=t;};set('jci-p-'+i,'P '+it.p);set('jci-c-'+i,'C '+it.c);set('jci-f-'+i,'F '+it.f);
   jrRecalc();}
@@ -17172,6 +17234,7 @@ async function jrAdd(){
   const isSkip=!!(nutriField&&nutriField.skipped);
   const entry={id:uid(),client_id:SESSION.id,date:$('jr-date').value||todayISO(),time:$('jr-time').value||'',description:desc,photo:photoField,nutrition:nutriField,meal:(($('jr-meal')&&$('jr-meal').value)||''),created_at:new Date().toISOString()};
   try{await DB.addJournal(entry);toast(isSkip?'Noted as skipped ✓':'Meal added ✓');
+    try{if(nutriField&&!isSkip&&fmLearn(nutriField.items)){await DB.saveMilestones(SESSION.id,PLAN.milestones);}}catch(_){}   // learn the client's corrections for next time
     $('jr-desc').value='';$('jr-photo').value='';$('jr-preview').innerHTML='';JR_PHOTOS=[];JR_NUTRI=null;JR_NUTRI_SKIPPED=false;JR_NUTRI_SKIP_RECO='';jrRenderNutri();
     try{foodJournalCancel();}catch(e){}
     try{await rwSyncFoodReward('journal');}catch(_){}
