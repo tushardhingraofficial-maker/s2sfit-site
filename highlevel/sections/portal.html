@@ -4088,7 +4088,7 @@ tr.tr-gr td:first-child{border-left:3px solid var(--red)}
 /* ── workout runner: full-screen takeover + premium exercise UI (v fx) ── */
 #workout-modal{padding:0;align-items:stretch;overflow:hidden;z-index:1300}
 #workout-modal .modal{max-width:100%;width:100%;height:100vh;height:100dvh;margin:0;border-radius:0;border:none;box-shadow:none;display:flex;flex-direction:column}
-#workout-modal .modal-head{flex:none;border-radius:0;background:var(--surface);border-bottom:1px solid var(--border)}
+#workout-modal .modal-head{flex:none;border-radius:0;background:var(--surface);border-bottom:1px solid var(--border);padding-top:calc(12px + env(safe-area-inset-top));align-items:center}
 #workout-modal .modal-body{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0}
 .wko-stage{padding:12px 14px calc(40px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto;touch-action:pan-y;will-change:transform;backface-visibility:hidden}
 /* media carousel */
@@ -4298,7 +4298,7 @@ tr.tr-gr td:first-child{border-left:3px solid var(--red)}
   .wrap{padding:14px 12px 100px}
   .overlay{padding:0 0 calc(24px + env(safe-area-inset-bottom));align-items:flex-start}
   .modal,.modal-sm{max-width:100%;border-radius:0;margin:0;min-height:100dvh}
-  .modal-head{padding:12px 14px}
+  .modal-head{padding:calc(12px + env(safe-area-inset-top)) 14px 12px}
   .modal-head h2{font-size:16px}
   .modal-body{padding:12px}
   .card{margin-bottom:12px}
@@ -7061,7 +7061,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04sh';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04si';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -12915,10 +12915,27 @@ function weeklyMealsMeta(){
   const dt=(edPlan.dayTypes||[])[0]||{};const meals=dt.meals||[];
   return meals.map((m,i)=>{const t=sumItems(m.items);return {label:(m.name||('Meal-'+(i+1))),target:round(t.p)+'g protein · '+round(t.c)+'g carbs · '+round(t.f)+'g fat · '+round(t.cal)+' kcal'};});
 }
+/* Describes the client's CURRENT TRAINING PHASE as deficit / surplus / maintenance food guidance,
+   so Smart meal recommendations suit whether they need a calorie deficit or surplus (not just the macros).
+   Uses edPlan in the coach editor, PLAN on the client side. */
+function phaseMealGuidance(){
+  const plan=((typeof ADMIN_OK!=='undefined'&&ADMIN_OK&&typeof edPlan!=='undefined'&&edPlan)?edPlan:(typeof PLAN!=='undefined'?PLAN:null));
+  if(!plan)return '';
+  const phase=((plan.phase)||'').trim();
+  const goal=(plan.profile&&plan.profile.goal)||'';
+  if(!phase&&!goal)return '';
+  const dir=(typeof phaseDirLabel==='function')?phaseDirLabel(phase,goal):'maintenance';
+  const ph=phase||goal;let g;
+  if(dir==='deficit')g='they are in a CALORIE DEFICIT for FAT LOSS — prioritise HIGH-PROTEIN, HIGH-VOLUME, high-satiety, lower-energy-density meals (lean proteins, plenty of vegetables and fibrous carbs) that keep them full at the lower calorie target, and keep added oils/fats and calorie-dense extras modest';
+  else if(dir==='surplus')g='they are in a CALORIE SURPLUS to BUILD MUSCLE — favour CALORIE-DENSE, protein-rich, easy-to-eat meals (more carbs and healthy fats, calorie-dense extras, shakes/smoothies where useful) so they comfortably reach the higher calorie target without uncomfortable food volume';
+  else g='they are around MAINTENANCE / recomposition — keep meals balanced and protein-forward to hold their physique at the target calories';
+  return 'CLIENT TRAINING PHASE: '+ph+' → '+dir.toUpperCase()+'. Because '+g+'. Always still hit the exact macro targets given for each meal.';
+}
 function weeklyMealsPrompt(diet,meals,prefs){
   prefs=prefs||{};
   const L=['You are a sports nutritionist for S2S Fit. Build a 7-day (Monday to Sunday) meal-variety chart. The client is bored of eating the same thing, so GENUINE day-to-day variety is the whole point — repetitive output is a failure.'];
   {const _dr=dietRuleText(diet);L.push(_dr?_dr:('Dietary preference: '+(diet||'no specific restriction')+'.'));}
+  {const _pg=phaseMealGuidance();if(_pg)L.push(_pg);}
   if(prefs.cuisine)L.push('Preferred cuisine / food style: '+prefs.cuisine+'.');
   if(prefs.region)L.push('Client is based in: '+prefs.region+' — use ingredients, brands and staples available and familiar there.');
   if(prefs.prep)L.push('Preparation style: '+prefs.prep+' — keep every meal consistent with this (e.g. "quick" = under ~15 min, "no-cook" = assembly only, "takeaway / eating out" = realistic ordered/restaurant options).');
@@ -12946,9 +12963,11 @@ function weeklyMealsPrompt(diet,meals,prefs){
 function weeklyMealsFillTemplate(tpl,diet,meals,prefs){
   prefs=prefs||{};
   const mealsList=(meals||[]).map(m=>'- '+m.label+' (target '+m.target+')').join('\n');
+  const pg=phaseMealGuidance();
   const map={'{{diet}}':(dietRuleText(diet)||('Dietary preference: '+(diet||'no specific restriction'))),'{{cuisine}}':prefs.cuisine||'','{{region}}':prefs.region||'',
-    '{{prep}}':prefs.prep||'','{{avoid}}':prefs.avoid||'','{{allergies}}':prefs.allergies||'','{{notes}}':prefs.notes||'','{{meals}}':mealsList};
+    '{{prep}}':prefs.prep||'','{{avoid}}':prefs.avoid||'','{{allergies}}':prefs.allergies||'','{{notes}}':prefs.notes||'','{{meals}}':mealsList,'{{phase}}':pg};
   let out=String(tpl||'');Object.keys(map).forEach(k=>{out=out.split(k).join(map[k]);});
+  if(pg&&!/phase|deficit|surplus/i.test(out))out+='\n\n'+pg;   // ensure phase is considered even if the template omits {{phase}}
   if(!/"days"\s*:/.test(out))
     out+='\n\nRespond with STRICT JSON only, no prose or markdown fences, in exactly this shape:\n{"days":[{"day":"Monday","meals":[{"label":"<slot label>","text":"<meal with quantities>"}]}, ... all 7 days Monday..Sunday ...]}';
   return out;
@@ -13063,6 +13082,7 @@ function mealPrepPrompt(prepDays,notes,plans){
   const L=['You are a PROFESSIONAL CHEF and sports nutritionist creating a DETAILED batch meal-prep strategy for S2S Fit. Write with a chef’s depth — specific quantities, temperatures, timings, yields and pro techniques — while staying easy to follow.'];
   L.push('The client batch-cooks on '+prepDays+' day(s) per week and eats from those batches across the whole week — scale all quantities and yields accordingly.');
   {const _dr=dietRuleText(clientDiet());if(_dr)L.push(_dr);}   // client's diet preference — must be respected in every recipe & ingredient
+  {const _pg=phaseMealGuidance();if(_pg)L.push(_pg);}   // match the client's current phase (deficit / surplus / maintenance)
   if(notes)L.push('Special prep instructions (follow these EXACTLY): '+notes);
   L.push('This client has '+plans.length+' diet plan(s) / day type(s). Produce a SEPARATE, detailed strategy for EACH plan below.');
   L.push('Present each plan’s content in THIS EXACT ORDER:');
@@ -13088,8 +13108,10 @@ function mealPrepPrompt(prepDays,notes,plans){
 }
 let MP_PROMPT_TPL='';
 function mealPrepFillTemplate(tpl,prepDays,notes,plans){
-  const map={'{{prepDays}}':String(prepDays),'{{notes}}':notes||'','{{plans}}':mealPrepPlansText(plans)};
+  const pg=phaseMealGuidance();
+  const map={'{{prepDays}}':String(prepDays),'{{notes}}':notes||'','{{plans}}':mealPrepPlansText(plans),'{{phase}}':pg};
   let out=String(tpl||'');Object.keys(map).forEach(k=>{out=out.split(k).join(map[k]);});
+  if(pg&&!/phase|deficit|surplus/i.test(out))out+='\n\n'+pg;   // ensure phase is considered even if the template omits {{phase}}
   if(!/"plans"\s*:/.test(out))out+='\n\nRespond with STRICT JSON only (no prose or markdown fences), in exactly this shape (express all yields as concrete quantities — grams/kg/ml/portions):\n{"plans":[{"plan":"<name>","prepDays":'+prepDays+',"yield":"<≈ total cooked weight · portions · per-portion size>","totalTime":"<hands-on time>","recipes":[{"name":"<recipe>","servings":"<portions ≈ cooked weight, per-portion size>","time":"<cook time>","ingredients":["<qty + item>"],"method":"<numbered method>","chefTip":"<pro tip>"}],"ingredients":[{"item":"<name>","qty":"<amount>","note":"<cooked-yield note>"}],"steps":[{"text":"<step>","time":"<approx>"}],"chefNotes":["<tip>"]}]}';
   return out;
 }
