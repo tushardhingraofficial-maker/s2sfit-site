@@ -918,10 +918,6 @@ body{overflow-x:hidden}
 .jr-chip{flex:none;border:1px solid var(--border);background:var(--card);border-radius:999px;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);transition:border-color .12s,background .12s}
 .jr-chip:hover{border-color:var(--prot)}
 .jr-chip:active{background:var(--card2)}
-.jr-mic{display:inline-flex;align-items:center;gap:7px;margin-top:9px;border:1px solid var(--prot);background:var(--card);border-radius:999px;padding:8px 15px;font-size:13px;font-weight:800;cursor:pointer;color:var(--prot);transition:border-color .12s,background .12s,color .12s}
-.jr-mic:hover{background:var(--card2)}
-.jr-mic.rec{background:var(--red);border-color:var(--red);color:#fff;animation:jrMicPulse 1.1s ease-in-out infinite}
-@keyframes jrMicPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.45)}50%{box-shadow:0 0 0 7px rgba(239,68,68,0)}}
 /* ── food journal: AI nutrition estimate card (shared: add form, recent entries, admin feed) ── */
 .jr-nutri{border:1px solid var(--border);border-radius:12px;background:var(--card2);padding:11px 13px}
 .jr-nutri-h{font-weight:800;font-size:12.5px;margin-bottom:8px}
@@ -4888,7 +4884,6 @@ img,svg,canvas,video{max-width:100%}
             </div>
             <div class="field"><label class="lab">What did you eat? <span class="small" style="text-transform:none;font-weight:400;color:var(--muted)">· optional if you added a photo</span></label>
               <textarea id="jr-desc" rows="4" placeholder="One item per line, with the amount — e.g.&#10;2 rotis&#10;1 bowl dal (150 g)&#10;100 g grilled paneer&#10;1 cup cooked rice"></textarea>
-              <div><button type="button" id="jr-mic" class="jr-mic" style="display:none" onclick="jrVoice()">🎤 Speak it</button></div>
               <div class="jr-chips" aria-label="Tap to add a portion size">
                 <button type="button" class="jr-chip" onclick="jrChip('100 g')">100 g</button>
                 <button type="button" class="jr-chip" onclick="jrChip('1 cup')">1 cup</button>
@@ -7164,7 +7159,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04su';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04sv';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -16382,42 +16377,6 @@ function jrChip(t){const el=$('jr-desc');if(!el)return;
   const ins=(needSp?' ':'')+t;
   el.value=before+ins+after;
   const pos=s+ins.length;try{el.focus();el.setSelectionRange(pos,pos);}catch(_){}}
-/* ── Voice dictation → speak the meal, it types into the description, the food AI reads that ── */
-let JR_REC=null,JR_REC_WD=null,JR_REC_MAX=null;
-function jrVoiceSupported(){return ('SpeechRecognition' in window)||('webkitSpeechRecognition' in window);}
-function jrVoiceStop(){
-  if(JR_REC_WD){clearTimeout(JR_REC_WD);JR_REC_WD=null;}
-  if(JR_REC_MAX){clearTimeout(JR_REC_MAX);JR_REC_MAX=null;}
-  const b=$('jr-mic');if(b){b.classList.remove('rec');b.innerHTML='🎤 Speak it';}
-  if(JR_REC){try{JR_REC.onend=null;JR_REC.onerror=null;JR_REC.onresult=null;if(JR_REC.abort)JR_REC.abort();else JR_REC.stop();}catch(e){}JR_REC=null;}}
-function jrVoice(){
-  const el=$('jr-desc');if(!el)return;
-  if(JR_REC){jrVoiceStop();return;}                                   // tap again = stop
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){toast('Voice typing isn’t supported on this device — type it instead',true);return;}
-  let rec;try{rec=new SR();}catch(e){toast('Voice typing isn’t available here — type it instead',true);return;}
-  try{rec.lang=(navigator.language||'en-AU');}catch(e){}rec.continuous=true;rec.interimResults=true;
-  let base=el.value||'';if(base&&!/\n$/.test(base))base+='\n';         // dictation starts on a fresh line
-  let started=false;
-  rec.onstart=function(){started=true;if(JR_REC_WD){clearTimeout(JR_REC_WD);JR_REC_WD=null;}const b=$('jr-mic');if(b)b.innerHTML='● Listening… tap to stop';};
-  rec.onaudiostart=function(){started=true;};
-  rec.onresult=function(ev){let fin='',int='';
-    for(let i=ev.resultIndex;i<ev.results.length;i++){const t=ev.results[i][0].transcript;if(ev.results[i].isFinal)fin+=t;else int+=t;}
-    if(fin)base+=fin.replace(/^\s+/,'');
-    el.value=base+int;try{el.scrollTop=el.scrollHeight;}catch(_){}
-    if(JR_REC_MAX){clearTimeout(JR_REC_MAX);JR_REC_MAX=setTimeout(jrVoiceStop,20000);}};   // auto-stop 20s after last speech
-  rec.onerror=function(ev){const e=ev&&ev.error;
-    if(e==='not-allowed'||e==='service-not-allowed')toast('Allow microphone access for your browser to use voice typing — or just type it',true);
-    else if(e==='no-speech')toast('Didn’t catch that — tap 🎤 and speak again',true);
-    else if(e==='audio-capture')toast('No microphone found — type it instead',true);
-    else if(e==='network')toast('Voice typing needs a connection — type it instead',true);
-    jrVoiceStop();};
-  rec.onend=function(){el.value=base;jrVoiceStop();};
-  JR_REC=rec;const b=$('jr-mic');if(b){b.classList.add('rec');b.innerHTML='● Starting…';}
-  JR_REC_WD=setTimeout(function(){if(!started){toast('Couldn’t start voice typing here — type it instead',true);jrVoiceStop();}},3500);   // never hang if it’s silently blocked (embedded frame / no mic event)
-  JR_REC_MAX=setTimeout(jrVoiceStop,20000);
-  try{rec.start();}catch(e){toast('Voice typing is already running or blocked — type it instead',true);jrVoiceStop();}
-}
 /* ── Barcode / brand lookup (Open Food Facts) → exact label macros for packaged foods ── */
 let JR_BC_STREAM=null,JR_BC_CONTROLS=null;
 function jrBarcodeStart(){const p=$('jr-bc');if(!p)return;const show=p.style.display==='none';p.style.display=show?'':'none';
@@ -16486,7 +16445,6 @@ function foodAddJournal(mealName,focus){
   const dd=$('jr-date');if(dd)dd.value=(($('log-date')&&$('log-date').value)||todayISO());
   const tt=$('jr-time');if(tt)tt.value=nowHM();
   const ds=$('jr-desc');if(ds)ds.value='';
-  try{jrVoiceStop();}catch(e){}const mic=$('jr-mic');if(mic)mic.style.display=jrVoiceSupported()?'':'none';
   const pv=$('jr-preview');if(pv)pv.innerHTML='';
   const sel=$('jr-meal');if(sel){const opts=(DAY_MEALS||[]).map(function(m){return (m.name||'Meal');});opts.push('Extra / unplanned');
     sel.innerHTML=opts.map(function(o){return '<option value="'+esc(o)+'"'+((mealName&&o===mealName)?' selected':'')+'>'+esc(o)+'</option>';}).join('');}
@@ -16495,7 +16453,7 @@ function foodAddJournal(mealName,focus){
   if(focus==='photo'){const pf=$('jr-photo');if(pf){try{pf.click();}catch(e){}}}
   else{const d2=$('jr-desc');if(d2)setTimeout(function(){try{d2.focus();}catch(e){}},320);}
 }
-function foodJournalCancel(){try{jrBarcodeStop();}catch(e){}try{jrVoiceStop();}catch(e){}const cap=$('jr-capture');if(cap)cap.style.display='none';JR_PHOTOS=[];JR_NUTRI=null;JR_NUTRI_SKIPPED=false;JR_NUTRI_SKIP_RECO='';const pv=$('jr-preview');if(pv)pv.innerHTML='';const bc=$('jr-bc');if(bc)bc.style.display='none';}
+function foodJournalCancel(){try{jrBarcodeStop();}catch(e){}const cap=$('jr-capture');if(cap)cap.style.display='none';JR_PHOTOS=[];JR_NUTRI=null;JR_NUTRI_SKIPPED=false;JR_NUTRI_SKIP_RECO='';const pv=$('jr-preview');if(pv)pv.innerHTML='';const bc=$('jr-bc');if(bc)bc.style.display='none';}
 function foodLogRefresh(){try{if(NUTRI_SUB==='log'&&$('log-date'))loadDayLog();}catch(e){}try{dpLoadToday();}catch(e){}}   // keep the Diet-plan Today ring + meal check-offs in sync with any food change
 /* Comment thread on the client's own day log (coach ↔ client). */
 async function renderLogComments(date){
