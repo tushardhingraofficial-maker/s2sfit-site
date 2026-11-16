@@ -918,6 +918,10 @@ body{overflow-x:hidden}
 .jr-chip{flex:none;border:1px solid var(--border);background:var(--card);border-radius:999px;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);transition:border-color .12s,background .12s}
 .jr-chip:hover{border-color:var(--prot)}
 .jr-chip:active{background:var(--card2)}
+.jr-mic{display:inline-flex;align-items:center;gap:7px;margin-top:9px;border:1px solid var(--prot);background:var(--card);border-radius:999px;padding:8px 15px;font-size:13px;font-weight:800;cursor:pointer;color:var(--prot);transition:border-color .12s,background .12s,color .12s}
+.jr-mic:hover{background:var(--card2)}
+.jr-mic.rec{background:var(--red);border-color:var(--red);color:#fff;animation:jrMicPulse 1.1s ease-in-out infinite}
+@keyframes jrMicPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.45)}50%{box-shadow:0 0 0 7px rgba(239,68,68,0)}}
 /* ── food journal: AI nutrition estimate card (shared: add form, recent entries, admin feed) ── */
 .jr-nutri{border:1px solid var(--border);border-radius:12px;background:var(--card2);padding:11px 13px}
 .jr-nutri-h{font-weight:800;font-size:12.5px;margin-bottom:8px}
@@ -4886,6 +4890,7 @@ img,svg,canvas,video{max-width:100%}
             </div>
             <div class="field"><label class="lab">What did you eat? <span class="small" style="text-transform:none;font-weight:400;color:var(--red)">· required</span></label>
               <textarea id="jr-desc" rows="4" placeholder="One item per line, with the amount — e.g.&#10;2 rotis&#10;1 bowl dal (150 g)&#10;100 g grilled paneer&#10;1 cup cooked rice"></textarea>
+              <div><button type="button" id="jr-mic" class="jr-mic" style="display:none" onclick="jrVoice()">🎤 Speak it</button></div>
               <div class="jr-chips" aria-label="Tap to add a portion size">
                 <button type="button" class="jr-chip" onclick="jrChip('100 g')">100 g</button>
                 <button type="button" class="jr-chip" onclick="jrChip('1 cup')">1 cup</button>
@@ -7161,7 +7166,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04sq';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04sr';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -16379,23 +16384,61 @@ function jrChip(t){const el=$('jr-desc');if(!el)return;
   const ins=(needSp?' ':'')+t;
   el.value=before+ins+after;
   const pos=s+ins.length;try{el.focus();el.setSelectionRange(pos,pos);}catch(_){}}
+/* ── Voice dictation → speak the meal, it types into the description, the food AI reads that ── */
+let JR_REC=null;
+function jrVoiceSupported(){return ('SpeechRecognition' in window)||('webkitSpeechRecognition' in window);}
+function jrVoiceStop(){const b=$('jr-mic');if(b){b.classList.remove('rec');b.innerHTML='🎤 Speak it';}if(JR_REC){try{JR_REC.onend=null;JR_REC.stop();}catch(e){}JR_REC=null;}}
+function jrVoice(){
+  const el=$('jr-desc');if(!el)return;
+  if(JR_REC){jrVoiceStop();return;}                                   // tap again = stop
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){toast('Voice typing isn’t supported on this device — type it instead',true);return;}
+  const rec=new SR();rec.lang=(navigator.language||'en-AU');rec.continuous=true;rec.interimResults=true;
+  let base=el.value||'';if(base&&!/\n$/.test(base))base+='\n';         // dictation starts on a fresh line
+  rec.onresult=function(ev){let fin='',int='';
+    for(let i=ev.resultIndex;i<ev.results.length;i++){const t=ev.results[i][0].transcript;if(ev.results[i].isFinal)fin+=t;else int+=t;}
+    if(fin)base+=fin.replace(/^\s+/,'');
+    el.value=base+int;try{el.scrollTop=el.scrollHeight;}catch(_){}};
+  rec.onerror=function(ev){if(ev&&(ev.error==='not-allowed'||ev.error==='service-not-allowed'))toast('Allow microphone access to use voice typing',true);else if(ev&&ev.error==='no-speech')toast('Didn’t catch that — tap 🎤 and speak again',true);jrVoiceStop();};
+  rec.onend=function(){el.value=base;jrVoiceStop();};
+  JR_REC=rec;const b=$('jr-mic');if(b){b.classList.add('rec');b.innerHTML='● Listening… tap to stop';}
+  try{rec.start();}catch(e){jrVoiceStop();}
+}
 /* ── Barcode / brand lookup (Open Food Facts) → exact label macros for packaged foods ── */
-let JR_BC_STREAM=null;
+let JR_BC_STREAM=null,JR_BC_CONTROLS=null;
 function jrBarcodeStart(){const p=$('jr-bc');if(!p)return;const show=p.style.display==='none';p.style.display=show?'':'none';
-  if(show){const sc=$('jr-bc-scan');if(sc)sc.style.display=('BarcodeDetector' in window && navigator.mediaDevices)?'':'none';const i=$('jr-bc-input');if(i)setTimeout(function(){try{i.focus();}catch(e){}},60);}
+  if(show){const sc=$('jr-bc-scan');if(sc)sc.style.display=(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)?'':'none';const i=$('jr-bc-input');if(i)setTimeout(function(){try{i.focus();}catch(e){}},60);}
   else{jrBarcodeStop();}}
-function jrBarcodeStop(){try{if(JR_BC_STREAM){JR_BC_STREAM.getTracks().forEach(function(t){t.stop();});JR_BC_STREAM=null;}}catch(e){}const v=$('jr-bc-video');if(v){v.style.display='none';try{v.srcObject=null;}catch(e){}}}
+function jrBarcodeStop(){
+  try{if(JR_BC_CONTROLS){JR_BC_CONTROLS.stop();JR_BC_CONTROLS=null;}}catch(e){}
+  try{if(JR_BC_STREAM){JR_BC_STREAM.getTracks().forEach(function(t){t.stop();});JR_BC_STREAM=null;}}catch(e){}
+  const v=$('jr-bc-video');if(v){v.style.display='none';try{v.srcObject=null;}catch(e){}}}
+function jrZXingLoad(){return new Promise(function(res,rej){
+  if(window.ZXing&&window.ZXing.BrowserMultiFormatReader)return res();
+  var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
+  s.onload=function(){(window.ZXing&&window.ZXing.BrowserMultiFormatReader)?res():rej(new Error('noglobal'));};
+  s.onerror=function(){rej(new Error('load'));};document.head.appendChild(s);});}
 async function jrBarcodeScan(){
-  if(!('BarcodeDetector' in window)){toast('Camera scanning isn’t supported here — type the number instead',true);return;}
-  try{const det=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128']});
-    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});JR_BC_STREAM=stream;
-    const v=$('jr-bc-video');v.srcObject=stream;v.style.display='';await v.play();
-    const st=$('jr-bc-stat');if(st)st.textContent='Point the camera at the barcode…';
-    const tick=async function(){if(!JR_BC_STREAM)return;
-      try{const codes=await det.detect(v);if(codes&&codes.length){const c=codes[0].rawValue;jrBarcodeStop();jrBarcodeLookup(c);return;}}catch(e){}
-      requestAnimationFrame(tick);};
-    requestAnimationFrame(tick);
-  }catch(e){toast('Couldn’t open the camera — type the number instead',true);jrBarcodeStop();}}
+  const v=$('jr-bc-video'),st=$('jr-bc-stat');
+  if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){toast('Camera isn’t available here — type the number instead',true);return;}
+  if('BarcodeDetector' in window){                                    // fast native path (Android Chrome)
+    try{const det=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128']});
+      const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});JR_BC_STREAM=stream;
+      v.srcObject=stream;v.style.display='';await v.play();
+      if(st)st.textContent='Point the camera at the barcode…';
+      const tick=async function(){if(!JR_BC_STREAM)return;
+        try{const codes=await det.detect(v);if(codes&&codes.length){const c=codes[0].rawValue;jrBarcodeStop();jrBarcodeLookup(c);return;}}catch(e){}
+        requestAnimationFrame(tick);};
+      requestAnimationFrame(tick);return;
+    }catch(e){toast('Couldn’t open the camera — type the number instead',true);jrBarcodeStop();return;}
+  }
+  if(st)st.textContent='Loading scanner…';                            // fallback: ZXing camera scanner (iPhone etc.)
+  try{await jrZXingLoad();}catch(e){if(st)st.textContent='';toast('Couldn’t load the scanner — type the number instead',true);return;}
+  try{v.style.display='';const reader=new ZXing.BrowserMultiFormatReader();
+    if(st)st.textContent='Point the camera at the barcode…';
+    JR_BC_CONTROLS=await reader.decodeFromConstraints({video:{facingMode:'environment'}},v,function(result,err,controls){
+      if(result){const c=(result.getText?result.getText():(result.text||''));try{controls.stop();}catch(e){}JR_BC_CONTROLS=null;jrBarcodeStop();jrBarcodeLookup(c);}});
+  }catch(e){if(st)st.textContent='';toast('Couldn’t open the camera — type the number instead',true);jrBarcodeStop();}}
 async function jrBarcodeLookup(code){
   code=String(code||($('jr-bc-input')&&$('jr-bc-input').value)||'').replace(/\D/g,'');
   if(code.length<6){toast('Enter the barcode number (digits only)',true);return;}
@@ -16429,6 +16472,7 @@ function foodAddJournal(mealName,focus){
   const dd=$('jr-date');if(dd)dd.value=(($('log-date')&&$('log-date').value)||todayISO());
   const tt=$('jr-time');if(tt)tt.value=nowHM();
   const ds=$('jr-desc');if(ds)ds.value='';
+  try{jrVoiceStop();}catch(e){}const mic=$('jr-mic');if(mic)mic.style.display=jrVoiceSupported()?'':'none';
   const pv=$('jr-preview');if(pv)pv.innerHTML='';
   const sel=$('jr-meal');if(sel){const opts=(DAY_MEALS||[]).map(function(m){return (m.name||'Meal');});opts.push('Extra / unplanned');
     sel.innerHTML=opts.map(function(o){return '<option value="'+esc(o)+'"'+((mealName&&o===mealName)?' selected':'')+'>'+esc(o)+'</option>';}).join('');}
@@ -16437,7 +16481,7 @@ function foodAddJournal(mealName,focus){
   if(focus==='photo'){const pf=$('jr-photo');if(pf){try{pf.click();}catch(e){}}}
   else{const d2=$('jr-desc');if(d2)setTimeout(function(){try{d2.focus();}catch(e){}},320);}
 }
-function foodJournalCancel(){try{jrBarcodeStop();}catch(e){}const cap=$('jr-capture');if(cap)cap.style.display='none';JR_PHOTOS=[];JR_NUTRI=null;JR_NUTRI_SKIPPED=false;JR_NUTRI_SKIP_RECO='';const pv=$('jr-preview');if(pv)pv.innerHTML='';const bc=$('jr-bc');if(bc)bc.style.display='none';}
+function foodJournalCancel(){try{jrBarcodeStop();}catch(e){}try{jrVoiceStop();}catch(e){}const cap=$('jr-capture');if(cap)cap.style.display='none';JR_PHOTOS=[];JR_NUTRI=null;JR_NUTRI_SKIPPED=false;JR_NUTRI_SKIP_RECO='';const pv=$('jr-preview');if(pv)pv.innerHTML='';const bc=$('jr-bc');if(bc)bc.style.display='none';}
 function foodLogRefresh(){try{if(NUTRI_SUB==='log'&&$('log-date'))loadDayLog();}catch(e){}try{dpLoadToday();}catch(e){}}   // keep the Diet-plan Today ring + meal check-offs in sync with any food change
 /* Comment thread on the client's own day log (coach ↔ client). */
 async function renderLogComments(date){
