@@ -7149,7 +7149,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04so';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04sp';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -14344,6 +14344,72 @@ function nutriReconcile(n){if(!n||typeof n!=='object')return n;
   }else if(nutriBad(n)){nutriFixOne(n);}
   return n;
 }
+/* ── DB grounding: pull real macros from the verified ingredient DB, so the
+   AI only has to NAME the food + estimate the portion, not do the arithmetic.
+   Runs BEFORE nutriReconcile. ──────────────────────────────────────────── */
+// household / regional portion units → grams (count × this)
+const UNIT_GRAMS=[
+  [/\bkatori\b|\bbowl\b|\bkatoris\b/i,180],[/\bthali\b|\bplate\b/i,350],[/\bcup\b/i,200],[/\bglass\b/i,250],
+  [/paratha|paranth|thepla/i,90],[/\bnaan\b|kulcha|bhatura/i,110],[/\broti\b|chapati|chapatti|phulka|rotis/i,40],
+  [/\bslice\b|slices/i,30],[/\bscoop\b/i,30],[/\btbsp\b|tablespoon/i,15],[/\btsp\b|teaspoon/i,5],
+  [/\bhandful\b/i,30],[/\bfist\b/i,150],[/\bpalm\b/i,100],[/\begg\b|eggs/i,50],
+];
+// best gram estimate for an item from its qty string + name
+function foodGrams(qty,name){
+  const s=((qty||'')+' '+(name||''));
+  const g=s.match(/([\d.]+)\s*(kg|gram|g\b|ml\b|millilit)/i);
+  if(g){let v=parseFloat(g[1]);if(/kg/i.test(g[2]))v*=1000;if(v>0)return Math.round(v);}
+  const n=(String(qty||'').match(/([\d.]+)/)||[])[1];const count=n?Math.max(1,parseFloat(n)):1;
+  for(let i=0;i<UNIT_GRAMS.length;i++){if(UNIT_GRAMS[i][0].test(s))return Math.round(count*UNIT_GRAMS[i][1]);}
+  if(/piece|\bpc\b|\bpcs\b|\bnos?\b/i.test(s))return Math.round(count*55);
+  return Math.round(count*120);
+}
+const NG_STOP={grilled:1,cooked:1,boiled:1,fried:1,raw:1,steamed:1,roasted:1,baked:1,fresh:1,with:1,and:1,the:1,of:1,plain:1,large:1,small:1,medium:1,hot:1,cold:1,homemade:1,home:1,made:1,prepared:1,estimated:1,approx:1,serving:1,piece:1,pieces:1,bowl:1,cup:1,glass:1,slice:1};
+function ngToks(s){return String(s||'').toLowerCase().split(/[^a-z]+/).filter(function(t){return t.length>2&&!NG_STOP[t];});}
+// best-matching DB ingredient for a food name (Jaccard token overlap, gated ≥0.5 so it won't mis-apply)
+function bestIngMatch(name){
+  const list=(typeof INGREDIENTS!=='undefined'&&INGREDIENTS)||[];if(!list.length)return null;
+  const it=ngToks(name);if(!it.length)return null;const itSet={};it.forEach(function(t){itSet[t]=1;});
+  let best=null,bestJ=0;
+  for(let i=0;i<list.length;i++){const f=list[i];const ft=ngToks(f.name);if(!ft.length)continue;
+    const uni={};it.forEach(function(t){uni[t]=1;});let shared=0;
+    for(let k=0;k<ft.length;k++){const t=ft[k];uni[t]=1;if(itSet[t])shared++;}
+    const j=shared/Object.keys(uni).length;
+    if(j>bestJ){bestJ=j;best=f;}
+  }
+  return bestJ>=0.6?best:null;   // gated: needs a strong token match (an exact food scores 1.0), so partials like "fried chicken"→"chicken curry" are rejected
+}
+function ngFracs(p,c,f){const pe=4*p,ce=4*c,fe=9*f,t=pe+ce+fe||1;return [pe/t,ce/t,fe/t];}
+// ground one item from the DB; keep AI calories when the portion disagrees (use DB composition). true if grounded.
+function nutriGroundItem(it){
+  const m=bestIngMatch(it&&it.name);if(!m)return false;
+  const mg=ilParseGrams(m.units)||100;if(!(mg>0))return false;
+  const grams=foodGrams(it.qty,it.name);
+  const per={p:(+m.p||0)/mg,c:(+m.carb||0)/mg,f:(+m.f||0)/mg,cal:(+m.cal||0)/mg};
+  const dbCal=Math.round(per.cal*grams),aiCal=Math.round(+it.cal||0);
+  if(aiCal>0&&dbCal>0&&dbCal/aiCal>=0.5&&dbCal/aiCal<=2){
+    it.cal=dbCal;it.p=Math.round(per.p*grams);it.c=Math.round(per.c*grams);it.f=Math.round(per.f*grams);
+  }else{
+    const cal=aiCal>0?aiCal:dbCal;const fr=ngFracs(per.p,per.c,per.f);
+    it.cal=cal;it.p=Math.round(cal*fr[0]/4);it.c=Math.round(cal*fr[1]/4);it.f=Math.round(cal*fr[2]/9);
+  }
+  it._src='db';return true;
+}
+// ground items from the DB, and sanity-correct degenerate (gram-echoed) calories for anything not in the DB
+function nutriGround(n){
+  if(!n||typeof n!=='object')return n;
+  const items=Array.isArray(n.items)?n.items:[];if(!items.length)return n;
+  items.forEach(function(it){
+    if(nutriGroundItem(it))return;
+    const grams=foodGrams(it.qty,it.name),cal=Math.round(+it.cal||0),pr=nutriProfileFor(it.name,it.qty);
+    if(pr&&grams>=10){
+      const k100=4*pr[0]+4*pr[1]+9*pr[2];               // kcal/100g ≈ Atwater of the profile's per-100g grams
+      const est=Math.round(grams*k100/100);
+      if(cal<=0||Math.abs(cal-grams)<=Math.max(3,grams*0.08)||cal>est*3||cal<est*0.34)it.cal=est;
+    }
+  });
+  return n;
+}
 /* protein-add examples that respect the client's diet preference (used in the local cheat tip) */
 function cheatProteinEg(){const c=(typeof dietNorm==='function')?dietNorm(typeof clientDiet==='function'?clientDiet():''):'';
   if(c==='vegan')return 'a scoop of plant/pea protein, a tofu or soya-chunk side, a soy yoghurt, or a bowl of dal/legumes';
@@ -14407,7 +14473,7 @@ function cheatPrepAI(d,tg){d=d||{};
   if(items.length){cal=items.reduce((s,i)=>s+i.cal,0);p=items.reduce((s,i)=>s+i.p,0);c=items.reduce((s,i)=>s+i.c,0);f=items.reduce((s,i)=>s+i.f,0);}
   else{cal=Math.round(+d.cal||0);p=Math.round(+d.p||0);c=Math.round(+d.c||0);f=Math.round(+d.f||0);}
   const name=((d.name||(CHEAT&&CHEAT.desc&&CHEAT.desc.split(/[,+\n]/)[0])||'Cheat meal')+'').trim().slice(0,60);
-  const fixed=nutriReconcile({name:name,items:items,cal:cal,p:p,c:c,f:f});cal=fixed.cal;p=fixed.p;c=fixed.c;f=fixed.f;items=fixed.items;
+  const fixed=nutriReconcile(nutriGround({name:name,items:items,cal:cal,p:p,c:c,f:f}));cal=fixed.cal;p=fixed.p;c=fixed.c;f=fixed.f;items=fixed.items;
   let reco=(d.reco||'').toString();if(!reco)reco=cheatLocalReco(cal,p,tg);
   return {name:name,items:items,cal:cal,p:p,c:c,f:f,reco:reco,confidence:(d.confidence||'').toString(),source:d.source||'ai'};}
 function cheatEditCal(v){if(!CHEAT)return;const ch=((LC_DATA&&LC_DATA.challenges)||[]).find(c=>c.id===CHEAT.chId);const tg=cheatTargetFor(ch,PLAN,todayISO());
@@ -16729,7 +16795,7 @@ function jrNormNutri(d,src){
   else{cal=Math.round(+d.cal||0);p=Math.round(+d.p||0);c=Math.round(+d.c||0);f=Math.round(+d.f||0);}
   if(!(cal>0||p>0||c>0||f>0))return null;
   const suggestions=(Array.isArray(d.suggestions)?d.suggestions:[]).map(function(s){return String(s||'').slice(0,240).trim();}).filter(Boolean).slice(0,5);
-  return nutriReconcile({name:(d.name||'').toString().slice(0,60),items:items,cal:cal,p:p,c:c,f:f,reco:(d.reco||'').toString().slice(0,600),suggestions:suggestions,source:src||(d.source||'ai'),at:new Date().toISOString()});
+  return nutriReconcile(nutriGround({name:(d.name||'').toString().slice(0,60),items:items,cal:cal,p:p,c:c,f:f,reco:(d.reco||'').toString().slice(0,600),suggestions:suggestions,source:src||(d.source||'ai'),at:new Date().toISOString()}));
 }
 /* local fallback meal tips (used when the Smart suggestions aren't available) — specific amounts + numbers */
 function jrLocalSugg(res){
