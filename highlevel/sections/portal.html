@@ -7110,7 +7110,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04sl';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04sm';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -14233,6 +14233,77 @@ function cheatLocalEstimate(desc,qty,tg){
   const items=[{name:name,qty:(qty||desc||'').toString().slice(0,40),cal:cal,p:p,c:c,f:f}];
   return {name:name,items:items,cal:cal,p:p,c:c,f:f,reco:cheatLocalReco(cal,p,tg),source:'estimate'};
 }
+/* ── Macro reconciliation / repair ──────────────────────────────────────────
+   The AI analyzer sometimes returns plausible CALORIES but broken macros
+   (all zeros, or echoing the gram weight as carbs/calories). We never trust a
+   macro set that doesn't energy-reconcile with its own calories (4P+4C+9F must
+   land near kcal). When it doesn't, we keep the calories and re-derive P/C/F
+   from the food's typical macro RATIO, so every stored macro is self-consistent.
+   grams-per-100g [protein, carb, fat] — only the RATIO matters, so approximate
+   values are fine. Specific/compound patterns first. */
+const NUTRI_PROFILES=[
+  [/protein\s*(shake|powder|whey|isolate)|whey|mass gainer/i,[20,6,3]],
+  [/protein\s*bar|granola bar|energy bar/i,[20,45,12]],
+  [/fried chicken|kfc|chicken wing|nugget|popcorn chicken/i,[22,9,17]],
+  [/butter chicken|chicken curry|chicken masala|chicken tikka masala|chicken korma/i,[10,6,10]],
+  [/chicken|turkey|tikka|kebab|kabab|tandoori|grilled chicken|breast/i,[29,1,6]],
+  [/paneer|cottage cheese|halloumi/i,[18,4,20]],
+  [/\bcheese|mozzarella|cheddar/i,[24,2,30]],
+  [/tofu|bean curd/i,[13,3,7]],
+  [/soya|soy chunk|soybean|edamame/i,[16,9,1]],
+  [/rajma|kidney bean|black ?bean|pinto|white bean|bean curry/i,[8.5,22,0.6]],
+  [/chickpea|chana|chole|garbanzo|hummus/i,[8,24,5]],
+  [/\bdal\b|daal|lentil|moong|masoor|toor|sambar|sambhar|rasam dal/i,[6,16,3]],
+  [/egg|omelet|omelette|anda|bhurji|scrambled|frittata/i,[13,2,11]],
+  [/fish|salmon|tuna|prawn|shrimp|seafood|mackerel|sardine|cod|tilapia/i,[22,0,5]],
+  [/quinoa/i,[4.4,21,1.9]],
+  [/biryani|pulao|pilaf|fried rice|jeera rice|pulav/i,[6,30,8]],
+  [/\brice\b|basmati|steamed rice|boiled rice|cooked rice|rice bowl/i,[2.7,28,0.4]],
+  [/oats|oat|porridge|dalia|daliya|overnight|muesli|granola/i,[5,15,3]],
+  [/maggi|noodle|ramen|pasta|spaghetti|macaroni|chow ?mein|hakka/i,[8,55,15]],
+  [/paratha|puri|naan|kulcha|poori|bhatura|thepla/i,[8,40,15]],
+  [/bread|\broti\b|chapati|chapatti|wrap|\bbun\b|\bsub\b|sandwich|toast|tortilla|phulka|pita|bagel|roll/i,[9,48,5]],
+  [/fries|chips|wedges|hash brown|crisps/i,[3.5,41,15]],
+  [/potato|aloo|mashed/i,[2,18,1]],
+  [/yogurt|yoghurt|curd|dahi|greek|skyr|raita/i,[9,5,2]],
+  [/milk|lassi|buttermilk|chaas|chaach/i,[3.4,7,3]],
+  [/\bnuts?\b|almond|peanut|cashew|walnut|pecan|pistachio|nut butter|trail mix|seeds?/i,[20,20,50]],
+  [/avocado/i,[2,9,15]],
+  [/banana/i,[1.1,23,0.3]],
+  [/fruit|apple|orange|mango|grape|berry|melon|papaya|\bpear\b|pineapple|guava|kiwi|watermelon|pomegranate/i,[0.7,13,0.2]],
+  [/vegetable|\bveg\b|salad|greens|broccoli|spinach|cauliflower|sabzi|sabji|stir ?fry|bhindi|\bgobi\b|cucumber|tomato|carrot|lettuce|capsicum/i,[2.2,6,0.5]],
+  [/\boil\b|ghee|\bbutter\b|mayonnaise|mayo|dressing/i,[0.3,2,80]],
+  [/pizza/i,[11,30,10]],
+  [/burger|cheeseburger|slider/i,[11,32,12]],
+  [/samosa|pakora|vada|bhaji|fritter|spring roll|cutlet|tikki|kachori|bonda/i,[5,34,18]],
+  [/curry|masala|gravy|korma|makhani|kadai|kadhai|tikka masala|kadhi/i,[8,8,11]],
+  [/soup|broth|rasam|shorba/i,[3,7,2]],
+  [/smoothie|juice|soda|cola|soft drink|frappe|milkshake|cold coffee/i,[2,15,1]],
+  [/chocolate|cake|pastry|dessert|\bsweet\b|mithai|gulab|jalebi|laddu|ladoo|halwa|barfi|ice ?cream|kulfi|cookie|biscuit|donut|doughnut|brownie|muffin|candy|chikki|pudding/i,[5,55,22]],
+  [/chaat|bhel|pani puri|dahi puri|sev puri|golgappa/i,[6,35,10]],
+  [/dosa|idli|uttapam|medu vada|appam/i,[4,30,4]],
+  [/poha|upma|pongal|khichdi|khichri/i,[3,25,5]],
+];
+function nutriProfileFor(name,qty){const s=((name||'')+' '+(qty||''));for(let i=0;i<NUTRI_PROFILES.length;i++){if(NUTRI_PROFILES[i][0].test(s))return NUTRI_PROFILES[i][1];}return null;}
+/* macro energy fractions [protein,carb,fat] of a profile (sum≈1); generic balanced split when unknown */
+function nutriFracs(pr){if(!pr)return [0.18,0.50,0.32];const pe=4*pr[0],ce=4*pr[1],fe=9*pr[2],t=pe+ce+fe||1;return [pe/t,ce/t,fe/t];}
+/* does this {cal,p,c,f} fail to energy-reconcile? (ignore trivially small items) */
+function nutriBad(o){const cal=Math.round(+(o&&o.cal)||0);if(cal<10)return false;const mc=4*(+o.p||0)+4*(+o.c||0)+9*(+o.f||0);return mc<cal*0.6||mc>cal*1.6;}
+/* keep calories, redistribute into macros by the food's typical ratio so 4P+4C+9F≈cal */
+function nutriFixOne(o){const cal=Math.round(+(o&&o.cal)||0);const fr=nutriFracs(nutriProfileFor(o.name,o.qty));o.p=Math.round(cal*fr[0]/4);o.c=Math.round(cal*fr[1]/4);o.f=Math.round(cal*fr[2]/9);o._fixed=true;return o;}
+/* repair an entire normalised nutrition object in place (items first, then totals) */
+function nutriReconcile(n){if(!n||typeof n!=='object')return n;
+  let items=Array.isArray(n.items)?n.items:[];
+  if(items.length){
+    items.forEach(function(it){if(nutriBad(it)){nutriFixOne(it);if(it.base)it.base={cal:Math.round(+it.cal||0),p:it.p,c:it.c,f:it.f};}});
+    n.items=items;
+    n.cal=items.reduce(function(s,i){return s+(+i.cal||0);},0);
+    n.p=items.reduce(function(s,i){return s+(+i.p||0);},0);
+    n.c=items.reduce(function(s,i){return s+(+i.c||0);},0);
+    n.f=items.reduce(function(s,i){return s+(+i.f||0);},0);
+  }else if(nutriBad(n)){nutriFixOne(n);}
+  return n;
+}
 /* protein-add examples that respect the client's diet preference (used in the local cheat tip) */
 function cheatProteinEg(){const c=(typeof dietNorm==='function')?dietNorm(typeof clientDiet==='function'?clientDiet():''):'';
   if(c==='vegan')return 'a scoop of plant/pea protein, a tofu or soya-chunk side, a soy yoghurt, or a bowl of dal/legumes';
@@ -14296,6 +14367,7 @@ function cheatPrepAI(d,tg){d=d||{};
   if(items.length){cal=items.reduce((s,i)=>s+i.cal,0);p=items.reduce((s,i)=>s+i.p,0);c=items.reduce((s,i)=>s+i.c,0);f=items.reduce((s,i)=>s+i.f,0);}
   else{cal=Math.round(+d.cal||0);p=Math.round(+d.p||0);c=Math.round(+d.c||0);f=Math.round(+d.f||0);}
   const name=((d.name||(CHEAT&&CHEAT.desc&&CHEAT.desc.split(/[,+\n]/)[0])||'Cheat meal')+'').trim().slice(0,60);
+  const fixed=nutriReconcile({name:name,items:items,cal:cal,p:p,c:c,f:f});cal=fixed.cal;p=fixed.p;c=fixed.c;f=fixed.f;items=fixed.items;
   let reco=(d.reco||'').toString();if(!reco)reco=cheatLocalReco(cal,p,tg);
   return {name:name,items:items,cal:cal,p:p,c:c,f:f,reco:reco,confidence:(d.confidence||'').toString(),source:d.source||'ai'};}
 function cheatEditCal(v){if(!CHEAT)return;const ch=((LC_DATA&&LC_DATA.challenges)||[]).find(c=>c.id===CHEAT.chId);const tg=cheatTargetFor(ch,PLAN,todayISO());
@@ -16609,7 +16681,7 @@ function jrNormNutri(d,src){
   else{cal=Math.round(+d.cal||0);p=Math.round(+d.p||0);c=Math.round(+d.c||0);f=Math.round(+d.f||0);}
   if(!(cal>0||p>0||c>0||f>0))return null;
   const suggestions=(Array.isArray(d.suggestions)?d.suggestions:[]).map(function(s){return String(s||'').slice(0,240).trim();}).filter(Boolean).slice(0,5);
-  return {name:(d.name||'').toString().slice(0,60),items:items,cal:cal,p:p,c:c,f:f,reco:(d.reco||'').toString().slice(0,600),suggestions:suggestions,source:src||(d.source||'ai'),at:new Date().toISOString()};
+  return nutriReconcile({name:(d.name||'').toString().slice(0,60),items:items,cal:cal,p:p,c:c,f:f,reco:(d.reco||'').toString().slice(0,600),suggestions:suggestions,source:src||(d.source||'ai'),at:new Date().toISOString()});
 }
 /* local fallback meal tips (used when the Smart suggestions aren't available) — specific amounts + numbers */
 function jrLocalSugg(res){
