@@ -5233,7 +5233,6 @@ img,svg,canvas,video{max-width:100%}
               <button class="adash-navbtn" onclick="openRewards()" title="Build the S2S Points programme — earn &amp; lose categories, rules, caps, redeem limit — award and bulk-award points"><svg class="nav-ic"><use href="#ic-trophy"/></svg> Rewards &amp; S2S Points</button>
               <button class="adash-navbtn" onclick="openChallenges()" title="Create group step challenges, build the teams, update daily steps and run the live leaderboard"><svg class="nav-ic"><use href="#ic-flame"/></svg> Live challenges</button>
               <button class="adash-navbtn" onclick="openScheduling()" title="Set your weekly availability per location, collect client availability and auto-build the week&#39;s PT sessions"><svg class="nav-ic"><use href="#ic-calendar"/></svg> PT scheduling</button>
-              <button class="adash-navbtn" onclick="openOnboardAdmin()" title="Edit the onboarding checklist new clients see when they sign up"><svg class="nav-ic"><use href="#ic-rocket"/></svg> Onboarding</button>
             </nav>
             <div class="adash-navtitle">Dashboard window</div>
             <div style="display:flex;gap:6px;align-items:center">
@@ -5700,6 +5699,12 @@ img,svg,canvas,video{max-width:100%}
             <p class="small" style="margin:0 0 10px">Step 1 (book a reflection call) is available as soon as the section is on. Enable the cancellation form only after they've had their reflection call.</p>
             <label class="switch"><input type="checkbox" id="ed-susp-form" onchange="edSuspToggle(this.checked)"><span class="track"></span><span style="font-weight:700">Enable cancellation form (step 2)</span> <span class="pill muted" id="ed-susp-pill">Locked</span></label>
             <div class="small" id="ed-susp-status" style="color:var(--muted);margin-top:10px"></div>
+            <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
+              <div class="uline" style="margin:0 0 5px">Pause / resume access</div>
+              <p class="small" style="margin:0 0 9px;color:var(--muted)">Pause an inactive client — they'll see an “account paused” screen and can't use the portal until you resume them. Their data is kept.</p>
+              <button class="btn-sm" id="ed-pause-btn" onclick="togglePause(edClient.id,!edPlan.paused)">⏸ Pause account</button>
+              <span class="small" id="ed-pause-state" style="margin-left:10px"></span>
+            </div>
           </div></div>
 
         <div class="card" data-edtab="sleep"><div class="card-head"><span class="step-no">😴</span><h2>Sleep</h2>
@@ -6541,22 +6546,6 @@ img,svg,canvas,video{max-width:100%}
     </div>
   </div>
 </div>
-<!-- ================= ADMIN · ONBOARDING TEMPLATE EDITOR ================= -->
-<div class="overlay" id="onboard-admin-modal">
-  <div class="modal">
-    <div class="modal-head"><div class="brand-logo admin-logo" role="img" aria-label="S2S Fit"></div><h2><svg class="hd-ic"><use href="#ic-rocket"/></svg>Onboarding checklist template</h2><span class="sp"></span><button class="icon-x" onclick="closeOnboardAdmin()">×</button></div>
-    <div class="modal-body">
-      <p class="small" style="margin-bottom:12px">This checklist is shown to every client when they sign up. Add steps, and subtasks within each step. Applies to all clients.</p>
-      <div id="onboard-tpl-list"></div>
-      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-        <button class="btn-sm solid" onclick="obtAddItem()">＋ Add step</button>
-        <button class="btn-sm" onclick="obtSeedDefaults()" title="Add a starter checklist">✨ Starter pack</button>
-        <span style="flex:1"></span>
-        <button class="btn btn-primary" style="flex:none" onclick="saveOnboardTpl()">Save template</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- ================= WALKTHROUGH INTRO PROMPT ================= -->
 <div class="overlay" id="tour-prompt">
@@ -7099,7 +7088,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04sj';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04sk';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -15603,7 +15592,6 @@ const FEATURES=[
   {key:'rewards',label:'Rewards & S2S Points',emoji:'🏆',grp:'Client engagement',fn:'openRewards'},
   {key:'challenges',label:'Live step challenges',emoji:'🔥',grp:'Client engagement',fn:'openChallenges',infer:async()=>{try{const d=await DB.getKV('live_challenges');const chs=(d&&d.challenges)||[];const dates=[];chs.forEach(c=>{if(c&&c.updated_at)dates.push(c.updated_at);const E=(c&&c.entries)||{};Object.keys(E).forEach(cid=>Object.keys(E[cid]||{}).forEach(dd=>dates.push(dd)));});return featMax(dates);}catch(e){return null;}}},
   {key:'scheduling',label:'PT scheduling',emoji:'🗓',grp:'Client engagement',fn:'openScheduling',infer:async()=>{try{const d=await DB.getKV('pt_scheduling');const ws=(d&&d.weeks)?Object.keys(d.weeks):[];return featMax(ws.concat(d&&d.week?[d.week]:[]));}catch(e){return null;}}},
-  {key:'onboarding',label:'Onboarding checklist',emoji:'🚀',grp:'Setup',fn:'openOnboardAdmin'},
   {key:'knowledge',label:'Knowledge — courses & quiz',emoji:'🧠',grp:'Client engagement'}
 ];
 async function featLoad(force){if(FEAT_USAGE&&!force)return FEAT_USAGE;try{const v=await DB.getKV('feature_usage');FEAT_USAGE=(v&&typeof v==='object')?v:{};FEAT_LOADED_OK=true;}catch(e){FEAT_USAGE=FEAT_USAGE||{};}return FEAT_USAGE;}
@@ -27281,6 +27269,7 @@ function edRenderSusp(){
     const secOn=(edPlan.sections&&edPlan.sections.suspension)===true||(!!SECTION_LIVE&&SECTION_LIVE.suspension===true&&(edPlan.sections?edPlan.sections.suspension!==false:true));
     st.innerHTML=(secOn?'':'⚠ The Membership Suspension section is off for this client — turn it on above so they can see it.<br>')+
       (sp.reflectionBookedAt?('📅 Reflection call marked booked on <b>'+esc(fmtDate(String(sp.reflectionBookedAt).slice(0,10)))+'</b>.'):'⏳ Client has not booked a reflection call yet.');}
+  try{edRenderPauseBtn();}catch(e){}   // pause / resume control lives in this card now
 }
 function edSuspToggle(on){edPlan.suspension=edPlan.suspension||{};edPlan.suspension.formEnabled=!!on;edRenderSusp();}
 /* Cardio — per-client objectives (fat loss / performance) + fat-loss target */
