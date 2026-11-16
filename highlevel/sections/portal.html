@@ -94,7 +94,11 @@ window.addEventListener('appinstalled',function(){window.__s2sBIP=null;try{if(ty
 :root[data-theme="light"] input,:root[data-theme="light"] select,:root[data-theme="light"] textarea{background:#fff}
 :root[data-theme="light"] input:focus,:root[data-theme="light"] select:focus,:root[data-theme="light"] textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(232,23,13,.12)}
 html{height:100%}
-body{min-height:100%;background:var(--ink);color:var(--text);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body{min-height:100%;min-height:100dvh;background:var(--ink);color:var(--text);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+/* Installed-PWA fix: on a short page (e.g. Home), iOS/Android standalone anchors position:fixed;bottom:0
+   to the document bottom, not the screen — so the bottom nav floats up. Force the client shell to always
+   fill the dynamic viewport so the document bottom == screen bottom and #bottom-nav pins correctly. */
+#portal:not(.hidden){min-height:100vh;min-height:100dvh}
 h1,h2,h3{font-family:var(--disp);text-wrap:balance}
 .tnum{font-variant-numeric:tabular-nums}
 .wrap{max-width:1100px;margin:0 auto;padding:24px 18px 120px}
@@ -4063,7 +4067,7 @@ tr.tr-gr td:first-child{border-left:3px solid var(--red)}
 #workout-modal .modal{max-width:100%;width:100%;height:100vh;height:100dvh;margin:0;border-radius:0;border:none;box-shadow:none;display:flex;flex-direction:column}
 #workout-modal .modal-head{flex:none;border-radius:0;background:var(--surface);border-bottom:1px solid var(--border)}
 #workout-modal .modal-body{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0}
-.wko-stage{padding:12px 14px calc(40px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto}
+.wko-stage{padding:12px 14px calc(40px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto;touch-action:pan-y;will-change:transform;backface-visibility:hidden}
 /* media carousel */
 .wko-media{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding:2px 0 8px;margin-bottom:10px}
 .wko-media::-webkit-scrollbar{height:6px}.wko-media::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:6px}
@@ -7034,7 +7038,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04sd';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04se';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -12341,7 +12345,7 @@ function wkoEntryStats(en){let sets=0,reps=0,vol=0,best=0;(en.sets||[]).forEach(
 function wkoEntryStatBits(en){const st=wkoEntryStats(en);if(st.aerobic){return [st.cardio.dur?('⏱ '+st.cardio.dur+'m'):'',st.cardio.dist?(st.cardio.dist+' km'):'',st.cardio.cal?(st.cardio.cal+' kcal'):'',st.cardio.hr?(st.cardio.hr+' bpm'):''].filter(Boolean);}return [st.vol?('📊 '+lcNum(st.vol)+' kg vol'):'',st.best1?('💪 '+st.best1+' kg 1RM'):''].filter(Boolean);}
 function wkoTotals(){let sets=0,reps=0,vol=0;(WKO.entries||[]).forEach(en=>en.sets.forEach(s=>{const r=+s.reps||0,w=+s.weight||0;if(r>0){sets++;reps+=r;vol+=r*w;}}));return{sets,reps,vol:Math.round(vol)};}
 /* ── premium one-exercise-focus logger ── */
-let WKO_IDX=0;
+let WKO_IDX=0, WKO_SWIPE_ANIM=false;
 function wkoClampIdx(){const n=WKO?WKO.entries.length:0;if(WKO_IDX<0)WKO_IDX=0;if(WKO_IDX>n)WKO_IDX=n;}
 function wkoNav(d){wkoClampIdx();const n=WKO?WKO.entries.length:0;
   if(WKO_IDX>=n){WKO_IDX=d<0?n-1:n;}   // from review
@@ -12525,9 +12529,75 @@ function renderWorkout(){
     else inner=wkoFocusHTML(WKO.entries[WKO_IDX],WKO_IDX);}
   host.innerHTML=wkoTopbarHTML()+'<div class="wko-stage">'+inner+'</div>';
   const stage=host.querySelector('.wko-stage');
-  if(stage){let sx=0,sy=0,ig=false;
-    stage.addEventListener('touchstart',ev=>{const t=ev.changedTouches[0];sx=t.clientX;sy=t.clientY;ig=!!(ev.target&&ev.target.closest&&ev.target.closest('.wko-media,input,textarea,select,.wk-slider'));},{passive:true});
-    stage.addEventListener('touchend',ev=>{if(ig)return;const t=ev.changedTouches[0];const dx=t.clientX-sx,dy=t.clientY-sy;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.4)wkoNav(dx<0?1:-1);},{passive:true});}
+  if(stage)wkoAttachSwipe(stage,n);
+}
+/* Smooth exercise swipe: finger-follows the card, rubber-bands at the ends, and on release
+   animates the current card out while the next slides in (instead of a hard jump/re-render). */
+function wkoAttachSwipe(stage,n){
+  let sx=0,sy=0,ig=false,drag=false,lock=false,w=0;
+  const canPrev=()=>WKO_IDX>0;
+  const canNext=()=>WKO_IDX<n;   // n entries; at review (idx>=n) next is disabled
+  stage.addEventListener('touchstart',ev=>{
+    if(WKO_SWIPE_ANIM||ev.touches.length!==1){ig=true;return;}
+    const t=ev.changedTouches[0];sx=t.clientX;sy=t.clientY;drag=false;lock=false;
+    w=stage.offsetWidth||window.innerWidth;
+    ig=!!(ev.target&&ev.target.closest&&ev.target.closest('.wko-media,input,textarea,select,.wk-slider'));
+    stage.style.transition='none';
+  },{passive:true});
+  stage.addEventListener('touchmove',ev=>{
+    if(ig||WKO_SWIPE_ANIM||ev.touches.length!==1)return;
+    const t=ev.touches[0];const dx=t.clientX-sx,dy=t.clientY-sy;
+    if(!lock){
+      if(Math.abs(dx)>8&&Math.abs(dx)>Math.abs(dy)){lock=true;drag=true;}
+      else if(Math.abs(dy)>8){ig=true;return;}   // vertical scroll — let the page handle it
+      else return;
+    }
+    if(ev.cancelable)ev.preventDefault();
+    let d=dx;
+    if((d>0&&!canPrev())||(d<0&&!canNext()))d*=0.3;   // rubber-band at the ends
+    stage.style.transform='translate3d('+d+'px,0,0)';
+    stage.style.opacity=String(Math.max(.5,1-Math.abs(d)/(w*1.5)));
+  },{passive:false});
+  stage.addEventListener('touchend',ev=>{
+    if(ig||!drag){ig=false;drag=false;return;}
+    drag=false;
+    const dx=ev.changedTouches[0].clientX-sx;
+    const thresh=Math.min(90,w*0.2);
+    const goNext=dx<-thresh&&canNext(), goPrev=dx>thresh&&canPrev();
+    if(goNext||goPrev){
+      const dir=goNext?1:-1;                      // 1 = next, -1 = prev (matches wkoNav)
+      WKO_SWIPE_ANIM=true;
+      stage.style.transition='transform .15s ease-out,opacity .15s ease-out';
+      stage.style.transform='translate3d('+(dir>0?-w:w)+'px,0,0)';
+      stage.style.opacity='0';
+      setTimeout(()=>{
+        wkoNav(dir);                              // re-renders a fresh stage
+        const ns=($('wko-body')||document).querySelector('.wko-stage');
+        if(ns){
+          ns.style.transition='none';
+          ns.style.transform='translate3d('+(dir>0?w:-w)+'px,0,0)';
+          ns.style.opacity='0';
+          void ns.offsetWidth;                    // force reflow (rAF-free: works even when backgrounded)
+          setTimeout(()=>{
+            ns.style.transition='transform .2s ease-out,opacity .2s ease-out';
+            ns.style.transform='translate3d(0,0,0)';
+            ns.style.opacity='1';
+          },16);
+        }
+        // guaranteed cleanup — the card ends visible & centred, and the lock always clears,
+        // even if timers/rAF were throttled (backgrounded tab, slow device)
+        setTimeout(()=>{
+          const cur=($('wko-body')||document).querySelector('.wko-stage');
+          if(cur){cur.style.transition='';cur.style.transform='';cur.style.opacity='';}
+          WKO_SWIPE_ANIM=false;
+        },250);
+      },150);
+    } else {
+      stage.style.transition='transform .2s ease-out,opacity .2s ease-out';
+      stage.style.transform='translate3d(0,0,0)';
+      stage.style.opacity='1';
+    }
+  },{passive:true});
 }
 function wkoSet(ei,si,f,v){WKO.entries[ei].sets[si][f]=v;/* no full re-render: keep focus & timers */}
 /* ---- rest timer (big clock) + bell + vibrate ---- */
