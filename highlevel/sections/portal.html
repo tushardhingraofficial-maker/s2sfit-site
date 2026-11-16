@@ -7166,7 +7166,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04sr';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04ss';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -21119,7 +21119,7 @@ async function chatSend(){const inp=$('chat-text');const t=(inp.value||'').trim(
   if(CHAT_REPLY){media=Object.assign({},media||{},{reply:CHAT_REPLY});CHAT_REPLY=null;chatRenderReplyBar(chatCtx());}
   try{if(CHAT_CLIENT_GROUP)await DB.sendGroupMessage(CHAT_CLIENT_GROUP,t,media);else await DB.sendMessage(SESSION.id,t,media);await renderChatThread();}catch(e){toast('Could not send',true);}}
 async function chatClientBadge(){try{const u=await DB.chatUnread();const n=(u&&u.total)||0;const b=$('chat-nav-badge');if(b){if(n>0&&!(CHAT_OPEN&&CHAT_THREAD_OPEN&&!CHAT_CLIENT_GROUP)){b.textContent=n;b.classList.remove('hidden');}else b.classList.add('hidden');}
-  if(n>CHAT_LASTUNREAD&&CHAT_LASTUNREAD>=0&&!(CHAT_OPEN&&CHAT_THREAD_OPEN)&&document.visibilityState==='visible')bigNotify('💬 New message from your coach');CHAT_LASTUNREAD=n;
+  CHAT_LASTUNREAD=n;   // new coach messages show only as the count badge on the Inbox nav button — no bottom-screen popup
   if(CHAT_OPEN&&CHAT_THREAD_OPEN)renderChatThread();}catch(e){}}
 /* ---- ADMIN messages: client threads + group threads ---- */
 function closeChatAdmin(){CHAT_ADM_CLIENT=null;CHAT_ADM_GROUP=null;try{chatStopLive();}catch(e){}}
