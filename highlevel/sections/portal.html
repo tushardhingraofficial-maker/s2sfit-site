@@ -2359,6 +2359,45 @@ table.pf-cmp th:first-child,table.pf-cmp td:first-child{text-align:left}
 .lsum-bar .tr i{display:block;height:100%;border-radius:999px}
 .lsum-bar .vv{width:74px;text-align:right;color:var(--muted);font-weight:600;font-size:11px;white-space:nowrap}
 .logadd-primary{font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.02em;font-size:13.5px}
+/* clean per-food rows inside a meal card (name + kcal on top, editable qty + P/C/F below) */
+.mfoods{margin:12px 0 2px}
+.mfood{padding:10px 2px;border-bottom:1px solid var(--border)}
+.mfood:last-child{border-bottom:0}
+.mf-top{display:flex;align-items:center;gap:10px}
+.mf-nm{flex:1;min-width:0;font-size:14px;font-weight:600;line-height:1.3}
+.mf-k{font-size:13.5px;font-weight:800;white-space:nowrap}
+.mf-k em{font-style:normal;font-weight:600;font-size:10.5px;color:var(--muted)}
+.mf-x{border:0;background:transparent;color:var(--muted);font-size:21px;line-height:1;cursor:pointer;padding:0 2px;flex:none}
+.mf-bot{display:flex;align-items:center;gap:7px;margin-top:8px;flex-wrap:wrap}
+.mf-q{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.02em}
+.mf-q em{font-style:normal}
+.mf-q input{width:60px;text-align:right;padding:5px 8px;font-size:13px;margin:0}
+.mf-m{font-size:12px;font-weight:800;background:var(--card2);border-radius:7px;padding:3px 8px}
+.mf-m.p{color:var(--prot)}.mf-m.c{color:var(--carb)}.mf-m.f{color:var(--fat)}
+.m2-empty-row{color:var(--muted);font-size:13px;padding:12px 2px;font-style:italic}
+/* one "Add food" button per meal → opens the unified add sheet */
+.meal-addbtn{width:100%;margin-top:11px;border:1.5px dashed var(--prot);background:transparent;color:var(--prot);border-radius:12px;padding:12px;font-size:14.5px;font-weight:800;cursor:pointer;transition:background .12s}
+.meal-addbtn:hover{background:var(--card2)}
+.meal-addbtn:active{background:var(--card2)}
+/* unified "Add food" bottom sheet (Search / Snap a photo / Describe) */
+.addsheet{position:fixed;inset:0;z-index:1500;display:flex;align-items:flex-end;justify-content:center}
+.addsheet.hidden{display:none}
+.as-backdrop{position:absolute;inset:0;background:rgba(16,24,40,.45);backdrop-filter:blur(1px)}
+.as-card{position:relative;width:100%;max-width:520px;max-height:90vh;display:flex;flex-direction:column;background:var(--card);border-radius:18px 18px 0 0;box-shadow:0 -10px 36px rgba(0,0,0,.28)}
+.as-head{display:flex;align-items:center;gap:8px;padding:14px 16px 12px;border-bottom:1px solid var(--border)}
+.as-head b{font-family:var(--disp);font-size:17px;font-weight:900}
+.as-x{margin-left:auto;border:0;background:var(--card2);width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;color:var(--muted)}
+.as-seg{display:flex;gap:7px;padding:13px 14px 4px;flex:none}
+.as-seg button{flex:1;min-width:0;border:1px solid var(--border);background:var(--card2);border-radius:12px;padding:10px 6px;font-size:12px;font-weight:800;cursor:pointer;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;line-height:1.1}
+.as-seg button .ic{font-size:18px}
+.as-seg button.on{background:var(--prot);border-color:var(--prot);color:#fff}
+.as-body{padding:13px 16px 20px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.as-body input,.as-body select,.as-body textarea{max-width:100%}
+.as-body .ac input{width:100%}
+.as-body #jr-capture{margin:0!important;border:0!important;background:transparent!important}
+.as-body #jr-capture>.card-body{padding:0}
+.as-body #jr-capture .card-body>div:first-child{display:none}   /* hide the capture's own "Journal a meal" header — the sheet has one */
+body.as-open{overflow:hidden}
 .log-tools{margin:2px 0 10px;border:1px solid var(--border);border-radius:13px;background:var(--card2);overflow:hidden}
 .log-tools>summary{list-style:none;cursor:pointer;padding:11px 14px;font-weight:800;font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
 .log-tools>summary::-webkit-details-marker{display:none}
@@ -4850,7 +4889,6 @@ img,svg,canvas,video{max-width:100%}
         <input type="date" id="log-date" style="max-width:170px;width:auto" onchange="loadDayLog()"></div>
         <div class="card-body">
           <div id="log-summary"></div>
-          <button class="btn btn-primary logadd-primary" style="width:100%;margin:2px 0 12px" onclick="foodAddOpen()">🍽 Add food — search, snap or describe</button>
           <div id="day-reco"></div>
           <!-- plan-a-meal: check a meal against today's remaining budget before eating it -->
           <div id="jr-plan" class="card" style="display:none;border-color:var(--prot);margin:4px 0 12px"><div class="card-body">
@@ -4860,7 +4898,8 @@ img,svg,canvas,video{max-width:100%}
             <button class="btn btn-primary" style="width:100%" onclick="foodPlanRun()">🔮 Check this meal</button>
             <div id="foodplan-res"></div>
           </div></div>
-          <!-- journal capture (revealed by a meal's "📸 Journal" button) -->
+          <!-- journal capture (revealed by a meal's "📸 Journal" button); lives here at rest, moved into the add-sheet when photo/describe is chosen -->
+          <div id="jr-cap-home">
           <div id="jr-capture" class="card" style="display:none;border-color:var(--prot);margin:4px 0 12px"><div class="card-body">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div style="font-family:var(--disp);font-weight:900;font-size:16px">📸 Journal a meal</div><span class="sp" style="flex:1"></span><button class="btn-sm" onclick="foodJournalCancel()">✕ Close</button></div>
             <p class="small" style="margin:0 0 10px;color:var(--muted)"><b>Snap a photo</b> of your meal, or <b>list what you ate</b> (add amounts if you can) — then tap <b>Estimate &amp; add</b>. From a photo alone we’ll identify the meal, estimate the portions, work out the calories &amp; macros and save it in one go. A few words make it more accurate.</p>
@@ -4910,6 +4949,28 @@ img,svg,canvas,video{max-width:100%}
             <button id="jr-addbtn" class="btn btn-primary" style="width:100%" onclick="jrEstimateAndAdd()">✨ Estimate &amp; add meal</button>
             <button type="button" class="btn-sm" style="width:100%;margin-top:7px;background:transparent;border:0;color:var(--muted);font-weight:600" onclick="jrAnalyse()">🔍 See &amp; tweak the numbers first</button>
           </div></div>
+          </div><!-- /#jr-cap-home -->
+          <!-- unified ADD-FOOD sheet: one button per meal opens this; three ways in one place -->
+          <div id="addsheet" class="addsheet hidden">
+            <div class="as-backdrop" onclick="addSheetClose()"></div>
+            <div class="as-card">
+              <div class="as-head"><b id="as-title">Add food</b><button class="as-x" type="button" onclick="addSheetClose()" title="Close">✕</button></div>
+              <div class="as-seg">
+                <button type="button" id="as-tab-search" class="on" onclick="addSheetTab('search')"><span class="ic">🔍</span>Search</button>
+                <button type="button" id="as-tab-photo" onclick="addSheetTab('photo')"><span class="ic">📷</span>Snap a photo</button>
+                <button type="button" id="as-tab-desc" onclick="addSheetTab('desc')"><span class="ic">✍️</span>Describe it</button>
+              </div>
+              <div class="as-body">
+                <div id="as-pane-search">
+                  <p class="small" style="margin:0 0 9px;color:var(--muted)">Search your food database for exact macros, pick the amount, and add it.</p>
+                  <div class="ac" style="position:relative"><input id="logadd-as" type="text" placeholder="🔍 Search a food / ingredient…" oninput="logAcInput('as')" onfocus="logAcInput('as')" autocomplete="off"><div class="ac-menu" id="logac-as"></div></div>
+                  <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:10px"><span class="uline">Qty</span><input id="logqty-as" type="number" min="0" step="any" value="1" style="width:68px" title="Quantity" oninput="logUnitChange('as')"><select id="logunit-as" class="u-unit" title="Unit — change it and the calories auto-calculate" onchange="logUnitChange('as')"><option value="">unit</option></select><span class="funit log-umac" id="logmac-as"></span></div>
+                  <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="addSheetAdd()">＋ Add to meal</button>
+                </div>
+                <div id="as-cap-host"></div>
+              </div>
+            </div>
+          </div>
           <details class="log-tools"><summary>⋯ More options</summary><div class="log-tools-body">
             <button class="btn-sm" style="border-color:var(--prot);color:var(--prot)" onclick="foodPlanOpen()">🔮 Plan a meal — decide before you eat</button>
             <button class="btn-sm solid" onclick="prefillFromPlan()">➕ Add planned meals</button>
@@ -7159,7 +7220,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04sv';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04sw';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -16453,7 +16514,9 @@ function foodAddJournal(mealName,focus){
   if(focus==='photo'){const pf=$('jr-photo');if(pf){try{pf.click();}catch(e){}}}
   else{const d2=$('jr-desc');if(d2)setTimeout(function(){try{d2.focus();}catch(e){}},320);}
 }
-function foodJournalCancel(){try{jrBarcodeStop();}catch(e){}const cap=$('jr-capture');if(cap)cap.style.display='none';JR_PHOTOS=[];JR_NUTRI=null;JR_NUTRI_SKIPPED=false;JR_NUTRI_SKIP_RECO='';const pv=$('jr-preview');if(pv)pv.innerHTML='';const bc=$('jr-bc');if(bc)bc.style.display='none';}
+function foodJournalCancel(){try{jrBarcodeStop();}catch(e){}const cap=$('jr-capture');if(cap)cap.style.display='none';JR_PHOTOS=[];JR_NUTRI=null;JR_NUTRI_SKIPPED=false;JR_NUTRI_SKIP_RECO='';const pv=$('jr-preview');if(pv)pv.innerHTML='';const bc=$('jr-bc');if(bc)bc.style.display='none';
+  try{asCaptureHome();}catch(e){}   // if it was inside the add-sheet, return it home and close the sheet
+  try{const sh=$('addsheet');if(sh&&!sh.classList.contains('hidden')){const host=$('as-cap-host');if(host)host.innerHTML='';sh.classList.add('hidden');document.body.classList.remove('as-open');}}catch(e){}}
 function foodLogRefresh(){try{if(NUTRI_SUB==='log'&&$('log-date'))loadDayLog();}catch(e){}try{dpLoadToday();}catch(e){}}   // keep the Diet-plan Today ring + meal check-offs in sync with any food change
 /* Comment thread on the client's own day log (coach ↔ client). */
 async function renderLogComments(date){
@@ -16507,33 +16570,65 @@ function renderLogMeal(key,name,time,planned,rows,jrs){
   const comb={p:lt.p+jlt.p,c:lt.c+jlt.c,f:lt.f+jlt.f,cal:lt.cal+jlt.cal};
   const nameJs=String(name).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
   const body=rows.map(({it,idx})=>{const mm=itemMacros(it);
-    return '<tr><td class="fname">'+esc(it.name)+(it.units?' <span class="funit">· '+esc(it.units)+'</span>':'')+'</td>'+
-      '<td class="qtycell" data-l="Quantity"><input type="number" min="0" step="0.25" value="'+it.qty+'" class="qtyinp" style="text-align:right" onchange="setLogQty('+idx+',this.value)" title="Tap to change quantity"></td>'+
-      '<td class="mm p" data-l="Protein">'+round(mm.p)+'</td><td class="mm c" data-l="Carbs">'+round(mm.c)+'</td><td class="mm f" data-l="Fat">'+round(mm.f)+'</td><td class="tnum" data-l="Calories">'+round(mm.cal)+'</td>'+
-      '<td class="rmcell"><button class="icon-x" style="font-size:18px;padding:0 4px" onclick="rmLogFood('+idx+')">×</button></td></tr>';}).join('')
-    ||(jrs.length?'':'<tr><td colspan="7" class="empty" style="padding:12px">Nothing tracked for this meal.</td></tr>');
+    return '<div class="mfood">'+
+      '<div class="mf-top"><span class="mf-nm">'+esc(it.name)+(it.units?' <span class="funit">· '+esc(it.units)+'</span>':'')+'</span>'+
+        '<span class="mf-k">'+round(mm.cal)+' <em>kcal</em></span>'+
+        '<button class="mf-x" onclick="rmLogFood('+idx+')" title="Remove">×</button></div>'+
+      '<div class="mf-bot"><span class="mf-q"><em>Qty</em><input type="number" min="0" step="0.25" value="'+it.qty+'" onchange="setLogQty('+idx+',this.value)" title="Tap to change quantity"></span>'+
+        '<span class="mf-m p">'+round(mm.p)+'P</span><span class="mf-m c">'+round(mm.c)+'C</span><span class="mf-m f">'+round(mm.f)+'F</span></div>'+
+    '</div>';}).join('');
+  const foodsHTML=(rows.length)?('<div class="mfoods">'+body+'</div>'):(jrs.length?'':'<div class="m2-empty-row">Nothing tracked for this meal yet.</div>');
   const _mealCal=Math.round(comb.cal||0);const _mtgt=planned?Math.round(planned.cal||calOf(planned)||0):0;const _hasLog=!!(comb.cal||comb.p||comb.c||comb.f);
   const _mpct=_mtgt>0?Math.min(100,Math.round(_mealCal/_mtgt*100)):(_hasLog?100:0);const _mover=_mtgt>0&&_mealCal>_mtgt+1;
   const _mring='<svg class="mrow-ring" width="32" height="32" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="var(--card2)" stroke-width="5"/>'+(_hasLog?'<circle cx="18" cy="18" r="15" fill="none" stroke="'+(_mover?'#E8170D':'#15A34A')+'" stroke-width="5" stroke-linecap="round" stroke-dasharray="'+(_mpct/100*94).toFixed(1)+' 94" transform="rotate(-90 18 18)"/>':'')+'</svg>';
   const _mkc='<div class="mrow-kc"><b'+(_hasLog?'':' style="color:var(--muted)"')+'>'+(_hasLog?_mealCal.toLocaleString():'0')+'</b>'+(_mtgt>0?'<span>of '+_mtgt.toLocaleString()+' kcal</span>':(_hasLog?'<span>kcal</span>':'<span>tap to add</span>'))+'</div>';
-  const tableHTML=(rows.length)?('<div class="tbl-scroll"><table class="itbl"><thead><tr><th>Food</th><th>Qty</th><th>P</th><th>C</th><th>F</th><th>kcal</th><th></th></tr></thead><tbody>'+body+'</tbody></table></div>'):(jrs.length?'':('<div class="tbl-scroll"><table class="itbl"><tbody>'+body+'</tbody></table></div>'));
   const jmealsHTML=jrs.length?('<div class="meal-jmeals">'+jrs.map(jmealCardHTML).join('')+'</div>'):'';
   return '<div class="meal"><div class="meal-head">'+_mring+'<span class="mname">'+esc(name)+'</span>'+(jlt.cal?'<span class="mrow-photo" title="includes a photo estimate">📸</span>':'')+(time?'<span class="mtime">'+esc(time)+'</span>':'')+_mkc+'</div>'+
-    tableHTML+jmealsHTML+
-    '<details class="meal-add-choose" id="mealchoose-'+key+'">'+
-      '<summary class="mac-summary">＋ Add to '+esc(name)+'</summary>'+
-      '<div class="mac-btns">'+
-        '<button type="button" class="mac-opt track" onclick="mealShowTrack(\''+key+'\')"><span class="mac-ic">🔍</span><span class="mac-tx"><b>Search</b><small>exact macros</small></span></button>'+
-        '<button type="button" class="mac-opt journal" onclick="foodAddJournal(\''+nameJs+'\',\'photo\')"><span class="mac-ic">📷</span><span class="mac-tx"><b>Snap</b><small>photo estimate</small></span></button>'+
-        '<button type="button" class="mac-opt journal" onclick="foodAddJournal(\''+nameJs+'\',\'desc\')"><span class="mac-ic">✍️</span><span class="mac-tx"><b>Describe</b><small>AI estimate</small></span></button>'+
-      '</div>'+
-    '</details>'+
-    '<div class="logadd" id="logaddwrap-'+key+'" style="display:none">'+
-      '<div class="ac" style="flex:1 1 100%;min-width:170px"><input id="logadd-'+key+'" type="text" placeholder="🔍 Search a food / ingredient for '+esc(name)+'…" oninput="logAcInput(\''+key+'\')" onfocus="logAcInput(\''+key+'\')" autocomplete="off"><div class="ac-menu" id="logac-'+key+'"></div></div>'+
-      '<div style="display:flex;align-items:center;gap:7px;flex:none;flex-wrap:wrap"><span class="uline">Qty</span><input id="logqty-'+key+'" type="number" min="0" step="any" value="1" style="width:64px" title="Quantity" oninput="logUnitChange(\''+key+'\')"><select id="logunit-'+key+'" class="u-unit" title="Unit — change it and the calories auto-calculate" onchange="logUnitChange(\''+key+'\')"><option value="">unit</option></select><span class="funit log-umac" id="logmac-'+key+'"></span></div>'+
-      '<button class="btn-sm solid" style="flex:none" onclick="addLogTo(\''+key+'\')">Add</button>'+
-      '<button class="btn-sm" style="flex:none" onclick="mealHideTrack(\''+key+'\')" title="Close">✕</button>'+
-    '</div></div>';
+    foodsHTML+jmealsHTML+
+    '<button type="button" class="meal-addbtn" onclick="mealAddOpen(\''+key+'\',\''+nameJs+'\')">＋ Add food</button>'+
+  '</div>';
+}
+/* ── Unified "Add food" sheet: one button per meal → Search / Snap a photo / Describe, in one place ── */
+let ADDSHEET_MEAL='',ADDSHEET_KEY='';
+function asCaptureHome(){const cap=$('jr-capture'),home=$('jr-cap-home');if(cap&&home&&cap.parentNode!==home){home.appendChild(cap);cap.style.display='none';}}
+function mealAddOpen(key,name){
+  ADDSHEET_KEY=key;ADDSHEET_MEAL=name||'';
+  const t=$('as-title');if(t)t.textContent='Add to '+(name||'meal');
+  LOG_PICK['as']=null;const si=$('logadd-as');if(si)si.value='';const mac=$('logmac-as');if(mac)mac.textContent='';
+  const su=$('logunit-as');if(su)su.innerHTML='<option value="">unit</option>';const qi=$('logqty-as');if(qi)qi.value=1;
+  const sh=$('addsheet');if(sh)sh.classList.remove('hidden');document.body.classList.add('as-open');
+  addSheetTab('search');
+}
+function addSheetClose(){
+  try{asCaptureHome();}catch(e){}
+  const host=$('as-cap-host');if(host)host.innerHTML='';
+  const sh=$('addsheet');if(sh)sh.classList.add('hidden');document.body.classList.remove('as-open');
+  const m=$('logac-as');if(m)m.classList.remove('open');
+}
+function addSheetTab(tab){
+  ['search','photo','desc'].forEach(function(t){const b=$('as-tab-'+t);if(b)b.classList.toggle('on',t===tab);});
+  const sp=$('as-pane-search'),host=$('as-cap-host');
+  if(tab==='search'){
+    try{asCaptureHome();}catch(e){}if(host)host.innerHTML='';
+    if(sp)sp.style.display='';
+    setTimeout(function(){try{$('logadd-as').focus();}catch(e){}},70);
+  }else{
+    if(sp)sp.style.display='none';
+    const cap=$('jr-capture');if(cap&&host&&cap.parentNode!==host)host.appendChild(cap);   // bring the photo/describe capture into the sheet
+    try{foodAddJournal(ADDSHEET_MEAL,tab==='photo'?'photo':'desc');}catch(e){}
+  }
+}
+function addSheetAdd(){
+  const key='as';
+  const f=LOG_PICK[key]||findIngByLabel(($('logadd-'+key)||{}).value||'');
+  if(!f){toast('Pick a food from the list',true);return;}
+  const qty=Number(($('logqty-'+key)||{}).value)||1;const unit=(($('logunit-'+key)||{}).value)||f.units;
+  const pref=clientDiet();if(pref&&!dietAllows(pref,f))toast('⚠ '+f.name+' is off your '+pref+' plan — added anyway',true);
+  const it=uApplyUnit(f,qty,unit);it.name=f.name;it.cat=f.cat;it.meal=ADDSHEET_MEAL||'Extra';
+  DAYLOG.items=DAYLOG.items||[];DAYLOG.items.push(it);LOG_PICK[key]=null;
+  const si=$('logadd-'+key);if(si)si.value='';const mac=$('logmac-'+key);if(mac)mac.textContent='';const su=$('logunit-'+key);if(su)su.innerHTML='<option value="">unit</option>';const qi=$('logqty-'+key);if(qi)qi.value=1;
+  try{setTimeout(function(){try{si&&si.focus();}catch(e){}},60);}catch(e){}
+  persistLog('Added '+qty+' '+unit+' '+f.name+' to '+(ADDSHEET_MEAL||'Extra'));   // keeps the sheet open so several foods can be added quickly
 }
 function logAcInput(key){
   const inp=$('logadd-'+key),menu=$('logac-'+key),q=inp.value.trim().toLowerCase();
