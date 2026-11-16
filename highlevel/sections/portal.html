@@ -900,6 +900,24 @@ body{overflow-x:hidden}
 .rw-dash-badges{flex:none;display:flex;align-items:center;gap:4px}
 @media(max-width:620px){.rw-dash-summary{grid-template-columns:repeat(2,1fr)}.rw-dash-bar{display:none}.rw-dash-name{flex-basis:40%}.rw-dash-val{display:none}}
 .jr-desc{flex:1;line-height:1.5;font-size:13px}
+/* ── food journal: describe-your-meal guidance ── */
+.jr-tips{border:1px solid var(--border);border-radius:11px;background:var(--card2);margin-top:8px;overflow:hidden}
+.jr-tips>summary{list-style:none;cursor:pointer;padding:9px 12px;font-weight:800;font-size:12.5px;display:flex;align-items:center;gap:7px}
+.jr-tips>summary::-webkit-details-marker{display:none}
+.jr-tips>summary .chev{margin-left:auto;transition:transform .2s;color:var(--muted)}
+.jr-tips[open]>summary .chev{transform:rotate(90deg)}
+.jr-tips-body{padding:0 12px 12px;font-size:12.5px;line-height:1.55}
+.jr-tips-body ul{margin:2px 0 10px;padding-left:18px}
+.jr-tips-body li{margin:3px 0}
+.jr-eg{display:flex;gap:8px;align-items:flex-start;padding:7px 9px;border-radius:9px;margin-top:6px}
+.jr-eg.good{background:rgba(74,158,232,.09)}
+.jr-eg.bad{background:rgba(255,107,94,.09)}
+.jr-eg .ic{flex:none;font-size:13px}
+.jr-eg b{font-weight:800}
+.jr-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.jr-chip{flex:none;border:1px solid var(--border);background:var(--card);border-radius:999px;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);transition:border-color .12s,background .12s}
+.jr-chip:hover{border-color:var(--prot)}
+.jr-chip:active{background:var(--card2)}
 /* ── food journal: AI nutrition estimate card (shared: add form, recent entries, admin feed) ── */
 .jr-nutri{border:1px solid var(--border);border-radius:12px;background:var(--card2);padding:11px 13px}
 .jr-nutri-h{font-weight:800;font-size:12.5px;margin-bottom:8px}
@@ -4845,7 +4863,7 @@ img,svg,canvas,video{max-width:100%}
           <!-- journal capture (revealed by a meal's "📸 Journal" button) -->
           <div id="jr-capture" class="card" style="display:none;border-color:var(--prot);margin:4px 0 12px"><div class="card-body">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div style="font-family:var(--disp);font-weight:900;font-size:16px">📸 Journal a meal</div><span class="sp" style="flex:1"></span><button class="btn-sm" onclick="foodJournalCancel()">✕ Close</button></div>
-            <p class="small" style="margin:0 0 10px;color:var(--muted)">Add a photo (optional) and <b>describe your meal</b> (required), then tap <b>Estimate &amp; add</b> — we work out the calories &amp; macros and save it in one go. They count toward today's macros.</p>
+            <p class="small" style="margin:0 0 10px;color:var(--muted)">Add a photo (optional) and <b>list what you ate</b> with amounts, then tap <b>Estimate &amp; add</b> — we work out the calories &amp; macros and save it in one go.</p>
             <div class="row" style="align-items:flex-end">
               <div style="max-width:180px"><label class="lab">Meal</label><select id="jr-meal"></select></div>
               <div style="max-width:150px"><label class="lab">Date</label><input type="date" id="jr-date"></div>
@@ -4855,8 +4873,29 @@ img,svg,canvas,video{max-width:100%}
               <label class="updrop"><input type="file" id="jr-photo" accept="image/*" multiple onchange="jrPreview()"><div class="ud-ic">📷</div><div class="ud-t">Add photos of your meal</div><div class="ud-s">tap to choose from your gallery or take a photo — you can add several</div></label></div>
             <div id="jr-preview" style="margin-bottom:10px"></div>
             <div class="field"><label class="lab">What did you eat? <span class="small" style="text-transform:none;font-weight:400;color:var(--red)">· required</span></label>
-              <textarea id="jr-desc" rows="3" placeholder="e.g. Grilled chicken salad with rice — around 1pm, felt a bit rushed and still slightly hungry after"></textarea>
-              <p class="small" style="margin-top:5px">List each item and roughly how much (the more detail, the better the estimate), plus how hungry or full you felt, any cravings, your energy/mood, and anything off-plan.</p></div>
+              <textarea id="jr-desc" rows="4" placeholder="One item per line, with the amount — e.g.&#10;2 rotis&#10;1 bowl dal (150 g)&#10;100 g grilled paneer&#10;1 cup cooked rice"></textarea>
+              <div class="jr-chips" aria-label="Tap to add a portion size">
+                <button type="button" class="jr-chip" onclick="jrChip('100 g')">100 g</button>
+                <button type="button" class="jr-chip" onclick="jrChip('1 cup')">1 cup</button>
+                <button type="button" class="jr-chip" onclick="jrChip('1 bowl')">1 bowl</button>
+                <button type="button" class="jr-chip" onclick="jrChip('1 piece')">1 piece</button>
+                <button type="button" class="jr-chip" onclick="jrChip('1 tbsp')">1 tbsp</button>
+                <button type="button" class="jr-chip" onclick="jrChip('grilled')">grilled</button>
+                <button type="button" class="jr-chip" onclick="jrChip('fried')">fried</button>
+              </div>
+              <details class="jr-tips">
+                <summary>💡 How to get an accurate estimate<span class="chev">›</span></summary>
+                <div class="jr-tips-body">
+                  <ul>
+                    <li><b>One food per line</b>, each with <b>how much</b> — grams, cups, bowls or pieces.</li>
+                    <li>Say how it's <b>cooked</b> — grilled, boiled, fried, or made with oil/ghee/butter.</li>
+                    <li><b>Name the brand</b> for packaged items (e.g. Maggi, Yopro, a protein bar).</li>
+                  </ul>
+                  <div class="jr-eg good"><span class="ic">✅</span><div><b>Clear:</b> 2 rotis · 1 bowl dal (150 g) · 100 g grilled paneer · 1 cup cooked rice</div></div>
+                  <div class="jr-eg bad"><span class="ic">🚫</span><div><b>Too vague:</b> dal, rice and sabzi</div></div>
+                  <p class="small" style="margin:9px 0 0;color:var(--muted)">Not sure of the exact amount? A rough guess (a palm, a fist, a handful) still helps — you can tweak the numbers after.</p>
+                </div>
+              </details></div>
             <div id="jr-nutri" style="margin-bottom:10px"></div>
             <button id="jr-addbtn" class="btn btn-primary" style="width:100%" onclick="jrEstimateAndAdd()">✨ Estimate &amp; add meal</button>
             <button type="button" class="btn-sm" style="width:100%;margin-top:7px;background:transparent;border:0;color:var(--muted);font-weight:600" onclick="jrAnalyse()">🔍 See &amp; tweak the numbers first</button>
@@ -7110,7 +7149,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04sn';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04so';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -16242,6 +16281,14 @@ function jmealCardHTML(e){
     '<div class="log-cmts" style="margin-top:9px">'+clientCmtBlockInnerHTML('journal',e.id,DAY_JR_CMT[e.id]||[],DAY_JR_LIKE[e.id]||[])+'</div>'+
   '</div>';
 }
+/* tap-to-insert a portion/cooking word into the journal description (at the cursor, or appended) */
+function jrChip(t){const el=$('jr-desc');if(!el)return;
+  const v=el.value||'';let s=(typeof el.selectionStart==='number')?el.selectionStart:v.length,e=(typeof el.selectionEnd==='number')?el.selectionEnd:v.length;
+  const before=v.slice(0,s),after=v.slice(e);
+  const needSp=before&&!/[\s(]$/.test(before);   // add a space unless we're at a line start / after "("
+  const ins=(needSp?' ':'')+t;
+  el.value=before+ins+after;
+  const pos=s+ins.length;try{el.focus();el.setSelectionRange(pos,pos);}catch(_){}}
 /* ── Food Log "＋ Add a meal" chooser ── */
 function foodAddTrack(){try{const s=$('log-sections');if(s)s.scrollIntoView({behavior:'smooth',block:'start'});const first=document.querySelector('#log-sections .meal-add-choose');if(first){mealShowTrack(first.id.replace('mealchoose-',''));}}catch(e){}}
 /* reveal / collapse one meal's "add ingredients" columns (the chooser shows the two options first) */
