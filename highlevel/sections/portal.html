@@ -3328,6 +3328,21 @@ body.gm-has-switch #custom-host{top:var(--gm-h,48px)}
 .tw-exmeta{flex:1;min-width:0}
 .tw-exmeta b{font-size:14.5px;font-weight:700;display:block;line-height:1.15;overflow-wrap:anywhere}
 .tw-exmeta span{font-size:12px;color:var(--muted);font-weight:600}
+/* finished-session panel (inside the hero when today's workout is already logged) */
+.tw-done{position:relative;z-index:2;margin-top:14px}
+.tw-done-h{font-family:var(--disp);font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#3ed47e;margin:0 0 9px}
+.tw-done-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.tw-dstat{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:12px;padding:9px 5px;text-align:center}
+.tw-dstat b{font-family:var(--disp);font-weight:900;font-size:17px;display:block;line-height:1;color:#fff}
+.tw-dstat span{font-size:9px;color:#aab2bf;text-transform:uppercase;letter-spacing:.04em;font-weight:700}
+.tw-done-exli{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:13px;overflow:hidden;margin-bottom:12px}
+.tw-done-exrow{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.08)}
+.tw-done-exrow:last-child{border-bottom:none}
+.tw-done-exrow .nm{flex:1;min-width:0;font-weight:700;color:#fff;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tw-done-exrow .st{flex:none;color:#aab2bf;font-weight:600;font-size:11px}
+.tw-done-btns{display:flex;gap:8px}
+.tw-done-btns .tw-cta{margin-top:0;font-size:13px;padding:12px}
+.tw-cta.ghost{background:rgba(255,255,255,.1);box-shadow:none;border:1px solid rgba(255,255,255,.2)}
 .tw-ss-tag{font-size:9.5px;font-weight:800;color:var(--prot);text-transform:uppercase;letter-spacing:.05em}
 .tw-extar{font-family:var(--disp);font-weight:800;font-size:13px;text-align:right;line-height:1.2;flex:none}
 .tw-extar small{display:block;font-size:10.5px;color:var(--muted);font-weight:700}
@@ -7046,7 +7061,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04sg';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04sh';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -12830,7 +12845,7 @@ async function wkoCommit(){
   const durationSec=WKO_START?Math.floor((Date.now()-WKO_START)/1000):0;
   const editing=!!WKO.editId;
   const log={id:WKO.editId||uid(),client_id:SESSION.id,date:WKO.date,day_id:WKO.day_id,day_name:WKO.day_name,entries:WKO.entries,summary,completion:WKO.completion,duration_sec:durationSec,done:WKO.completion>=100};
-  try{await DB.saveWorkoutLog(log);wkoStopClock();toast((editing?'✓ Session updated — ':'✓ Workout saved — ')+t.sets+' sets · '+lcNum(t.vol)+' kg volume');$('workout-modal').classList.remove('open');WKO=null;renderTraining();}catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);}
+  try{await DB.saveWorkoutLog(log);wkoStopClock();toast((editing?'✓ Session updated — ':'✓ Workout saved — ')+t.sets+' sets · '+lcNum(t.vol)+' kg volume');$('workout-modal').classList.remove('open');WKO=null;WD2_DONE=null;WD2_LOGS=null;renderTraining();}catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);}
 }
 function renderHydration(){
   const h=(PLAN.hydration||'').trim(),card=$('hydration-card');if(!h){card.classList.add('hidden');return;}
@@ -17610,8 +17625,28 @@ async function msPhoto(gi,which,input){const f=input.files[0];if(!f)return;try{c
 /* ═══════════ CLIENT · Training v2 (calendar view + rebuilt runner) ═══════════ */
 function t2c(){const v=(PLAN&&PLAN.training&&PLAN.training.v2)||{};return {active:!!v.active,workouts:Array.isArray(v.workouts)?v.workouts:[],calendar:(v.calendar&&typeof v.calendar==='object')?v.calendar:{}};}
 function t2cWorkout(id){return t2c().workouts.find(w=>w.id===id)||null;}
-let WD2_DONE=null, WD2=null, WD2_TIMER=null, WD2_WEEK=0, TW_RELIB=false;
-async function wd2LoadDone(){try{const logs=await DB.listWorkoutLogs(SESSION.id);WD2_DONE=new Set((logs||[]).map(l=>String(l.date||'').slice(0,10)));}catch(e){WD2_DONE=new Set();}try{renderTrainingV2();}catch(e){}}
+let WD2_DONE=null, WD2_LOGS=null, WD2=null, WD2_TIMER=null, WD2_WEEK=0, TW_RELIB=false;
+async function wd2LoadDone(){try{const logs=await DB.listWorkoutLogs(SESSION.id);WK_LOGS=logs||[];WD2_DONE=new Set((logs||[]).map(l=>String(l.date||'').slice(0,10)));WD2_LOGS={};(logs||[]).forEach(l=>{const d=String(l.date||'').slice(0,10);const prev=WD2_LOGS[d];if(!prev||String(l.created_at||'')>String(prev.created_at||''))WD2_LOGS[d]=l;});}catch(e){WD2_DONE=new Set();WD2_LOGS={};}try{renderTrainingV2();}catch(e){}}
+/* the logged session for a date (latest, if logged twice) + its stats-and-edit panel for a finished day */
+function wd2LogForDate(iso){const m=WD2_LOGS||{};return m[iso]||null;}
+function wd2FinishedPanel(log,iso,id){
+  if(!log)return '<button class="tw-cta" onclick="startWorkoutV2(\''+iso+'\',\''+id+'\')">↻ Log this workout</button>';
+  const s=log.summary||{};const vol=s.volume||0,sets=s.totalSets||0,comp=log.completion||0;
+  const dur=log.duration_sec||0;const durStr=dur?(dur>=3600?(Math.floor(dur/3600)+'h'+(Math.floor(dur%3600/60)?(' '+Math.floor(dur%3600/60)+'m'):'')):(Math.floor(dur/60)+'m')):'—';
+  const exs=Array.isArray(s.exercises)?s.exercises:[];
+  let exli='';exs.forEach(x=>{const st=x.aerobic?'cardio session':((x.sets||0)+'×'+(x.reps||0)+' · '+lcNum(x.vol||0)+' kg'+((x.est1rm>0)?(' · 1RM '+x.est1rm):''));exli+='<div class="tw-done-exrow"><span class="nm">'+esc(x.name||'')+'</span><span class="st">'+st+'</span></div>';});
+  return '<div class="tw-done">'+
+    '<div class="tw-done-h">✓ Logged '+(iso===todayISO()?'today':esc(fmtDate(iso)))+'</div>'+
+    '<div class="tw-done-stats">'+
+      '<div class="tw-dstat"><b>'+lcNum(vol)+'</b><span>kg vol</span></div>'+
+      '<div class="tw-dstat"><b>'+sets+'</b><span>sets</span></div>'+
+      '<div class="tw-dstat"><b>'+durStr+'</b><span>time</span></div>'+
+      '<div class="tw-dstat"><b>'+comp+'%</b><span>done</span></div>'+
+    '</div>'+
+    (exli?'<div class="tw-done-exli">'+exli+'</div>':'')+
+    '<div class="tw-done-btns"><button class="tw-cta" onclick="wkoEditLog(\''+log.id+'\')">✏️ Edit session</button><button class="tw-cta ghost" onclick="startWorkoutV2(\''+iso+'\',\''+id+'\')">↻ Log again</button></div>'+
+  '</div>';
+}
 function wd2WeekNav(d){const cfg=(PLAN&&PLAN.training&&PLAN.training.v2)||{};const n=WD2_WEEK+d;if(n<0&&cfg.showPast===false)return;if(n>0&&cfg.showNext===false)return;WD2_WEEK=n;renderTrainingV2();}
 function twExTarget(e){
   const sets=wdExSets(e);const first=sets[0]||{};
@@ -17659,7 +17694,8 @@ function renderTrainingV2(){
         '<div class="tw-stat"><b>~'+mins+'</b><span>Minutes</span></div></div>'+
         '<svg class="tw-ring" width="64" height="64" viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="7"/><circle cx="32" cy="32" r="26" fill="none" stroke="#3ed47e" stroke-width="7" stroke-linecap="round" stroke-dasharray="'+dash.toFixed(1)+' '+circ+'" transform="rotate(-90 32 32)"/><text x="32" y="30" text-anchor="middle" font-size="15" font-weight="900" fill="#fff" font-family="Archivo">'+wkDoneN+'/'+wkPlan+'</text><text x="32" y="43" text-anchor="middle" font-size="8" fill="#aab2bf" font-family="Inter">week</text></svg>';
       hero+='</div>';
-      hero+='<button class="tw-cta" onclick="startWorkoutV2(\''+today+'\',\''+id+'\')">'+(dn?'↻ Log again':'▶ Start workout')+'</button></div>';
+      if(dn){hero+=wd2FinishedPanel(wd2LogForDate(today),today,id)+'</div>';return hero;}
+      hero+='<button class="tw-cta" onclick="startWorkoutV2(\''+today+'\',\''+id+'\')">▶ Start workout</button></div>';
       let li='',idx=0;
       (w.sections||[]).forEach(s=>{const exs=s.exercises||[];exs.forEach((e,i)=>{idx++;const ss=e.linkNext||(i>0&&exs[i-1].linkNext);const lib=e.exId?exById(e.exId):null;const t=twExTarget(e);
         const sub=ss?'<span class="tw-ss-tag">⛓ Superset</span>':esc(((lib&&lib.bodyPart)||s.name||'')+(lib&&lib.equipment?(' · '+lib.equipment):''));
@@ -17684,7 +17720,9 @@ function renderTrainingV2(){
   for(let i=0;i<7;i++){const iso=addDaysISO(ws,i),w2=c[iso]||[],isT=(iso===today),dn=done.has(iso),missed=(iso<today)&&w2.length&&!dn;const d=new Date(iso+'T00:00:00');
     const cls=['tw-d'];if(dn)cls.push('done');else if(isT&&w2.length)cls.push('today');else if(missed)cls.push('missed');else if(!w2.length)cls.push('rest');if(w2.length)cls.push('clk');
     const nm=w2.length?esc((t2cWorkout(w2[0])||{}).name||'Workout'):'Rest';
-    wk+='<div class="'+cls.join(' ')+'"'+(w2.length?(' onclick="startWorkoutV2(\''+iso+'\',\''+w2[0]+'\')"'):'')+'>'+(dn?'<div class="chk">✓</div>':'')+'<div class="dow">'+d.toLocaleDateString(undefined,{weekday:'short'})+'</div><div class="dn">'+d.getDate()+'</div><div class="dwk">'+nm+'</div><div class="dot"></div></div>';}
+    const dlog=dn?wd2LogForDate(iso):null;
+    const click=w2.length?(' onclick="'+(dlog?('wkoEditLog(\''+dlog.id+'\')'):('startWorkoutV2(\''+iso+'\',\''+w2[0]+'\')'))+'"'+(dlog?' title="View &amp; edit this logged session"':'')):'';
+    wk+='<div class="'+cls.join(' ')+'"'+click+'>'+(dn?'<div class="chk">✓</div>':'')+'<div class="dow">'+d.toLocaleDateString(undefined,{weekday:'short'})+'</div><div class="dn">'+d.getDate()+'</div><div class="dwk">'+nm+'</div><div class="dot"></div></div>';}
   wk+='</div></div>';
   host.innerHTML=h+wk;
 }
