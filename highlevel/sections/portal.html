@@ -4144,7 +4144,7 @@ tr.tr-gr td:first-child{border-left:3px solid var(--red)}
 .wko-focus{animation:wkoFade .2s ease}
 @keyframes wkoFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .wko-fx-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.wko-fx-name{font-family:var(--disp);font-weight:800;font-size:22px;line-height:1.1;flex:1;min-width:0}
+.wko-fx-name{font-family:var(--disp);font-weight:800;font-size:18px;line-height:1.12;flex:1;min-width:0}
 .wko-fx-name.skip{text-decoration:line-through;color:var(--muted)}
 .wko-skip{background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:4px 9px;font-size:14px;cursor:pointer;flex:none}
 .wko-skip:hover{border-color:var(--gold);color:var(--gold)}
@@ -4233,6 +4233,15 @@ tr.tr-gr td:first-child{border-left:3px solid var(--red)}
 .wko-instr>summary::after{content:'▾';float:right;color:var(--muted)}
 .wko-instr[open]>summary::after{content:'▴'}
 .wko-instr-body{padding:0 14px 12px}
+/* compact runner: demo video + how-to + equipment/brand/tools collapsed so the set inputs stay on screen */
+.wko-more{margin:2px 0 12px;border:1px solid var(--border);border-radius:12px;background:var(--card2);overflow:hidden}
+.wko-more>summary{cursor:pointer;padding:10px 14px;font-family:var(--disp);font-weight:800;font-size:13px;list-style:none;color:var(--muted)}
+.wko-more>summary::-webkit-details-marker{display:none}
+.wko-more>summary::after{content:'▾';float:right}
+.wko-more[open]>summary::after{content:'▴'}
+.wko-more-body{padding:6px 12px 12px}
+.wko-more-body .wko-media{margin-bottom:10px}
+.wko-more-body .wko-instr,.wko-more-body .wko-tools{margin-bottom:10px}
 /* per-exercise tools */
 .wko-tools{display:flex;flex-wrap:wrap;gap:9px;margin:2px 0 12px}
 .wko-tool{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;background:var(--card2);border:1px solid var(--border);color:var(--muted);border-radius:13px;padding:0;cursor:pointer}
@@ -4313,6 +4322,50 @@ tr.tr-gr td:first-child{border-left:3px solid var(--red)}
 .twk-day[draggable="true"]{cursor:grab}.twk-day[draggable="true"]:active{cursor:grabbing}
 .twk-day.dragover{outline:2px dashed var(--gold);outline-offset:1px;background:rgba(245,200,66,.08)}
 @media(max-width:640px){.twk-board{grid-template-columns:repeat(2,1fr)}.twk-day{min-height:0;flex-direction:row;flex-wrap:wrap;justify-content:flex-start;text-align:left;gap:6px}.twk-dow{width:100%}.twk-badge{margin-top:0;margin-left:auto}.twk-start{width:auto;flex:1 1 100%;padding:9px}}
+/* training week as a readable vertical LIST — easy to scan & rearrange */
+.twl-list{display:flex;flex-direction:column;gap:8px}
+.twl-row{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:13px;padding:10px 11px;background:var(--card2)}
+.twl-row.done{border-color:var(--good);background:rgba(34,197,94,.06)}
+.twl-row.today{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+.twl-row.miss{border-color:rgba(232,23,13,.45)}
+.twl-row.rest{opacity:.72}
+.twl-grip{flex:none;color:var(--faint);font-size:17px;cursor:grab;line-height:1;padding:2px;letter-spacing:-2px}
+.twl-row[draggable="true"]{cursor:grab}.twl-row[draggable="true"]:active{cursor:grabbing}
+.twl-row.dragover{outline:2px dashed var(--gold);outline-offset:1px;background:rgba(245,200,66,.08)}
+.twl-row.moving{outline:2px dashed var(--gold);outline-offset:1px}
+.twl-date{flex:none;width:40px;text-align:center}
+.twl-dow{font-family:var(--disp);font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);line-height:1}
+.twl-dom{font-family:var(--disp);font-weight:900;font-size:19px;line-height:1.05;margin-top:1px}
+.twl-row.today .twl-dom{color:var(--gold)}
+.twl-main{flex:1;min-width:0}
+.twl-title{font-family:var(--disp);font-weight:800;font-size:15px;line-height:1.15;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.twl-title.rest{color:var(--muted);font-weight:600}
+.twl-title-btn{background:none;border:none;cursor:pointer;padding:0;text-align:left;width:100%;text-decoration:underline;text-decoration-color:rgba(127,127,127,.35);text-underline-offset:2px}
+.twl-title-btn:hover{color:var(--red)}
+.twl-focus{font-size:11.5px;color:var(--muted);line-height:1.25;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.twl-right{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.twl-badge{font-size:9.5px;font-weight:800;border-radius:20px;padding:2px 8px;white-space:nowrap}
+.twl-badge.done{background:rgba(34,197,94,.16);color:var(--good)}
+.twl-badge.miss{background:rgba(232,23,13,.14);color:var(--red)}
+.twl-badge.today{background:rgba(245,200,66,.18);color:var(--gold)}
+.twl-badge.plan{background:rgba(127,127,127,.12);color:var(--muted)}
+.twl-start{background:var(--red);color:#fff;border:none;border-radius:9px;padding:8px 13px;font-family:var(--disp);font-weight:800;font-size:12px;cursor:pointer;line-height:1;white-space:nowrap}
+.twl-start:hover{background:var(--red-hover)}
+.twl-start.move{background:var(--gold);color:#1a1a1a}
+.twl-mv{background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 9px;font-size:12px;font-weight:800;cursor:pointer;line-height:1}
+.twl-mv:hover{border-color:var(--red);color:var(--red)}
+.twl-mv.cancel{color:var(--muted)}
+.twl-hint{text-align:center;font-size:11px;color:var(--muted);margin-top:8px}
+/* resume-in-progress workout banner */
+.wko-resume{display:flex;align-items:center;gap:11px;background:linear-gradient(90deg,rgba(232,23,13,.1),rgba(232,23,13,.03));border:1px solid var(--red);border-radius:14px;padding:11px 13px;margin-bottom:14px}
+.wko-resume-ic{font-size:22px;flex:none;line-height:1}
+.wko-resume-tx{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.2}
+.wko-resume-tx b{font-family:var(--disp);font-weight:800;font-size:14px}
+.wko-resume-tx span{font-size:11.5px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wko-resume-go{flex:none;background:var(--red);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-family:var(--disp);font-weight:800;font-size:13px;cursor:pointer}
+.wko-resume-go:hover{background:var(--red-hover)}
+.wko-resume-x{flex:none;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0 2px;line-height:1}
+.wko-resume-x:hover{color:var(--red)}
 .wk-slider{width:100%;accent-color:var(--red);height:26px}
 .ex-vidbtn{cursor:pointer;color:var(--red);font-weight:700}
 .help-item{border:1px solid var(--border);border-radius:10px;margin-bottom:8px;background:var(--card2);overflow:hidden}
@@ -7230,7 +7283,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04sy';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04sz';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -12594,6 +12647,11 @@ function parseSecs(v,def){const m=String(v==null?'':v).match(/\d+/);return m?par
 async function startWorkout(dayId){
   const tr=(PLAN&&PLAN.training)||{};const day=(tr.days||[]).find(d=>d.id===dayId)||(tr.days||[])[0];
   if(!day){toast('No workout to start',true);return;}
+  const _saved=wkoLoadActive();
+  if(_saved&&_saved.w&&_saved.w.day_id===day.id){
+    if(confirm('You have an unfinished “'+(_saved.w.day_name||'workout')+'”.\n\nOK — resume where you left off\nCancel — start over')){return wkoResume();}
+    wkoClearActive();
+  }
   await loadExLib();try{WKO_HISTORY=await DB.listWorkoutLogs(SESSION.id);}catch(e){WKO_HISTORY=[];}
   try{WKO_COLS=(await DB.getKV('workout_log_cols'))||[];}catch(e){WKO_COLS=[];}if(!Array.isArray(WKO_COLS))WKO_COLS=[];
   wkoLoadClientCols();
@@ -12606,7 +12664,29 @@ async function startWorkout(dayId){
 }
 function wkoStartClock(){if(WKO_CLOCK)return;WKO_CLOCK=setInterval(()=>{const el=$('wko-elapsed');if(!el){return;}const s=Math.floor((Date.now()-WKO_START)/1000);const h=Math.floor(s/3600),m=Math.floor(s%3600/60),ss=s%60;const p=n=>String(n).padStart(2,'0');el.textContent=(h>0?h+':':'')+p(m)+':'+p(ss);},1000);}
 function wkoStopClock(){if(WKO_CLOCK){clearInterval(WKO_CLOCK);WKO_CLOCK=null;}wkoRestEnd(true);wkoSwStop();}
-function closeWorkout(){if(WKO&&!confirm('Close without finishing? Your entries won’t be saved.'))return;wkoStopClock();try{wkoHistClose();}catch(e){}$('workout-modal').classList.remove('open');WKO=null;}
+/* ── resume an in-progress workout across app closes ── */
+function wkoActiveKey(){return 's2s_wko_active_'+((SESSION&&SESSION.id)||'');}
+function wkoActiveHasProgress(o){try{return !!(o&&o.w&&(o.w.entries||[]).some(en=>en.comment||(en.sets||[]).some(s=>s.done||String(s.reps||'').trim()||String(s.weight||'').trim()||String(s.dur||'').trim()||String(s.dist||'').trim()||String(s.cal||'').trim())));}catch(e){return false;}}
+function wkoPersist(){try{if(!WKO||WKO.editId)return;if(!(WKO.entries&&WKO.entries.length))return;const o={w:WKO,i:WKO_IDX,t:WKO_START,at:Date.now()};if(!wkoActiveHasProgress(o))return;localStorage.setItem(wkoActiveKey(),JSON.stringify(o));}catch(e){}}
+function wkoClearActive(){try{localStorage.removeItem(wkoActiveKey());}catch(e){}}
+function wkoLoadActive(){try{const raw=localStorage.getItem(wkoActiveKey());if(!raw)return null;const o=JSON.parse(raw);if(!wkoActiveHasProgress(o)){wkoClearActive();return null;}if(o.at&&(Date.now()-o.at)>129600000){wkoClearActive();return null;}return o;}catch(e){return null;}}
+function wkoRefreshTraining(){try{if(PLAN&&PLAN.training&&PLAN.training.v2&&PLAN.training.v2.active)renderTrainingV2();else renderTraining();}catch(e){}}
+function wkoResumeBannerHTML(){const o=wkoLoadActive();if(!o)return '';const w=o.w;let done=0,tot=0;(w.entries||[]).forEach(en=>(en.sets||[]).forEach(s=>{tot++;if(s.done)done++;}));const pct=tot?Math.round(done/tot*100):0;
+  return '<div class="wko-resume"><div class="wko-resume-ic">⏸</div>'+
+    '<div class="wko-resume-tx"><b>Resume your workout</b><span>'+esc(w.day_name||'Workout')+' · '+done+'/'+tot+' sets logged'+(pct?' · '+pct+'%':'')+' — pick up where you left off</span></div>'+
+    '<button class="wko-resume-go" onclick="wkoResume()">Resume ▶</button>'+
+    '<button class="wko-resume-x" title="Discard this unfinished session" onclick="wkoDiscardActive()">×</button></div>';}
+async function wkoResume(){const o=wkoLoadActive();if(!o||!o.w){toast('No saved workout to resume',true);wkoRefreshTraining();return;}
+  await loadExLib();try{WKO_HISTORY=await DB.listWorkoutLogs(SESSION.id);}catch(e){WKO_HISTORY=[];}
+  try{WKO_COLS=(await DB.getKV('workout_log_cols'))||[];}catch(e){WKO_COLS=[];}if(!Array.isArray(WKO_COLS))WKO_COLS=[];
+  wkoLoadClientCols();
+  WKO=o.w;WKO_IDX=o.i||0;WKO_START=o.t||Date.now();
+  $('workout-modal').classList.add('open');renderWorkout();wkoStartClock();}
+function wkoDiscardActive(){if(!confirm('Discard this unfinished workout? Your unsaved entries will be removed.'))return;wkoClearActive();wkoRefreshTraining();toast('Unfinished workout discarded');}
+function closeWorkout(){
+  wkoStopClock();try{wkoHistClose();}catch(e){}
+  if(WKO&&!WKO.editId){if(wkoActiveHasProgress({w:WKO})){wkoPersist();toast('Saved — resume anytime from Training');}else{wkoClearActive();}}
+  $('workout-modal').classList.remove('open');WKO=null;wkoRefreshTraining();}
 function wkoEntryBest1RM(en){let best=0;(en.sets||[]).forEach(s=>{const v=est1RM(s.weight,s.reps);if(v>best)best=v;});return best;}
 function wkoEntryStats(en){let sets=0,reps=0,vol=0,best=0;(en.sets||[]).forEach(s=>{const r=+s.reps||0,w=+s.weight||0;if(r>0){sets++;reps+=r;vol+=r*w;}const e=est1RM(w,r);if(e>best)best=e;});return {sets,reps,vol:Math.round(vol),best1:Math.round(best),aerobic:wkoIsAerobic(en),cardio:wkoCardioTotals(en.sets)};}
 /* Past-performance totals for THIS exercise (same brand+equipment setup), per past session, from WKO_HISTORY */
@@ -12722,12 +12802,14 @@ function wkoFocusHTML(en,ei,noNav){
     '</div>'+
     '<button class="wko-set-done'+(s.done?' on':'')+'" title="Mark done'+(aerobic?'':' — starts rest timer')+'" onclick="wkoToggleDone('+ei+','+si+')">'+(s.done?'✓':'○')+'</button>'+
     '<button class="wko-set-x" onclick="wkoDelSet('+ei+','+si+')">×</button></div>';}).join('');
+  // compact: video demo + how-to + equipment/brand/tools tuck into one collapsible panel so name + sets stay on screen
+  const moreInner=media+instrHTML+tools+equipRow+brandRow+altRow;
+  const moreHTML=(moreInner&&moreInner.trim())?'<details class="wko-more"><summary>▶ Demo video · how-to · equipment &amp; options</summary><div class="wko-more-body">'+moreInner+'</div></details>':'';
   return '<div class="wko-focus">'+
     '<div class="wko-fx-top"><div class="wko-fx-name">'+esc(en.name)+'</div>'+grpBadge+'<button class="wko-skip" onclick="wkoSkip('+ei+')" title="Skip this exercise">⏭</button></div>'+
     (en.target?'<div class="wko-fx-target">🎯 '+esc(en.target)+(en.restTarget?' · rest '+en.restTarget+'s':'')+'</div>':'')+
-    media+instrHTML+tools+
     (en.comment?'<div class="wko-comment-box">💬 <b>Your note:</b> '+esc(en.comment)+'</div>':'')+
-    equipRow+brandRow+altRow+
+    moreHTML+
     gridHead+
     wkoLiveStatsHTML(en,ei)+
     '<div class="wko-sets">'+sets+'</div>'+
@@ -12824,6 +12906,7 @@ function renderWorkout(){
   host.innerHTML=wkoTopbarHTML()+'<div class="wko-stage">'+inner+'</div>';
   const stage=host.querySelector('.wko-stage');
   if(stage)wkoAttachSwipe(stage,n);
+  wkoPersist();   // checkpoint progress so the client can resume after closing the app
 }
 /* Smooth exercise swipe: finger-follows the card, rubber-bands at the ends, and on release
    animates the current card out while the next slides in (instead of a hard jump/re-render). */
@@ -12893,7 +12976,7 @@ function wkoAttachSwipe(stage,n){
     }
   },{passive:true});
 }
-function wkoSet(ei,si,f,v){WKO.entries[ei].sets[si][f]=v;wkoUpdateLive(ei);/* live stats only — no full re-render, so focus & timers stay */}
+function wkoSet(ei,si,f,v){WKO.entries[ei].sets[si][f]=v;wkoUpdateLive(ei);wkoPersist();/* live stats only — no full re-render, so focus & timers stay */}
 /* ---- rest timer (big clock) + bell + vibrate ---- */
 let WKO_REST=null;
 function wkoStartRest(ei,si){const en=WKO.entries[ei],s=en.sets[si];const secs=parseSecs(s.rest,0)||en.restTarget||90;wkoRestBegin(secs);}
@@ -13089,7 +13172,7 @@ async function wkoCommit(){
   const durationSec=WKO_START?Math.floor((Date.now()-WKO_START)/1000):0;
   const editing=!!WKO.editId;
   const log={id:WKO.editId||uid(),client_id:SESSION.id,date:WKO.date,day_id:WKO.day_id,day_name:WKO.day_name,entries:WKO.entries,summary,completion:WKO.completion,duration_sec:durationSec,done:WKO.completion>=100};
-  try{await DB.saveWorkoutLog(log);wkoStopClock();toast((editing?'✓ Session updated — ':'✓ Workout saved — ')+t.sets+' sets · '+lcNum(t.vol)+' kg volume');$('workout-modal').classList.remove('open');WKO=null;WD2_DONE=null;WD2_LOGS=null;renderTraining();}catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);}
+  try{await DB.saveWorkoutLog(log);wkoClearActive();wkoStopClock();toast((editing?'✓ Session updated — ':'✓ Workout saved — ')+t.sets+' sets · '+lcNum(t.vol)+' kg volume');$('workout-modal').classList.remove('open');WKO=null;WD2_DONE=null;WD2_LOGS=null;renderTraining();}catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);}
 }
 function renderHydration(){
   const h=(PLAN.hydration||'').trim(),card=$('hydration-card');if(!h){card.classList.add('hidden');return;}
@@ -18240,12 +18323,17 @@ function renderTrainingV2(){
     const click=w2.length?(' onclick="'+(dlog?('wkoEditLog(\''+dlog.id+'\')'):('startWorkoutV2(\''+iso+'\',\''+w2[0]+'\')'))+'"'+(dlog?' title="View &amp; edit this logged session"':'')):'';
     wk+='<div class="'+cls.join(' ')+'"'+click+'>'+(dn?'<div class="chk">✓</div>':'')+'<div class="dow">'+d.toLocaleDateString(undefined,{weekday:'short'})+'</div><div class="dn">'+d.getDate()+'</div><div class="dwk">'+nm+'</div><div class="dot"></div></div>';}
   wk+='</div></div>';
-  host.innerHTML=h+wk;
+  host.innerHTML=wkoResumeBannerHTML()+h+wk;
 }
 /* ---- rebuilt runner ---- */
 /* Restore the previous focus-view runner for v2 workouts: adapt a v2 workout into WKO + per-set targets, then run the legacy runner. */
 async function startWorkoutV2(iso,wId){
   const w=t2cWorkout(wId);if(!w){toast('Workout not found',true);return;}
+  const _saved=wkoLoadActive();
+  if(_saved&&_saved.w&&_saved.w.day_id===w.id){
+    if(confirm('You have an unfinished “'+(_saved.w.day_name||'workout')+'”.\n\nOK — resume where you left off\nCancel — start over')){return wkoResume();}
+    wkoClearActive();
+  }
   await loadExLib();try{WKO_HISTORY=await DB.listWorkoutLogs(SESSION.id);}catch(e){WKO_HISTORY=[];}
   try{WKO_COLS=(await DB.getKV('workout_log_cols'))||[];}catch(e){WKO_COLS=[];}if(!Array.isArray(WKO_COLS))WKO_COLS=[];
   wkoLoadClientCols();
@@ -18321,7 +18409,7 @@ function renderTraining(){
   const hasSplit=WK_DAYS.some((_,i)=>(sdays[i]||'').trim());
   const hasAny=!!(hasProg||hasSplit||macX.cals||(t.startPoint||'').trim()||(t.nextMilestone||'').trim()||(t.split||'').trim()||(t.periodization||'').trim()||(t.cardio||'').trim()||(t.weeklyAdjust||'').trim()||(t.notes||'').trim()||(t.longTerm||'').trim()||(t.shortTerm||'').trim()||(t.expectations||'').trim()||(t.stage||'').trim()||phases.length||days.length||hasWs);
   if(!hasAny){host.innerHTML='<div class="card"><div class="card-body" style="text-align:center;padding:48px 20px"><div style="font-size:44px;margin-bottom:12px">🏋️</div><h2 style="font-size:22px;text-transform:uppercase;letter-spacing:.02em;margin:0">Training plan coming soon</h2><p class="small" style="max-width:440px;margin:10px auto 0;line-height:1.55">Your coach hasn’t published your training programme yet — it’ll appear here once it’s ready.</p></div></div>';return;}
-  let h='';
+  let h=wkoResumeBannerHTML();
   // programme sheet (new spreadsheet-style layout)
   if(hasProg){
     const pr=[['Current weight',prog.weight?esc(prog.weight)+' kg':''],['Body fat',prog.bodyFat?esc(prog.bodyFat)+'%':''],['Estimate FFM',macX.ffm?esc(macX.ffm):''],['Metrics',esc(prog.metrics||'')],['Goal',esc(prog.goal||'')],['Program duration',esc(prog.duration||'')]].filter(x=>x[1]);
@@ -18534,33 +18622,34 @@ function wkCalRender(){
     if(planned)planN++;if(w)doneN++;
     const title=day?(day.name||'Training day'):(focusText||(isRest?'Rest':'—'));
     const focus=day?(day.focus||focusText||''):'';const startable=day&&dayAllEx(day).length>0;
-    let cls='rest',badge='';
-    if(w){cls='done';badge='<span class="twk-badge done">✓ done</span>';}
-    else if(planned&&iso<today){cls='miss';badge='<span class="twk-badge miss">✗ missed</span>';}
-    else if(planned&&iso===today){cls='today';badge='<span class="twk-badge today">● today</span>';}
-    else if(planned){cls='plan';}
-    const moveIcon=(moving==null&&movable)?'<button class="twk-mv" title="Reschedule this workout (this week only)" onclick="wkCalPick('+i+')">⇄</button>':'';
+    let cls='plan',bCls='plan',bTxt='planned';
+    if(w){cls='done';bCls='done';bTxt='✓ done';}
+    else if(isRest){cls='rest';bTxt='';}
+    else if(planned&&iso<today){cls='miss';bCls='miss';bTxt='✗ missed';}
+    else if(planned&&iso===today){cls='today';bCls='today';bTxt='● today';}
+    const badge=bTxt?'<span class="twl-badge '+bCls+'">'+bTxt+'</span>':'';
+    const moveBtn=(moving==null&&movable)?'<button class="twl-mv" title="Reschedule this workout (this week only)" onclick="wkCalPick('+i+')">⇄</button>':'';
     const action=(moving!=null)
-      ? (moving===i?'<button class="twk-mv cancel" onclick="wkCalPick(null)">✕ cancel</button>':'<button class="twk-mv target" onclick="wkCalMove('+i+')">↧ move here</button>')
-      : (startable?'<button class="twk-start" onclick="startWorkout(\''+day.id+'\')">▶ '+(w?'Log again':'Start')+'</button>':'');
+      ? (moving===i?'<button class="twl-mv cancel" onclick="wkCalPick(null)">✕ cancel</button>':(movable?'<button class="twl-start move" onclick="wkCalMove('+i+')">↧ Move here</button>':''))
+      : (startable?'<button class="twl-start" onclick="startWorkout(\''+day.id+'\')">▶ '+(w?'Log again':'Start')+'</button>':'');
     const dnd=' ondragover="wkCalDragOver(event,'+i+')" ondragleave="wkCalDragLeave(event)" ondrop="wkCalDrop(event,'+i+')"'+((movable&&moving==null)?' draggable="true" ondragstart="wkCalDragStart(event,'+i+')" ondragend="wkCalDragLeave(event)"':'');
-    const titleHTML=day?('<button class="twk-title twk-title-btn'+(isRest?' rest':'')+'" onclick="wkoOpenDayDetail(\''+day.id+'\',\''+iso+'\')" title="See the full workout">'+esc(title)+'</button>')
-      :('<div class="twk-title'+(isRest?' rest':'')+'">'+esc(title)+'</div>');
-    return '<div class="twk-day '+cls+(moving===i?' moving':'')+'"'+dnd+'>'+
-      '<div class="twk-dow">'+wd[i]+' <span class="twk-date">'+dd.dom+'</span>'+moveIcon+'</div>'+
-      titleHTML+
-      (focus&&focus!==title?'<div class="twk-focus">'+esc(focus)+'</div>':'')+
-      badge+action+
+    const titleHTML=day?('<button class="twl-title twl-title-btn'+(isRest?' rest':'')+'" onclick="wkoOpenDayDetail(\''+day.id+'\',\''+iso+'\')" title="See the full workout">'+esc(title)+'</button>')
+      :('<div class="twl-title'+(isRest?' rest':'')+'">'+esc(title)+'</div>');
+    const grip='<span class="twl-grip"'+((movable&&moving==null)?' title="Drag to reschedule"':' style="opacity:.22"')+'>⠿</span>';
+    return '<div class="twl-row '+cls+(moving===i?' moving':'')+'"'+dnd+'>'+grip+
+      '<div class="twl-date"><div class="twl-dow">'+wd[i]+'</div><div class="twl-dom">'+dd.dom+'</div></div>'+
+      '<div class="twl-main">'+titleHTML+(focus&&focus!==title?'<div class="twl-focus">'+esc(focus)+'</div>':'')+'</div>'+
+      '<div class="twl-right">'+badge+moveBtn+action+'</div>'+
       '</div>';
   }).join('');
   const label=fmtDate(dates[0].iso)+' – '+fmtDate(dates[6].iso);
   const resetBtn=overridden?'<button class="btn-sm" style="flex:none;margin-right:8px" onclick="wkCalReset()" title="Undo this week\'s reschedules">↺ Reset week</button>':'';
-  host.innerHTML='<div class="card"><div class="card-head"><span class="step-no">🗓</span><h2>Training split &amp; weekly calendar</h2><span class="sp"></span>'+resetBtn+'<button class="btn-sm" onclick="wkWeekNav(-1)">‹</button><span class="small" style="min-width:120px;text-align:center">'+esc(label)+'</span><button class="btn-sm" onclick="wkWeekNav(1)">›</button></div>'+
+  host.innerHTML='<div class="card"><div class="card-head"><span class="step-no">🗓</span><h2>Your training week</h2><span class="sp"></span>'+resetBtn+'<button class="btn-sm" onclick="wkWeekNav(-1)">‹</button><span class="small" style="min-width:120px;text-align:center">'+esc(label)+'</span><button class="btn-sm" onclick="wkWeekNav(1)">›</button></div>'+
     '<div class="card-body">'+
-    (moving!=null?'<div class="twk-movehint">↧ Tap the day you want to move this workout to '+(overridden?'':'')+'· <button class="twk-mv cancel" onclick="wkCalPick(null)" style="margin-left:6px">cancel</button></div>':'')+
-    '<div class="twk-board">'+cells+'</div>'+
+    (moving!=null?'<div class="twk-movehint">↧ Tap “Move here” on the day you want this workout on · <button class="twk-mv cancel" onclick="wkCalPick(null)" style="margin-left:6px">cancel</button></div>':'')+
+    '<div class="twl-list">'+cells+'</div>'+
     '<div class="small" style="margin-top:12px;text-align:center">'+doneN+' of '+(planN||doneN||0)+' planned session'+((planN||doneN)===1?'':'s')+' done this week'+(planN?(' · <b class="wk-1rm">'+Math.min(100,Math.round(doneN/planN*100))+'%</b>'):'')+(overridden?' · <span style="color:var(--gold)">rescheduled</span>':'')+'</div>'+
-    '<div class="wkw-legend"><span><i class="d-done"></i> done</span><span><i class="d-miss"></i> missed</span><span><i class="d-plan"></i> planned</span><span><i class="d-rest"></i> rest</span><span>tap a title for details · drag a day (or ⇄) to reschedule</span></div>'+
+    '<div class="twl-hint">Drag ⠿ a day (or tap ⇄) to reschedule · tap a day’s name for the full workout</div>'+
     '</div></div>';
 }
 /* compliance stats for any date range */
