@@ -3436,6 +3436,9 @@ body.gm-has-switch #custom-host{top:var(--gm-h,48px)}
 .wd-cal-date{font-size:11px;color:var(--muted);font-weight:700}
 .wd-cal-chip{display:flex;align-items:center;gap:4px;background:var(--prot);color:#06121f;border-radius:8px;padding:4px 7px;font-size:12px;font-weight:700;cursor:grab}
 .wd-cal-chip button{background:none;border:none;color:#06121f;cursor:pointer;font-weight:900;flex:none}
+.wd-cc-tx{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.15}
+.wd-cc-nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wd-cc-sub{font-size:9.5px;opacity:.82;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wd-cal-add{font-size:11px;color:var(--prot);background:none;border:1px dashed var(--border);border-radius:8px;padding:5px;cursor:pointer;margin-top:auto}
 .wd-cal-vis{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 12px;font-size:12px;color:var(--muted)}
 .wd-week{margin-bottom:16px}
@@ -3537,6 +3540,37 @@ body.gm-has-switch #custom-host{top:var(--gm-h,48px)}
 .wkc-start{font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.03em;border:0;border-radius:13px;background:var(--red);color:#fff;padding:15px;font-size:17px;cursor:pointer}
 .wkc-start:active{transform:scale(.99)}
 .wkc-cancel{border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:13px;padding:12px;font-size:14px;font-weight:600;cursor:pointer}
+/* Week calendar — Option A vertical list with drag-to-reschedule */
+.tw-wkhint{font-size:11.5px;color:var(--muted);margin:0 2px 8px;display:flex;align-items:center;gap:5px}
+.tw-gripmini{color:var(--muted)}
+.tw-week-list{display:flex;flex-direction:column;gap:7px}
+.tw-wd{display:flex;align-items:stretch;gap:10px;border-radius:13px;transition:background .12s}
+.tw-wd.tw-drop{background:rgba(232,23,13,.08);outline:2px dashed var(--red);outline-offset:2px}
+.tw-wd-day{flex:none;width:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted)}
+.tw-wd-day .dow{font-size:10.5px;text-transform:uppercase;letter-spacing:.03em}
+.tw-wd-day .dn{font-family:var(--disp);font-weight:900;font-size:19px;line-height:1;color:var(--text)}
+.tw-wd.is-today .tw-wd-day .dn,.tw-wd.is-today .tw-wd-day .dow{color:var(--red)}
+.tw-wd-slot{flex:1;min-width:0;display:flex}
+.tw-wk-card{flex:1;min-width:0;display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--border);border-radius:13px;padding:11px 12px;cursor:pointer;text-align:left;color:var(--text);box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.tw-wk-card.today{border-color:var(--red);box-shadow:0 2px 12px -4px rgba(232,23,13,.4)}
+.tw-wk-card.done{opacity:.72}
+.tw-wk-card:active{transform:scale(.995)}
+.tw-grip{flex:none;color:var(--muted);font-size:17px;line-height:1;cursor:grab;touch-action:none;padding:2px 1px;user-select:none;-webkit-user-select:none}
+.tw-grip.ghost{cursor:default;opacity:.5;font-size:13px}
+.tw-wk-meta{flex:1;min-width:0}
+.tw-wk-meta b{display:block;font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tw-wk-meta span{display:block;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tw-wk-stat{flex:none;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;border-radius:20px;padding:2px 8px}
+.tw-wk-stat.done{color:var(--good);background:rgba(21,163,74,.12)}
+.tw-wk-stat.today{color:var(--red);background:rgba(232,23,13,.1)}
+.tw-wk-stat.missed{color:#dc3b2f;background:rgba(220,59,47,.1)}
+.tw-wk-stat:empty{display:none}
+.tw-wk-go{flex:none;color:var(--muted);font-size:18px}
+.tw-rest-cell{flex:1;display:flex;align-items:center;justify-content:center;border:1px dashed var(--border);border-radius:13px;padding:12px;font-size:12.5px;color:var(--muted)}
+.tw-ghost{position:fixed;z-index:2000;pointer-events:none;opacity:.96;box-shadow:0 14px 34px -8px rgba(16,24,40,.5);transform:rotate(-1.5deg);border-radius:13px;background:var(--card);border:1px solid var(--red)}
+.tw-ghost .tw-wd-day,.tw-ghost .tw-wk-go{display:none}
+.tw-src{opacity:.32}
+body.tw-dragging{user-select:none;-webkit-user-select:none}
 .tw-d{text-align:center;border-radius:12px;padding:8px 2px 7px;background:var(--card2);border:1px solid transparent;position:relative;cursor:default;min-width:0}
 .tw-d.clk{cursor:pointer}
 .tw-d .dow{font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase}
@@ -7364,7 +7398,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04tl';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04tm';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -18377,7 +18411,11 @@ async function msPhoto(gi,which,input){const f=input.files[0];if(!f)return;try{c
 
 /* ═══════════════ 10e · TRAINING (client view) ═══════════════ */
 /* ═══════════ CLIENT · Training v2 (calendar view + rebuilt runner) ═══════════ */
-function t2c(){const v=(PLAN&&PLAN.training&&PLAN.training.v2)||{};return {active:!!v.active,workouts:Array.isArray(v.workouts)?v.workouts:[],calendar:(v.calendar&&typeof v.calendar==='object')?v.calendar:{}};}
+function t2c(){const v=(PLAN&&PLAN.training&&PLAN.training.v2)||{};
+  let cal=(v.calendar&&typeof v.calendar==='object')?v.calendar:{};
+  /* the client can reschedule their own week — stored in milestones.trainingCal and merged over the coach's calendar (coach preview sees the real plan) */
+  if(typeof ADMIN_OK==='undefined'||!ADMIN_OK){const ov=PLAN&&PLAN.milestones&&PLAN.milestones.trainingCal;if(ov&&typeof ov==='object'){cal=Object.assign({},cal);Object.keys(ov).forEach(function(d){cal[d]=ov[d];});}}
+  return {active:!!v.active,workouts:Array.isArray(v.workouts)?v.workouts:[],calendar:cal};}
 function t2cWorkout(id){return t2c().workouts.find(w=>w.id===id)||null;}
 let WD2_DONE=null, WD2_LOGS=null, WD2=null, WD2_TIMER=null, WD2_WEEK=0, TW_RELIB=false;
 async function wd2LoadDone(){try{const logs=await DB.listWorkoutLogs(SESSION.id);WK_LOGS=logs||[];WD2_DONE=new Set((logs||[]).map(l=>String(l.date||'').slice(0,10)));WD2_LOGS={};(logs||[]).forEach(l=>{const d=String(l.date||'').slice(0,10);const prev=WD2_LOGS[d];if(!prev||String(l.created_at||'')>String(prev.created_at||''))WD2_LOGS[d]=l;});}catch(e){WD2_DONE=new Set();WD2_LOGS={};}try{renderTrainingV2();}catch(e){}}
@@ -18470,15 +18508,82 @@ function renderTrainingV2(){
   let wk='<div class="tw-wk">';
   wk+='<div class="tw-wknav"><button class="btn-xxs"'+(canPrev?'':' disabled style="opacity:.4"')+' onclick="wd2WeekNav(-1)">‹</button><b>'+esc(label)+'</b><button class="btn-xxs"'+(canNext?'':' disabled style="opacity:.4"')+' onclick="wd2WeekNav(1)">›</button></div>';
   wk+='<div class="tw-wk-top"><div class="tw-flame">🔥 '+streak+'</div><div class="tw-wk-prog"><div class="lbl"><span>'+(WD2_WEEK<0?'Sessions done':WD2_WEEK>0?'Planned':'Sessions done')+'</span><span>'+bDone+' of '+bPlan+'</span></div><div class="tw-wk-bar"><i style="width:'+(bPlan?Math.round(bDone/bPlan*100):0)+'%"></i></div></div></div>';
-  wk+='<div class="tw-wk-strip">';
+  const canResched=(typeof ADMIN_OK==='undefined'||!ADMIN_OK);
+  wk+='<div class="tw-wkhint">'+(canResched?'Drag <span class="tw-gripmini">⠿</span> to move a workout to another day':'Your weekly schedule')+'</div>';
+  wk+='<div class="tw-week-list" id="tw-week-list">';
   for(let i=0;i<7;i++){const iso=addDaysISO(ws,i),w2=c[iso]||[],isT=(iso===today),dn=done.has(iso),missed=(iso<today)&&w2.length&&!dn;const d=new Date(iso+'T00:00:00');
-    const cls=['tw-d'];if(dn)cls.push('done');else if(isT&&w2.length)cls.push('today');else if(missed)cls.push('missed');else if(!w2.length)cls.push('rest');if(w2.length)cls.push('clk');
-    const nm=w2.length?esc((t2cWorkout(w2[0])||{}).name||'Workout'):'Rest';
     const dlog=dn?wd2LogForDate(iso):null;
-    const click=w2.length?(' onclick="'+(dlog?('wkoEditLog(\''+dlog.id+'\')'):('startWorkoutV2(\''+iso+'\',\''+w2[0]+'\')'))+'"'+(dlog?' title="View &amp; edit this logged session"':'')):'';
-    wk+='<div class="'+cls.join(' ')+'"'+click+'>'+(dn?'<div class="chk">✓</div>':'')+'<div class="dow">'+d.toLocaleDateString(undefined,{weekday:'short'})+'</div><div class="dn">'+d.getDate()+'</div><div class="dwk">'+nm+'</div><div class="dot"></div></div>';}
+    let slot;
+    if(w2.length){
+      const w=t2cWorkout(w2[0])||{};
+      let exCount=0,setCount=0;const flat=[];(w.sections||[]).forEach(s=>(s.exercises||[]).forEach(e=>{flat.push(e);exCount++;setCount+=wdExSets(e).filter(x=>!x.tech).length;}));
+      const mins=Math.max(10,Math.round(setCount*2.6));
+      const musc=[];flat.forEach(e=>{const lib=e.exId?exById(e.exId):null;const bp=lib&&lib.bodyPart;if(bp&&musc.indexOf(bp)<0)musc.push(bp);});
+      const summ=exCount+' ex · ~'+mins+' min'+(musc.length?(' · '+musc.slice(0,2).join(', ')):(w.focus?(' · '+esc(w.focus)):''));
+      const onclick=dlog?('wkoEditLog(\''+dlog.id+'\')'):('startWorkoutV2(\''+iso+'\',\''+esc(w2[0])+'\')');
+      const canDrag=canResched&&!dn;
+      slot='<div class="tw-wk-card'+(dn?' done':isT?' today':missed?' missed':'')+'"'+(canDrag?' data-wid="'+esc(w2[0])+'" data-date="'+iso+'"':'')+' onclick="'+onclick+'">'+
+        (canDrag?'<span class="tw-grip" aria-label="Drag to another day">⠿</span>':'<span class="tw-grip ghost">'+(dn?'✓':missed?'!':'·')+'</span>')+
+        '<div class="tw-wk-meta"><b>'+esc(w.name||'Workout')+'</b><span>'+summ+'</span></div>'+
+        '<span class="tw-wk-stat '+(dn?'done':isT?'today':missed?'missed':'')+'">'+(dn?'done':isT?'today':missed?'missed':'')+'</span>'+
+        '<span class="tw-wk-go">›</span></div>';
+    } else { slot='<div class="tw-rest-cell">Rest day</div>'; }
+    wk+='<div class="tw-wd'+(w2.length?'':' rest')+(isT?' is-today':'')+'" data-date="'+iso+'"><div class="tw-wd-day"><span class="dow">'+d.toLocaleDateString(undefined,{weekday:'short'})+'</span><span class="dn">'+d.getDate()+'</span></div><div class="tw-wd-slot">'+slot+'</div></div>';
+  }
   wk+='</div></div>';
   host.innerHTML=wkoResumeBannerHTML()+h+wk;
+  try{if(canResched)twDragInit();}catch(e){}
+}
+/* ===== Client week drag-to-reschedule (touch + mouse); saves a personal override in milestones.trainingCal ===== */
+let TW_DRAG=null;
+function twDragInit(){
+  const list=$('tw-week-list');if(!list)return;
+  if(!window._twClickGuard){window._twClickGuard=true;document.addEventListener('click',function(e){if(window._twSuppressClick&&Date.now()-window._twSuppressClick<500){window._twSuppressClick=0;e.preventDefault();e.stopPropagation();}},true);}
+  list.querySelectorAll('.tw-wk-card[data-wid]').forEach(function(card){
+    const grip=card.querySelector('.tw-grip');if(!grip)return;
+    grip.addEventListener('pointerdown',function(ev){twDragStart(ev,card);});
+  });
+}
+function twDragStart(ev,card){
+  if(TW_DRAG)return;ev.preventDefault();ev.stopPropagation();
+  const rect=card.getBoundingClientRect();
+  TW_DRAG={card:card,wid:card.dataset.wid,from:card.dataset.date,ghost:null,overDate:null,offX:ev.clientX-rect.left,offY:ev.clientY-rect.top,moved:false};
+  const g=card.cloneNode(true);g.classList.add('tw-ghost');g.style.width=rect.width+'px';g.style.left=(ev.clientX-TW_DRAG.offX)+'px';g.style.top=(ev.clientY-TW_DRAG.offY)+'px';
+  document.body.appendChild(g);TW_DRAG.ghost=g;card.classList.add('tw-src');document.body.classList.add('tw-dragging');
+  window.addEventListener('pointermove',twDragMove,{passive:false});
+  window.addEventListener('pointerup',twDragEnd,{passive:false});
+  window.addEventListener('pointercancel',twDragEnd,{passive:false});
+}
+function twDragMove(ev){
+  if(!TW_DRAG)return;ev.preventDefault();TW_DRAG.moved=true;
+  const g=TW_DRAG.ghost;g.style.left=(ev.clientX-TW_DRAG.offX)+'px';g.style.top=(ev.clientY-TW_DRAG.offY)+'px';
+  g.style.display='none';const el=document.elementFromPoint(ev.clientX,ev.clientY);g.style.display='';
+  const row=el&&el.closest?el.closest('.tw-wd'):null;
+  const list=$('tw-week-list');if(list)list.querySelectorAll('.tw-wd.tw-drop').forEach(function(r){r.classList.remove('tw-drop');});
+  if(row&&row.dataset.date&&row.dataset.date!==TW_DRAG.from){row.classList.add('tw-drop');TW_DRAG.overDate=row.dataset.date;}else TW_DRAG.overDate=null;
+}
+function twDragEnd(ev){
+  if(!TW_DRAG)return;
+  window.removeEventListener('pointermove',twDragMove);window.removeEventListener('pointerup',twDragEnd);window.removeEventListener('pointercancel',twDragEnd);
+  const d=TW_DRAG;TW_DRAG=null;
+  if(d.ghost)d.ghost.remove();if(d.card)d.card.classList.remove('tw-src');document.body.classList.remove('tw-dragging');
+  const list=$('tw-week-list');if(list)list.querySelectorAll('.tw-wd.tw-drop').forEach(function(r){r.classList.remove('tw-drop');});
+  if(d.moved)window._twSuppressClick=Date.now();   // swallow the click that follows a drag so it doesn't open the workout
+  if(d.overDate&&d.overDate!==d.from)twMoveWorkout(d.wid,d.from,d.overDate);
+}
+function twMoveWorkout(wid,fromDate,toDate){
+  if(!PLAN||!SESSION)return;
+  const eff=t2c().calendar;
+  const fromArr=(eff[fromDate]||[]).filter(function(x){return x!==wid;});
+  const toArr=(eff[toDate]||[]).slice();if(toArr.indexOf(wid)<0)toArr.push(wid);
+  PLAN.milestones=PLAN.milestones||{};
+  const ov=PLAN.milestones.trainingCal=(PLAN.milestones.trainingCal&&typeof PLAN.milestones.trainingCal==='object')?PLAN.milestones.trainingCal:{};
+  ov[fromDate]=fromArr;ov[toDate]=toArr;
+  WD2_DONE=null;   // refresh done/plan state
+  try{renderTrainingV2();}catch(e){}
+  if(typeof ADMIN_OK!=='undefined'&&ADMIN_OK){toast('Moved (coach preview — not saved; edit the plan in the builder)',true);return;}
+  toast('Rescheduled ✓');
+  DB.saveMilestones(SESSION.id,PLAN.milestones).catch(function(e){toast('Could not save — '+((e&&e.message)||'error'),true);});
 }
 /* ---- rebuilt runner ---- */
 /* Restore the previous focus-view runner for v2 workouts: adapt a v2 workout into WKO + per-set targets, then run the legacy runner. */
@@ -28500,7 +28605,10 @@ function wdCalWeekStarts(){const base=wdMonday(wdCalStart());
 function wdCalDayCell(iso){const c=wdCal(),ids=c[iso]||[],isToday=(iso===todayISO()),d=new Date(iso+'T00:00:00');
   let h='<div class="wd-cal-cell'+(isToday?' today':'')+'" ondragover="event.preventDefault()" ondrop="wdCalDrop(\''+iso+'\')">';
   h+='<div class="wd-cal-date">'+d.toLocaleDateString(undefined,{weekday:'short'})+' '+d.getDate()+(isToday?' •':'')+'</div>';
-  ids.forEach((id,idx)=>{const w=wdWorkout(id);h+='<div class="wd-cal-chip" draggable="true" ondragstart="wdCalDragStart(\''+iso+'\','+idx+')" title="'+esc((w&&w.name)||'')+'"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc((w&&w.name)||'(deleted)')+'</span><button onclick="wdCalRemove(\''+iso+'\','+idx+')">×</button></div>';});
+  ids.forEach((id,idx)=>{const w=wdWorkout(id);
+    let nx=0,setc=0;((w&&w.sections)||[]).forEach(s=>((s.exercises)||[]).forEach(e=>{nx++;setc+=(Array.isArray(e.sets)&&e.sets.length)?e.sets.length:(parseInt(e.scheme&&e.scheme.sets)||3);}));
+    const summ=nx?(nx+' ex · ~'+Math.max(10,Math.round(setc*2.6))+'m'):'';
+    h+='<div class="wd-cal-chip" draggable="true" ondragstart="wdCalDragStart(\''+iso+'\','+idx+')" title="'+esc((w&&w.name)||'')+(summ?(' — '+summ):'')+'"><div class="wd-cc-tx"><span class="wd-cc-nm">'+esc((w&&w.name)||'(deleted)')+'</span>'+(summ?'<span class="wd-cc-sub">'+summ+'</span>':'')+'</div><button onclick="wdCalRemove(\''+iso+'\','+idx+')">×</button></div>';});
   if(WD_CAL_PICK===iso)h+='<select onchange="wdCalAssign(\''+iso+'\',this.value)"><option value="">Pick…</option>'+t2().workouts.map(w=>'<option value="'+w.id+'">'+esc(w.name||'Workout')+'</option>').join('')+'</select>';
   else h+='<button class="wd-cal-add" onclick="wdCalPick(\''+iso+'\')">＋</button>';
   return h+'</div>';}
