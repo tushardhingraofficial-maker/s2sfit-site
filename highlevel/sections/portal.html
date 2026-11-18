@@ -3513,6 +3513,30 @@ body.gm-has-switch #custom-host{top:var(--gm-h,48px)}
 .tw-wknav{display:flex;align-items:center;gap:8px;margin:0 2px 10px}
 .tw-wknav b{flex:1;text-align:center;font-size:13px}
 .tw-wk-strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+/* Pre-workout confirmation sheet */
+.wkc-overlay{position:fixed;inset:0;z-index:1500;background:rgba(10,14,20,.6);backdrop-filter:blur(4px);display:none;align-items:flex-end;justify-content:center}
+.wkc-overlay.open{display:flex}
+.wkc-sheet{position:relative;width:100%;max-width:560px;background:var(--surface);border-radius:20px 20px 0 0;max-height:92vh;overflow:auto;padding:22px 18px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.4)}
+.wkc-x{position:absolute;top:14px;right:14px;width:34px;height:34px;border:1px solid var(--border);background:var(--card);color:var(--muted);border-radius:9px;font-size:20px;line-height:1;cursor:pointer}
+.wkc-eyebrow{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--red)}
+.wkc-title{font-family:var(--disp);font-weight:900;font-size:26px;text-transform:uppercase;line-height:1.05;margin-top:3px}
+.wkc-focus{color:var(--muted);font-size:13px;margin-top:4px}
+.wkc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
+.wkc-stat{background:var(--card2);border:1px solid var(--border);border-radius:13px;padding:12px 8px;text-align:center}
+.wkc-stat b{display:block;font-family:var(--disp);font-weight:900;font-size:24px;line-height:1}
+.wkc-stat span{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-top:3px;display:block}
+.wkc-uline{font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.05em;font-size:11px;color:var(--muted);margin:4px 2px 8px}
+.wkc-list{display:flex;flex-direction:column;border:1px solid var(--border);border-radius:13px;overflow:hidden;margin-bottom:18px}
+.wkc-ex{display:flex;align-items:center;gap:10px;padding:11px 13px;border-bottom:1px solid var(--border)}
+.wkc-ex:last-child{border-bottom:0}
+.wkc-ex-nm{flex:1;min-width:0;font-weight:700;font-size:14px}
+.wkc-ss{font-size:9.5px;font-weight:800;text-transform:uppercase;color:var(--prot);background:rgba(47,127,209,.12);border-radius:5px;padding:1px 5px;margin-left:4px}
+.wkc-ex-t{font-size:12.5px;color:var(--muted);white-space:nowrap;flex:none}
+.wkc-ex-v{flex:none;color:var(--red);text-decoration:none;font-size:14px}
+.wkc-actions{display:flex;flex-direction:column;gap:9px}
+.wkc-start{font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.03em;border:0;border-radius:13px;background:var(--red);color:#fff;padding:15px;font-size:17px;cursor:pointer}
+.wkc-start:active{transform:scale(.99)}
+.wkc-cancel{border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:13px;padding:12px;font-size:14px;font-weight:600;cursor:pointer}
 .tw-d{text-align:center;border-radius:12px;padding:8px 2px 7px;background:var(--card2);border:1px solid transparent;position:relative;cursor:default;min-width:0}
 .tw-d.clk{cursor:pointer}
 .tw-d .dow{font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase}
@@ -7340,7 +7364,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04tk';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04tl';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -18458,13 +18482,42 @@ function renderTrainingV2(){
 }
 /* ---- rebuilt runner ---- */
 /* Restore the previous focus-view runner for v2 workouts: adapt a v2 workout into WKO + per-set targets, then run the legacy runner. */
-async function startWorkoutV2(iso,wId){
+/* Tapping a workout shows a confirmation / "ready to train?" screen first; the runner only opens on Start. */
+let WKC_PENDING=null;
+function startWorkoutV2(iso,wId){
   const w=t2cWorkout(wId);if(!w){toast('Workout not found',true);return;}
   const _saved=wkoLoadActive();
   if(_saved&&_saved.w&&_saved.w.day_id===w.id){
     if(confirm('You have an unfinished “'+(_saved.w.day_name||'workout')+'”.\n\nOK — resume where you left off\nCancel — start over')){return wkoResume();}
     wkoClearActive();
   }
+  wkoShowConfirm(iso,wId,w);
+}
+function wkoShowConfirm(iso,wId,w){
+  w=w||t2cWorkout(wId);if(!w){toast('Workout not found',true);return;}
+  const flat=[];(w.sections||[]).forEach(sec=>{(sec.exercises||[]).forEach(e=>flat.push(e));});
+  if(!flat.length){toast('This workout has no exercises yet',true);return;}
+  let totalSets=0;
+  const exRows=flat.map(function(e){const ts=(typeof wdExSets==='function')?wdExSets(e):[{}];totalSets+=ts.length;const first=ts[0]||{};
+    const uni=ts.length&&ts.every(function(s){return String(s.reps||'')===String(first.reps||'')&&String(s.weight||'')===String(first.weight||'');});
+    const tgt=uni?[ts.length+' ×',(first.reps||''),(first.weight?('@ '+first.weight+'kg'):'')].join(' ').replace(/\s+/g,' ').trim():(ts.length+' sets');
+    const lib=e.exId&&(typeof exById==='function')?exById(e.exId):null;const vid=lib&&lib.video;
+    return '<div class="wkc-ex"><div class="wkc-ex-nm">'+esc(e.name||'Exercise')+(e.linkNext?' <span class="wkc-ss">superset</span>':'')+'</div><div class="wkc-ex-t">'+esc(tgt)+'</div>'+(vid?'<a class="wkc-ex-v" href="'+esc(vid)+'" target="_blank" rel="noopener" title="Watch demo">▶</a>':'')+'</div>';
+  }).join('');
+  const estMin=Math.max(10,Math.round(totalSets*2.5));
+  const html='<div class="wkc-sheet"><button class="wkc-x" onclick="wkoCloseConfirm()" aria-label="Close">×</button>'+
+    '<div class="wkc-eyebrow">Ready to train?</div><div class="wkc-title">'+esc(w.name||'Workout')+'</div>'+(w.focus?'<div class="wkc-focus">'+esc(w.focus)+'</div>':'')+
+    '<div class="wkc-stats"><div class="wkc-stat"><b>'+flat.length+'</b><span>exercises</span></div><div class="wkc-stat"><b>'+totalSets+'</b><span>sets</span></div><div class="wkc-stat"><b>~'+estMin+'</b><span>min</span></div></div>'+
+    '<div class="wkc-uline">What you’re doing</div><div class="wkc-list">'+exRows+'</div>'+
+    '<div class="wkc-actions"><button class="wkc-start" onclick="wkoConfirmGo()">▶ Start workout</button><button class="wkc-cancel" onclick="wkoCloseConfirm()">Not now</button></div></div>';
+  let ov=$('wko-confirm');
+  if(!ov){ov=document.createElement('div');ov.id='wko-confirm';ov.className='wkc-overlay';document.body.appendChild(ov);ov.addEventListener('click',function(e){if(e.target===ov)wkoCloseConfirm();});}
+  ov.innerHTML=html;ov.classList.add('open');WKC_PENDING={iso:iso,wId:wId};
+}
+function wkoCloseConfirm(){const ov=$('wko-confirm');if(ov)ov.classList.remove('open');}
+function wkoConfirmGo(){const p=WKC_PENDING;wkoCloseConfirm();if(p)wkoRunV2(p.iso,p.wId);}
+async function wkoRunV2(iso,wId){
+  const w=t2cWorkout(wId);if(!w){toast('Workout not found',true);return;}
   await loadExLib();try{WKO_HISTORY=await DB.listWorkoutLogs(SESSION.id);}catch(e){WKO_HISTORY=[];}
   try{WKO_COLS=(await DB.getKV('workout_log_cols'))||[];}catch(e){WKO_COLS=[];}if(!Array.isArray(WKO_COLS))WKO_COLS=[];
   wkoLoadClientCols();
