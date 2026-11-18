@@ -4370,6 +4370,34 @@ tr.tr-gr td:first-child{border-left:3px solid var(--red)}
 .wko-tool .ic{width:21px;height:21px}
 .wko-tool:hover{border-color:var(--red);color:var(--text)}
 .wko-tool.on{background:rgba(232,23,13,.12);border-color:var(--red);color:var(--red)}
+/* tempo + breathing knowledge card */
+.brth-card{border:1px solid var(--border);border-radius:13px;background:var(--card2);padding:11px 12px;margin:12px 0}
+.brth-head{display:flex;align-items:center;margin-bottom:8px}
+.brth-title{font-weight:800;font-family:var(--disp);font-size:13px;text-transform:uppercase;letter-spacing:.03em}
+.brth-tempo{margin-left:auto;font-size:12px;color:var(--muted)}
+.brth-cue{font-size:12.5px;color:var(--muted);margin:0 0 9px;line-height:1.5}
+.brth-rows{display:flex;flex-direction:column;gap:7px}
+.brth-row{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-left:3px solid var(--border);border-radius:10px;padding:8px 10px}
+.brth-ic{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex:none;font-size:14px;font-weight:800}
+.brth-tx{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.brth-tx b{font-size:13px;font-weight:700}
+.brth-tx span{font-size:11.5px;color:var(--muted)}
+.brth-start{width:100%;margin-top:10px;border:0;border-radius:11px;background:var(--red);color:#fff;padding:11px;font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.03em;font-size:13.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}
+.brth-start:active{transform:scale(.99)}
+/* animated breathing pacer overlay */
+.bp-overlay{position:fixed;inset:0;z-index:1600;background:rgba(10,14,20,.72);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:18px}
+.bp-overlay.open{display:flex}
+.bp-sheet{position:relative;width:100%;max-width:360px;background:var(--surface);border-radius:20px;padding:22px 18px 18px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.bp-x{position:absolute;top:12px;right:12px;width:32px;height:32px;border:1px solid var(--border);background:var(--card);color:var(--muted);border-radius:9px;font-size:19px;line-height:1;cursor:pointer}
+.bp-h{font-family:var(--disp);font-weight:900;font-size:19px;text-transform:uppercase}
+.bp-rep{font-size:12.5px;color:var(--muted);margin-top:3px}
+.bp-wrap{position:relative;width:186px;height:186px;margin:16px auto 10px}
+.bp-ring{position:absolute;inset:0;border-radius:50%;border:2px solid var(--border)}
+.bp-cwrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.bp-circle{width:152px;height:152px;border-radius:50%;background:#2F7FD1;display:flex;align-items:center;justify-content:center;transform:scale(.55);will-change:transform}
+.bp-phase{font-weight:700;font-size:16px;color:#fff;letter-spacing:.01em}
+.bp-sub{font-size:12px;color:var(--muted);margin-bottom:14px}
+.bp-btn{border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:11px;padding:11px 26px;font-size:14px;font-weight:600;cursor:pointer}
 /* grid header + toggles */
 .wko-gridhead{display:flex;align-items:center;gap:8px;margin:2px 0 6px}
 .wko-toggle{background:var(--card2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:4px 9px;font-size:11px;font-weight:800;font-family:var(--disp);cursor:pointer;text-transform:uppercase;letter-spacing:.03em}
@@ -7406,7 +7434,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04tn';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04to';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -8991,7 +9019,8 @@ const SVG_ICONS={
   plus:'<path d="M12 5v14M5 12h14"/>',
   link:'<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
   settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
-  bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>'
+  bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+  breath:'<path d="M12 2v10"/><path d="M12 12c0 4-1.5 7-5 7a3 3 0 0 1-3-3c0-2 1-3 1-6"/><path d="M12 12c0 4 1.5 7 5 7a3 3 0 0 0 3-3c0-2-1-3-1-6"/>'
 };
 function svgIcon(name,cls){const p=SVG_ICONS[name];if(!p)return '';return '<svg class="ic '+(cls||'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';}
 /* swap the bottom-nav emoji glyphs for the SVG set (once) */
@@ -12795,15 +12824,68 @@ async function seedExStarter(){
   try{await DB.saveExercises(EX_LIB);toast('Starter pack loaded — '+added+' added, '+updated+' updated');renderExList();}
   catch(e){console.error(e);toast('Could not save — '+((e&&e.message)||'error'),true);}
 }
+/* ---- tempo + breathing: knowledge card in the tutorial + an animated breathing pacer ---- */
+function parseTempo(str){
+  str=String(str==null?'':str).trim();if(!str)return [3,1,1,0];
+  let toks;if(/[-/ ,]/.test(str))toks=str.split(/[-/ ,]+/).filter(Boolean);else toks=str.replace(/[^0-9Xx]/g,'').split('');
+  const n=toks.map(function(t){return (/^[Xx]$/.test(t))?1:(parseInt(t,10)||0);});
+  const ecc=(n[0]!=null&&n[0]>0)?n[0]:3,pb=(n[1]!=null)?n[1]:1,con=(n[2]!=null&&n[2]>0)?n[2]:1,pt=(n[3]!=null)?n[3]:0;
+  return [ecc,pb,con,pt];
+}
+function breathingCardHTML(tempo,cue){
+  const t=parseTempo(tempo),ecc=t[0],pb=t[1],con=t[2],pt=t[3];
+  const tdisp=[ecc,pb,con].concat(pt?[pt]:[]).join('·');
+  let rows='<div class="brth-row" style="border-left-color:var(--prot)"><div class="brth-ic" style="background:rgba(47,127,209,.12);color:var(--prot)">▼</div><div class="brth-tx"><b>Lower · '+ecc+'s</b><span>Breathe <b style="color:var(--prot)">IN</b> through the nose, fill the belly</span></div></div>';
+  if(pb)rows+='<div class="brth-row" style="border-left-color:var(--gold,#BA7517)"><div class="brth-ic" style="background:rgba(186,117,23,.12);color:var(--gold,#BA7517)">⏸</div><div class="brth-tx"><b>Bottom · '+pb+'s</b><span><b style="color:var(--gold,#BA7517)">BRACE</b> — 360° core tightness, hold the air</span></div></div>';
+  rows+='<div class="brth-row" style="border-left-color:var(--red)"><div class="brth-ic" style="background:rgba(232,23,13,.1);color:var(--red)">▲</div><div class="brth-tx"><b>Lift · '+con+'s</b><span>Breathe <b style="color:var(--red)">OUT</b> hard through the sticking point</span></div></div>';
+  const safeTempo=String(tempo==null?'':tempo).replace(/[^0-9Xx\-\/ ,]/g,'');
+  return '<div class="brth-card"><div class="brth-head"><span class="brth-title">🫁 Tempo &amp; breathing</span><span class="brth-tempo">Tempo '+esc(tdisp)+'</span></div>'+
+    (cue&&String(cue).trim()?'<div class="brth-cue">'+esc(cue).replace(/\n/g,'<br>')+'</div>':'')+
+    '<div class="brth-rows">'+rows+'</div>'+
+    '<button class="brth-start" onclick="event.stopPropagation();wkoOpenPacer(\''+safeTempo+'\')"><span>▶</span> Start breathing guide</button></div>';
+}
+function wkoEntryTempo(en){if(!en)return '';const ss=en.sets||[];for(let i=0;i<ss.length;i++){const t=ss[i]&&ss[i].target&&ss[i].target.tempo;if(t)return t;}return (en.scheme&&en.scheme.tempo)||'';}
+let BP_RAF=null,BP_RUN=false,BP_BASE=0,BP_T=[3,1,1,0];
+function wkoOpenPacer(tempoStr){
+  BP_T=parseTempo(tempoStr);
+  let ov=$('bp-overlay');
+  if(!ov){ov=document.createElement('div');ov.id='bp-overlay';ov.className='bp-overlay';document.body.appendChild(ov);ov.addEventListener('click',function(e){if(e.target===ov)wkoClosePacer();});}
+  const tdisp=[BP_T[0],BP_T[1],BP_T[2]].concat(BP_T[3]?[BP_T[3]]:[]).join('·');
+  ov.innerHTML='<div class="bp-sheet"><button class="bp-x" onclick="wkoClosePacer()" aria-label="Close">×</button>'+
+    '<div class="bp-h">🫁 Breathing pacer</div><div class="bp-rep" id="bp-rep">Follow the circle</div>'+
+    '<div class="bp-wrap"><div class="bp-ring"></div><div class="bp-cwrap"><div class="bp-circle" id="bp-circle"><span class="bp-phase" id="bp-phase">Ready</span></div></div></div>'+
+    '<div class="bp-sub">Paced to your tempo · '+esc(tdisp)+'</div>'+
+    '<button class="bp-btn" id="bp-btn" onclick="wkoPacerToggle()">Pause</button></div>';
+  ov.classList.add('open');
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce){BP_RUN=false;const c=$('bp-circle'),p=$('bp-phase'),b=$('bp-btn');if(c)c.style.transform='scale(.92)';if(p)p.textContent='Breathe in';if(b)b.textContent='Resume';return;}
+  BP_RUN=true;BP_BASE=performance.now();BP_RAF=requestAnimationFrame(wkoPacerFrame);
+}
+function wkoPacerFrame(now){
+  if(!BP_RUN)return;const circle=$('bp-circle');if(!circle){BP_RUN=false;return;}
+  const phase=$('bp-phase'),rep=$('bp-rep');
+  const INH=Math.max(600,BP_T[0]*1000),HOLD=Math.max(0,BP_T[1]*1000),EXH=Math.max(600,BP_T[2]*1000),TOP=Math.max(0,BP_T[3]*1000),CYC=INH+HOLD+EXH+TOP;
+  const el=now-BP_BASE,t=el%CYC,r=1+(Math.floor(el/CYC)%8);let s,ph,c;
+  if(rep)rep.textContent='Rep '+r+' / 8';
+  if(t<INH){s=.55+(t/INH)*.45;ph='Breathe in…';c='#2F7FD1';}
+  else if(t<INH+HOLD){s=1;ph='Brace';c='#BA7517';}
+  else if(t<INH+HOLD+EXH){s=1-((t-INH-HOLD)/EXH)*.45;ph='Breathe out…';c='#E8170D';}
+  else{s=.55;ph='Hold';c='#2F7FD1';}
+  circle.style.transform='scale('+s.toFixed(3)+')';circle.style.background=c;if(phase)phase.textContent=ph;
+  BP_RAF=requestAnimationFrame(wkoPacerFrame);
+}
+function wkoPacerToggle(){BP_RUN=!BP_RUN;const b=$('bp-btn');if(b)b.textContent=BP_RUN?'Pause':'Resume';if(BP_RUN){BP_BASE=performance.now();BP_RAF=requestAnimationFrame(wkoPacerFrame);}}
+function wkoClosePacer(){BP_RUN=false;if(BP_RAF)cancelAnimationFrame(BP_RAF);const ov=$('bp-overlay');if(ov)ov.classList.remove('open');}
 /* ---- exercise video / instructions modal (shared coach + client) ---- */
 function exSecHTML(icon,title,txt,cls){return txt?('<div class="exsec '+cls+'"><div class="exsec-h">'+icon+' '+title+'</div><div class="exsec-b">'+esc(txt).replace(/\n/g,'<br>')+'</div></div>'):'';}
-function exDetailHTML(e){
+function exDetailHTML(e,tempo){
   const meta=[e.bodyPart,e.equipment,e.category].filter(Boolean);
   let h=meta.length?'<div class="uline" style="margin-bottom:10px">'+meta.map(esc).join(' · ')+'</div>':'';
   if(e.howto||e.mistakes||e.cues||e.breathing){
-    h+=exSecHTML('✅','How to perform',e.howto,'go')+exSecHTML('🫁','Breathing &amp; core bracing',e.breathing,'breath')+exSecHTML('⚠️','Common mistakes',e.mistakes,'bad')+exSecHTML('⭐','Make it perfect',e.cues,'gold');
+    h+=exSecHTML('✅','How to perform',e.howto,'go')+exSecHTML('⚠️','Common mistakes',e.mistakes,'bad')+exSecHTML('⭐','Make it perfect',e.cues,'gold');
   }else if(e.instructions){h+='<div class="exsec-b">'+esc(e.instructions).replace(/\n/g,'<br>')+'</div>';}
   else h+='<span style="color:var(--muted)">No instructions added.</span>';
+  try{h+=breathingCardHTML(tempo,e.breathing);}catch(_){}
   try{if(typeof ADMIN_OK!=='undefined'&&!ADMIN_OK&&e.name&&typeof sectionLive==='function'&&sectionLive('formcheck')){
     h+='<div style="margin-top:12px"><button class="btn-sm solid" style="width:100%" onclick="event.stopPropagation();fcStartForEnc(\''+encodeURIComponent(e.name)+'\')">📹 Get a form check on this exercise</button></div>';
   }}catch(_){}
@@ -12950,13 +13032,15 @@ function wkoFocusHTML(en,ei,noNav){
   const eff=en.effort||'rir';const effLbl=(eff==='rpe'?'RPE':'RIR');
   const lib=en.exId&&exById(en.exId);
   const media=wkoMediaHTML(en);
-  const instr=lib?exDetailHTML(lib):'';
+  const _tempo=String(wkoEntryTempo(en)||'').replace(/[^0-9Xx\-\/ ,]/g,'');
+  const instr=lib?exDetailHTML(lib,_tempo):'';
   const instrHTML=instr?'<details class="wko-instr"><summary>📋 How to perform</summary><div class="wko-instr-body">'+instr+'</div></details>':'';
   // per-exercise tools
   const tools='<div class="wko-tools">'+
     '<button class="wko-tool" onclick="wkoReplace('+ei+')" title="Swap from your library" aria-label="Replace exercise">'+svgIcon('refresh')+'</button>'+
     '<button class="wko-tool" onclick="wkoAddCustom()" title="Add a custom exercise" aria-label="Add custom exercise">'+svgIcon('plus')+'</button>'+
     '<button class="wko-tool" onclick="wkoHistToggle('+ei+')" title="Past performance" aria-label="History">'+svgIcon('history')+'</button>'+
+    '<button class="wko-tool" onclick="wkoOpenPacer(\''+_tempo+'\')" title="Breathing pacer" aria-label="Breathing pacer">'+svgIcon('breath')+'</button>'+
     '<button class="wko-tool'+(en.comment?' on':'')+'" onclick="wkoComment('+ei+')" title="Add a comment for your coach" aria-label="Comment">'+svgIcon('chat')+'</button>'+
     '<button class="wko-tool'+(en.group?' on':'')+'" onclick="wkoToggleSuperset('+ei+')" title="Superset with the next exercise" aria-label="Superset">'+svgIcon('link')+'</button>'+
     '</div>';
