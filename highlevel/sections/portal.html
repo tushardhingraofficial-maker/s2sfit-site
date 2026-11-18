@@ -7318,7 +7318,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04th';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04ti';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -8851,7 +8851,7 @@ const NAV_GROUPS=[
   {lead:'time',     label:'Schedule', kids:['time','availability']}
 ];
 const NAV_BAR=['home','training','nutrition','goals','chat'];           // group leads pinned on the bottom bar
-const NAV_MORE=['time','livechal','buddy','knowledge','reports'];       // standalone / grouped items shown in the More sheet (Settings appended; rewards lives inside Settings)
+const NAV_MORE=['livechal','buddy','knowledge','reports'];              // standalone / grouped items shown in the More sheet (Settings appended; rewards lives inside Settings). Schedule ('time') hidden for now.
 const GROUP_OF={};NAV_GROUPS.forEach(g=>g.kids.forEach(k=>{GROUP_OF[k]=g;}));
 const SUBLABEL={training:'Workouts',cardio:'Cardio',formcheck:'Form check',goals:'Metrics',sleep:'Sleep',habits:'Habits',chat:'Messages',checkins:'Check-ins',mytasks:'Tasks',time:'Planner',availability:'Availability'};
 const MORE_LABEL={time:'Schedule',livechal:'Challenge',buddy:'Gym Buddy',knowledge:'Knowledge',reports:'Documents',settings:'Settings'};
