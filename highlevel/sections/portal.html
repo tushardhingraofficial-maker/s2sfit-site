@@ -2319,6 +2319,21 @@ table.pf-cmp th:first-child,table.pf-cmp td:first-child{text-align:left}
 .adash-settings>summary{cursor:pointer;font-family:var(--disp);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);list-style:none}
 .adash-settings>summary::-webkit-details-marker{display:none}
 .adash-settings[open]>summary{color:var(--text);margin-bottom:4px}
+/* Collapsible dashboard cards (Notifications / Tasks) — tuck them away while working on the dashboard */
+.card-collapse{flex:none;border:1px solid var(--border);background:var(--card);color:var(--muted);border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:12px;line-height:1;display:inline-flex;align-items:center;justify-content:center;transition:transform .18s,color .15s,border-color .15s}
+.card-collapse:hover{color:var(--text);border-color:var(--red)}
+.card.collapsed>.card-body{display:none!important}
+.card.collapsed .card-collapse{transform:rotate(-90deg)}
+/* Dashboard: give the left rail & the main column their own scroll so each can be scrolled all the way,
+   independently, when the cursor is over it (desktop two-column layout only; mobile stacks & flows normally). */
+@media(min-width:901px){
+  #admin-list .adash{height:calc(100vh - 160px);min-height:420px;align-items:stretch}
+  #admin-list .adash-side{position:static;align-self:stretch;overflow-y:auto;overscroll-behavior:contain;padding-right:5px}
+  #admin-list .adash-main{overflow-y:auto;overscroll-behavior:contain;padding-right:4px}
+  #admin-list .adash-side::-webkit-scrollbar,#admin-list .adash-main::-webkit-scrollbar{width:8px}
+  #admin-list .adash-side::-webkit-scrollbar-thumb,#admin-list .adash-main::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px}
+  #admin-list .adash-side::-webkit-scrollbar-track,#admin-list .adash-main::-webkit-scrollbar-track{background:transparent}
+}
 @media(max-width:900px){
   .adash{flex-direction:column}
   .adash-side{position:static;flex:1 1 auto;width:100%;flex-direction:row;flex-wrap:wrap;align-items:center}
@@ -5461,12 +5476,14 @@ img,svg,canvas,video{max-width:100%}
           <main class="adash-main">
             <div class="card notif-card" id="notif-card"><div class="card-head"><span class="step-no">🔔</span><h2>Notifications</h2>
               <span class="sp"></span><span class="pill" id="notif-count">0</span>
-              <button class="btn-sm" style="margin-left:8px" onclick="notifRefresh()" title="Refresh notifications">↻</button></div>
+              <button class="btn-sm" style="margin-left:8px" onclick="notifRefresh()" title="Refresh notifications">↻</button>
+              <button class="card-collapse" style="margin-left:8px" onclick="toggleDashCard('notif-card')" title="Collapse / expand this panel">▾</button></div>
               <div class="card-body" id="notif-host"></div></div>
 
             <div class="card" id="tasks-card" style="border-color:var(--red)"><div class="card-head"><span class="step-no">✓</span><h2>Tasks to finish</h2>
               <span class="sp"></span><span class="pill" id="tasks-count"></span>
-              <button class="btn-sm solid" style="margin-left:8px" onclick="toggleTaskForm()">＋ Add task</button></div>
+              <button class="btn-sm solid" style="margin-left:8px" onclick="toggleTaskForm()">＋ Add task</button>
+              <button class="card-collapse" style="margin-left:8px" onclick="toggleDashCard('tasks-card')" title="Collapse / expand this panel">▾</button></div>
               <div class="card-body">
                 <div id="gcal-bar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--card2);border:1px solid var(--border);border-radius:11px;padding:9px 12px;margin-bottom:12px"></div>
                 <div id="task-form" class="hidden" style="background:var(--card2);border:1px solid var(--border);border-radius:11px;padding:12px;margin-bottom:12px">
@@ -7294,7 +7311,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04td';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04te';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -23712,7 +23729,11 @@ let OV_ROWS=[], OV_FILTER='all', OV_DAYS=14, OV_SORT='', OV_PAUSED_OPEN=false, O
 function setOvSort(v){OV_SORT=v;renderOverviewTable();}
 async function renderClientList(){return renderOverview();}   /* alias: dashboard is the client list */
 function setOvFilter(f){OV_FILTER=f;document.querySelectorAll('[data-ovf]').forEach(b=>b.classList.toggle('on',b.dataset.ovf===f));renderOverviewTable();}
+/* collapse/expand the Notifications & Tasks dashboard panels (remembered per browser) */
+function toggleDashCard(id){const c=document.getElementById(id);if(!c)return;const col=c.classList.toggle('collapsed');try{localStorage.setItem('s2s_dashcol_'+id,col?'1':'0');}catch(e){}}
+function restoreDashCards(){['notif-card','tasks-card'].forEach(function(id){const c=document.getElementById(id);if(!c)return;let v='0';try{v=localStorage.getItem('s2s_dashcol_'+id)||'0';}catch(e){}c.classList.toggle('collapsed',v==='1');});}
 async function renderOverview(){
+  try{restoreDashCards();}catch(e){}
   const host=$('adm-overview-host');if(host)host.innerHTML='<div class="empty">Loading compliance…</div>';
   const days=parseInt((($('ov-range')||{}).value))||14;OV_DAYS=days;
   const today=todayISO(),start=addDaysISO(today,-(days-1));
