@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-version="v2026-11-16a">
+<html lang="en" data-version="v2026-11-18a">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -582,6 +582,15 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
 .pg-head .pg-c.rec .pg-tag{color:var(--gold)}
 .pg-disc{display:block;font-size:10.5px;font-weight:600;color:var(--gold);margin-top:3px}
 .pg-sub{font-size:10.5px;color:var(--muted)}
+/* VSL voucher step-by-step breakdown on the pricing page */
+.disc-break{margin-top:9px;display:grid;gap:5px}
+.db-row{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12.5px;color:var(--text);padding:6px 9px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:7px}
+.db-row b{color:var(--gold);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;white-space:nowrap}
+.db-row.done{border-color:rgba(34,197,94,.3)}
+.db-row.done b{color:var(--green)}
+.db-tot{background:rgba(245,200,66,.08);border-color:rgba(245,200,66,.3)}
+.db-tot span{font-weight:700;color:var(--white)}
+.db-tot b{font-size:15px}
 </style>
 </head>
 <body>
@@ -886,6 +895,7 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
       <div class="px-card dsc">
         <div class="px-h" id="pc-disc-h">🎟️ Strategy-call discount</div>
         <p id="pc-disc-txt">Complete your strategy call / VSL for <b>$500 off</b> your coaching.</p>
+        <div class="disc-break" id="pc-disc-break"></div>
       </div>
     </div>
   </div>
@@ -1350,6 +1360,19 @@ function pricing(vslOn){
   const nPay=4, coachingPer=coaching/nPay;
   return {coachingFull,coaching,effWeekly,total:CFG.onboard+coaching,nPay,coachingPer,p1:CFG.onboard+coachingPer,creditOff,creditLabel};
 }
+/* VSL voucher split — mirrors the strategy call page: the 3 pre-call steps are weighted,
+   the strategy call itself gets the remainder (the biggest slice). Scales with the voucher amount. */
+const VSL_STEPS=[
+  {k:'video', ic:'▶️', label:'Watch the welcome video', w:20},
+  {k:'proof', ic:'⭐', label:'See real client results', w:20},
+  {k:'assess',ic:'📊', label:'Complete your 7-Level assessment', w:20}
+];
+function vslShares(){
+  const V=Number(CFG.vsl)||0; let o={}, sum=0;
+  VSL_STEPS.forEach(x=>{const a=Math.round(V*x.w/100/5)*5; o[x.k]=a; sum+=a;});
+  o.call=Math.max(0,V-sum);
+  return o;
+}
 function renderPricing(){
   const vslOn=isReturning()?false:((document.getElementById('vsl-chk')||{}).checked||false);
   const pr=pricing(vslOn);
@@ -1362,7 +1385,7 @@ function renderPricing(){
   set('pc-coaching',money(pr.coaching));
   set('pc-total',money(pr.total));
   set('pc-o2o',money(CFG.one2one));
-  const vlt=document.getElementById('vsl-lt');if(vlt)vlt.textContent='Completed the strategy call / VSL — '+money(CFG.vsl)+' off';
+  const vlt=document.getElementById('vsl-lt');if(vlt)vlt.textContent='Completed the strategy-call steps + the call — '+money(CFG.vsl)+' off';
   // rewards + discount summary on the price page
   const pr2=document.getElementById('pc-reward');if(pr2)pr2.textContent=money(REWARDS.redeemLimit*REWARDS.perPoint);
   // returning-member reactivation note on the plan card
@@ -1371,8 +1394,21 @@ function renderPricing(){
   const dh=document.getElementById('pc-disc-h'), dt=document.getElementById('pc-disc-txt');
   if(dh&&dt){
     if(isReturning()){dh.textContent='🔁 Welcome-back reactivation offer';dt.innerHTML='Restart with us: a <b>'+money(CFG.reactCredit)+' credit</b> split across your program'+(Number(CFG.reactFreeWeeks)>0?(', plus a <b>'+CFG.reactFreeWeeks+'-week free foundation</b> period of full coaching to bounce back'):'')+'. Onboarding and your '+CFG.weeks+'-week commitment still apply.';}
-    else if(vslOn){dh.textContent='🎟️ Discount applied';dt.innerHTML='✓ Your <b>'+money(CFG.vsl)+' strategy-call voucher</b> is applied — coaching discounted, spread across the plan.';}
-    else{dh.textContent='🎟️ Strategy-call discount';dt.innerHTML='Complete your strategy call / VSL for <b>'+money(CFG.vsl)+' off</b> your coaching.';}
+    else if(vslOn){dh.textContent='🎟️ '+money(CFG.vsl)+' voucher applied';dt.innerHTML='✓ Banked across your strategy-call steps, spread across your plan:';}
+    else{dh.textContent='🎟️ Up to '+money(CFG.vsl)+' off — banked in steps';dt.innerHTML='Each step of your strategy-call journey banks part of your voucher:';}
+  }
+  // break the VSL voucher into the same steps as the strategy call page
+  const brk=document.getElementById('pc-disc-break');
+  if(brk){
+    if(isReturning()||!(Number(CFG.vsl)>0)){brk.innerHTML='';brk.style.display='none';}
+    else{
+      brk.style.display='';
+      const sh=vslShares();
+      const rows=VSL_STEPS.map(x=>[x.ic,x.label,sh[x.k]]);
+      rows.push(['📞','Attend your strategy call',sh.call]);
+      brk.innerHTML=rows.map(r=>'<div class="db-row'+(vslOn?' done':'')+'"><span>'+r[0]+' '+r[1]+'</span><b>'+money(r[2])+'</b></div>').join('')
+        +'<div class="db-row db-tot"><span>Total off your coaching</span><b>'+money(CFG.vsl)+'</b></div>';
+    }
   }
   const saveEl=document.getElementById('pc-save');
   if(saveEl){if(pr.creditOff>0){saveEl.style.display='';saveEl.textContent='You save '+money(pr.creditOff)+' — effective '+money(pr.effWeekly)+'/wk';}else saveEl.style.display='none';}
