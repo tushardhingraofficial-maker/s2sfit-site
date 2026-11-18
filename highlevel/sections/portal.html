@@ -2988,6 +2988,27 @@ svg.ic{width:22px;height:22px;display:inline-block;vertical-align:middle;flex:no
 /* single-row, swipeable icon bar (icon above a short label); scrolls horizontally, no wrap */
 .gm-switch{position:fixed;top:0;left:0;right:0;z-index:1300;display:flex;gap:4px;justify-content:flex-start;align-items:stretch;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:calc(7px + env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) 7px max(8px,env(safe-area-inset-left));background:linear-gradient(180deg,rgba(26,26,26,.99),rgba(12,12,12,.99));backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.06);box-shadow:0 6px 22px rgba(0,0,0,.5)}
 .gm-switch::-webkit-scrollbar{display:none}
+/* Progress context bar (title / back) + Overview metric list (Option 3) */
+.gm-bar{display:flex;align-items:center;gap:10px;width:100%;min-height:34px}
+.gm-bar-title{font-family:var(--disp);font-weight:800;font-size:16px;color:var(--text);text-transform:uppercase;letter-spacing:.02em}
+.gm-back{border:1px solid var(--border);background:var(--card2);color:var(--text);border-radius:9px;width:34px;height:34px;font-size:22px;line-height:1;cursor:pointer;flex:none;display:flex;align-items:center;justify-content:center;padding:0}
+.gm-back:active{transform:scale(.94)}
+.pg-landing{max-width:560px;margin:0 auto}
+.pg-roadmap{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--red);color:#fff;border:0;border-radius:14px;padding:14px 15px;margin:0 0 14px;cursor:pointer;box-shadow:0 7px 20px -8px rgba(232,23,13,.55)}
+.pg-roadmap:active{transform:scale(.99)}
+.pg-rm-ic{flex:none;width:30px;display:flex;justify-content:center}.pg-rm-ic svg{width:26px;height:26px}
+.pg-rm-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.pg-rm-tx b{font-family:var(--disp);font-weight:800;font-size:16px}.pg-rm-tx span{font-size:12px;opacity:.92}
+.pg-roadmap .pg-go{color:#fff}
+.pg-list{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(16,24,40,.05),0 10px 26px -18px rgba(16,24,40,.25)}
+.pg-row{display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--border);padding:15px;cursor:pointer;color:var(--text)}
+.pg-row:last-child{border-bottom:0}
+.pg-row:active{background:var(--card2)}
+.pg-ic{flex:none;width:24px;display:flex;justify-content:center;color:var(--red)}.pg-ic svg{width:21px;height:21px}
+.pg-nm{flex:1;min-width:0;font-weight:700;font-size:15px}
+.pg-val{display:flex;flex-direction:column;align-items:flex-end;line-height:1.25;font-size:14px;color:var(--muted);text-align:right}
+.pg-add{color:var(--prot,#2F7FD1);font-weight:700;font-size:13px}
+.pg-sub{font-size:11.5px}.pg-sub.good{color:var(--good)}.pg-sub.bad{color:var(--red)}
+.pg-go{flex:none;color:var(--muted);font-size:20px}
 @media(min-width:720px){.gm-switch{justify-content:center}}
 .gm-tab{flex:0 0 auto;min-width:58px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:7px 10px;border-radius:13px;border:1px solid rgba(255,255,255,.07);background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));color:var(--muted);font-family:var(--sans);font-weight:700;letter-spacing:.01em;font-size:10.5px;line-height:1;white-space:nowrap;cursor:pointer;transition:background .18s,color .18s,border-color .18s,box-shadow .18s,transform .1s}
 .gm-tab:hover{color:var(--text);border-color:rgba(255,255,255,.16)}
@@ -7319,7 +7340,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04tj';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04tk';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -21713,9 +21734,18 @@ function gmSetup(){
 /* the sub-nav WRAPS to show every tab, so its height varies — publish it as --gm-h so the content overlays sit right below it */
 function gmSyncHeight(){try{const sw=$('gm-switch');const h=(sw&&!sw.classList.contains('hidden'))?sw.offsetHeight:0;document.documentElement.style.setProperty('--gm-h',(h||48)+'px');}catch(e){}}
 window.addEventListener('resize',function(){try{if(document.body.classList.contains('gm-has-switch'))gmSyncHeight();}catch(e){}});
+function gmTitleFor(w){return ({overview:'Progress',roadmap:'Roadmap',weight:'Weight',comp:'Body composition',photos:'Photos',perf:'Performance',meas:'Measurements',health:'Health',custom:'Custom goals',climb:'Progress'})[w]||'Progress';}
+/* the Progress top bar is now a context bar: a title on the Overview, a back button on a metric */
+function gmRenderBar(which){
+  const sw=$('gm-switch');if(!sw)return;
+  if(which==='overview'){sw.innerHTML='<div class="gm-bar"><span class="gm-bar-title">Progress</span></div>';}
+  else{sw.innerHTML='<div class="gm-bar"><button class="gm-back" onclick="gmBranch(\'overview\')" aria-label="Back to progress">‹</button><span class="gm-bar-title">'+esc(gmTitleFor(which))+'</span></div>';}
+  try{gmSyncHeight();}catch(e){}
+}
 function gmBranch(which){
   GM_BRANCH=which;
   try{navStateSave();}catch(e){}
+  try{gmRenderBar(which==='assess'||which==='climb'?'overview':which);}catch(e){}
   if(which==='assess')which='climb';   // Fitness assessment tab removed
   const f=$('climb-frame'),host=$('custom-host'),comp=$('comp-host'),wt=$('weight-host'),ph=$('photos-host'),pf=$('perf-host'),ms=$('meas-host'),hl=$('health-host'),ov=$('overview-host'),rd=$('roadmap-host');
   const tabs={overview:'gm-tab-overview',roadmap:'gm-tab-roadmap',climb:'gm-tab-climb',custom:'gm-tab-custom',weight:'gm-tab-weight',comp:'gm-tab-comp',photos:'gm-tab-photos',perf:'gm-tab-perf',meas:'gm-tab-meas',health:'gm-tab-health'};
@@ -21748,9 +21778,50 @@ function gmBranch(which){
 /* collapsible "＋ Log" so every panel can lead with results and tuck the entry form away */
 function pgLogToggle(btn){const c=btn.nextElementSibling;if(!c||!c.classList.contains('pg-logwrap'))return;const closed=c.hasAttribute('hidden');if(closed){c.removeAttribute('hidden');btn.classList.add('open');}else{c.setAttribute('hidden','');btn.classList.remove('open');}try{gmSyncHeight();}catch(e){}}
 function pgWeighStreak(sorted){const set={};(sorted||[]).forEach(function(e){set[String(e.date||'').slice(0,10)]=1;});let n=0;for(let i=0;i<400;i++){const d=addDaysISO(todayISO(),-i);if(set[d])n++;else if(i>0)break;}return n;}
+/* Progress Overview = an engaging metric list (Roadmap card + a row per metric with its latest value) */
+function renderProgressList(host,mcB){
+  const m=(PLAN&&PLAN.milestones)||{};
+  const ws=(typeof weightSorted==='function')?weightSorted():[];
+  const lw=ws.length?ws[ws.length-1]:null,fw=ws.length?ws[0]:null;
+  const unit=(lw&&lw.unit)||'kg';
+  const wVal=lw?round(+lw.value,1)+' '+unit:'';
+  const wD=(lw&&fw)?round(+lw.value-+fw.value,1):null;
+  const ct=(typeof compTestsSorted==='function')?compTestsSorted():[];
+  const lc=ct.length?ct[ct.length-1]:null;
+  const cVal=lc?((lc.fat!=null&&lc.fat!=='')?round(+lc.fat,1)+'% fat':(lc.muscle!=null&&lc.muscle!==''?round(+lc.muscle,1)+'% musc':'')):'';
+  const ms=(typeof measSorted==='function')?measSorted():[];
+  const lm=ms.length?ms[ms.length-1]:null;
+  const waist=(lm&&lm.values)?((lm.values.waist!=null&&lm.values.waist!=='')?lm.values.waist:((lm.values.waistMin!=null&&lm.values.waistMin!=='')?lm.values.waistMin:null)):null;
+  const measVal=waist!=null?(waist+' cm waist'):(ms.length?'logged':'');
+  const photos=(m.progressPhotos&&Array.isArray(m.progressPhotos.sets))?m.progressPhotos.sets.length:0;
+  const phVal=photos?(photos+' set'+(photos===1?'':'s')):'';
+  const hlogs=(m.health&&Array.isArray(m.health.logs))?m.health.logs:[];
+  let hBP='';for(let i=hlogs.length-1;i>=0;i--){const v=hlogs[i].v||{};if(v.bp_sys!=null&&v.bp_dia!=null){hBP=v.bp_sys+'/'+v.bp_dia;break;}}
+  if(!hBP&&hlogs.length)hBP=hlogs.length+' readings';
+  const arr=function(d,u){return d==null?'':(d<0?'▼ '+Math.abs(d):d>0?'▲ '+d:'– 0')+(u?' '+u:'');};
+  const hasRm=(typeof rmHas==='function')&&rmHas();
+  const row=function(br,ic,nm,val,sub,scls,valId){
+    return '<button class="pg-row" onclick="gmBranch(\''+br+'\')"><span class="pg-ic">'+svgIcon(ic)+'</span><span class="pg-nm">'+esc(nm)+'</span>'+
+      '<span class="pg-val"'+(valId?' id="'+valId+'"':'')+'>'+(val?esc(val):'<span class="pg-add">Add</span>')+(sub?'<span class="pg-sub '+(scls||'')+'">'+esc(sub)+'</span>':'')+'</span><span class="pg-go">›</span></button>';
+  };
+  let h=(mcB||'')+'<div class="pg-landing">';
+  if(hasRm)h+='<button class="pg-roadmap" onclick="gmBranch(\'roadmap\')"><span class="pg-rm-ic">'+svgIcon('climb')+'</span><span class="pg-rm-tx"><b>Your roadmap</b><span>See your journey &amp; goals</span></span><span class="pg-go">›</span></button>';
+  h+='<div class="pg-list">'+
+    row('weight','weight','Weight',wVal,(wD!=null?arr(wD,unit)+' since start':''),(wD==null?'':(wD<0?'good':wD>0?'bad':'')))+
+    row('comp','composition','Body composition',cVal)+
+    row('photos','history','Photos',phVal)+
+    row('perf','trend','Performance','…','','','pg-perf-val')+
+    row('meas','goal','Measurements',measVal)+
+    row('health','health','Health',hBP)+
+  '</div></div>';
+  host.innerHTML=h;
+  try{gmSyncHeight();}catch(e){}
+  try{DB.listWorkoutLogs(SESSION.id).then(function(logs){const mo=todayISO().slice(0,7);const n=(logs||[]).filter(function(w){return String(w.date||'').slice(0,7)===mo;}).length;const el=$('pg-perf-val');if(el)el.textContent=n?(n+' this month'):'View lifts';}).catch(function(){const el=$('pg-perf-val');if(el)el.textContent='View lifts';});}catch(e){}
+}
 function renderOverviewProgress(){
   const host=$('overview-host');if(!host)return;
   const mcB=(typeof mcClientBannerHTML==='function')?mcClientBannerHTML():'';   // course + phase banner — shows ONLY here, inside the Progress → Overview panel
+  try{renderProgressList(host,mcB);return;}catch(e){}   // engaging metric list (Option 3); falls through to the legacy rich overview on error
   const pr=PLAN.profile||{};
   const ws=weightSorted();
   const latest=ws.length?ws[ws.length-1]:null, first=ws.length?ws[0]:null;
