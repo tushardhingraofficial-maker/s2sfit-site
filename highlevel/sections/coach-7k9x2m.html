@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light" data-version="2026-11-18c">
+<html lang="en" data-theme="light" data-version="2026-11-18d">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -125,6 +125,7 @@ input:focus,select,textarea:focus{outline:none;border-color:var(--red)}
 .field label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:5px}
 .row{display:flex;gap:10px}
 .row>*{flex:1}
+.meas2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--text);color:var(--surface);padding:11px 18px;border-radius:30px;font-size:13.5px;font-weight:600;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:90%}
 .plan-day{border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:9px;background:var(--card2)}
 .plan-day h4{font-family:var(--disp);font-size:15px;margin-bottom:4px}
@@ -340,7 +341,7 @@ function overviewHTML(){
   logToday.forEach(function(l){var s=sumNutr(l.items);tot.cal+=s.cal;tot.p+=s.p;tot.c+=s.c;tot.f+=s.f;});
   var lastCk=(d.checkins||[]).filter(function(x){return x.kind!=='booking';}).slice().sort(function(a,b){return String(a.date)<String(b.date)?1:-1;})[0];
   var prof=(CURPLAN&&CURPLAN.profile)||{};
-  var qa='<div class="cm-qa">'+[['💬','Message','openChat()'],['⚖','Log weight','openLogWeight()'],['✅','Add task','openAddTask()'],['📏','Measure','openLogMeasure()']].map(function(a){return '<button class="cm-qab" onclick="'+a[2]+'"><span class="i">'+a[0]+'</span><span class="t">'+a[1]+'</span></button>';}).join('')+'</div>';
+  var qa='<div class="cm-qa">'+[['💬','Message','openChat()'],['⚖','Log weight','openLogWeight()'],['✅','Add task','openAddTask()'],['📈','Progress','openLogProgress()']].map(function(a){return '<button class="cm-qab" onclick="'+a[2]+'"><span class="i">'+a[0]+'</span><span class="t">'+a[1]+'</span></button>';}).join('')+'</div>';
   var stats='<div class="cm-stat">'+
     '<div class="cm-st"><div class="k">Weight</div><div class="v">'+(last?round(num(last.value)*10)/10+' kg':'—')+'</div><div class="d"'+(wDelta!=null?(' style="color:'+(wDelta<0?'var(--good)':wDelta>0?'var(--crit)':'var(--muted)')+'"'):'')+'>'+(wDelta!=null?((wDelta<0?'▼ ':wDelta>0?'▲ +':'')+Math.abs(wDelta)+' kg since last'):'no weigh-ins')+'</div></div>'+
     '<div class="cm-st"><div class="k">Logged today</div><div class="v">'+(tot.cal?round(tot.cal).toLocaleString():'—')+'</div><div class="d">'+(tot.cal?('kcal · '+round(tot.p)+'P '+round(tot.c)+'C '+round(tot.f)+'F'):'nothing logged yet')+'</div></div>'+
@@ -479,6 +480,7 @@ function measSeries(m){
 }
 function progressHTML(){
   var m=(CURPLAN&&CURPLAN.milestones)||{};var d=cur();var out='';
+  out+='<button class="btn" style="margin:0 0 12px" onclick="openLogProgress()">＋ Log / update progress</button>';
   var wl=weightLog();
   var tests=(m.composition&&Array.isArray(m.composition.tests))?m.composition.tests.slice().sort(function(a,b){return String(a.date)<String(b.date)?-1:1;}):[];
   var comp=tests.length?tests[tests.length-1]:null;var fatV=comp&&comp.fat!=null?comp.fat:null,musV=comp&&comp.muscle!=null?comp.muscle:null;
@@ -521,6 +523,7 @@ function progressHTML(){
   out+='<div class="uline">Weekly progress reports</div>';
   out+= pr.length?pr.slice(0,10).map(function(e){var dd=progData(e);var stTxt=dd.status?('<span class="pill '+(dd.status==='good'?'good':dd.status==='concern'?'crit':'')+'">'+esc(dd.status)+'</span>'):'';
     return '<div class="cm-ev"><div class="cm-ev-h"><b>Week of '+esc(fmtDate(e.week||e.created_at))+'</b>'+stTxt+'<span class="cm-ev-t">'+esc(ago(e.created_at||e.week))+'</span></div>'+(dd.update?'<div class="small">'+esc(dd.update)+'</div>':'<div class="small muted">No coach note.</div>')+'</div>';}).join(''):'<div class="small muted" style="padding:4px 2px">No weekly reports yet.</div>';
+  out+=healthSectionHTML();
   return out;
 }
 /* training performance — volume trend, per-exercise estimated 1RM, best-lift list (from workout logs) */
@@ -606,26 +609,142 @@ function openLogWeight(){
 function saveWeight(){
   var v=num(($('lw-val')&&$('lw-val').value));if(!(v>0)){toast('Enter a weight',true);return;}
   var date=($('lw-date')&&$('lw-date').value)||todayISO();var note=($('lw-note')&&$('lw-note').value||'').trim();
-  var m=(CURPLAN&&CURPLAN.milestones)||{};m.weightLog=Array.isArray(m.weightLog)?m.weightLog:[];
-  m.weightLog.push({id:'w'+Date.now(),date:date,value:v,time:nowHM(),note:note,by:'coach'});
-  CURPLAN.milestones=m;
+  var entry={id:'w'+Date.now(),date:date,value:v,time:nowHM(),note:note,by:'coach'};
   closeSheet();toast('Saving…');
-  api('saveMilestones',{clientId:CUR.id,milestones:m}).then(function(){toast('Weight logged ✓');renderClient();}).catch(function(e){toast((e&&e.message)||'Save failed',true);});
+  cmMergeMilestone(function(m){m.weightLog=Array.isArray(m.weightLog)?m.weightLog:[];m.weightLog.push(entry);}).then(function(){toast('Weight logged ✓');renderClient();}).catch(function(e){toast((e&&e.message)||'Save failed',true);});
 }
-function openLogMeasure(){
-  sheet('<h3>📏 Log measurement — '+esc(CUR.name||'client')+'</h3>'+
-    '<div class="field"><label>What</label><select id="lm-key"><option value="waist">Waist (cm)</option><option value="hips">Hips (cm)</option><option value="chest">Chest (cm)</option><option value="arm">Arm (cm)</option><option value="thigh">Thigh (cm)</option><option value="bodyFat">Body fat %</option><option value="muscle">Muscle %</option></select></div>'+
-    '<div class="row"><div class="field"><label>Value</label><input id="lm-val" type="number" step="0.1" inputmode="decimal" placeholder="e.g. 84"></div>'+
-    '<div class="field"><label>Date</label><input id="lm-date" type="date" value="'+todayISO()+'"></div></div>'+
-    '<button class="btn" onclick="saveMeasure()">Save</button><button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">Cancel</button>');
+/* ========================= PROGRESS LOGGING (coach logs/updates every progress metric for the client) =========================
+   Body composition · measurements · progress photos · weekly report · health markers — all written in the SAME shapes the
+   portal/client use, so they reconcile everywhere. Milestone writes go through cmMergeMilestone (reload-fresh → mutate → save)
+   so a client's concurrent edits are never clobbered. Photos upload via climbSignUpload; the weekly report uses saveProgress. */
+function cmMergeMilestone(mutator){
+  return api('getPlan',{clientId:CUR.id}).then(function(raw){raw=raw||{};var m=raw.milestones||{};mutator(m);
+    return api('saveMilestones',{clientId:CUR.id,milestones:m}).then(function(){CURPLAN=CURPLAN||{};CURPLAN.milestones=m;return m;});});
 }
-function saveMeasure(){
-  var key=($('lm-key')&&$('lm-key').value)||'waist';var v=num(($('lm-val')&&$('lm-val').value));if(!(v>0)){toast('Enter a value',true);return;}
-  var date=($('lm-date')&&$('lm-date').value)||todayISO();
-  var m=(CURPLAN&&CURPLAN.milestones)||{};m.measurements=m.measurements||{};m.measurements[key]=Array.isArray(m.measurements[key])?m.measurements[key]:[];
-  m.measurements[key].push({date:date,value:v,by:'coach'});CURPLAN.milestones=m;
+function cmUpload(file,keyPrefix){
+  var ext=(String(file.name||'').split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5)||'jpg';
+  return api('climbSignUpload',{clientId:CUR.id,key:(keyPrefix||'file')+'-'+Date.now(),ext:ext,contentType:file.type}).then(function(d){
+    return new Promise(function(res,rej){var x=new XMLHttpRequest();x.open('PUT',d.signedUrl);x.setRequestHeader('content-type',file.type||'application/octet-stream');x.setRequestHeader('x-upsert','true');x.onload=function(){x.status<300?res({url:d.publicUrl,path:d.path}):rej(new Error('Upload failed ('+x.status+')'));};x.onerror=function(){rej(new Error('Network error'));};x.send(file);});
+  });
+}
+function progAfterSave(){if(CTAB==='progress'||CTAB==='overview')renderClient();}
+/* chooser hub */
+function openLogProgress(){
+  sheet('<h3>＋ Log / update — '+esc(CUR.name||'client')+'</h3>'+
+    '<p class="small muted" style="margin:-4px 0 10px">Log any progress metric for this client. It saves to their Progress Tracking and the client sees it.</p>'+
+    '<div class="cm-qa" style="grid-template-columns:repeat(3,1fr)">'+[
+      ['⚖','Weight','openLogWeight'],['📏','Measure','openMeasLog'],['🧬','Body comp','openCompLog'],
+      ['📸','Photos','openPhotoLog'],['📝','Weekly','openWeeklyLog'],['❤️','Health','openHealthLog']
+    ].map(function(a){return '<button class="cm-qab" onclick="closeSheet();'+a[2]+'()"><span class="i">'+a[0]+'</span><span class="t">'+a[1]+'</span></button>';}).join('')+'</div>'+
+    '<button class="btn ghost" style="margin-top:10px" onclick="closeSheet()">Close</button>');
+}
+/* ---- body composition ---- */
+function openCompLog(){
+  sheet('<h3>🧬 Body composition — '+esc(CUR.name||'client')+'</h3>'+
+    '<div class="row"><div class="field"><label>Muscle %</label><input id="cp-mus" type="number" step="0.1" inputmode="decimal" placeholder="e.g. 42"></div>'+
+    '<div class="field"><label>Fat %</label><input id="cp-fat" type="number" step="0.1" inputmode="decimal" placeholder="e.g. 18"></div></div>'+
+    '<div class="row"><div class="field"><label>Weight (kg, optional)</label><input id="cp-wt" type="number" step="0.1" inputmode="decimal"></div>'+
+    '<div class="field"><label>Date</label><input id="cp-date" type="date" value="'+todayISO()+'"></div></div>'+
+    '<div class="field"><label>Note (optional)</label><input id="cp-note" placeholder="e.g. DEXA, InBody"></div>'+
+    '<button class="btn" onclick="saveComp()">Save test</button><button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">Cancel</button>');
+  setTimeout(function(){var e=$('cp-mus');if(e)e.focus();},60);
+}
+function saveComp(){
+  var fat=parseFloat(($('cp-fat')||{}).value),mus=parseFloat(($('cp-mus')||{}).value),wt=parseFloat(($('cp-wt')||{}).value);
+  if(isNaN(fat)&&isNaN(mus)){toast('Enter fat % or muscle %',true);return;}
+  var t={id:uid(),date:($('cp-date')&&$('cp-date').value)||todayISO(),fat:isNaN(fat)?null:fat,muscle:isNaN(mus)?null:mus,weight:isNaN(wt)?null:wt,note:(($('cp-note')||{}).value||'').trim(),by:'coach'};
   closeSheet();toast('Saving…');
-  api('saveMilestones',{clientId:CUR.id,milestones:m}).then(function(){toast('Measurement logged ✓');}).catch(function(e){toast((e&&e.message)||'Save failed',true);});
+  cmMergeMilestone(function(m){m.composition=m.composition||{tests:[]};if(!Array.isArray(m.composition.tests))m.composition.tests=[];m.composition.tests.push(t);}).then(function(){toast('Composition test added ✓');progAfterSave();}).catch(function(e){toast((e&&e.message)||'Save failed',true);});
+}
+/* ---- measurements (canonical milestones.measurements.logs[].values) ---- */
+var CM_MEAS=[['neck','Neck'],['shoulders','Shoulders'],['chest','Chest'],['waistMin','Waist · narrow'],['waist','Waist · navel'],['waistWide','Waist · wide'],['hips','Hips'],['armL','Left arm'],['armR','Right arm'],['thighL','Left thigh'],['thighR','Right thigh'],['calf','Calf']];
+function cmMeasLast(){var m=(CURPLAN&&CURPLAN.milestones)||{};var logs=(m.measurements&&Array.isArray(m.measurements.logs))?m.measurements.logs:[];var s=logs.slice().sort(function(a,b){return String(a.date)<String(b.date)?-1:1;});var lv=s[s.length-1];return (lv&&lv.values)||m.measLatest||{};}
+function openMeasLog(){
+  var last=cmMeasLast();
+  sheet('<h3>📏 Measurements (cm) — '+esc(CUR.name||'client')+'</h3>'+
+    '<div class="field"><label>Date</label><input id="ms-date" type="date" value="'+todayISO()+'"></div>'+
+    '<div class="meas2">'+CM_MEAS.map(function(f){var lv=(last[f[0]]!=null)?last[f[0]]:'';return '<div class="field" style="margin-bottom:8px"><label>'+esc(f[1])+'</label><input id="ms-'+f[0]+'" type="number" step="0.1" inputmode="decimal" placeholder="'+(lv!==''?esc(lv+' last'):'cm')+'"></div>';}).join('')+'</div>'+
+    '<button class="btn" onclick="saveMeas2()">Save measurements</button><button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">Cancel</button>');
+}
+function saveMeas2(){
+  var vals={},any=false;CM_MEAS.forEach(function(f){var v=parseFloat(($('ms-'+f[0])||{}).value);if(!isNaN(v)&&v>0){vals[f[0]]=v;any=true;}});
+  if(!any){toast('Enter at least one measurement',true);return;}
+  var date=($('ms-date')&&$('ms-date').value)||todayISO();
+  var entry={id:uid(),date:date,unit:'cm',values:vals,at:new Date().toISOString(),by:'coach'};
+  closeSheet();toast('Saving…');
+  cmMergeMilestone(function(m){m.measurements=m.measurements||{logs:[]};if(!Array.isArray(m.measurements.logs))m.measurements.logs=[];m.measurements.logs.push(entry);m.measLatest=Object.assign({},m.measLatest,vals,{date:date,unit:'cm'});}).then(function(){toast('Measurements added ✓');progAfterSave();}).catch(function(e){toast((e&&e.message)||'Save failed',true);});
+}
+/* ---- progress photos (front/side/back uploaded to climb-media) ---- */
+var CM_PP={front:null,side:null,back:null};
+function openPhotoLog(){
+  CM_PP={front:null,side:null,back:null};
+  sheet('<h3>📸 Progress photos — '+esc(CUR.name||'client')+'</h3>'+
+    '<div class="field"><label>Date</label><input id="pp-date" type="date" value="'+todayISO()+'"></div>'+
+    ['front','side','back'].map(function(k){return '<div class="field"><label>'+k.charAt(0).toUpperCase()+k.slice(1)+'</label><input type="file" accept="image/*" onchange="ppPick(\''+k+'\',this)"><div class="small" id="pp-stat-'+k+'" style="color:var(--muted);margin-top:3px"></div></div>';}).join('')+
+    '<button class="btn" onclick="savePhotos()">Save photo set</button><button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">Cancel</button>');
+}
+function ppPick(dir,inp){var f=inp&&inp.files&&inp.files[0];if(!f)return;var st=$('pp-stat-'+dir);if(st)st.textContent='Uploading…';cmUpload(f,'pp-'+dir).then(function(r){CM_PP[dir]=r;if(st)st.textContent='✓ uploaded';}).catch(function(e){if(st)st.textContent='';toast((e&&e.message)||'Upload failed',true);});}
+function savePhotos(){
+  if(!(CM_PP.front&&CM_PP.side&&CM_PP.back)){toast('Add all 3 — front, side & back',true);return;}
+  var date=($('pp-date')&&$('pp-date').value)||todayISO();
+  var entry={id:uid(),date:date,front:CM_PP.front.url,side:CM_PP.side.url,back:CM_PP.back.url,fp:[CM_PP.front.path,CM_PP.side.path,CM_PP.back.path],at:new Date().toISOString(),by:'coach'};
+  CM_PP={front:null,side:null,back:null};
+  closeSheet();toast('Saving…');
+  cmMergeMilestone(function(m){m.progressPhotos=m.progressPhotos||{sets:[]};if(!Array.isArray(m.progressPhotos.sets))m.progressPhotos.sets=[];m.progressPhotos.sets.push(entry);}).then(function(){toast('Progress photos added ✓');progAfterSave();}).catch(function(e){toast((e&&e.message)||'Save failed',true);});
+}
+/* ---- weekly progress report (dp_progress) ---- */
+function openWeeklyLog(){
+  sheet('<h3>📝 Weekly progress — '+esc(CUR.name||'client')+'</h3>'+
+    '<div class="row"><div class="field"><label>Week of</label><input id="wr-week" type="date" value="'+todayISO()+'"></div>'+
+    '<div class="field"><label>Status</label><select id="wr-status"><option value="good">🟢 On track</option><option value="steady" selected>🟡 Steady</option><option value="concern">🔴 Concern</option></select></div></div>'+
+    '<div class="field"><label>Update for the client</label><textarea id="wr-update" rows="4" placeholder="How did this week go, and the focus for next week…"></textarea></div>'+
+    '<label style="display:flex;align-items:center;gap:8px;font-size:13.5px;margin-bottom:12px"><input type="checkbox" id="wr-pub" style="width:auto" checked> Show to the client now</label>'+
+    '<button class="btn" onclick="saveWeekly()">Save report</button><button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">Cancel</button>');
+}
+function saveWeekly(){
+  var update=(($('wr-update')||{}).value||'').trim();if(!update){toast('Write an update first',true);return;}
+  var status=($('wr-status')&&$('wr-status').value)||'steady';
+  var week=(($('wr-week')&&$('wr-week').value)||todayISO()).slice(0,10);
+  var published=!!($('wr-pub')&&$('wr-pub').checked);
+  var lab=({good:'🟢 On track',steady:'🟡 Steady',concern:'🔴 Concern'})[status]||'';
+  var entry={id:uid(),client_id:CUR.id,week:week,kind:'progress',title:lab,note:update,data:{update:update,observed:update,status:status,actions:[],metrics:{}},published:published};
+  closeSheet();toast('Saving…');
+  api('saveProgress',{entry:entry}).then(function(sv){var c=cur();c.progress=c.progress||[];c.progress.unshift(sv||entry);toast(published?'Saved & shown to client ✓':'Saved — hidden from client ✓');progAfterSave();}).catch(function(e){toast((e&&e.message)||'Save failed',true);});
+}
+/* ---- health markers (milestones.health.logs[].v) ---- */
+var CM_HEALTH=[['Blood pressure (mmHg)',[['bp_sys','Systolic'],['bp_dia','Diastolic']]],['Cholesterol & lipids',[['chol_total','Total'],['chol_ldl','LDL'],['chol_hdl','HDL'],['trig','Triglycerides']]],['Blood sugar',[['glucose','Fasting glucose']]],['HbA1c (%)',[['hba1c','HbA1c']]]];
+function openHealthLog(){
+  sheet('<h3>❤️ Health markers — '+esc(CUR.name||'client')+'</h3>'+
+    '<p class="small muted" style="margin:-4px 0 8px">For tracking only — not medical advice. Fill whatever you have; leave the rest blank.</p>'+
+    '<div class="field"><label>Date</label><input id="hl-date" type="date" value="'+todayISO()+'"></div>'+
+    CM_HEALTH.map(function(g){return '<div class="uline" style="margin:6px 2px 4px">'+esc(g[0])+'</div><div class="meas2">'+g[1].map(function(f){return '<div class="field" style="margin-bottom:8px"><label>'+esc(f[1])+'</label><input id="hl-'+f[0]+'" type="number" step="0.1" inputmode="decimal"></div>';}).join('')+'</div>';}).join('')+
+    '<div class="field"><label>Note (optional)</label><input id="hl-note" placeholder="e.g. fasted morning"></div>'+
+    '<button class="btn" onclick="saveHealth()">Save readings</button><button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">Cancel</button>');
+}
+function saveHealth(){
+  var v={},any=false;CM_HEALTH.forEach(function(g){g[1].forEach(function(f){var n=parseFloat(($('hl-'+f[0])||{}).value);if(!isNaN(n)&&n>0){v[f[0]]=n;any=true;}});});
+  if(!any){toast('Enter at least one reading',true);return;}
+  var date=($('hl-date')&&$('hl-date').value)||todayISO();var note=(($('hl-note')||{}).value||'').trim();
+  var entry={id:uid(),date:date,by:'coach',note:note,v:v,at:new Date().toISOString()};
+  closeSheet();toast('Saving…');
+  cmMergeMilestone(function(m){m.health=m.health||{logs:[],reports:[],unit:{chol:'mmol/L',glu:'mmol/L'}};if(!Array.isArray(m.health.logs))m.health.logs=[];m.health.logs.push(entry);}).then(function(){toast('Readings logged ✓');progAfterSave();}).catch(function(e){toast((e&&e.message)||'Save failed',true);});
+}
+/* compact health display for the Progress tab */
+function healthSectionHTML(){
+  var h=((CURPLAN&&CURPLAN.milestones&&CURPLAN.milestones.health)||{});
+  var logs=(Array.isArray(h.logs)?h.logs:[]).slice().sort(function(a,b){return String(a.date)<String(b.date)?-1:1;});
+  var out='<div class="uline">Health markers</div>';
+  if(!logs.length)return out+'<div class="small muted" style="padding:4px 2px">No readings yet. Tap <b>＋ Log / update progress</b> → Health.</div>';
+  var fields=[['bp_sys','Systolic','mmHg'],['bp_dia','Diastolic','mmHg'],['chol_total','Total chol.',''],['chol_ldl','LDL',''],['chol_hdl','HDL',''],['trig','Trig.',''],['glucose','Glucose',''],['hba1c','HbA1c','%']];
+  var latest=function(k){for(var i=logs.length-1;i>=0;i--){if(logs[i].v&&logs[i].v[k]!=null)return {value:logs[i].v[k],date:logs[i].date};}return null;};
+  var cards=fields.map(function(f){var l=latest(f[0]);if(!l)return '';return '<div class="cm-st"><div class="k">'+esc(f[1])+'</div><div class="v" style="font-size:18px;margin-top:4px">'+esc(l.value)+(f[2]?' <small style="font-size:11px">'+esc(f[2])+'</small>':'')+'</div><div class="d">'+esc(fmtDate(l.date))+'</div></div>';}).filter(Boolean).join('');
+  if(cards)out+='<div class="cm-stat">'+cards+'</div>';
+  var sys=logs.filter(function(e){return e.v&&e.v.bp_sys!=null;}).map(function(e){return {date:e.date,value:+e.v.bp_sys};});
+  var dia=logs.filter(function(e){return e.v&&e.v.bp_dia!=null;}).map(function(e){return {date:e.date,value:+e.v.bp_dia};});
+  if(sys.length>=2||dia.length>=2)out+='<div class="small" style="font-weight:700;margin:8px 2px 3px">Blood pressure</div>'+cmChart([{label:'Systolic',color:'#E8170D',pts:sys},{label:'Diastolic',color:'#2F7FD1',pts:dia}]);
+  var glu=logs.filter(function(e){return e.v&&e.v.glucose!=null;}).map(function(e){return {date:e.date,value:+e.v.glucose};});
+  if(glu.length>=2)out+='<div class="small" style="font-weight:700;margin:8px 2px 3px">Fasting glucose</div>'+cmChart([{label:'Glucose',color:'#C77D08',pts:glu}]);
+  return out;
 }
 function openAddTask(){
   sheet('<h3>✅ Add task — '+esc(CUR.name||'client')+'</h3>'+
