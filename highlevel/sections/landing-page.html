@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="en" data-version="v2026-11-18d">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,229 +7,6 @@
 <meta name="description" content="Personal & online fitness coaching for busy Indo-Australians. South Asian nutrition plans, culturally tailored programs, real results in 12 weeks."/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-<!-- ═══════════════════════════════════════════════════════════
-     S2S FIT ANALYTICS
-     Replace the two placeholder IDs below with your real ones.
-     Step 1: GA4   → https://analytics.google.com  (create property → get "G-XXXXXXXXXX")
-     Step 2: Clarity → https://clarity.microsoft.com (create project → get 10-char ID)
-     ═══════════════════════════════════════════════════════════ -->
-
-<!-- ① Microsoft Clarity — heatmaps, recordings, scroll maps, rage/dead clicks -->
-<script>
-(function(c,l,a,r,i,t,y){
-  c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-  t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-  y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-})(window,document,"clarity","script","qzajopknqw");
-</script>
-
-<!-- ② Google Analytics 4 -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-34T495JB0V"></script>
-<script>
-window.dataLayer=window.dataLayer||[];
-function gtag(){dataLayer.push(arguments);}
-gtag('js',new Date());
-gtag('config','G-34T495JB0V',{
-  send_page_view: true,
-  page_title: 'S2S Fit Landing Page'
-});
-
-/* ─── S2S FIT CUSTOM TRACKER ────────────────────────────────
-   Tracks: scroll depth, section dwell time, CTA clicks,
-           quiz interactions, booking visibility, exit intent
-   ─────────────────────────────────────────────────────────── */
-(function(){
-  'use strict';
-
-  /* ── Helpers ── */
-  function fire(eventName, params){
-    try {
-      gtag('event', eventName, params || {});
-      /* also tag Clarity with the same event name for correlation */
-      if(window.clarity) clarity('event', eventName);
-    } catch(e){}
-  }
-
-  /* ── 1. SCROLL DEPTH ── */
-  var scrollMilestones = [25,50,75,90,100];
-  var scrollFired = {};
-  var maxScroll = 0;
-  function onScroll(){
-    var scrolled = Math.round(
-      (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100
-    );
-    if(scrolled > maxScroll) maxScroll = scrolled;
-    scrollMilestones.forEach(function(m){
-      if(!scrollFired[m] && scrolled >= m){
-        scrollFired[m] = true;
-        fire('scroll_depth', { depth_percent: m, page: 'landing' });
-      }
-    });
-  }
-  window.addEventListener('scroll', onScroll, { passive: true });
-
-  /* ── 2. SECTION DWELL TIME ── */
-  var sectionTimes = {};
-  var sectionEntries = {};
-  var sections = [
-    { id: 'hero',          label: 'Hero' },
-    { id: 'quiz',          label: 'Quiz' },
-    { id: 'testimonials',  label: 'Transformations & Reviews' },
-    { id: 'booking',       label: 'Booking CTA' }
-  ];
-  /* generic sections by their content heading */
-  var sectionSelectors = [
-    { sel: '.intro-video-section', label: 'Intro Video' },
-    { sel: '.hero',                label: 'Hero' },
-    { sel: '#quiz',                label: 'Quiz' },
-    { sel: '#testimonials',        label: 'Transformations & Reviews' },
-    { sel: '#booking',             label: 'Booking CTA' }
-  ];
-  if('IntersectionObserver' in window){
-    var sectionObserver = new IntersectionObserver(function(entries){
-      entries.forEach(function(entry){
-        var lbl = entry.target.dataset.trackLabel;
-        if(!lbl) return;
-        if(entry.isIntersecting){
-          sectionEntries[lbl] = Date.now();
-        } else {
-          if(sectionEntries[lbl]){
-            var dwell = Math.round((Date.now() - sectionEntries[lbl]) / 1000);
-            sectionTimes[lbl] = (sectionTimes[lbl] || 0) + dwell;
-            delete sectionEntries[lbl];
-            if(dwell >= 3){
-              fire('section_dwell', { section: lbl, seconds: dwell });
-            }
-          }
-        }
-      });
-    }, { threshold: 0.3 });
-
-    sectionSelectors.forEach(function(s){
-      var el = document.querySelector(s.sel);
-      if(el){ el.dataset.trackLabel = s.label; sectionObserver.observe(el); }
-    });
-
-    /* also observe all named sections */
-    document.querySelectorAll('section[id], section[class]').forEach(function(el,i){
-      if(!el.dataset.trackLabel){
-        var lbl = el.id || el.className.split(' ')[0] || ('section_'+i);
-        el.dataset.trackLabel = lbl;
-        sectionObserver.observe(el);
-      }
-    });
-  }
-
-  /* ── 3. CTA CLICK TRACKING ── */
-  var ctaSelectors = [
-    '.btn-hero-main', '.btn-hero-ghost',
-    '.nav-cta', '.path-btn', '.club-card',
-    '.qz-cta-primary', '.qz-cta-secondary',
-    '.reviews-cta-link'
-  ];
-  document.addEventListener('click', function(e){
-    var target = e.target.closest(ctaSelectors.join(','));
-    if(target){
-      var section = (target.closest('[data-track-label]') || {}).dataset || {};
-      fire('cta_click', {
-        button_text:  (target.textContent || '').trim().substring(0,80),
-        button_class: target.className,
-        section:      section.trackLabel || 'unknown',
-        href:         target.href || ''
-      });
-    }
-    /* track booking calendar interactions */
-    if(e.target.closest('#gb7kmF0LFwqHhnW1pABp_1782025556455')){
-      fire('booking_calendar_interact', { section: 'Final CTA' });
-    }
-  }, true);
-
-  /* ── 4. BOOKING CALENDAR VISIBILITY ── */
-  var bookingIframe = document.getElementById('gb7kmF0LFwqHhnW1pABp_1782025556455');
-  if(bookingIframe && 'IntersectionObserver' in window){
-    var bookingFired = false;
-    var bookingObserver = new IntersectionObserver(function(entries){
-      if(!bookingFired && entries[0].isIntersecting){
-        bookingFired = true;
-        fire('booking_calendar_viewed', { section: 'Final CTA' });
-        bookingObserver.disconnect();
-      }
-    }, { threshold: 0.5 });
-    bookingObserver.observe(bookingIframe);
-  }
-
-  /* ── 5. QUIZ TRACKING ── */
-  /* Patches into the quiz engine after it initialises */
-  window.addEventListener('load', function(){
-    /* Intercept quiz option clicks */
-    document.addEventListener('click', function(e){
-      var opt = e.target.closest('.qz-opt');
-      if(opt){
-        var slide = opt.closest('.qz-slide');
-        var qIdx  = slide ? slide.dataset.qIdx : '?';
-        fire('quiz_answer', {
-          question_index: qIdx,
-          answer_text: (opt.textContent || '').trim().substring(0,60)
-        });
-      }
-      /* Quiz started on first Next/Back click */
-      if(e.target.closest('#qz-nav') && !window._s2sQuizStarted){
-        window._s2sQuizStarted = true;
-        fire('quiz_started', {});
-      }
-    });
-
-    /* Observe quiz result appearing */
-    var resultEl = document.getElementById('qz-result');
-    if(resultEl && 'IntersectionObserver' in window){
-      var resultObs = new IntersectionObserver(function(entries){
-        if(entries[0].isIntersecting){
-          fire('quiz_completed', {
-            result_shown: (resultEl.textContent || '').substring(0,60).trim()
-          });
-          resultObs.disconnect();
-        }
-      }, { threshold: 0.5 });
-      resultObs.observe(resultEl);
-    }
-  });
-
-  /* ── 6. EXIT INTENT ── */
-  document.addEventListener('mouseleave', function(e){
-    if(e.clientY <= 0){
-      fire('exit_intent', {
-        max_scroll_depth: maxScroll,
-        time_on_page_s:   Math.round((Date.now() - window._s2sPageStart) / 1000)
-      });
-    }
-  });
-
-  /* ── 7. ENGAGEMENT TIME (accurate, not GA's sampled version) ── */
-  window._s2sPageStart = Date.now();
-  var _s2sActive = true;
-  var _s2sHiddenAt = null;
-  document.addEventListener('visibilitychange', function(){
-    if(document.hidden){
-      _s2sActive = false;
-      _s2sHiddenAt = Date.now();
-    } else {
-      _s2sActive = true;
-    }
-  });
-  /* fire engagement summary on page unload */
-  window.addEventListener('pagehide', function(){
-    var totalTime = Math.round((Date.now() - window._s2sPageStart) / 1000);
-    fire('page_engagement', {
-      time_on_page_s:   totalTime,
-      max_scroll_depth: maxScroll,
-      sections_seen:    Object.keys(sectionTimes).join(' | ')
-    });
-  });
-
-})();
-</script>
-<!-- ═══════════════════════════════════════════════════════════ -->
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -281,6 +58,12 @@ body{background:var(--ink);color:var(--text);font-family:'Barlow',system-ui,sans
 .btn-hero-main:hover{background:var(--red-hover);transform:translateY(-2px)}
 .btn-hero-ghost{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:transparent;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.22);border-radius:3px;padding:17px 32px;cursor:pointer;transition:.18s;text-decoration:none;display:inline-flex;align-items:center}
 .btn-hero-ghost:hover{border-color:rgba(255,255,255,.55);color:white}
+.btn-hero-book{display:block;width:100%;max-width:420px;margin:12px auto 0;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:rgba(255,255,255,.12);color:white;border:1px solid rgba(255,255,255,.3);border-radius:3px;padding:14px 24px;text-align:center;text-decoration:none;transition:.18s;}
+.btn-hero-book:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.55);}
+/* Floating sticky book CTA */
+.floating-book-btn{position:fixed;bottom:24px;right:24px;z-index:999;background:var(--red);color:white;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:14px 24px;border-radius:3px;text-decoration:none;box-shadow:0 4px 24px rgba(232,23,13,.5);transition:.18s;display:flex;align-items:center;gap:8px;}
+.floating-book-btn:hover{background:var(--red-hover);transform:translateY(-2px);}
+@media(max-width:480px){.floating-book-btn{bottom:16px;right:16px;padding:12px 18px;font-size:13px;}}
 .hero-proof{display:flex;align-items:center;justify-content:center;gap:10px;font-size:12px;color:var(--muted);flex-wrap:wrap}
 .stars{display:flex;gap:2px}
 .star{color:var(--gold)}
@@ -549,7 +332,7 @@ body{background:var(--ink);color:var(--text);font-family:'Barlow',system-ui,sans
 <!-- NAV -->
 <nav class="lp-nav" id="lp-nav">
   <div class="nav-logo"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAAm0ElEQVR42u2de3RV5Zn/P/tyLjknCeGSkHBLuBMgEKghhFvDoAXUqaCO6FJHV3GJU8f76KK2a+qaurQz09ZKuyyd4Tez1I5TbZWqo6hFbpEIghhIwv0WIQQSEnI79733+/sj7N2TkEDAADn0/ax1FuScffbZ+93v932e93mf930VQCCRSNA0DdM0KSgo4IsvvkAIgSqLRSLpGikQiUQKRCKRApFIpEAkEikQiUQKRCKRApFIpEAkEikQiUQKRCKRSIFIJFIgEokUiEQiBSKRSIFIJFIgEokUiEQiBSKRSIFIJFIgEolECkQikQKRSKRAJBIpEIlECkQikQKRSKRAJBIpEIlECkQikUiBSCRSIBKJFIhEIgUikUiBSCRSIBKJFIhEIgUikUiBSCRSIBKJRApEIpECkUikQCQSKRCJRApEIpECkUikQCQSKRCJRApEIpFIgUgkUiASiRSIRCIFIpFIgUgkUiASiRSIRCIFIpFIgUgkUiASieRc9ES5UEVRrskHIITo9F5VVb3m7tOyLCmQK1mRrlWEEJimec3dl6IoCfccE0YgmqYlZAFfiHgh2PfXr18/8vLyMAwj4S2nEAJN02hpaaGsrExakMvR4miaxrvvvsuYMWOIxWIJ737Y91RbW8tNN91Ec3Oz41aZpsnkyZNZt27dNdUQlJaWMnPmTFRVTShXK2EsyNixYxk1atQ1VWkGDBjQ6fuGYSCEQAiR8BbENE00TSMSichO+uVscUOhEJZlYVlWwlsQuwVtbW3t1GW0O7R25VJVNWGFoiiK85ICuYyoquoII1EFYvc3dL2t2NPT0zutOKqqomkamqad89349yRSINdMR9yu9ACRSIR9+/axceNGotHoOZZl165dLFmyhNzcXIqKiigqKiI1NbWddZFCkQJJeOwKb1fmDRs28Ic//IF169axf/9+LMs6x4IoikJjYyNvvfWW896QIUOYN28e9957L/PmzUPTNEzTvCbHS3qli99bX4qiCECoqioqKiqEEEKYpikSAcMwnP+vXr1azJkzp929qaoqPB6P0DTNuc/4z9xut/B6vULX9XafzZ07V3z00Ued/k5vLof169c799Zb65umaQIQBQUFQgghLMsSsvm5DAEFwzDQNI3KykoWLlzI4sWL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" alt="S2S Fit — Sedentary to Splendid"></div>
-  <a href="#quiz" class="nav-cta">Find Your Level →</a>
+  <a href="#booking" class="nav-cta">Book a Free Call →</a>
 </nav>
 
 <!-- ① HERO -->
@@ -574,6 +357,7 @@ body{background:var(--ink);color:var(--text);font-family:'Barlow',system-ui,sans
       <a href="#quiz" class="btn-hero-main">Find your fitness level →</a>
       <a href="#testimonials" class="btn-hero-ghost">See real results</a>
     </div>
+    <a href="#booking" class="btn-hero-book">📞 Book a free strategy call — no obligation</a>
     <div class="hero-proof">
       <div class="stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
       <span>4.9 on Google</span>
@@ -814,36 +598,20 @@ body{background:var(--ink);color:var(--text);font-family:'Barlow',system-ui,sans
 <section>
   <div class="section-wrap tight">
     <div class="s-eyebrow">How it works</div>
-    <h2 class="s-title">From awareness<br>to <em>Splendid</em></h2>
-    <p class="s-sub">A structured journey — not guesswork. Seven steps, one goal.</p>
+    <h2 class="s-title">Three steps to<br><em>Splendid</em></h2>
+    <p class="s-sub">A structured system — not guesswork. Simple to start.</p>
     <div class="process-grid">
       <div class="process-step"><div class="process-connector"></div>
         <div class="process-num-wrap"><div class="process-num">1</div></div>
-        <div class="process-body"><div class="process-title">You recognise the problem</div><div class="process-desc">You know something needs to change — energy, body composition, confidence. You're aware and looking for a solution that actually fits your life.</div></div>
+        <div class="process-body"><div class="process-title">Book a free strategy call</div><div class="process-desc">A free 30-minute call with Coach Tushar. No pressure — just an honest conversation about your goals, lifestyle, and what's held you back. We'll figure out the right path together.</div><span class="process-pill">Book in 60 seconds ↓</span></div>
       </div>
       <div class="process-step"><div class="process-connector"></div>
         <div class="process-num-wrap"><div class="process-num">2</div></div>
-        <div class="process-body"><div class="process-title">Book a Fitness Strategy Session</div><div class="process-desc">A free 30-minute call with Coach Tushar. No pressure — just an honest conversation about your goals, lifestyle, and what's possible for you.</div><span class="process-pill">Book in 60 seconds ↓</span></div>
-      </div>
-      <div class="process-step"><div class="process-connector"></div>
-        <div class="process-num-wrap"><div class="process-num">3</div></div>
-        <div class="process-body"><div class="process-title">We map out the process on the call</div><div class="process-desc">We walk you through exactly how the S2S system works. If in-person suits you, we also book your <strong style="color:white">S2S Fit — 7 Levels of Fitness Assessment</strong>.</div><span class="process-pill">In-person option available</span></div>
-      </div>
-      <div class="process-step"><div class="process-connector"></div>
-        <div class="process-num-wrap"><div class="process-num">4</div></div>
-        <div class="process-body"><div class="process-title">Assessment → Onboarding</div><div class="process-desc">After your assessment, we onboard you into the S2S system — Everfit app, profile setup, and all the data we need to build your plan.</div><span class="process-pill">Everfit app set up</span></div>
-      </div>
-      <div class="process-step"><div class="process-connector"></div>
-        <div class="process-num-wrap"><div class="process-num">5</div></div>
-        <div class="process-body"><div class="process-title">7-Day S2S Fitness Audit</div><div class="process-desc">Your first week is an observation phase. We watch how you move, respond to training, and eat in real life. Daily check-ins on Everfit. This builds the foundation of your plan.</div><span class="process-pill">7 days · Daily check-ins</span></div>
-      </div>
-      <div class="process-step"><div class="process-connector"></div>
-        <div class="process-num-wrap"><div class="process-num">6</div></div>
-        <div class="process-body"><div class="process-title">Your Master Plan is built</div><div class="process-desc">With audit data, we build your complete personalised plan — training blocks, South Asian nutrition macros, recovery, and lifestyle accommodations. Full resource allocation.</div><span class="process-pill">Fully personalised · 48hr delivery</span></div>
+        <div class="process-body"><div class="process-title">Get your personalised plan</div><div class="process-desc">We build a complete programme around South Asian food, your real schedule, and your fitness level. Training blocks, nutrition macros, and lifestyle accommodations — all done for you.</div><span class="process-pill">Fully personalised · 48hr delivery</span></div>
       </div>
       <div class="process-step">
-        <div class="process-num-wrap"><div class="process-num">7</div></div>
-        <div class="process-body"><div class="process-title">Execute → Assess → Re-strategise → Repeat</div><div class="process-desc">We implement, track, adapt, and keep you progressing. Weekly reviews, WhatsApp support, and program adjustments. We repeat until you hit your goals — then climb the next S2S level.</div><span class="process-pill">Ongoing · Level by level</span></div>
+        <div class="process-num-wrap"><div class="process-num">3</div></div>
+        <div class="process-body"><div class="process-title">Train, transform, and climb</div><div class="process-desc">Weekly coaching, WhatsApp support, and program adjustments. We track, adapt, and keep you progressing. Results in 12 weeks — then we climb the next S2S level together.</div><span class="process-pill">Ongoing · Level by level</span></div>
       </div>
     </div>
   </div>
@@ -869,7 +637,7 @@ body{background:var(--ink);color:var(--text);font-family:'Barlow',system-ui,sans
           <li class="pf"><div class="pf-dot"><svg viewBox="0 0 12 12"><polyline points="1,6 4.5,9.5 11,2"/></svg></div>WhatsApp support 7 days/week</li>
           <li class="pf"><div class="pf-dot"><svg viewBox="0 0 12 12"><polyline points="1,6 4.5,9.5 11,2"/></svg></div>Weekly reviews + program adjustments</li>
         </ul>
-        <a href="https://api.leadconnectorhq.com/widget/bookings/coach-tushar-dhingra" target="_blank" rel="noopener" class="path-btn pri">Book free strategy call →</a>
+        <a href="#booking" class="path-btn pri">Book free strategy call →</a>
       </div>
       <div class="path-card">
         <div class="path-icon">🏋️</div>
@@ -880,32 +648,32 @@ body{background:var(--ink);color:var(--text);font-family:'Barlow',system-ui,sans
           <li class="pf"><div class="pf-dot"><svg viewBox="0 0 12 12"><polyline points="1,6 4.5,9.5 11,2"/></svg></div>Everything in online + hands-on form coaching</li>
           <li class="pf"><div class="pf-dot"><svg viewBox="0 0 12 12"><polyline points="1,6 4.5,9.5 11,2"/></svg></div>Hybrid option: in-person + online support</li>
         </ul>
-        <a href="https://api.leadconnectorhq.com/widget/bookings/coach-tushar-dhingra" target="_blank" rel="noopener" class="path-btn ghost">Book free strategy call →</a>
+        <a href="#booking" class="path-btn ghost">Book free strategy call →</a>
       </div>
+    </div>
+    <div style="margin-top:28px;background:rgba(232,23,13,.08);border:1px solid rgba(232,23,13,.2);border-radius:4px;padding:18px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+      <div style="font-size:20px">💬</div>
+      <div style="flex:1;min-width:200px">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;text-transform:uppercase;color:white;margin-bottom:4px">Not sure which suits you?</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.5">Book a free strategy call and Tushar will help you decide — online, in-person, or hybrid. No commitment required.</div>
+      </div>
+      <a href="#booking" style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--red);color:white;border-radius:3px;padding:12px 22px;text-decoration:none;white-space:nowrap;flex-shrink:0;">Book a free call →</a>
     </div>
   </div>
 </section>
 
-<!-- ⑧ COMMUNITY -->
+<!-- ⑧ COMMUNITY (collapsed to booking bridge) -->
 <section style="border-top:1px solid var(--border)">
-  <div class="section-wrap tight">
+  <div class="section-wrap tight" style="text-align:center">
     <div class="s-eyebrow">Community</div>
-    <h2 class="s-title">Join a community<br>that <em>moves together</em></h2>
-    <p class="s-sub">Sport clubs, free courses, and a tight-knit group who get it.</p>
-    <div class="clubs-grid">
-      <a href="https://chat.whatsapp.com/HY27eHIDrfF4dnsDgC2niQ" target="_blank" rel="noopener" class="club-card">
-        <div class="club-left"><div class="club-emoji">🏏</div><div><div class="club-name">Indoor cricket club</div><div class="club-sub">WhatsApp group · Active</div></div></div>
-        <div class="club-arrow">Join →</div>
-      </a>
-      <a href="https://chat.whatsapp.com/I0DyxzYjhTx1YGZnmp3XMV" target="_blank" rel="noopener" class="club-card">
-        <div class="club-left"><div class="club-emoji">🏸</div><div><div class="club-name">Badminton club</div><div class="club-sub">WhatsApp group · Active</div></div></div>
-        <div class="club-arrow">Join →</div>
-      </a>
-      <a href="https://www.skool.com/rebirth-transformation-9227/about?ref=94456eaed0c2458ebb6f2bf04f12e11a" target="_blank" rel="noopener" class="club-card">
-        <div class="club-left"><div class="club-emoji">🎓</div><div><div class="club-name">Free courses on Skool</div><div class="club-sub">Training · Nutrition · Recovery · Habits</div></div></div>
-        <div class="club-arrow">Join →</div>
-      </a>
+    <h2 class="s-title">S2S Fit is more than<br><em>just training</em></h2>
+    <p class="s-sub" style="max-width:500px;margin-left:auto;margin-right:auto">Our community includes an indoor cricket club, badminton club, and free Skool courses — but it all starts with one conversation. Book your free strategy call and we'll show you everything that's available.</p>
+    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:28px">
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)"><span style="font-size:18px">🏏</span>Indoor cricket club</div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)"><span style="font-size:18px">🏸</span>Badminton club</div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)"><span style="font-size:18px">🎓</span>Free Skool courses</div>
     </div>
+    <a href="#booking" style="display:inline-block;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--red);color:white;border-radius:3px;padding:16px 36px;text-decoration:none;">Book a free strategy call →</a>
   </div>
 </section>
 
@@ -916,7 +684,11 @@ body{background:var(--ink);color:var(--text);font-family:'Barlow',system-ui,sans
   <div class="final-cta-inner">
     <div class="s-eyebrow" style="text-align:center">Limited spots available</div>
     <h2 class="s-title" style="text-align:center;margin-bottom:14px">Ready to make it<br><em>finally stick?</em></h2>
-    <p style="font-size:15px;color:var(--muted);margin:0 auto 32px;max-width:440px;text-align:center;line-height:1.7">Book your free strategy session below. No obligation.</p>
+    <p style="font-size:15px;color:var(--muted);margin:0 auto 20px;max-width:440px;text-align:center;line-height:1.7">Book your free strategy session below. No obligation.</p>
+    <div style="display:inline-flex;align-items:center;gap:10px;background:rgba(255,200,50,.1);border:1px solid rgba(255,200,50,.25);border-radius:4px;padding:12px 20px;margin:0 auto 28px;text-align:left;">
+      <span style="font-size:18px">🟡</span>
+      <span style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.5"><strong style="color:white">Limited spots each month.</strong> Tushar takes on a small number of new clients to maintain quality. Secure your free call before spots fill.</span>
+    </div>
     <div class="cta-checks">
       <div class="cta-check"><div class="cta-check-icon">✓</div>100% free — no credit card needed</div>
       <div class="cta-check"><div class="cta-check-icon">✓</div>Culturally aware coaching</div>
@@ -939,6 +711,8 @@ body{background:var(--ink);color:var(--text);font-family:'Barlow',system-ui,sans
   </div>
   <div class="footer-contact">support@s2sfit.com &nbsp;·&nbsp; Adelaide, AU</div>
 </footer>
+
+<a href="#booking" class="floating-book-btn">📞 Book a Free Call →</a>
 
 <script>
 /* NAV */
@@ -998,14 +772,17 @@ function buildQzSlides(){
     <div class="qz-result-tag" id="qz-result-tag"></div>
     <div class="qz-result-desc" id="qz-result-desc"></div>
     <div class="qz-result-domains" id="qz-result-domains"></div>
-    <div class="qz-cta-btns">
-      <a class="qz-cta-primary" href="https://api.leadconnectorhq.com/widget/bookings/s2s-fit-7-levels-of-fitness" target="_blank" rel="noopener">
+    <div style="margin:4px auto 0;max-width:480px;text-align:center">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6">Based on your result, Tushar can build you a plan that fits your South Asian lifestyle. The first step is a free 20-min strategy call — no pressure, no obligation.</p>
+      <a href="#booking" class="qz-cta-primary" style="display:flex;text-decoration:none;">
+        📞 Book your free strategy call →
+        <span class="qz-btn-label">30-min online · Review your level &amp; plan your path</span>
+      </a>
+    </div>
+    <div class="qz-cta-btns" style="margin-top:12px">
+      <a class="qz-cta-secondary" href="https://api.leadconnectorhq.com/widget/bookings/s2s-fit-7-levels-of-fitness" target="_blank" rel="noopener">
         Book S2S Fit — 7 Levels of Fitness Assessment
         <span class="qz-btn-label">In-person · Full physical assessment with Coach Tushar</span>
-      </a>
-      <a class="qz-cta-secondary" href="https://api.leadconnectorhq.com/widget/bookings/coach-tushar-dhingra" target="_blank" rel="noopener">
-        Book a Free Strategy Call
-        <span class="qz-btn-label">30-min online session · Review your level &amp; plan your path</span>
       </a>
     </div>
     <div style="margin-top:14px;font-size:12px;color:var(--muted)">
