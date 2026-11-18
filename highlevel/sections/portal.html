@@ -4305,13 +4305,10 @@ tr.tr-gr td:first-child{border-left:3px solid var(--red)}
 .wko-rev-sets{font-size:12px;color:var(--muted);white-space:nowrap;flex:none}
 .wk-perf-brand{background:rgba(232,23,13,.14);color:var(--red);border-radius:10px;padding:0 7px;font-size:10.5px}
 /* live in-workout stats strip (updates as the client types reps/weight) */
-.wko-live{display:flex;gap:6px;margin:2px 0 8px}
-.wkl-tile{flex:1;background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:5px 6px;text-align:center;min-width:0}
-.wkl-k{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-family:var(--disp)}
-.wkl-v{font-family:var(--disp);font-weight:900;font-size:17px;line-height:1.02;margin:1px 0 2px}
-.wkl-v small{font-size:10px;font-weight:700;color:var(--muted)}
-.wkl-d{font-size:9px;font-weight:800;color:var(--muted);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wkl-d.up{color:var(--good,#22c55e)}.wkl-d.down{color:var(--red)}.wkl-d.pr{color:var(--gold,#f5c842)}
+.wko-live{display:flex;gap:7px;flex-wrap:wrap;margin:2px 0 10px}
+.wkl-chip{display:inline-flex;align-items:center;gap:5px;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:5px 11px;font-size:12px;color:var(--muted);white-space:nowrap}
+.wkl-chip b{font-family:var(--disp);font-weight:900;font-size:14px;color:var(--text)}
+.wkl-chip.pr{background:rgba(245,200,66,.16);border-color:var(--gold,#f5c842);color:var(--gold,#B07A0C)}
 .wk-perf{margin-top:12px;border-top:1px dashed var(--border);padding-top:8px}
 .wk-perf-top{font-family:var(--disp);font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin-bottom:6px}
 .wk-perf-empty{font-size:12.5px;color:var(--muted)}
@@ -7438,7 +7435,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04tp';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04tq';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -12987,10 +12984,12 @@ function wkoLiveStatsHTML(en,ei){
   let rmD;
   if(st.best1>0&&past&&past.best1>0){if(st.best1>past.best1)rmD='<div class="wkl-d pr">▲ PR +'+(st.best1-past.best1)+'kg</div>';else{const d=st.best1-past.last1;rmD='<div class="wkl-d">best '+past.best1+' · last '+past.last1+'kg</div>';}}
   else if(st.best1>0)rmD='<div class="wkl-d">first log</div>';else rmD='<div class="wkl-d">—</div>';
+  const isPR=(st.best1>0&&past&&past.best1>0&&st.best1>past.best1);
   return '<div class="wko-live" id="wko-live-'+ei+'">'+
-    '<div class="wkl-tile"><div class="wkl-k">Volume</div><div class="wkl-v">'+(st.vol?st.vol.toLocaleString():'0')+'<small>kg</small></div>'+volD+'</div>'+
-    '<div class="wkl-tile"><div class="wkl-k">Est. 1RM</div><div class="wkl-v">'+(st.best1||0)+'<small>kg</small></div>'+rmD+'</div>'+
-    '<div class="wkl-tile"><div class="wkl-k">Sets</div><div class="wkl-v">'+doneN+'<small>/'+totN+'</small></div><div class="wkl-d">'+(sessVol?sessVol.toLocaleString()+' kg today':'session')+'</div></div>'+
+    '<span class="wkl-chip"><b>'+(st.vol?st.vol.toLocaleString():'0')+'</b> kg vol</span>'+
+    '<span class="wkl-chip"><b>'+(st.best1||0)+'</b> kg 1RM</span>'+
+    '<span class="wkl-chip"><b>'+doneN+'/'+totN+'</b> sets</span>'+
+    (isPR?'<span class="wkl-chip pr">▲ PR</span>':'')+
     '</div>';
 }
 /* in-place refresh of the live strip (called from wkoSet on every keystroke — no full re-render) */
