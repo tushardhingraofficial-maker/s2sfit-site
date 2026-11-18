@@ -4065,6 +4065,7 @@ tr.pgw-focus input,tr.pgw-focus select{border-color:var(--gold,#f5c842)}
 .exsec.breath .exsec-h{color:var(--prot,#4a9ee8)}
 /* ---- Exercise form-check / corrections ---- */
 .fc-vid{width:100%;max-width:340px;border-radius:12px;border:1px solid var(--border);background:#000;display:block;margin:4px 0}
+.fc-img{width:100%;max-width:340px;border-radius:12px;border:1px solid var(--border);display:block;margin:4px 0;cursor:zoom-in}
 .fc-thread{border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;background:var(--card2)}
 .fc-thread.approved{border-color:var(--good,#22c55e)}
 .fc-thread.reupload{border-color:var(--gold,#f5c842)}
@@ -7318,7 +7319,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04ti';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04tj';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -22260,12 +22261,14 @@ function fcPlanExercises(plan){const names=new Set();const tr=(plan&&plan.traini
 function fcStatusMeta(s){return s==='approved'?{ic:'🟢',lbl:'Approved',cls:'good'}:s==='reupload'?{ic:'🟡',lbl:'Re-upload needed',cls:'warn'}:{ic:'⚪',lbl:'Awaiting coach review',cls:'muted'};}
 function fcWhen(at){try{return (typeof fmtDT==='function')?fmtDT(at):fmtDate((at||'').slice(0,10));}catch(e){return '';}}
 function fcVideoHTML(url){return url?'<video src="'+esc(url)+'" controls playsinline preload="metadata" class="fc-vid"></video>':'';}
+function fcImageHTML(url){return url?'<a href="'+esc(url)+'" target="_blank" rel="noopener"><img src="'+esc(url)+'" class="fc-img" alt="form-check photo"></a>':'';}
+function fcMediaHTML(en){return en.kind==='image'?fcImageHTML(en.imageUrl||en.videoUrl):fcVideoHTML(en.videoUrl);}
 function fcEntryHTML(en,viewer,clientName){
   const avatar=en.by==='coach'?'🧑‍🏫':'🏋️';
   const label=en.by==='coach'?(viewer==='coach'?'You (coach)':'Coach'):(viewer==='coach'?(clientName||'Client'):'You');
   const cls=en.kind==='approve'?'approve':en.kind==='request'?'request':(en.by==='coach'?'coach':'client');
   let inner='';
-  if(en.kind==='video'){inner=fcVideoHTML(en.videoUrl)+(en.text?'<div class="fc-txt" style="margin-top:6px">'+esc(en.text).replace(/\n/g,'<br>')+'</div>':'');}
+  if(en.kind==='video'||en.kind==='image'){inner=fcMediaHTML(en)+(en.text?'<div class="fc-txt" style="margin-top:6px">'+esc(en.text).replace(/\n/g,'<br>')+'</div>':'');}
   else if(en.kind==='approve'){inner='<div class="fc-txt">🟢 <b>Green flag — form approved.</b> '+(en.text?esc(en.text).replace(/\n/g,'<br>'):'Great work — you’re cleared to progress this movement.')+'</div>';}
   else if(en.kind==='request'){inner='<div class="fc-txt">🔁 <b>Please re-record and upload again.</b>'+(en.text?'<br>'+esc(en.text).replace(/\n/g,'<br>'):'')+'</div>';}
   else{inner='<div class="fc-txt">'+esc(en.text||'').replace(/\n/g,'<br>')+'</div>';}
@@ -22273,7 +22276,7 @@ function fcEntryHTML(en,viewer,clientName){
   return '<div class="fc-entry '+cls+'"><div class="fc-av">'+avatar+'</div><div class="fc-bub"><div class="fc-who"><span>'+esc(label)+'</span><span style="color:var(--muted);font-weight:400;text-transform:none">'+esc(fcWhen(en.at))+'</span></div>'+inner+'</div></div>';
 }
 function fcThreadBodyHTML(t,viewer,clientName){
-  let h=(t.entries||[]).length?(t.entries||[]).map(function(e){return fcEntryHTML(e,viewer,clientName);}).join(''):'<div class="empty" style="padding:14px">No video uploaded yet.</div>';
+  let h=(t.entries||[]).length?(t.entries||[]).map(function(e){return fcEntryHTML(e,viewer,clientName);}).join(''):'<div class="empty" style="padding:14px">Nothing uploaded yet.</div>';
   if(t.status==='approved')h+='<div class="fc-flag">🟢 Approved — cleared to progress this movement</div>';
   return h;
 }
@@ -22284,22 +22287,24 @@ function fcStartFor(exName){try{setSection('formcheck');}catch(e){}setTimeout(fu
 function fcStartForEnc(s){try{fcStartFor(decodeURIComponent(s));}catch(e){try{fcStartFor(s);}catch(_){}}}
 async function fcClientUpload(inp,threadId){
   const f=inp&&inp.files&&inp.files[0];if(!f){return;}
-  if(f.size>80*1024*1024){toast('Video too large (80 MB max) — trim it or lower the quality',true);inp.value='';return;}
+  const isImg=/^image\//i.test(f.type||'')||/\.(jpe?g|png|gif|webp|heic|heif)$/i.test(f.name||'');
+  const maxMB=isImg?25:80;const noun=isImg?'Photo':'Video';
+  if(f.size>maxMB*1024*1024){toast(noun+' too large ('+maxMB+' MB max)'+(isImg?'':' — trim it or lower the quality'),true);inp.value='';return;}
   let exName='';
   if(threadId){const t=fcData(PLAN).threads.find(x=>x.id===threadId);exName=t?t.exName:'';}
-  else{exName=(($('fc-ex')||{}).value||'').trim();if(!exName){toast('Pick which exercise this video is for first',true);inp.value='';return;}}
+  else{exName=(($('fc-ex')||{}).value||'').trim();if(!exName){toast('Pick which exercise this is for first',true);inp.value='';return;}}
   const st=$(threadId?('fc-upst-'+threadId):'fc-upst-new');if(st)st.textContent='Uploading… 0%';
   try{
-    const ext=((f.name.split('.').pop()||'mp4').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5))||'mp4';
+    const ext=((f.name.split('.').pop()||(isImg?'jpg':'mp4')).toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5))||(isImg?'jpg':'mp4');
     const d=await DB._api('climbSignUpload',{clientId:SESSION.id,key:'fc-'+Date.now(),ext,contentType:f.type});
     await new Promise((res,rej)=>{const x=new XMLHttpRequest();x.open('PUT',d.signedUrl);x.setRequestHeader('content-type',f.type||'application/octet-stream');x.setRequestHeader('x-upsert','true');if(x.upload)x.upload.onprogress=function(e){if(e.lengthComputable&&st)st.textContent='Uploading… '+Math.round(e.loaded/e.total*100)+'%';};x.onload=()=>x.status<300?res():rej(new Error('Upload failed ('+x.status+')'));x.onerror=()=>rej(new Error('Network error'));x.send(f);});
     const fc=fcData(PLAN);let t=threadId?fc.threads.find(x=>x.id===threadId):fc.threads.find(x=>(x.exName||'').toLowerCase()===exName.toLowerCase()&&x.status!=='approved');
     if(!t){t={id:uid(),exName:exName,status:'open',entries:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};fc.threads.push(t);}
-    t.entries.push({id:uid(),by:'client',kind:'video',videoUrl:d.publicUrl,videoPath:d.path,at:new Date().toISOString()});
+    t.entries.push(isImg?{id:uid(),by:'client',kind:'image',imageUrl:d.publicUrl,imagePath:d.path,at:new Date().toISOString()}:{id:uid(),by:'client',kind:'video',videoUrl:d.publicUrl,videoPath:d.path,at:new Date().toISOString()});
     t.status='open';t.updatedAt=new Date().toISOString();
     try{await DB.saveMilestones(SESSION.id,PLAN.milestones);}catch(e){toast('Could not save',true);return;}
-    try{await DB.addAudit({client_id:SESSION.id,actor:'client',action:'Uploaded a form-check video',detail:exName});}catch(e){}
-    toast('Video uploaded — your coach will review it 👀');FC_OPEN=t.id;if($('fc-ex'))$('fc-ex').value='';renderFormCheck();
+    try{await DB.addAudit({client_id:SESSION.id,actor:'client',action:'Uploaded a form-check '+(isImg?'photo':'video'),detail:exName});}catch(e){}
+    toast(noun+' uploaded — your coach will review it 👀');FC_OPEN=t.id;if($('fc-ex'))$('fc-ex').value='';renderFormCheck();
   }catch(e){if(st)st.textContent='';toast((e&&e.message)||'Upload failed',true);}
   finally{inp.value='';}
 }
@@ -22308,16 +22313,17 @@ function renderFormCheck(){
   const fc=fcData(PLAN);const threads=fc.threads.slice().sort((a,b)=>((a.updatedAt||'')<(b.updatedAt||'')?1:-1));
   const exNames=fcPlanExercises(PLAN);
   let h='<div class="card"><div class="card-head"><span class="step-no">📹</span><h2>Form check</h2></div><div class="card-body">'+
-    '<p class="small" style="color:var(--muted);margin:0 0 12px">Record a short clip of an exercise (side-on is best), upload it here, and your coach will review your form, leave corrections, and give you a 🟢 <b>green flag</b> when it’s spot on.</p>'+
+    '<p class="small" style="color:var(--muted);margin:0 0 12px">Record a short clip of an exercise (side-on is best) <b>or pick a video / photo from your gallery</b>, upload it here, and your coach will review your form, leave corrections, and give you a 🟢 <b>green flag</b> when it’s spot on.</p>'+
     '<div class="pg-grid"><div class="field"><label class="lab">Which exercise?</label><input id="fc-ex" list="fc-exlist" placeholder="Pick or type an exercise"><datalist id="fc-exlist">'+exNames.map(n=>'<option value="'+esc(n)+'">').join('')+'</datalist></div></div>'+
-    '<label class="btn btn-primary" style="cursor:pointer;display:block;text-align:center;margin-top:10px">📹 Upload a form-check video<input type="file" accept="video/*" capture="environment" style="display:none" onchange="fcClientUpload(this)"></label>'+
+    '<label class="btn btn-primary" style="cursor:pointer;display:block;text-align:center;margin-top:10px">📹 Upload a video or photo<input type="file" accept="video/*,image/*" style="display:none" onchange="fcClientUpload(this)"></label>'+
+    '<div class="small" style="color:var(--muted);text-align:center;margin-top:5px">Choose from your gallery or record a new clip</div>'+
     '<div class="small" id="fc-upst-new" style="color:var(--muted);margin-top:7px"></div>'+
   '</div></div>';
   h+='<div class="card"><div class="card-head"><span class="step-no">'+svgIcon('history')+'</span><h2>Your movements</h2><span class="sp"></span><span class="pill muted">'+threads.length+'</span></div><div class="card-body">';
-  if(!threads.length)h+='<div class="empty">No form checks yet — upload your first video above.</div>';
-  else h+=threads.map(function(t){const m=fcStatusMeta(t.status);const open=FC_OPEN===t.id;const n=(t.entries||[]).filter(e=>e.kind==='video').length;
-    return '<div class="fc-thread '+(t.status||'')+'"><div class="fc-thread-head" onclick="fcClientToggle(\''+t.id+'\')"><div class="fc-th-name">'+esc(t.exName)+'<div class="fc-th-sub">'+n+' video'+(n===1?'':'s')+' · updated '+esc(fmtDate((t.updatedAt||'').slice(0,10)))+'</div></div><span class="fc-badge '+m.cls+'">'+m.ic+' '+m.lbl+'</span></div>'+
-    (open?('<div class="fc-body">'+fcThreadBodyHTML(t,'client','')+(t.status==='reupload'?('<label class="btn btn-primary" style="cursor:pointer;display:block;text-align:center;margin-top:10px">📹 Upload a new video<input type="file" accept="video/*" capture="environment" style="display:none" onchange="fcClientUpload(this,\''+t.id+'\')"></label><div class="small" id="fc-upst-'+t.id+'" style="color:var(--muted);margin-top:6px"></div>'):'')+'</div>'):'')+
+  if(!threads.length)h+='<div class="empty">No form checks yet — upload your first video or photo above.</div>';
+  else h+=threads.map(function(t){const m=fcStatusMeta(t.status);const open=FC_OPEN===t.id;const n=(t.entries||[]).filter(e=>e.kind==='video'||e.kind==='image').length;
+    return '<div class="fc-thread '+(t.status||'')+'"><div class="fc-thread-head" onclick="fcClientToggle(\''+t.id+'\')"><div class="fc-th-name">'+esc(t.exName)+'<div class="fc-th-sub">'+n+' upload'+(n===1?'':'s')+' · updated '+esc(fmtDate((t.updatedAt||'').slice(0,10)))+'</div></div><span class="fc-badge '+m.cls+'">'+m.ic+' '+m.lbl+'</span></div>'+
+    (open?('<div class="fc-body">'+fcThreadBodyHTML(t,'client','')+(t.status==='reupload'?('<label class="btn btn-primary" style="cursor:pointer;display:block;text-align:center;margin-top:10px">📹 Upload a new video or photo<input type="file" accept="video/*,image/*" style="display:none" onchange="fcClientUpload(this,\''+t.id+'\')"></label><div class="small" id="fc-upst-'+t.id+'" style="color:var(--muted);margin-top:6px"></div>'):'')+'</div>'):'')+
     '</div>';}).join('');
   h+='</div></div>';
   host.innerHTML=h;
@@ -22372,8 +22378,8 @@ function edRenderFormCheck(){
     '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><button class="btn-sm solid" style="flex:none" onclick="edFcImport()">⬇ Import allocated exercises'+(toImport?(' ('+toImport+')'):'')+'</button><span class="small" style="color:var(--muted)">'+alloc.length+' in plan · '+threads.length+' tracked · '+threads.filter(t=>t.status==='approved').length+' 🟢</span></div>';
   h+='<div style="margin-top:12px">';
   if(!threads.length)h+='<div class="empty">No movements yet — import this client’s allocated exercises, or wait for them to upload a video.</div>';
-  else h+=threads.map(function(t){const m=fcStatusMeta(t.status);const open=ED_FC_OPEN===t.id;const n=(t.entries||[]).filter(e=>e.kind==='video').length;
-    return '<div class="fc-thread '+(t.status||'')+'"><div class="fc-thread-head" onclick="edFcToggle(\''+t.id+'\')"><div class="fc-th-name">'+esc(t.exName)+'<div class="fc-th-sub">'+n+' video'+(n===1?'':'s')+' · updated '+esc(fmtDate((t.updatedAt||'').slice(0,10)))+'</div></div><span class="fc-badge '+m.cls+'">'+m.ic+' '+m.lbl+'</span></div>'+
+  else h+=threads.map(function(t){const m=fcStatusMeta(t.status);const open=ED_FC_OPEN===t.id;const n=(t.entries||[]).filter(e=>e.kind==='video'||e.kind==='image').length;
+    return '<div class="fc-thread '+(t.status||'')+'"><div class="fc-thread-head" onclick="edFcToggle(\''+t.id+'\')"><div class="fc-th-name">'+esc(t.exName)+'<div class="fc-th-sub">'+n+' upload'+(n===1?'':'s')+' · updated '+esc(fmtDate((t.updatedAt||'').slice(0,10)))+'</div></div><span class="fc-badge '+m.cls+'">'+m.ic+' '+m.lbl+'</span></div>'+
     (open?('<div class="fc-body">'+fcThreadBodyHTML(t,'coach',(edClient&&(edClient.name||edClient.email))||'Client')+edFcComposerHTML(t)+'</div>'):'')+
     '</div>';}).join('');
   h+='</div>';
