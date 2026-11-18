@@ -324,7 +324,11 @@ body{background:var(--ink);color:var(--text);font-family:'Barlow',system-ui,sans
   .who-img-stack{height:320px}
   .tx-grid{grid-template-columns:repeat(2,1fr);gap:10px}
 }
-@media(prefers-reduced-motion:reduce){*{animation-duration:0.01ms !important;transition-duration:0.01ms !important}}
+@media(prefers-reduced-motion:reduce){
+  .scroll-hint{animation:none}
+  .hero-eyebrow-dot{animation:none}
+  .btn-hero-main{animation:none;box-shadow:0 4px 28px rgba(232,23,13,.45)}
+}
 </style>
 </head>
 <body>
