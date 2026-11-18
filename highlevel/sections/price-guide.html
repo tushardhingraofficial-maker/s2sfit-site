@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-version="v2026-11-18b">
+<html lang="en" data-version="v2026-11-18c">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -896,7 +896,7 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
         </div>
         <div class="commit-note" id="commit-note">Minimum commitment: 16 weeks. Onboarding is charged in full with your first payment.</div>
       </div>
-      <div class="price-card alt">
+      <div class="price-card alt" id="pc-o2o-card">
         <div class="price-tag" style="color:var(--gold)">One-on-One Sessions · 📍 Adelaide</div>
         <p style="font-size:13.5px;color:var(--text);line-height:1.5">In Adelaide and want hands-on? Book an in-person PT session <b>on request</b> — only when you need it.</p>
         <div class="o2o-price"><span id="pc-o2o">$50</span><small> / 30-min session</small></div>
@@ -984,6 +984,27 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
   </div>
 </section>
 
+<!-- PREFERENCE BRANCH: online coaching vs one-on-one -->
+<section class="slide" id="s-prefer">
+  <div class="inner center">
+    <div class="eyebrow">One Quick Question</div>
+    <h2>How Do You Want to Train?</h2>
+    <p class="lead" style="max-width:560px;margin:14px auto 0">This shapes what we show you next — pick what fits you best.</p>
+    <div class="dec-cards">
+      <button class="dec-card go" onclick="choosePref('online')">
+        <div class="dec-ic">💻</div><div class="dec-h">Online coaching</div>
+        <p>Coached remotely through the app — training, nutrition and accountability on your own schedule.</p>
+        <span class="dec-cta">Show me the packages →</span>
+      </button>
+      <button class="dec-card wait" onclick="choosePref('oneonone')">
+        <div class="dec-ic">🏋️</div><div class="dec-h">One-on-one assistance</div>
+        <p>Hands-on, in-person sessions with a coach — let's compare what that really costs.</p>
+        <span class="dec-cta">Compare the cost →</span>
+      </button>
+    </div>
+  </div>
+</section>
+
 <!-- DECISION -->
 <section class="slide" id="s-decision">
   <div class="inner center">
@@ -1029,7 +1050,7 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
         <p class="po-sub">On things that change nothing — a gym membership you barely use, takeaways, random supplements, the last program that didn't work. A year of "getting by" quietly costs <b>more than this</b>, with nothing to show for it. This is the same money, finally pointed at a result you actually keep.</p>
       </div>
 
-      <div class="po-card save">
+      <div class="po-card save" id="wo-cmp">
         <div class="po-h good">3 · It's the cheaper path — not the expensive one</div>
         <div class="po-save-row"><span class="l">A personal trainer for your goal <small>(your numbers)</small></span><span class="v bad" id="wo-pt">$6,240</span></div>
         <div class="po-save-row"><span class="l" id="wo-s2s-l">The S2S Hybrid — done &amp; yours to keep</span><span class="v good" id="wo-s2s">$2,200</span></div>
@@ -1404,6 +1425,8 @@ function renderPricing(){
   set('pc-coaching',money(pr.coaching));
   set('pc-total',money(pr.total));
   set('pc-o2o',money(CFG.one2one));
+  // online-coaching clients: hide the one-on-one add-on card entirely
+  const o2oCard=document.getElementById('pc-o2o-card');if(o2oCard)o2oCard.style.display=(COACH_PREF==='online')?'none':'';
   // rewards + discount summary on the price page
   const pr2=document.getElementById('pc-reward');if(pr2)pr2.textContent=money(REWARDS.redeemLimit*REWARDS.perPoint);
   // returning-member reactivation note on the plan card
@@ -1519,6 +1542,8 @@ function renderWait(){
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   const W=CFG.weeks||16, m=WAIT_MONTHS;
   const pr=pricing(), allIn=ourAllIn(), hasAddon=o2oAddon()>0;
+  // online-coaching clients: hide the "vs a personal trainer" comparison (section 3)
+  const cmp=document.getElementById('wo-cmp');if(cmp)cmp.style.display=(COACH_PREF==='online')?'none':'';
   // 1 — broken down small (program + any hands-on added, so it matches the comparison)
   set('wo-total',money(allIn));
   set('wo-week',money(Math.round(allIn/W)));
@@ -1654,8 +1679,11 @@ function renderTri(){
 }
 
 /* ═══════════ SLIDE ENGINE ═══════════ */
-const ORDER=['s-cover','s-problem','s-trilemma','s-ptcost','s-system','s-pricing','s-final','s-decision','s-wait','s-close'];   // problem → trilemma(paralysis) → PT cost reality → our system → our pricing → final face-off → decision → (waiting) → go
-const NEXT={}; ORDER.forEach((id,i)=>NEXT[id]=ORDER[i+1]||null);
+// two paths from the preference branch: online-only skips the PT-cost calc and the PT face-off
+const ORDER_HYBRID=['s-cover','s-problem','s-trilemma','s-prefer','s-ptcost','s-system','s-pricing','s-final','s-decision','s-wait','s-close'];
+const ORDER_ONLINE=['s-cover','s-problem','s-trilemma','s-prefer','s-system','s-pricing','s-decision','s-wait','s-close'];
+let COACH_PREF='oneonone';   // 'online' | 'oneonone' — chosen on the s-prefer branch
+function FLOW(){return COACH_PREF==='online'?ORDER_ONLINE:ORDER_HYBRID;}
 let current='s-start', history=[];
 function show(id){
   const prev=document.querySelector('.slide.active'), next=document.getElementById(id), desktop=window.innerWidth>=760;
@@ -1673,17 +1701,17 @@ function show(id){
   updateChrome();
 }
 function goTo(id){history.push(current);show(id);}
-function goNext(){const n=NEXT[current];if(n)goTo(n);}
+function goNext(){const f=FLOW(),i=f.indexOf(current),n=(i>=0)?f[i+1]:null;if(n)goTo(n);}
 function goBack(){if(history.length){show(history.pop());}}
 function updateChrome(){
-  const atStart=current==='s-start';
+  const f=FLOW(), i=f.indexOf(current), atStart=current==='s-start';
   document.getElementById('btn-back').style.visibility=history.length?'visible':'hidden';
-  const nx=document.getElementById('btn-next'), i=ORDER.indexOf(current);
-  if(atStart||current==='s-close'||current==='s-decision'){nx.style.display='none';}
-  else{nx.style.display='';nx.textContent=current==='s-cover'?'Start →':current==='s-system'?'See the pricing →':current==='s-pricing'?'Compare the cost →':current==='s-final'?'My decision →':current==='s-wait'?'I’m ready →':'Next →';}
+  const nx=document.getElementById('btn-next');
+  if(atStart||current==='s-close'||current==='s-decision'||current==='s-prefer'){nx.style.display='none';}
+  else{nx.style.display='';nx.textContent=current==='s-cover'?'Start →':current==='s-system'?'See the pricing →':current==='s-pricing'?(COACH_PREF==='online'?'My decision →':'Compare the cost →'):current==='s-final'?'My decision →':current==='s-wait'?'I’m ready →':'Next →';}
   const fill=document.getElementById('progress-fill'), meta=document.getElementById('nav-meta');
   if(atStart){fill.style.width='0%';meta.textContent='';}
-  else{fill.style.width=((i+1)/ORDER.length*100)+'%';meta.textContent=(i+1)+' / '+ORDER.length;}
+  else if(i>=0){fill.style.width=((i+1)/f.length*100)+'%';meta.textContent=(i+1)+' / '+f.length;}
 }
 function applyModeChrome(){
   const ey=document.querySelector('#s-cover .eyebrow');
@@ -1694,6 +1722,13 @@ function chooseClient(mode){
   applyModeChrome();
   renderPricing();renderFinal();renderWait();
   goTo('s-cover');
+}
+/* preference branch: online coaching only (skip PT-cost + the one-on-one add-on) vs one-on-one (full comparison) */
+function choosePref(p){
+  COACH_PREF=(p==='online')?'online':'oneonone';
+  renderPricing();renderFinal();renderWait();
+  const f=FLOW(), i=f.indexOf('s-prefer');
+  goTo(f[i+1]);
 }
 document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;if(e.key==='ArrowRight')goNext();if(e.key==='ArrowLeft')goBack();});
 
