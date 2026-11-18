@@ -2556,6 +2556,15 @@ details.meal-add-choose[open]>summary{background:none;color:var(--muted);box-sha
 .subtab{border:none;background:transparent;color:var(--muted);font-family:var(--sans);font-weight:600;font-size:13px;padding:8px 15px;border-radius:8px;cursor:pointer;white-space:nowrap}
 .subtab:hover{color:var(--text)}
 .subtab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.35)}
+#grp-nav{display:flex}
+.set-list{display:flex;flex-direction:column;gap:8px}
+.set-item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:var(--sans);font-size:14.5px;font-weight:600;padding:13px 14px;cursor:pointer;transition:border-color .12s,background .12s}
+.set-item:hover{border-color:var(--red);background:var(--card2)}
+.set-item .ic{width:20px;height:20px;flex:none;color:var(--muted)}
+.set-item .set-lbl{flex:1;min-width:0}
+.set-item .set-go{color:var(--muted);flex:none;font-size:18px}
+.set-item.danger{color:var(--crit,#dc3b2f)}
+.set-item.danger .ic{color:var(--crit,#dc3b2f)}
 .tab .badge{position:absolute;top:-7px;right:-7px;background:var(--gold);color:#111;border-radius:20px;font-size:10px;font-weight:800;padding:1px 6px}
 
 .sync{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted)}
@@ -4861,8 +4870,14 @@ img,svg,canvas,video{max-width:100%}
       <button class="subtab" data-nutri="recipes" onclick="setNutri('recipes')">Recipes</button>
     </div>
 
+    <!-- ---- GROUP SUB-TABS (Training / Progress / Coaching / Schedule) ---- -->
+    <div class="subtabs" id="grp-nav" style="display:none"></div>
+
     <!-- ---- DASHBOARD / HOME VIEW ---- -->
     <section id="view-dashboard" class="hidden"><div id="dash-host"></div></section>
+
+    <!-- ---- SETTINGS VIEW ---- -->
+    <section id="view-settings" class="hidden"><div id="settings-host"></div></section>
 
     <!-- ---- PLAN VIEW ---- -->
     <section id="view-plan">
@@ -5355,14 +5370,6 @@ img,svg,canvas,video{max-width:100%}
   <div id="more-sheet" class="hidden">
     <div class="more-title" id="more-sec-title">Sections</div>
     <div id="more-sections"></div>
-    <div class="more-sep"></div>
-    <div class="more-title">Menu</div>
-    <button class="more-item" onclick="openFlagModal();closeMoreSheet()"><span class="mic" data-mic="flag"></span> Flag an issue</button>
-    <button class="more-item" onclick="openHelp();closeMoreSheet()"><span class="mic" data-mic="help"></span> How to use</button>
-    <button class="more-item" onclick="pushOpenCard();closeMoreSheet()"><span>🔔</span> Reminders</button>
-    <button class="more-item" onclick="installApp();closeMoreSheet()"><span class="mic" data-mic="install"></span> Add to Home Screen</button>
-    <button class="more-item" onclick="loadIngredients(true);closeMoreSheet()"><span class="mic" data-mic="refresh"></span> Refresh data</button>
-    <button class="more-item more-danger" onclick="closeMoreSheet();logout()"><span class="mic" data-mic="signout"></span> Sign out</button>
   </div>
   <div id="more-backdrop" class="hidden" onclick="closeMoreSheet()"></div>
 </main>
@@ -7311,7 +7318,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04tf';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04tg';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -8823,7 +8830,7 @@ SECTION_TITLES.habits='Habit Lab';
 const SECTIONS_TOGGLE=[['nutrition','Nutrition'],['training','Training'],['formcheck','Form Check 📹'],['cardio','Cardio 🏃'],['time','Time Management'],['availability','Availability'],['goals','Progress Tracking 📈'],['checkins','Weekly Check-ins'],['habits','Habits & Challenges'],['mytasks','Tasks'],['reports','Reports & Documents'],['rewards','Rewards & S2S Points'],['livechal','Live Challenge 🔥'],['buddy','Gym Buddy 🤝'],['knowledge','Knowledge 🧠'],['chat','Inbox / Chat'],['suspension','Membership Suspension ⏸'],['sleep','Sleep 😴']];
 (function(){try{const r=SECTIONS_TOGGLE.find(x=>x[0]==='habits');if(r)r[1]='Habit Lab 🧪';}catch(e){}})();
 function sectionLive(sec){if(TOUR_FORCE_LIVE)return true;if(ADMIN_OK&&!PREVIEW)return true;const s=CLIENT_SECTIONS||SECTION_LIVE;return s[sec]!==false;}
-function showViewOnly(v){['dashboard','plan','swap','prep','log','journal','foods','recipes','calendar','availability','training','formcheck','cardio','milestones','checkins','habits','mytasks','reports','rewards','chat','challenge','buddy','knowledge','suspension','sleep','soon'].forEach(x=>{const el=$('view-'+x);if(el)el.classList.toggle('hidden',x!==v);});}
+function showViewOnly(v){['dashboard','plan','swap','prep','log','journal','foods','recipes','calendar','availability','training','formcheck','cardio','milestones','checkins','habits','mytasks','reports','rewards','chat','challenge','buddy','knowledge','suspension','sleep','settings','soon'].forEach(x=>{const el=$('view-'+x);if(el)el.classList.toggle('hidden',x!==v);});}
 /* the "Add a food" tool (#food-tools) lives in one place and is moved between the modal and the nutrition view */
 function mountFoodTools(where){const ft=$('food-tools');if(!ft)return;const slot=$('food-tools-slot'),modal=$('ing-modal-body');
   const target=(where==='view')?slot:modal;if(target&&ft.parentNode!==target)target.appendChild(ft);}
@@ -8831,6 +8838,23 @@ function mountFoodTools(where){const ft=$('food-tools');if(!ft)return;const slot
 const NAV_ORDER=['home','nutrition','training','formcheck','cardio','chat','rewards','checkins','goals','habits','mytasks','time','availability','reports','livechal','buddy','knowledge','sleep','suspension'];
 const NAV_MAIN_MAX=4;
 const NAV_PINNED=['home','nutrition','training','chat'];   // task-bar order: Home · Nutrition · Training · Inbox (then More)
+/* ───── Grouped navigation (fewer top-level panels; related sections become sub-tabs) ─────
+   Bar = 5 group leads + More. Grouped children are reached via the #grp-nav sub-tab strip. */
+const NAV_GROUPS=[
+  {lead:'home',     label:'Home',     kids:['home']},
+  {lead:'training', label:'Training', kids:['training','cardio','formcheck']},
+  {lead:'nutrition',label:'Nutrition',kids:['nutrition']},
+  {lead:'goals',    label:'Progress', kids:['goals','sleep','habits']},
+  {lead:'chat',     label:'Coaching', kids:['chat','checkins','mytasks']},
+  {lead:'time',     label:'Schedule', kids:['time','availability']}
+];
+const NAV_BAR=['home','training','nutrition','goals','chat'];           // group leads pinned on the bottom bar
+const NAV_MORE=['time','livechal','buddy','knowledge','reports'];       // standalone / grouped items shown in the More sheet (Settings appended; rewards lives inside Settings)
+const GROUP_OF={};NAV_GROUPS.forEach(g=>g.kids.forEach(k=>{GROUP_OF[k]=g;}));
+const SUBLABEL={training:'Workouts',cardio:'Cardio',formcheck:'Form check',goals:'Metrics',sleep:'Sleep',habits:'Habits',chat:'Messages',checkins:'Check-ins',mytasks:'Tasks',time:'Planner',availability:'Availability'};
+const MORE_LABEL={time:'Schedule',livechal:'Challenge',buddy:'Gym Buddy',knowledge:'Knowledge',reports:'Documents',settings:'Settings'};
+function navGroupLead(g){return g.kids.find(k=>sectionLive(k));}   // first live child, or undefined if none live
+function navGroup(leadKey){const g=NAV_GROUPS.find(x=>x.lead===leadKey);if(!g)return;navGo(navGroupLead(g)||g.lead);}
 /* ───── Premium line-icon system (Lucide-style, inherits currentColor) ───── */
 const SVG_ICONS={
   home:'<path d="M3 9.5 12 3l9 6.5"/><path d="M5 9v11a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9"/>',
@@ -8875,11 +8899,13 @@ const SVG_ICONS={
   square:'<rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>',
   health:'<path d="M3 12h4l2 6 4-14 2 8h6"/>',
   plus:'<path d="M12 5v14M5 12h14"/>',
-  link:'<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>'
+  link:'<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
+  settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>'
 };
 function svgIcon(name,cls){const p=SVG_ICONS[name];if(!p)return '';return '<svg class="ic '+(cls||'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';}
 /* swap the bottom-nav emoji glyphs for the SVG set (once) */
-const NAV_ICON_MAP={home:'home',nutrition:'nutrition',training:'training',formcheck:'formcheck',cardio:'cardio',sleep:'sleep',chat:'chat',rewards:'rewards',checkins:'checkins',goals:'goals',habits:'habits',mytasks:'mytasks',time:'time',availability:'availability',reports:'reports',livechal:'livechal',buddy:'buddy',knowledge:'knowledge',suspension:'suspension'};
+const NAV_ICON_MAP={home:'home',nutrition:'nutrition',training:'training',formcheck:'formcheck',cardio:'cardio',sleep:'sleep',chat:'chat',rewards:'rewards',checkins:'checkins',goals:'goals',habits:'habits',mytasks:'mytasks',time:'time',availability:'availability',reports:'reports',livechal:'livechal',buddy:'buddy',knowledge:'knowledge',suspension:'suspension',settings:'settings'};
 let NAV_ICONS_DONE=false;
 function applyNavIcons(){
   if(NAV_ICONS_DONE)return;
@@ -8888,34 +8914,82 @@ function applyNavIcons(){
   document.querySelectorAll('.more-item .mic[data-mic]').forEach(s=>{s.innerHTML=svgIcon(s.dataset.mic);});
   NAV_ICONS_DONE=true;
 }
-/* Re-parent section buttons between the task bar and the More sheet so the bar never shows more than 4 + More. */
+/* Grouped bottom nav: the bar shows up to 5 GROUP leads + More; grouped children + standalone
+   sections live in the More sheet (reached as sub-tabs once you're in a group). */
+function navBuildMoreBtn(key,label,target){
+  const b=document.createElement('button');b.className='bnav-btn';b.setAttribute('data-sec',key);
+  b.innerHTML='<span class="bnav-ic">'+svgIcon(NAV_ICON_MAP[key]||key)+'</span><span class="bnav-lbl">'+esc(label)+'</span>';
+  b.onclick=function(){navGo(target);};
+  return b;
+}
 function renderBottomNav(){
   applyNavIcons();
   const nav=$('bottom-nav'),moreBtn=$('more-btn'),moreSec=$('more-sections');
   if(!nav||!moreBtn||!moreSec)return;
-  const live=NAV_ORDER.filter(k=>sectionLive(k));
-  // Pin the task bar to Home · Nutrition · Training · Inbox (+ More). Top up from other live sections if any pinned one is off.
-  let main=NAV_PINNED.filter(k=>live.includes(k));
-  if(main.length<NAV_MAIN_MAX){for(const k of live){if(main.length>=NAV_MAIN_MAX)break;if(main.indexOf(k)<0)main.push(k);}}
-  const overflow=live.filter(k=>main.indexOf(k)<0);
-  const btn=k=>document.querySelector('.bnav-btn[data-sec="'+k+'"]');
-  // main bar: live[0..3] in order, just before the More button
-  main.forEach(k=>{const b=btn(k);if(b){b.classList.remove('hidden');nav.insertBefore(b,moreBtn);}});
-  // overflow live sections + all non-live sections live in the More sheet
-  overflow.forEach(k=>{const b=btn(k);if(b){b.classList.remove('hidden');moreSec.appendChild(b);}});
-  NAV_ORDER.forEach(k=>{if(!live.includes(k)){const b=btn(k);if(b){b.classList.add('hidden');moreSec.appendChild(b);}}});
-  const t=$('more-sec-title');if(t)t.style.display=overflow.length?'':'none';
+  const realBtn=k=>document.querySelector('#bottom-nav > .bnav-btn[data-sec="'+k+'"]');
+  // hide every static section button up front; we re-place only the ones we use on the bar
+  NAV_ORDER.forEach(k=>{const b=realBtn(k);if(b)b.classList.add('hidden');});
+  // BAR: the 5 group leads whose group has at least one live section
+  NAV_BAR.forEach(leadKey=>{
+    const g=NAV_GROUPS.find(x=>x.lead===leadKey);if(!g)return;
+    const target=navGroupLead(g);if(!target)return;
+    const b=realBtn(g.lead);if(!b)return;
+    const lbl=b.querySelector('.bnav-lbl');if(lbl)lbl.textContent=g.label;
+    b.dataset.go=target;b.onclick=function(){navGroup(g.lead);};
+    b.classList.remove('hidden');nav.insertBefore(b,moreBtn);
+  });
+  // MORE sheet: Schedule (group) + standalone live sections + Settings
+  moreSec.innerHTML='';
+  NAV_MORE.forEach(key=>{
+    const g=NAV_GROUPS.find(x=>x.lead===key);
+    if(g){const t=navGroupLead(g);if(t)moreSec.appendChild(navBuildMoreBtn(key,MORE_LABEL[key]||g.label,t));}
+    else if(sectionLive(key))moreSec.appendChild(navBuildMoreBtn(key,MORE_LABEL[key]||(SECTION_TITLES[key]||key),key));
+  });
+  moreSec.appendChild(navBuildMoreBtn('settings','Settings','settings'));
+  const t=$('more-sec-title');if(t)t.style.display='';
   syncNavActive();
   if(SESSION&&sectionLive('buddy')&&typeof bdRefreshBadge==='function')bdRefreshBadge();
 }
-/* keep the active highlight (bar + More button) in sync with the current section */
+/* sub-tab strip for a grouped panel (Training/Progress/Coaching/Schedule); hidden for Home, Nutrition & standalone */
+function renderGroupNav(sec){
+  const gn=$('grp-nav');if(!gn)return;
+  const g=GROUP_OF[sec];
+  if(!g||g.kids.length<2||g.lead==='nutrition'){gn.style.display='none';gn.innerHTML='';return;}
+  const kids=g.kids.filter(k=>sectionLive(k));
+  if(kids.length<2){gn.style.display='none';gn.innerHTML='';return;}
+  gn.innerHTML=kids.map(k=>'<button class="subtab'+(k===sec?' active':'')+'" onclick="setSection(\''+k+'\')">'+esc(SUBLABEL[k]||k)+'</button>').join('');
+  gn.style.display='';
+}
+/* keep the active highlight (bar + More button) in sync with the current section / its group */
 function syncNavActive(){
-  document.querySelectorAll('[data-sec]').forEach(b=>b.classList.toggle('active',b.dataset.sec===CUR_SECTION));
-  const mb=$('more-btn'),cur=document.querySelector('.bnav-btn[data-sec="'+CUR_SECTION+'"]');
-  if(mb)mb.classList.toggle('active',!!(cur&&cur.closest('#more-sheet')));
+  const g=GROUP_OF[CUR_SECTION];const activeKey=g?g.lead:CUR_SECTION;
+  document.querySelectorAll('.bnav-btn[data-sec]').forEach(b=>b.classList.toggle('active',b.dataset.sec===activeKey||b.dataset.sec===CUR_SECTION));
+  const mb=$('more-btn');
+  const cur=document.querySelector('#more-sheet .bnav-btn[data-sec="'+activeKey+'"]')||document.querySelector('#more-sheet .bnav-btn[data-sec="'+CUR_SECTION+'"]');
+  if(mb)mb.classList.toggle('active',!!cur);
 }
 /* task-bar / More-sheet click → navigate and close the sheet */
 function navGo(sec){closeMoreSheet();setSection(sec);}
+/* ───── Settings panel — profile details + account & app actions (moved out of the More menu) ───── */
+function renderSettings(){
+  const host=$('settings-host');if(!host)return;
+  const p=(PLAN&&PLAN.profile)||{};const nm=(SESSION&&SESSION.name)||p.name||'';const email=(SESSION&&SESSION.email)||p.email||'';
+  const rows=[['Name',nm],['Email',email],['Goal',p.goal],['Height',p.height],['Diet',p.diet],['Phone',p.phone],['Start weight',p.startWeight],['Current weight',p.weight]].filter(r=>r[1]);
+  let h='<div class="uline">Your details</div><div class="card" style="padding:12px 14px;margin-bottom:16px">'+
+    (rows.length?rows.map(r=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:14px;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">'+esc(r[0])+'</span><span style="font-weight:600;text-align:right">'+esc(r[1])+'</span></div>').join(''):'<div class="small" style="color:var(--muted)">Your coach will add your details.</div>')+
+    '<div class="small" style="color:var(--muted);margin-top:8px">To change these, message your coach in Coaching.</div></div>';
+  const item=(ic,label,onclick,danger)=>'<button class="set-item'+(danger?' danger':'')+'" onclick="'+onclick+'">'+svgIcon(ic)+'<span class="set-lbl">'+esc(label)+'</span><span class="set-go">›</span></button>';
+  h+='<div class="uline">Account &amp; app</div><div class="set-list">';
+  if(sectionLive('rewards'))h+=item('rewards','Rewards & S2S Points',"navGo('rewards')");
+  h+=item('bell','Reminders',"pushOpenCard()");
+  h+=item('refresh','Refresh data',"loadIngredients(true)");
+  h+=item('help','How to use',"openHelp()");
+  h+=item('flag','Flag an issue',"openFlagModal()");
+  h+=item('install','Add to Home Screen',"installApp()");
+  h+=item('signout','Sign out',"logout()",true);
+  h+='</div>';
+  host.innerHTML=h;
+}
 /* Hide the nav tab of any section that isn't live for this client (admins outside preview see them all). */
 function applyNavVisibility(){
   renderBottomNav();
@@ -9205,12 +9279,13 @@ function setSection(sec){
   if(sec!=='chat'){try{document.body.classList.remove('chat-thread-open');CHAT_THREAD_OPEN=false;}catch(e){}}   // leaving chat restores the bottom nav
   try{navStateSave();}catch(e){}
   if(typeof syncNavActive==='function')syncNavActive();else document.querySelectorAll('[data-sec]').forEach(b=>b.classList.toggle('active',b.dataset.sec===sec));
+  try{renderGroupNav(sec);}catch(e){}
   const live=sectionLive(sec);
   $('nutri-nav').classList.toggle('hidden',!(sec==='nutrition'&&live));
   if(!live){showViewOnly('soon');const t=$('soon-title');if(t)t.textContent=(SECTION_TITLES[sec]||'This section')+' — coming soon';window.scrollTo(0,0);return;}
   if(sec==='home'){$('nutri-nav').classList.add('hidden');showViewOnly('dashboard');try{renderDashboard();}catch(e){}window.scrollTo(0,0);return;}
   if(sec==='nutrition'){setNutri(NUTRI_SUB||'plan');return;}
-  const view=sec==='training'?'training':sec==='formcheck'?'formcheck':sec==='cardio'?'cardio':sec==='time'?'calendar':sec==='availability'?'availability':sec==='checkins'?'checkins':sec==='habits'?'habits':sec==='mytasks'?'mytasks':sec==='reports'?'reports':sec==='rewards'?'rewards':sec==='chat'?'chat':sec==='livechal'?'challenge':sec==='buddy'?'buddy':sec==='knowledge'?'knowledge':sec==='suspension'?'suspension':sec==='sleep'?'sleep':'milestones';
+  const view=sec==='training'?'training':sec==='formcheck'?'formcheck':sec==='cardio'?'cardio':sec==='time'?'calendar':sec==='availability'?'availability':sec==='checkins'?'checkins':sec==='habits'?'habits':sec==='mytasks'?'mytasks':sec==='reports'?'reports':sec==='rewards'?'rewards':sec==='chat'?'chat':sec==='livechal'?'challenge':sec==='buddy'?'buddy':sec==='knowledge'?'knowledge':sec==='suspension'?'suspension':sec==='sleep'?'sleep':sec==='settings'?'settings':'milestones';
   showViewOnly(view);
   CHAT_OPEN=(view==='chat');   // controls the chat unread badge
   if(view==='calendar')loadPlanner();
@@ -9230,6 +9305,7 @@ function setSection(sec){
   if(view==='cardio'){try{renderCardio();}catch(e){}}
   if(view==='sleep'){try{renderSleep();}catch(e){}}
   if(view==='formcheck'){try{renderFormCheck();}catch(e){}}
+  if(view==='settings'){try{renderSettings();}catch(e){}}
   window.scrollTo(0,0);
 }
 const NUTRI_TOOL_MODE={findfood:'single',breakdown:'recipe',cookyield:'yield'};
