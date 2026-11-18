@@ -4255,8 +4255,10 @@ tr.tr-gr td:first-child{border-left:3px solid var(--red)}
 .wko-swbtn{background:var(--card2);border:1px solid var(--border);border-radius:9px;width:34px;height:34px;font-size:16px;cursor:pointer;flex:none}
 .wko-focus{animation:wkoFade .2s ease}
 @keyframes wkoFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.wko-fx-top{display:flex;align-items:center;gap:9px;margin-bottom:9px;padding:2px 0 9px;border-bottom:2px solid var(--border)}
-.wko-fx-name{font-family:var(--disp);font-weight:900;font-size:25px;line-height:1.08;letter-spacing:.2px;flex:1;min-width:0;color:var(--text);text-transform:uppercase;border-left:5px solid var(--prot);padding-left:11px}
+.wko-fx-top{display:flex;align-items:center;gap:9px;margin-bottom:7px;padding:0 0 7px;border-bottom:2px solid var(--border)}
+.wko-fx-name{font-family:var(--disp);font-weight:900;font-size:22px;line-height:1.08;letter-spacing:.2px;flex:1;min-width:0;color:var(--text);text-transform:uppercase;border-left:5px solid var(--prot);padding-left:11px}
+.wko-meta{display:flex;align-items:center;justify-content:space-between;gap:6px 12px;flex-wrap:wrap;margin:0 0 9px}
+.wko-meta-target{font-size:12.5px;color:var(--muted);line-height:1.3;min-width:0}
 .wko-fx-name.skip{text-decoration:line-through;color:var(--muted);border-left-color:var(--muted)}
 .wko-skip{background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:4px 9px;font-size:14px;cursor:pointer;flex:none}
 .wko-skip:hover{border-color:var(--gold);color:var(--gold)}
@@ -4268,7 +4270,7 @@ tr.tr-gr td:first-child{border-left:3px solid var(--red)}
 .wko-brand-chip{background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:16px;padding:5px 12px;font-size:12.5px;font-weight:600;cursor:pointer}
 .wko-brand-chip.on{background:var(--red);border-color:var(--red);color:#fff}
 .wko-brand-chip.add{border-style:dashed;color:var(--muted)}
-.wko-sets{display:flex;flex-direction:column;gap:7px;margin:4px 0 6px}
+.wko-sets{display:flex;flex-direction:column;gap:7px;margin:2px 0 6px}
 .wko-set{display:flex;align-items:center;gap:8px;background:var(--card2);border:1px solid var(--border);border-radius:11px;padding:7px 9px;flex-wrap:nowrap}
 .wko-set.done{border-color:var(--good);background:rgba(34,197,94,.09)}
 .wko-set-n{font-family:var(--disp);font-weight:800;font-size:12.5px;color:var(--muted);width:26px;flex:none;text-align:center}
@@ -4283,7 +4285,7 @@ tr.tr-gr td:first-child{border-left:3px solid var(--red)}
 .wko-set-done.on{background:var(--good);border-color:var(--good);color:#fff}
 .wko-set-x{flex:none;background:none;border:none;color:var(--faint);font-size:15px;cursor:pointer;padding:0 1px;align-self:center}
 .wko-set-x:hover{color:var(--red)}
-.wko-sethead{display:flex;align-items:center;gap:7px;padding:2px 8px 4px}
+.wko-sethead{display:flex;align-items:center;gap:7px;padding:0 8px 4px}
 .wko-sethead-n{width:26px;flex:none;text-align:center;font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
 .wko-sethead-flds{flex:1;min-width:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(48px,1fr));gap:5px}
 .wko-sethead-flds span{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -4305,7 +4307,7 @@ tr.tr-gr td:first-child{border-left:3px solid var(--red)}
 .wko-rev-sets{font-size:12px;color:var(--muted);white-space:nowrap;flex:none}
 .wk-perf-brand{background:rgba(232,23,13,.14);color:var(--red);border-radius:10px;padding:0 7px;font-size:10.5px}
 /* live in-workout stats strip (updates as the client types reps/weight) */
-.wko-live{display:flex;gap:7px;flex-wrap:wrap;margin:2px 0 10px}
+.wko-live{display:flex;gap:6px;flex-wrap:wrap;margin:0}
 .wkl-chip{display:inline-flex;align-items:center;gap:5px;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:5px 11px;font-size:12px;color:var(--muted);white-space:nowrap}
 .wkl-chip b{font-family:var(--disp);font-weight:900;font-size:14px;color:var(--text)}
 .wkl-chip.pr{background:rgba(245,200,66,.16);border-color:var(--gold,#f5c842);color:var(--gold,#B07A0C)}
@@ -4357,8 +4359,8 @@ tr.tr-gr td:first-child{border-left:3px solid var(--red)}
 .wko-instr[open]>summary::after{content:'▴'}
 .wko-instr-body{padding:0 14px 12px}
 /* compact runner: demo video + how-to + equipment/brand/tools collapsed so the set inputs stay on screen */
-.wko-more{margin:2px 0 12px;border:1px solid var(--border);border-radius:12px;background:var(--card2);overflow:hidden}
-.wko-more>summary{cursor:pointer;padding:10px 14px;font-family:var(--disp);font-weight:800;font-size:13px;list-style:none;color:var(--muted)}
+.wko-more{margin:0 0 9px;border:1px solid var(--border);border-radius:11px;background:var(--card2);overflow:hidden}
+.wko-more>summary{cursor:pointer;padding:8px 13px;font-family:var(--disp);font-weight:800;font-size:12.5px;list-style:none;color:var(--muted)}
 .wko-more>summary::-webkit-details-marker{display:none}
 .wko-more>summary::after{content:'▾';float:right}
 .wko-more[open]>summary::after{content:'▴'}
@@ -4366,9 +4368,9 @@ tr.tr-gr td:first-child{border-left:3px solid var(--red)}
 .wko-more-body .wko-media{margin-bottom:10px}
 .wko-more-body .wko-instr,.wko-more-body .wko-tools{margin-bottom:10px}
 /* per-exercise tools (action icons row under the title) */
-.wko-tools{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 11px;justify-content:space-between}
-.wko-tool{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;background:var(--card2);border:1px solid var(--border);color:var(--muted);border-radius:50%;padding:0;cursor:pointer}
-.wko-tool .ic{width:21px;height:21px}
+.wko-tools{display:flex;flex-wrap:wrap;gap:9px;margin:0 0 9px;justify-content:flex-start}
+.wko-tool{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;background:var(--card2);border:1px solid var(--border);color:var(--muted);border-radius:50%;padding:0;cursor:pointer}
+.wko-tool .ic{width:19px;height:19px}
 .wko-tool:hover{border-color:var(--red);color:var(--text)}
 .wko-tool.on{background:rgba(232,23,13,.12);border-color:var(--red);color:var(--red)}
 /* tempo + breathing knowledge card */
@@ -7435,7 +7437,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04tq';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04tr';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -9021,7 +9023,7 @@ const SVG_ICONS={
   link:'<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
   settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
   bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
-  breath:'<path d="M12 2v10"/><path d="M12 12c0 4-1.5 7-5 7a3 3 0 0 1-3-3c0-2 1-3 1-6"/><path d="M12 12c0 4 1.5 7 5 7a3 3 0 0 0 3-3c0-2-1-3-1-6"/>'
+  breath:'<path d="M12 4V8"/><path d="M12 8 11.3 9.5"/><path d="M12 8 12.7 9.5"/><path d="M11.3 9.5C11.3 11 10.5 11.3 9.4 11.8 7.8 12.5 7.2 14.3 7.2 16.2 7.2 18.1 7.9 19.4 9.4 19.4 11 19.4 11.3 18 11.3 16.3Z"/><path d="M12.7 9.5C12.7 11 13.5 11.3 14.6 11.8 16.2 12.5 16.8 14.3 16.8 16.2 16.8 18.1 16.1 19.4 14.6 19.4 13 19.4 12.7 18 12.7 16.3Z"/>'
 };
 function svgIcon(name,cls){const p=SVG_ICONS[name];if(!p)return '';return '<svg class="ic '+(cls||'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';}
 /* swap the bottom-nav emoji glyphs for the SVG set (once) */
@@ -13085,17 +13087,19 @@ function wkoFocusHTML(en,ei,noNav){
     '<button class="wko-set-x" onclick="wkoDelSet('+ei+','+si+')">×</button></div>';}).join('');
   // video + action icons now sit at the top (Everfit-style); how-to + equipment/brand/alts stay in a collapsible
   const moreInner=instrHTML+equipRow+brandRow+altRow;
-  const moreHTML=(moreInner&&moreInner.trim())?'<details class="wko-more"><summary>📋 How-to · equipment &amp; options</summary><div class="wko-more-body">'+moreInner+'</div></details>':'';
+  const moreHTML=(moreInner&&moreInner.trim())?'<details class="wko-more"><summary>📋 How-to &amp; setup</summary><div class="wko-more-body">'+moreInner+'</div></details>':'';
   const fldLabels=aerobic?['Min','Km','Cal','Avg HR']:['kg',rpl,effLbl].concat(extra.map(c=>(c.label||c.key).split(/[ (]/)[0]));
   const setHead=en.sets.length?'<div class="wko-sethead"><span class="wko-sethead-n">Set</span><div class="wko-sethead-flds">'+fldLabels.map(l=>'<span>'+esc(l)+'</span>').join('')+'</div><span class="wko-sethead-end">✓</span></div>':'';
   return '<div class="wko-focus">'+
     (media?('<div class="wko-vid">'+media+'</div>'):'')+
     '<div class="wko-fx-top"><div class="wko-fx-name">'+esc(en.name)+'</div>'+grpBadge+'<button class="wko-skip" onclick="wkoSkip('+ei+')" title="Skip this exercise">⏭</button></div>'+
-    (en.target?'<div class="wko-fx-target">🎯 '+esc(en.target)+(en.restTarget?' · rest '+en.restTarget+'s':'')+'</div>':'')+
+    '<div class="wko-meta">'+
+      (en.target?'<span class="wko-meta-target">🎯 '+esc(en.target)+(en.restTarget?' · rest '+en.restTarget+'s':'')+'</span>':'')+
+      wkoLiveStatsHTML(en,ei)+
+    '</div>'+
     tools+
     (en.comment?'<div class="wko-comment-box">💬 <b>Your note:</b> '+esc(en.comment)+'</div>':'')+
     moreHTML+
-    wkoLiveStatsHTML(en,ei)+
     setHead+
     '<div class="wko-sets">'+sets+'</div>'+
     '<div class="wko-set-add"><button class="btn-sm" onclick="wkoAddSet('+ei+')">＋ Add '+(aerobic?'interval':'set')+'</button>'+
