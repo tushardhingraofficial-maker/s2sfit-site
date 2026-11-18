@@ -21,6 +21,7 @@ explicitly asks - changing it means the user must re-paste it in HighLevel.
 1. `git pull origin main` first (another session may have pushed).
 2. Edit / replace the file in `highlevel/sections/`.
 3. Bump the version string (portal: `APP_VERSION`; strategy page: `data-version` on `#s2sv`; price guide: `data-version` on `<html>`) (e.g. `v2026-08-04pe` -> next letter) so the user can confirm it is live.
+   - **PORTAL ONLY: also write the SAME new version into `highlevel/sections/version.txt`** (one line, e.g. `2026-08-04td`) and bump `sw.js` `CACHE`. The portal reads version.txt on boot and auto-clears caches + hard-reloads any client stuck on an older build (self-heal). If version.txt lags APP_VERSION, clients won't be nudged; if it's AHEAD, every client force-reloads once — so keep it exactly equal to APP_VERSION.
 4. Commit with a clear message and `git push origin main`.
 5. Verify: `https://s2sfit-sections.netlify.app/sections/<file>.html` returns 200 and contains the new version string (allow ~30-60s).
 6. Tell the user: "Live - refresh s2sfit.com (Ctrl+Shift+R) and look for version X."
