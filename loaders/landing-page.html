@@ -1,0 +1,27 @@
+<!--
+  S2S FIT — Landing Page Loader
+  Paste this ONCE into your HighLevel page > Settings > Header Code (or a Custom Code element).
+  Never edit this snippet again — changes to the landing page deploy automatically via GitHub → Netlify.
+-->
+<script>
+(function(){
+  var LANDING_URL = "https://s2sfit-sections.netlify.app/sections/landing-page.html";
+  // Full-page redirect (cleanest option for a standalone landing page)
+  if (window.location.href.indexOf("s2sfit-sections") === -1) {
+    // Option A: redirect — uncomment to make GHL page redirect to the hosted version
+    // window.location.replace(LANDING_URL);
+
+    // Option B: iframe embed — loads the page inside a full-screen iframe
+    document.addEventListener("DOMContentLoaded", function(){
+      var wrap = document.createElement("div");
+      wrap.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;background:#000";
+      var fr = document.createElement("iframe");
+      fr.src = LANDING_URL;
+      fr.style.cssText = "width:100%;height:100%;border:none";
+      fr.setAttribute("allowfullscreen","");
+      wrap.appendChild(fr);
+      document.body.appendChild(wrap);
+    });
+  }
+})();
+</script>
