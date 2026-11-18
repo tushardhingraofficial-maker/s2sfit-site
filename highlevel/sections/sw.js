@@ -1,6 +1,6 @@
 /* S2S Transformation Portal — service worker
    Makes the portal installable and usable offline. Bump CACHE on each release. */
-const CACHE = 's2s-portal-2026-08-04tc';
+const CACHE = 's2s-portal-2026-08-04td';
 /* served as /sections/portal.html on the standalone origin; icons/manifest are absolute (Supabase bucket). */
 const SHELL = ['./portal.html'];
 const PUSH_ICON = 'https://iiaqezfiqkonajqqcrcj.supabase.co/storage/v1/object/public/app/icon-192.png';
@@ -27,6 +27,9 @@ self.addEventListener('fetch', (e) => {
 
   // Never cache other origins (Supabase API, Google Fonts, the ingredients sheet, YouTube…)
   if (url.origin !== self.location.origin) return;
+
+  // The version probe must ALWAYS hit the network (never served stale) so the app can self-heal.
+  if (url.pathname.endsWith('version.txt')) return;
 
   // App shell (the HTML page): network-first so updates land fast, fall back to cache offline.
   if (req.mode === 'navigate' || url.pathname.endsWith('.html')) {

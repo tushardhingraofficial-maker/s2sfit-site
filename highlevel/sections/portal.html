@@ -7294,7 +7294,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04tc';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04td';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -29245,7 +29245,11 @@ function triageOpenClient(cid){triageClose();try{editClient(cid);}catch(e){}}
 
 /* ---- PWA: register the service worker so the portal installs as an app & works offline ---- */
 if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
-  window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(function(){});});
+  var __hadSWCtrl=!!navigator.serviceWorker.controller;   // was a worker already in control? (true = this is an UPDATE, not a first install)
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(reg){try{reg.update();}catch(e){}}).catch(function(){});});
+  // when a NEW worker takes over an already-controlled page, reload once so the fresh app shell is used
+  var __swReloaded=false;
+  try{navigator.serviceWorker.addEventListener('controllerchange',function(){if(!__hadSWCtrl||__swReloaded)return;__swReloaded=true;try{location.reload();}catch(e){}});}catch(e){}
 }
 /* ---- Pull-to-refresh: drag down from the very top to reload & fetch the latest data ---- */
 (function(){
@@ -29400,6 +29404,27 @@ function enhanceCombos(){COMBO_IDS.forEach(id=>{const el=document.getElementById
 /* ─────────── In-app "new version available" notice (clients + coaches) ─────────── */
 let UPD_TIMER=null;
 function updNewer(a,b){return String(a||'')>String(b||'');}             // build ids: date + lex suffix → string compare
+/* ─── Self-heal: the canonical live build number lives in a tiny file on Netlify.
+   On boot (and periodically) we fetch it fresh, bypassing every cache; if this running
+   copy is OLDER, we clear caches, drop any stale service worker and hard-reload ONCE so
+   the client jumps to the latest build without anyone having to clear anything manually. ─── */
+const VER_URL='https://s2sfit-sections.netlify.app/sections/version.txt';
+let VER_LATEST='';
+async function verProbe(){
+  try{const r=await fetch(VER_URL+'?cb='+Date.now(),{cache:'no-store'});if(!r.ok)return '';
+    const v=((await r.text()).match(/\d{4}-\d{2}-\d{2}[a-z]+/i)||[''])[0].trim();if(v)VER_LATEST=v;return v;}catch(e){return '';}
+}
+async function verForceSync(){
+  const latest=await verProbe();
+  if(!latest||!updNewer(latest,APP_VERSION)){try{localStorage.removeItem('s2s_force_ver');}catch(e){}return;}   // up to date (or probe failed) → nothing to do
+  let guard='';try{guard=localStorage.getItem('s2s_force_ver')||'';}catch(e){}
+  if(guard===latest)return;   // already force-reloaded for this build and we're STILL behind (source can't update) → stop; the banner takes over
+  let ok=false;try{localStorage.setItem('s2s_force_ver',latest);ok=(localStorage.getItem('s2s_force_ver')===latest);}catch(e){ok=false;}
+  if(!ok)return;              // can't persist a loop-guard (private mode?) → don't auto-reload, just let the banner show
+  try{if('caches'in window){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
+  try{if('serviceWorker'in navigator){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(x=>x.unregister()));}}catch(e){}
+  try{location.reload();}catch(e){try{location.href=location.pathname+location.search;}catch(_){}}
+}
 function updLatest(){try{return (SECTION_LIVE&&SECTION_LIVE._appUpdate)||null;}catch(e){return null;}}
 function updSeen(){try{return localStorage.getItem('s2s_upd_seen')||'';}catch(e){return '';}}
 async function updPublish(msg){
@@ -29424,10 +29449,13 @@ async function updAutoBump(){   // the newest coach session marks the latest shi
 async function updPoll(){
   try{const cfg=await DB.getConfig();if(cfg&&typeof cfg==='object'&&cfg._appUpdate&&SECTION_LIVE)SECTION_LIVE._appUpdate=cfg._appUpdate;}catch(e){}
   try{await updAutoBump();}catch(e){}
+  try{await verProbe();}catch(e){}   // refresh the live-build number so the banner appears even if nobody clicked “Announce update”
   updCheck();
 }
 function updCheck(){
-  const l=updLatest();
+  let l=updLatest();
+  // if Netlify is serving a newer build than this running copy, show the banner regardless of a manual announce
+  if(VER_LATEST&&updNewer(VER_LATEST,APP_VERSION)&&(!l||updNewer(VER_LATEST,l.version||'')))l={version:VER_LATEST,at:'ver-'+VER_LATEST,msg:''};
   if(l&&l.version&&updNewer(l.version,APP_VERSION)&&updSeen()!==String(l.at))updBanner(l);else updHide();
 }
 function updBanner(l){
@@ -29439,7 +29467,12 @@ function updBanner(l){
   b.classList.add('show');
 }
 function updHide(){const b=document.getElementById('upd-banner');if(b)b.classList.remove('show');}
-function updRefresh(){try{if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>{try{r.update();}catch(e){}})).catch(()=>{});}}catch(e){}setTimeout(()=>{try{location.reload();}catch(e){location.href=location.pathname+location.search;}},150);}
+async function updRefresh(){
+  try{const l=updLatest();if(l)localStorage.setItem('s2s_upd_seen',String(l.at));}catch(e){}   // don't re-nag after a manual refresh
+  try{if('caches'in window){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
+  try{if('serviceWorker'in navigator){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.unregister()));}}catch(e){}
+  setTimeout(()=>{try{location.reload();}catch(e){location.href=location.pathname+location.search;}},120);
+}
 function updDismiss(){const l=updLatest();try{if(l)localStorage.setItem('s2s_upd_seen',String(l.at));}catch(e){}updHide();}
 function updBootNotice(){
   try{updCheck();}catch(e){}
@@ -29462,6 +29495,8 @@ try{applyTheme('light');}catch(e){}
 try{applyTheme(getThemePref());}catch(e){}
 (async function boot(){
   console.log('S2S Transformation Portal — build '+APP_VERSION+(CLIENT_ONLY?' (client app)':''));
+  try{verForceSync();}catch(e){}   // if this client is running an older build, auto-clear caches + reload to the latest
+
   try{enhanceCombos();}catch(_){}
   try{featWrapOpeners();}catch(_){}   // record feature usage when an admin opens a tool
   const av=$('app-ver');if(av)av.textContent='v'+APP_VERSION;
