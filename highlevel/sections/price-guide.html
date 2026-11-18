@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-version="v2026-11-18d">
+<html lang="en" data-version="v2026-11-18e">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -909,6 +909,24 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
 </section>
 
 <!-- PRICING -->
+<!-- COMMIT: start timing — asked BEFORE the cost, so the number doesn't cause second thoughts -->
+<section class="slide" id="s-commit">
+  <div class="inner center">
+    <div class="eyebrow">Before We Talk Numbers</div>
+    <h2>When Would You Want to Start?</h2>
+    <p class="lead" style="max-width:540px;margin:14px auto 0">You've seen exactly how we'd get you there. If it's the right fit for you — when would you want to begin?</p>
+    <div class="echo" style="margin-top:14px">Your goal: <span class="echo-goal"></span></div>
+    <div class="q-block" id="commit-q">
+      <div class="chips" id="commit-start">
+        <button class="chip" onclick="pickStart('now','this week',this)">🚀 This week</button>
+        <button class="chip" onclick="pickStart('soon','next week',this)">📅 Next week</button>
+        <button class="chip" onclick="pickStart('date','pick a date with my coach',this)">🗓️ Pick a date</button>
+      </div>
+      <div class="q-ans" id="commit-confirm" style="text-align:center"></div>
+    </div>
+  </div>
+</section>
+
 <section class="slide" id="s-pricing">
   <div class="inner">
     <div class="center"><div class="eyebrow">Your Investment</div>
@@ -1163,15 +1181,7 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
     <div class="close-big">Let's<br>Begin.</div>
     <p class="lead" style="max-width:520px;margin:18px auto 0">You've seen where you are, what's in the way, how we solve it and exactly what it takes. The only thing left is the decision.</p>
     <p id="close-client" style="margin:14px auto 0;color:var(--muted)"></p>
-    <div class="q-block" id="close-q">
-      <div class="q-label">When do you want to start?</div>
-      <div class="chips" id="close-start">
-        <button class="chip" onclick="pickStart('now','this week',this)">🚀 This week</button>
-        <button class="chip" onclick="pickStart('soon','next week',this)">📅 Next week</button>
-        <button class="chip" onclick="pickStart('date','pick a date with my coach',this)">🗓️ Pick a date</button>
-      </div>
-      <div class="q-ans" id="close-confirm" style="text-align:center"></div>
-    </div>
+    <p id="close-start-echo" style="margin:16px auto 0;font-weight:600;color:var(--green)"></p>
   </div>
 </section>
 
@@ -1746,8 +1756,8 @@ function renderTri(){
 
 /* ═══════════ SLIDE ENGINE ═══════════ */
 // two paths from the preference branch: online-only skips the PT-cost calc and the PT face-off
-const ORDER_HYBRID=['s-cover','s-problem','s-trilemma','s-prefer','s-ptcost','s-system','s-pricing','s-final','s-decision','s-wait','s-close'];
-const ORDER_ONLINE=['s-cover','s-problem','s-trilemma','s-prefer','s-system','s-pricing','s-decision','s-wait','s-close'];
+const ORDER_HYBRID=['s-cover','s-problem','s-trilemma','s-prefer','s-ptcost','s-system','s-commit','s-pricing','s-final','s-decision','s-wait','s-close'];
+const ORDER_ONLINE=['s-cover','s-problem','s-trilemma','s-prefer','s-system','s-commit','s-pricing','s-decision','s-wait','s-close'];
 let COACH_PREF='oneonone';   // 'online' | 'oneonone' — chosen on the s-prefer branch
 function FLOW(){return COACH_PREF==='online'?ORDER_ONLINE:ORDER_HYBRID;}
 let current='s-start', history=[];
@@ -1761,9 +1771,11 @@ function show(id){
   if(id==='s-ptcost')renderPTCost();
   if(id==='s-final'){renderFinal();renderO2OBreak();}
   if(id==='s-wait'){renderWait();}
+  if(id==='s-commit'){echoAnswers();}
   if(id==='s-pricing'){renderPricing();renderLeadSummary(CURRENT_LEAD);}
   if(id==='s-framework'){requestAnimationFrame(()=>requestAnimationFrame(updateFlowFocus));setTimeout(updateFlowFocus,120);}
-  if(id==='s-close'){const cc=document.getElementById('close-client');const nm=CURRENT_LEAD&&CURRENT_LEAD.name;cc.textContent=nm?('Prepared for '+nm+'.'):'';}
+  if(id==='s-close'){const cc=document.getElementById('close-client');const nm=CURRENT_LEAD&&CURRENT_LEAD.name;cc.textContent=nm?('Prepared for '+nm+'.'):'';
+    const se=document.getElementById('close-start-echo');if(se)se.textContent=ANSWERS.start?('✓ You said you want to start '+ANSWERS.start+' — let’s make it happen.'):'';}
   updateChrome();
 }
 function goTo(id){history.push(current);show(id);}
@@ -1773,8 +1785,8 @@ function updateChrome(){
   const f=FLOW(), i=f.indexOf(current), atStart=current==='s-start';
   document.getElementById('btn-back').style.visibility=history.length?'visible':'hidden';
   const nx=document.getElementById('btn-next');
-  if(atStart||current==='s-close'||current==='s-decision'||current==='s-prefer'){nx.style.display='none';}
-  else{nx.style.display='';nx.textContent=current==='s-cover'?'Start →':current==='s-system'?'See the pricing →':current==='s-pricing'?(COACH_PREF==='online'?'My decision →':'Compare the cost →'):current==='s-final'?'My decision →':current==='s-wait'?'I’m ready →':'Next →';}
+  if(atStart||current==='s-close'||current==='s-decision'||current==='s-prefer'||current==='s-commit'){nx.style.display='none';}
+  else{nx.style.display='';nx.textContent=current==='s-cover'?'Start →':current==='s-system'?'One last question →':current==='s-pricing'?(COACH_PREF==='online'?'My decision →':'Compare the cost →'):current==='s-final'?'My decision →':current==='s-wait'?'I’m ready →':'Next →';}
   const fill=document.getElementById('progress-fill'), meta=document.getElementById('nav-meta');
   if(atStart){fill.style.width='0%';meta.textContent='';}
   else if(i>=0){fill.style.width=((i+1)/f.length*100)+'%';meta.textContent=(i+1)+' / '+f.length;}
@@ -1822,9 +1834,10 @@ const OBJ_MAP={
 };
 function pickObjection(key,btn){ANSWERS.objection=key;selOne(document.getElementById('obj-pick'),btn);
   const a=document.getElementById('obj-response');if(a){a.style.display='block';a.innerHTML='💬 '+esc(OBJ_MAP[key]||'');}}
-function pickStart(key,label,btn){ANSWERS.start=label;selOne(document.getElementById('close-start'),btn);
-  const a=document.getElementById('close-confirm');if(a){a.style.display='block';
-    a.innerHTML='🎉 Perfect — <b>'+esc(label)+'</b>.'+(ANSWERS.goal?(' Let’s make <b>'+esc(ANSWERS.goal)+'</b> happen.'):' Let’s make it happen.')+' Your coach will get your onboarding ready.';}}
+function pickStart(key,label,btn){ANSWERS.start=label;selOne(document.getElementById('commit-start'),btn);
+  const a=document.getElementById('commit-confirm');if(a){a.style.display='block';
+    a.innerHTML='🎉 Locked in — <b>'+esc(label)+'</b>.'+(ANSWERS.goal?(' Let’s make <b>'+esc(ANSWERS.goal)+'</b> happen.'):' Let’s make it happen.');}
+  if(current==='s-commit')setTimeout(()=>{if(current==='s-commit')goNext();},700);}
 document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;if(e.key==='ArrowRight')goNext();if(e.key==='ArrowLeft')goBack();});
 
 /* flow-chart scroll spotlight: focus the phase nearest viewport-centre */
