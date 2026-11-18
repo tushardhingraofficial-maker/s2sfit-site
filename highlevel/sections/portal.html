@@ -4268,18 +4268,18 @@ tr.tr-gr td:first-child{border-left:3px solid var(--red)}
 .wko-brand-chip{background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:16px;padding:5px 12px;font-size:12.5px;font-weight:600;cursor:pointer}
 .wko-brand-chip.on{background:var(--red);border-color:var(--red);color:#fff}
 .wko-brand-chip.add{border-style:dashed;color:var(--muted)}
-.wko-sets{display:flex;flex-direction:column;gap:6px;margin:4px 0}
-.wko-set{display:flex;align-items:center;gap:7px;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:5px 8px;flex-wrap:nowrap}
+.wko-sets{display:flex;flex-direction:column;gap:7px;margin:4px 0 6px}
+.wko-set{display:flex;align-items:center;gap:8px;background:var(--card2);border:1px solid var(--border);border-radius:11px;padding:7px 9px;flex-wrap:nowrap}
 .wko-set.done{border-color:var(--good);background:rgba(34,197,94,.09)}
 .wko-set-n{font-family:var(--disp);font-weight:800;font-size:12.5px;color:var(--muted);width:26px;flex:none;text-align:center}
 /* compact table: labels live in the header row (.wko-sethead), inputs sit in a tidy grid */
 .wko-set-flds{flex:1;min-width:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(48px,1fr));gap:5px;align-items:center}
 .wko-set-fld{display:flex;flex-direction:column;align-items:center;min-width:0}
-.wko-set-fld input{width:100%;text-align:center;font-family:var(--disp);font-weight:800;font-size:15px;padding:6px 2px;border-radius:7px;box-sizing:border-box}
+.wko-set-fld input{width:100%;text-align:center;font-family:var(--disp);font-weight:800;font-size:16px;padding:9px 3px;border-radius:8px;box-sizing:border-box}
 .wko-set-fld span{display:none}
 .wko-rest-cap{width:100%;margin-top:2px;background:none;border:none;color:var(--good);font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;cursor:pointer;padding:0;line-height:1.2}
 .wko-rest-cap:hover{color:var(--text)}
-.wko-set-done{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid var(--border);background:var(--card);color:var(--muted);font-size:15px;font-weight:800;cursor:pointer;line-height:1;align-self:center}
+.wko-set-done{flex:none;width:34px;height:34px;border-radius:50%;border:2px solid var(--border);background:var(--card);color:var(--muted);font-size:17px;font-weight:800;cursor:pointer;line-height:1;align-self:center}
 .wko-set-done.on{background:var(--good);border-color:var(--good);color:#fff}
 .wko-set-x{flex:none;background:none;border:none;color:var(--faint);font-size:15px;cursor:pointer;padding:0 1px;align-self:center}
 .wko-set-x:hover{color:var(--red)}
@@ -4305,8 +4305,8 @@ tr.tr-gr td:first-child{border-left:3px solid var(--red)}
 .wko-rev-sets{font-size:12px;color:var(--muted);white-space:nowrap;flex:none}
 .wk-perf-brand{background:rgba(232,23,13,.14);color:var(--red);border-radius:10px;padding:0 7px;font-size:10.5px}
 /* live in-workout stats strip (updates as the client types reps/weight) */
-.wko-live{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:4px 0 8px}
-.wkl-tile{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:6px 7px;text-align:center;min-width:0}
+.wko-live{display:flex;gap:6px;margin:2px 0 8px}
+.wkl-tile{flex:1;background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:5px 6px;text-align:center;min-width:0}
 .wkl-k{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-family:var(--disp)}
 .wkl-v{font-family:var(--disp);font-weight:900;font-size:17px;line-height:1.02;margin:1px 0 2px}
 .wkl-v small{font-size:10px;font-weight:700;color:var(--muted)}
@@ -4337,7 +4337,11 @@ tr.tr-gr td:first-child{border-left:3px solid var(--red)}
 #workout-modal .modal{max-width:100%;width:100%;height:100vh;height:100dvh;margin:0;border-radius:0;border:none;box-shadow:none;display:flex;flex-direction:column}
 #workout-modal .modal-head{flex:none;border-radius:0;background:var(--surface);border-bottom:1px solid var(--border);padding-top:calc(12px + env(safe-area-inset-top));align-items:center}
 #workout-modal .modal-body{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0}
-.wko-stage{padding:12px 14px calc(40px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto;touch-action:pan-y;will-change:transform;backface-visibility:hidden}
+#workout-modal #wko-body{display:flex;flex-direction:column;min-height:100%}
+.wko-stage{padding:12px 14px calc(16px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto;touch-action:pan-y;will-change:transform;backface-visibility:hidden;flex:1;display:flex;flex-direction:column;width:100%}
+.wko-stage>.wko-focus{flex:1;display:flex;flex-direction:column}
+.wko-fill{flex:1;min-height:10px}
+.wko-focus .wko-nav{margin-top:8px;padding-top:10px;border-top:1px solid var(--border)}
 /* media carousel */
 .wko-media{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding:2px 0 8px;margin-bottom:10px}
 .wko-media::-webkit-scrollbar{height:6px}.wko-media::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:6px}
@@ -7434,7 +7438,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04to';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04tp';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -13092,7 +13096,6 @@ function wkoFocusHTML(en,ei,noNav){
     tools+
     (en.comment?'<div class="wko-comment-box">💬 <b>Your note:</b> '+esc(en.comment)+'</div>':'')+
     moreHTML+
-    gridHead+
     wkoLiveStatsHTML(en,ei)+
     setHead+
     '<div class="wko-sets">'+sets+'</div>'+
@@ -13100,6 +13103,7 @@ function wkoFocusHTML(en,ei,noNav){
       (en.sets.length?'<button class="btn-sm wko-markall'+(allDone?' solid':'')+'" onclick="wkoMarkAllDone('+ei+')">'+(allDone?'↺ Unmark all':'✓ Mark all done')+'</button>':'')+
       (aerobic?wkoCardioSessionNote(en):'')+'</div>'+
     wkoPerfHTML(en)+
+    (noNav?'':'<div class="wko-fill"></div>')+
     navBtns+
     '</div>';
 }
@@ -13116,7 +13120,7 @@ function wkoLoadClientCols(){try{const raw=localStorage.getItem('s2s_wkocols_'+(
 function wkoSaveClientCols(){try{localStorage.setItem('s2s_wkocols_'+((SESSION&&SESSION.id)||''),JSON.stringify(WKO_CLIENT_COLS));}catch(e){}}
 function wkoAddClientCol(){const name=(prompt('Add a tracking column (e.g. Calories, Incline, Band, Distance):','')||'').trim();if(!name)return;WKO_CLIENT_COLS.push({key:'cc_'+uid(),label:name,client:true});wkoSaveClientCols();renderWorkout();}
 function wkoDelClientCol(key){if(!confirm('Remove this column? Values already logged stay in past workouts.'))return;WKO_CLIENT_COLS=(WKO_CLIENT_COLS||[]).filter(c=>c.key!==key);wkoSaveClientCols();renderWorkout();}
-function wkoExtraCols(){const admin=(WKO_COLS||[]).filter(c=>c.key!=='rir'&&c.key!=='rest'&&c.key!=='tempo');return admin.concat(WKO_CLIENT_COLS||[]);}
+function wkoExtraCols(){return (WKO_COLS||[]).filter(c=>c.key!=='rir'&&c.key!=='rest'&&c.key!=='tempo');}   /* coach-defined columns only; client add/change removed */
 /* ---- reps↔time, RIR↔RPE toggles ---- */
 function wkoToggleRepType(ei){const en=WKO.entries[ei];if(!en)return;en.repType=(en.repType==='time')?'reps':'time';renderWorkout();}
 function wkoToggleEffort(ei){const en=WKO.entries[ei];if(!en)return;en.effort=(en.effort==='rpe')?'rir':'rpe';renderWorkout();}
