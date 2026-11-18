@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="en" data-version="v2026-11-18a">
+<html lang="en" data-version="v2026-11-18b">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +7,231 @@
 <meta name="description" content="Personal & online fitness coaching for busy Indo-Australians. South Asian nutrition plans, culturally tailored programs, real results in 12 weeks."/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- ═══════════════════════════════════════════════════════════
+     S2S FIT ANALYTICS
+     Replace the two placeholder IDs below with your real ones.
+     Step 1: GA4   → https://analytics.google.com  (create property → get "G-XXXXXXXXXX")
+     Step 2: Clarity → https://clarity.microsoft.com (create project → get 10-char ID)
+     ═══════════════════════════════════════════════════════════ -->
+
+<!-- ① Microsoft Clarity — heatmaps, recordings, scroll maps, rage/dead clicks -->
+<script>
+(function(c,l,a,r,i,t,y){
+  c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+  t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+  y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window,document,"clarity","script","CLARITY_PROJECT_ID");
+// ↑ Replace CLARITY_PROJECT_ID with your 10-character Clarity project ID
+</script>
+
+<!-- ② Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+<!-- ↑ Replace GA_MEASUREMENT_ID with your G-XXXXXXXXXX ID (also replace it in the line below) -->
+<script>
+window.dataLayer=window.dataLayer||[];
+function gtag(){dataLayer.push(arguments);}
+gtag('js',new Date());
+gtag('config','GA_MEASUREMENT_ID',{
+  send_page_view: true,
+  page_title: 'S2S Fit Landing Page'
+});
+
+/* ─── S2S FIT CUSTOM TRACKER ────────────────────────────────
+   Tracks: scroll depth, section dwell time, CTA clicks,
+           quiz interactions, booking visibility, exit intent
+   ─────────────────────────────────────────────────────────── */
+(function(){
+  'use strict';
+
+  /* ── Helpers ── */
+  function fire(eventName, params){
+    try {
+      gtag('event', eventName, params || {});
+      /* also tag Clarity with the same event name for correlation */
+      if(window.clarity) clarity('event', eventName);
+    } catch(e){}
+  }
+
+  /* ── 1. SCROLL DEPTH ── */
+  var scrollMilestones = [25,50,75,90,100];
+  var scrollFired = {};
+  var maxScroll = 0;
+  function onScroll(){
+    var scrolled = Math.round(
+      (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100
+    );
+    if(scrolled > maxScroll) maxScroll = scrolled;
+    scrollMilestones.forEach(function(m){
+      if(!scrollFired[m] && scrolled >= m){
+        scrollFired[m] = true;
+        fire('scroll_depth', { depth_percent: m, page: 'landing' });
+      }
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  /* ── 2. SECTION DWELL TIME ── */
+  var sectionTimes = {};
+  var sectionEntries = {};
+  var sections = [
+    { id: 'hero',          label: 'Hero' },
+    { id: 'quiz',          label: 'Quiz' },
+    { id: 'testimonials',  label: 'Transformations & Reviews' },
+    { id: 'booking',       label: 'Booking CTA' }
+  ];
+  /* generic sections by their content heading */
+  var sectionSelectors = [
+    { sel: '.intro-video-section', label: 'Intro Video' },
+    { sel: '.hero',                label: 'Hero' },
+    { sel: '#quiz',                label: 'Quiz' },
+    { sel: '#testimonials',        label: 'Transformations & Reviews' },
+    { sel: '#booking',             label: 'Booking CTA' }
+  ];
+  if('IntersectionObserver' in window){
+    var sectionObserver = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        var lbl = entry.target.dataset.trackLabel;
+        if(!lbl) return;
+        if(entry.isIntersecting){
+          sectionEntries[lbl] = Date.now();
+        } else {
+          if(sectionEntries[lbl]){
+            var dwell = Math.round((Date.now() - sectionEntries[lbl]) / 1000);
+            sectionTimes[lbl] = (sectionTimes[lbl] || 0) + dwell;
+            delete sectionEntries[lbl];
+            if(dwell >= 3){
+              fire('section_dwell', { section: lbl, seconds: dwell });
+            }
+          }
+        }
+      });
+    }, { threshold: 0.3 });
+
+    sectionSelectors.forEach(function(s){
+      var el = document.querySelector(s.sel);
+      if(el){ el.dataset.trackLabel = s.label; sectionObserver.observe(el); }
+    });
+
+    /* also observe all named sections */
+    document.querySelectorAll('section[id], section[class]').forEach(function(el,i){
+      if(!el.dataset.trackLabel){
+        var lbl = el.id || el.className.split(' ')[0] || ('section_'+i);
+        el.dataset.trackLabel = lbl;
+        sectionObserver.observe(el);
+      }
+    });
+  }
+
+  /* ── 3. CTA CLICK TRACKING ── */
+  var ctaSelectors = [
+    '.btn-hero-main', '.btn-hero-ghost',
+    '.nav-cta', '.path-btn', '.club-card',
+    '.qz-cta-primary', '.qz-cta-secondary',
+    '.reviews-cta-link'
+  ];
+  document.addEventListener('click', function(e){
+    var target = e.target.closest(ctaSelectors.join(','));
+    if(target){
+      var section = (target.closest('[data-track-label]') || {}).dataset || {};
+      fire('cta_click', {
+        button_text:  (target.textContent || '').trim().substring(0,80),
+        button_class: target.className,
+        section:      section.trackLabel || 'unknown',
+        href:         target.href || ''
+      });
+    }
+    /* track booking calendar interactions */
+    if(e.target.closest('#gb7kmF0LFwqHhnW1pABp_1782025556455')){
+      fire('booking_calendar_interact', { section: 'Final CTA' });
+    }
+  }, true);
+
+  /* ── 4. BOOKING CALENDAR VISIBILITY ── */
+  var bookingIframe = document.getElementById('gb7kmF0LFwqHhnW1pABp_1782025556455');
+  if(bookingIframe && 'IntersectionObserver' in window){
+    var bookingFired = false;
+    var bookingObserver = new IntersectionObserver(function(entries){
+      if(!bookingFired && entries[0].isIntersecting){
+        bookingFired = true;
+        fire('booking_calendar_viewed', { section: 'Final CTA' });
+        bookingObserver.disconnect();
+      }
+    }, { threshold: 0.5 });
+    bookingObserver.observe(bookingIframe);
+  }
+
+  /* ── 5. QUIZ TRACKING ── */
+  /* Patches into the quiz engine after it initialises */
+  window.addEventListener('load', function(){
+    /* Intercept quiz option clicks */
+    document.addEventListener('click', function(e){
+      var opt = e.target.closest('.qz-opt');
+      if(opt){
+        var slide = opt.closest('.qz-slide');
+        var qIdx  = slide ? slide.dataset.qIdx : '?';
+        fire('quiz_answer', {
+          question_index: qIdx,
+          answer_text: (opt.textContent || '').trim().substring(0,60)
+        });
+      }
+      /* Quiz started on first Next/Back click */
+      if(e.target.closest('#qz-nav') && !window._s2sQuizStarted){
+        window._s2sQuizStarted = true;
+        fire('quiz_started', {});
+      }
+    });
+
+    /* Observe quiz result appearing */
+    var resultEl = document.getElementById('qz-result');
+    if(resultEl && 'IntersectionObserver' in window){
+      var resultObs = new IntersectionObserver(function(entries){
+        if(entries[0].isIntersecting){
+          fire('quiz_completed', {
+            result_shown: (resultEl.textContent || '').substring(0,60).trim()
+          });
+          resultObs.disconnect();
+        }
+      }, { threshold: 0.5 });
+      resultObs.observe(resultEl);
+    }
+  });
+
+  /* ── 6. EXIT INTENT ── */
+  document.addEventListener('mouseleave', function(e){
+    if(e.clientY <= 0){
+      fire('exit_intent', {
+        max_scroll_depth: maxScroll,
+        time_on_page_s:   Math.round((Date.now() - window._s2sPageStart) / 1000)
+      });
+    }
+  });
+
+  /* ── 7. ENGAGEMENT TIME (accurate, not GA's sampled version) ── */
+  window._s2sPageStart = Date.now();
+  var _s2sActive = true;
+  var _s2sHiddenAt = null;
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden){
+      _s2sActive = false;
+      _s2sHiddenAt = Date.now();
+    } else {
+      _s2sActive = true;
+    }
+  });
+  /* fire engagement summary on page unload */
+  window.addEventListener('pagehide', function(){
+    var totalTime = Math.round((Date.now() - window._s2sPageStart) / 1000);
+    fire('page_engagement', {
+      time_on_page_s:   totalTime,
+      max_scroll_depth: maxScroll,
+      sections_seen:    Object.keys(sectionTimes).join(' | ')
+    });
+  });
+
+})();
+</script>
+<!-- ═══════════════════════════════════════════════════════════ -->
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
