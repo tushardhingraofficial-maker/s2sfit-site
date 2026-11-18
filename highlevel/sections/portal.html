@@ -2320,10 +2320,10 @@ table.pf-cmp th:first-child,table.pf-cmp td:first-child{text-align:left}
 .adash-settings>summary::-webkit-details-marker{display:none}
 .adash-settings[open]>summary{color:var(--text);margin-bottom:4px}
 /* Collapsible dashboard cards (Notifications / Tasks) — tuck them away while working on the dashboard */
-.card-collapse{flex:none;border:1px solid var(--border);background:var(--card);color:var(--muted);border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:12px;line-height:1;display:inline-flex;align-items:center;justify-content:center;transition:transform .18s,color .15s,border-color .15s}
-.card-collapse:hover{color:var(--text);border-color:var(--red)}
+.card-collapse{flex:none;display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--border);background:var(--card2);color:var(--text);border-radius:9px;height:36px;padding:0 14px;font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.03em;font-size:13px;line-height:1;cursor:pointer;transition:.15s}
+.card-collapse:hover{background:var(--red);border-color:var(--red);color:#fff}
+.card-collapse .cc-ic{font-size:16px;line-height:1}
 .card.collapsed>.card-body{display:none!important}
-.card.collapsed .card-collapse{transform:rotate(-90deg)}
 /* Dashboard: give the left rail & the main column their own scroll so each can be scrolled all the way,
    independently, when the cursor is over it (desktop two-column layout only; mobile stacks & flows normally). */
 @media(min-width:901px){
@@ -5477,13 +5477,13 @@ img,svg,canvas,video{max-width:100%}
             <div class="card notif-card" id="notif-card"><div class="card-head"><span class="step-no">🔔</span><h2>Notifications</h2>
               <span class="sp"></span><span class="pill" id="notif-count">0</span>
               <button class="btn-sm" style="margin-left:8px" onclick="notifRefresh()" title="Refresh notifications">↻</button>
-              <button class="card-collapse" style="margin-left:8px" onclick="toggleDashCard('notif-card')" title="Collapse / expand this panel">▾</button></div>
+              <button class="card-collapse" style="margin-left:8px" onclick="toggleDashCard('notif-card')" title="Collapse / expand this panel"><span class="cc-ic">▾</span> Hide</button></div>
               <div class="card-body" id="notif-host"></div></div>
 
             <div class="card" id="tasks-card" style="border-color:var(--red)"><div class="card-head"><span class="step-no">✓</span><h2>Tasks to finish</h2>
               <span class="sp"></span><span class="pill" id="tasks-count"></span>
               <button class="btn-sm solid" style="margin-left:8px" onclick="toggleTaskForm()">＋ Add task</button>
-              <button class="card-collapse" style="margin-left:8px" onclick="toggleDashCard('tasks-card')" title="Collapse / expand this panel">▾</button></div>
+              <button class="card-collapse" style="margin-left:8px" onclick="toggleDashCard('tasks-card')" title="Collapse / expand this panel"><span class="cc-ic">▾</span> Hide</button></div>
               <div class="card-body">
                 <div id="gcal-bar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--card2);border:1px solid var(--border);border-radius:11px;padding:9px 12px;margin-bottom:12px"></div>
                 <div id="task-form" class="hidden" style="background:var(--card2);border:1px solid var(--border);border-radius:11px;padding:12px;margin-bottom:12px">
@@ -7311,7 +7311,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04te';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04tf';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -23730,8 +23730,9 @@ function setOvSort(v){OV_SORT=v;renderOverviewTable();}
 async function renderClientList(){return renderOverview();}   /* alias: dashboard is the client list */
 function setOvFilter(f){OV_FILTER=f;document.querySelectorAll('[data-ovf]').forEach(b=>b.classList.toggle('on',b.dataset.ovf===f));renderOverviewTable();}
 /* collapse/expand the Notifications & Tasks dashboard panels (remembered per browser) */
-function toggleDashCard(id){const c=document.getElementById(id);if(!c)return;const col=c.classList.toggle('collapsed');try{localStorage.setItem('s2s_dashcol_'+id,col?'1':'0');}catch(e){}}
-function restoreDashCards(){['notif-card','tasks-card'].forEach(function(id){const c=document.getElementById(id);if(!c)return;let v='0';try{v=localStorage.getItem('s2s_dashcol_'+id)||'0';}catch(e){}c.classList.toggle('collapsed',v==='1');});}
+function ccSetLabel(c){const b=c&&c.querySelector('.card-collapse');if(!b)return;const col=c.classList.contains('collapsed');b.innerHTML='<span class="cc-ic">'+(col?'▸':'▾')+'</span> '+(col?'Show':'Hide');}
+function toggleDashCard(id){const c=document.getElementById(id);if(!c)return;const col=c.classList.toggle('collapsed');ccSetLabel(c);try{localStorage.setItem('s2s_dashcol_'+id,col?'1':'0');}catch(e){}}
+function restoreDashCards(){['notif-card','tasks-card'].forEach(function(id){const c=document.getElementById(id);if(!c)return;let v='0';try{v=localStorage.getItem('s2s_dashcol_'+id)||'0';}catch(e){}c.classList.toggle('collapsed',v==='1');ccSetLabel(c);});}
 async function renderOverview(){
   try{restoreDashCards();}catch(e){}
   const host=$('adm-overview-host');if(host)host.innerHTML='<div class="empty">Loading compliance…</div>';
