@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-version="v2026-11-18a">
+<html lang="en" data-version="v2026-11-18b">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -582,6 +582,19 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
 .pg-head .pg-c.rec .pg-tag{color:var(--gold)}
 .pg-disc{display:block;font-size:10.5px;font-weight:600;color:var(--gold);margin-top:3px}
 .pg-sub{font-size:10.5px;color:var(--muted)}
+/* interactive VSL voucher checklist on the plan card */
+.vsl-pick{margin:4px 0 2px;background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.22);border-radius:10px;padding:11px 12px}
+.vsl-pick-h{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:.03em;text-transform:uppercase;color:var(--text);margin-bottom:8px}
+.vsl-checklist{display:grid;gap:6px}
+.vsl-ck{display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--ink);border:1px solid var(--border);border-radius:7px;padding:8px 10px;transition:border-color .15s,background .15s}
+.vsl-ck:hover{border-color:var(--muted)}
+.vsl-ck.on{border-color:rgba(34,197,94,.45);background:rgba(34,197,94,.08)}
+.vsl-ck input{width:17px;height:17px;accent-color:var(--green);flex:none;cursor:pointer}
+.vsl-ck .vc-l{flex:1;font-size:13px;color:var(--text)}
+.vsl-ck .vc-a{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:var(--muted);white-space:nowrap}
+.vsl-ck.on .vc-a{color:var(--green)}
+.vsl-applied{margin-top:9px;font-size:12.5px;color:var(--muted);text-align:center}
+.vsl-applied b{color:var(--green)}
 /* VSL voucher step-by-step breakdown on the pricing page */
 .disc-break{margin-top:9px;display:grid;gap:5px}
 .db-row{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12.5px;color:var(--text);padding:6px 9px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:7px}
@@ -869,8 +882,11 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
         <div class="prow"><span class="k">Onboarding <small>(one-time)</small></span><span class="v" id="pc-onboard">$200</span></div>
         <div class="prow"><span class="k">Weekly coaching</span><span class="v" id="pc-weekly">$125<small>/wk</small></span></div>
         <div class="prow"><span class="k" id="pc-weeks-k">Coaching (16 wks)</span><span class="v" id="pc-coaching">$2,000</span></div>
-        <label class="vsl-toggle" id="vsl-toggle"><input type="checkbox" id="vsl-chk" onchange="renderPricing();renderFinal();renderWait();">
-          <span><span class="lt" id="vsl-lt">Completed the strategy call / VSL — $500 off</span><br><span class="ls">Discount applies to coaching only, spread across the commitment.</span></span></label>
+        <div class="vsl-pick" id="vsl-pick">
+          <div class="vsl-pick-h">🎟️ Strategy-call voucher — tick each step they've done</div>
+          <div class="vsl-checklist" id="vsl-checklist"></div>
+          <div class="vsl-applied" id="vsl-applied"></div>
+        </div>
         <div class="total-row"><span class="k">Total plan cost</span><span class="v" id="pc-total">$2,200</span></div>
         <div class="save-note" id="pc-save" style="display:none"></div>
         <div class="save-note" id="pc-loyalty" style="display:none;color:var(--gold)"></div>
@@ -1345,16 +1361,16 @@ function renderSolutions(){
 
 /* ═══════════ PRICING (guide) ═══════════ */
 function isReturning(){return CLIENT_MODE==='returning';}
-function pricing(vslOn){
+function pricing(){
   const coachingFull=CFG.weekly*CFG.weeks;
   let coaching=coachingFull, creditOff=0, creditLabel='';
   if(isReturning()){
     // Reactivation: a $credit split across the program. Onboarding + the full commitment still apply.
     creditOff=Math.min(coachingFull,Number(CFG.reactCredit)||0);
     coaching=coachingFull-creditOff; creditLabel='reactivation credit';
-  } else if(vslOn){
-    creditOff=Math.min(coachingFull,CFG.vsl);
-    coaching=coachingFull-creditOff; creditLabel='voucher';
+  } else {
+    const v=vslApplied();   // sum of the strategy-call steps the client has ticked
+    if(v>0){creditOff=Math.min(coachingFull,v); coaching=coachingFull-creditOff; creditLabel='voucher';}
   }
   const effWeekly=coaching/CFG.weeks;
   const nPay=4, coachingPer=coaching/nPay;
@@ -1373,19 +1389,21 @@ function vslShares(){
   o.call=Math.max(0,V-sum);
   return o;
 }
+/* each strategy-call step is ticked individually; the applied voucher is the sum of ticked steps */
+let VSL_TICKS={video:false,proof:false,assess:false,call:false};
+function vslApplied(){if(isReturning())return 0;const sh=vslShares();let s=0;['video','proof','assess','call'].forEach(k=>{if(VSL_TICKS[k])s+=sh[k];});return s;}
+function toggleVslStep(k){VSL_TICKS[k]=!VSL_TICKS[k];renderPricing();renderFinal();renderWait();}
+function setVslAll(on){['video','proof','assess','call'].forEach(k=>VSL_TICKS[k]=!!on);}
 function renderPricing(){
-  const vslOn=isReturning()?false:((document.getElementById('vsl-chk')||{}).checked||false);
-  const pr=pricing(vslOn);
+  const pr=pricing();
+  const applied=vslApplied();
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.innerHTML=v;};
-  // returning members get the reactivation offer, not the VSL voucher — hide that checkbox for them
-  const vtog=document.getElementById('vsl-toggle');if(vtog)vtog.style.display=isReturning()?'none':'';
   set('pc-onboard',money(CFG.onboard));
   set('pc-weekly',money(pr.creditOff>0?pr.effWeekly:CFG.weekly)+'<small>/wk</small>');
   set('pc-weeks-k','Coaching ('+CFG.weeks+' wks)');
   set('pc-coaching',money(pr.coaching));
   set('pc-total',money(pr.total));
   set('pc-o2o',money(CFG.one2one));
-  const vlt=document.getElementById('vsl-lt');if(vlt)vlt.textContent='Completed the strategy-call steps + the call — '+money(CFG.vsl)+' off';
   // rewards + discount summary on the price page
   const pr2=document.getElementById('pc-reward');if(pr2)pr2.textContent=money(REWARDS.redeemLimit*REWARDS.perPoint);
   // returning-member reactivation note on the plan card
@@ -1394,20 +1412,22 @@ function renderPricing(){
   const dh=document.getElementById('pc-disc-h'), dt=document.getElementById('pc-disc-txt');
   if(dh&&dt){
     if(isReturning()){dh.textContent='🔁 Welcome-back reactivation offer';dt.innerHTML='Restart with us: a <b>'+money(CFG.reactCredit)+' credit</b> split across your program'+(Number(CFG.reactFreeWeeks)>0?(', plus a <b>'+CFG.reactFreeWeeks+'-week free foundation</b> period of full coaching to bounce back'):'')+'. Onboarding and your '+CFG.weeks+'-week commitment still apply.';}
-    else if(vslOn){dh.textContent='🎟️ '+money(CFG.vsl)+' voucher applied';dt.innerHTML='✓ Banked across your strategy-call steps, spread across your plan:';}
-    else{dh.textContent='🎟️ Up to '+money(CFG.vsl)+' off — banked in steps';dt.innerHTML='Each step of your strategy-call journey banks part of your voucher:';}
+    else{dh.textContent='🎟️ Strategy-call voucher';dt.innerHTML=applied>0?('You’ve banked <b>'+money(applied)+'</b> of the '+money(CFG.vsl)+' voucher — tick the rest on your plan as you finish each step.'):('Up to <b>'+money(CFG.vsl)+'</b> off, banked step by step. Tick each completed step on your plan.');}
   }
-  // break the VSL voucher into the same steps as the strategy call page
-  const brk=document.getElementById('pc-disc-break');
-  if(brk){
-    if(isReturning()||!(Number(CFG.vsl)>0)){brk.innerHTML='';brk.style.display='none';}
+  const brk=document.getElementById('pc-disc-break');if(brk)brk.innerHTML='';
+  // interactive strategy-call voucher — tick each step; the discount adds up
+  const pick=document.getElementById('vsl-pick'), vc=document.getElementById('vsl-checklist');
+  if(pick&&vc){
+    if(isReturning()||!(Number(CFG.vsl)>0)){pick.style.display='none';}
     else{
-      brk.style.display='';
+      pick.style.display='';
       const sh=vslShares();
-      const rows=VSL_STEPS.map(x=>[x.ic,x.label,sh[x.k]]);
-      rows.push(['📞','Attend your strategy call',sh.call]);
-      brk.innerHTML=rows.map(r=>'<div class="db-row'+(vslOn?' done':'')+'"><span>'+r[0]+' '+r[1]+'</span><b>'+money(r[2])+'</b></div>').join('')
-        +'<div class="db-row db-tot"><span>Total off your coaching</span><b>'+money(CFG.vsl)+'</b></div>';
+      const steps=VSL_STEPS.concat([{k:'call',ic:'📞',label:'Attend your strategy call'}]);
+      vc.innerHTML=steps.map(x=>{const on=!!VSL_TICKS[x.k];
+        return '<label class="vsl-ck'+(on?' on':'')+'"><input type="checkbox" '+(on?'checked':'')+' onchange="toggleVslStep(\''+x.k+'\')"><span class="vc-l">'+x.ic+' '+esc(x.label)+'</span><b class="vc-a">'+money(sh[x.k])+'</b></label>';
+      }).join('');
+      const ap=document.getElementById('vsl-applied');
+      if(ap)ap.innerHTML=applied>0?('✓ <b>'+money(applied)+'</b> of '+money(CFG.vsl)+' voucher applied — spread across your plan'):('Tick each step you’ve completed to bank up to <b>'+money(CFG.vsl)+'</b> off');
     }
   }
   const saveEl=document.getElementById('pc-save');
@@ -1448,20 +1468,20 @@ function o2oAddon(){
   const W=CFG.weeks||16, rate=CFG.one2one||0, periods=W/(O2O_FREQW[O2O_FREQ]||1);
   return Math.round(O2O_NUM*periods)*rate;
 }
-function ourAllIn(vslOn){return pricing(vslOn).total + o2oAddon();}
+function ourAllIn(){return pricing().total + o2oAddon();}
 /* ---- final face-off: their PT total vs our all-in (program + hands-on) ---- */
 function renderFinal(){
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   const W=CFG.weeks||16;
-  const vslOn=(document.getElementById('vsl-chk')||{}).checked||false;
-  const addon=o2oAddon(), ourTotal=ourAllIn(vslOn), ptTotal=ptCalc().total, gap=ptTotal-ourTotal;
+  const pr=pricing();
+  const addon=o2oAddon(), ourTotal=ourAllIn(), ptTotal=ptCalc().total, gap=ptTotal-ourTotal;
   set('fin-pt',money(ptTotal));
   set('fin-pt-sub','over '+PT_MONTHS+' month'+(PT_MONTHS===1?'':'s')+' — then it keeps going');
   set('fin-s2s',money(ourTotal));
   set('fin-weeks',W);
   set('fin-s2s-lead',addon>0?'program + hands-on':'the full program');
   const fv=document.getElementById('fin-voucher');
-  if(fv){fv.style.display=vslOn?'block':'none';const va=document.getElementById('fin-vamt');if(va)va.textContent=money(CFG.vsl);}
+  if(fv){const showV=!isReturning()&&pr.creditOff>0;fv.style.display=showV?'block':'none';const va=document.getElementById('fin-vamt');if(va)va.textContent=money(pr.creditOff);}
   const se=document.getElementById('fin-save');
   if(se)se.textContent=gap>0?('You save '+money(gap)+' — and you actually own the result.'):'Close on paper — but only one leaves you independent, for life.';
   renderO2OBreak();
@@ -1474,8 +1494,7 @@ function setO2OFreq(f){O2O_FREQ=f;renderFinal();renderWait();}
 function renderO2OBreak(){
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   const W=CFG.weeks||16, rate=CFG.one2one||0;
-  const vslOn=(document.getElementById('vsl-chk')||{}).checked||false;
-  const s2sTotal=pricing(vslOn).total;
+  const s2sTotal=pricing().total;
   const periods=W/(O2O_FREQW[O2O_FREQ]||1);
   const sess=Math.round(O2O_NUM*periods);
   const addon=sess*rate, total=s2sTotal+addon;
@@ -1499,8 +1518,7 @@ function selectWait(m){WAIT_MONTHS=m;renderWait();}
 function renderWait(){
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   const W=CFG.weeks||16, m=WAIT_MONTHS;
-  const vslOn=isReturning()?false:((document.getElementById('vsl-chk')||{}).checked||false);
-  const pr=pricing(vslOn), allIn=ourAllIn(vslOn), hasAddon=o2oAddon()>0;
+  const pr=pricing(), allIn=ourAllIn(), hasAddon=o2oAddon()>0;
   // 1 — broken down small (program + any hands-on added, so it matches the comparison)
   set('wo-total',money(allIn));
   set('wo-week',money(Math.round(allIn/W)));
@@ -1514,7 +1532,7 @@ function renderWait(){
   set('wo-s2s',money(allIn));
   set('wo-s2s-l',o2oAddon()>0?'The S2S Hybrid — program + hands-on':'The S2S Hybrid — done & yours to keep');
   set('wo-save',money(save));
-  let vtxt=vslOn?('your '+money(CFG.vsl)+' voucher is already applied, '):'';
+  let vtxt=(!isReturning()&&pr.creditOff>0)?('your '+money(pr.creditOff)+' voucher is already applied, '):'';
   if(isReturning()&&pr.creditOff>0)vtxt='your '+money(CFG.reactCredit)+' reactivation credit is already applied, ';
   set('wo-voucher',vtxt);
   // 5 — rewards (real points system from the portal): max redeemable = 25,000 pts × $0.01 = $250
@@ -1554,12 +1572,11 @@ function renderPlanGrid(){
   const W=CFG.weeks||16;
   const mom=esc(CFG.fb1Title||'Momentum'), bp=esc(CFG.fb2Title||'Blueprint');
   // Online Coaching investment reflects the SAME discounted total shown everywhere else (reactivation credit / VSL voucher)
-  const vslOn=isReturning()?false:((document.getElementById('vsl-chk')||{}).checked||false);
-  const pr=pricing(vslOn);
+  const pr=pricing();
   let onlineInvest=money(pr.total)+' total · '+W+' wks';
   const disc=[];
   if(isReturning()&&pr.creditOff>0){disc.push(money(CFG.reactCredit)+' credit');if(Number(CFG.reactFreeWeeks)>0)disc.push(CFG.reactFreeWeeks+' wks free');}
-  else if(vslOn&&CFG.vsl>0)disc.push(money(CFG.vsl)+' voucher');
+  else if(pr.creditOff>0)disc.push(money(pr.creditOff)+' voucher');
   if(disc.length)onlineInvest+='<span class="pg-disc">'+disc.join(' + ')+' applied</span>';
   const cols=[
     {name:'Online Coaching',tag:'Best results',cls:'rec'},
@@ -1891,15 +1908,14 @@ async function delPhase(id){if(!confirm('Delete this phase?'))return;
 /* ----- clients ----- */
 function profileData(){
   const g=id=>(document.getElementById(id)||{}).value||'';
-  const vslOn=(document.getElementById('vsl-chk')||{}).checked||false;
-  const pr=pricing(vslOn);
+  const pr=pricing(), applied=vslApplied();
   return {name:g('pf-name'),age:g('pf-age'),gender:g('pf-gender'),contact:g('pf-contact'),
     height:g('pf-height'),weight:g('pf-weight'),goalweight:g('pf-goalweight'),
     experience:g('pf-experience'),activity:g('pf-activity'),goal:g('pf-goal'),
     medical:g('pf-medical'),notes:g('pf-notes'),
     challenges:[...SELECTED].map(cid=>{const c=CHALLENGES.find(x=>x.id===cid);return c?c.label:null;}).filter(Boolean),
     challengeIds:[...SELECTED],
-    vslOn, quote:{onboard:CFG.onboard,weekly:CFG.weekly,weeks:CFG.weeks,vsl:CFG.vsl,
+    vslOn:applied>0, vslTicks:{...VSL_TICKS}, vslApplied:applied, quote:{onboard:CFG.onboard,weekly:CFG.weekly,weeks:CFG.weeks,vsl:CFG.vsl,
       coaching:pr.coaching,total:pr.total,effWeekly:pr.effWeekly,per:pr.coachingPer,p1:pr.p1,one2one:CFG.one2one},
     savedAt:new Date().toISOString()};
 }
@@ -1998,7 +2014,7 @@ async function loadClients(){
 let CURRENT_LEAD=null;
 function reopenClient(id){
   const row=CLIENTS.find(c=>c.id===id);if(!row)return;const d=row.d;CURRENT_LEAD=d;
-  const vc=document.getElementById('vsl-chk');if(vc)vc.checked=!!d.vslOn;   // VSL leads get the discount
+  if(d.vslTicks){['video','proof','assess','call'].forEach(k=>VSL_TICKS[k]=!!d.vslTicks[k]);}else setVslAll(!!d.vslOn);   // restore which voucher steps were banked
   renderLeadSummary(d);renderPricing();
   closeAdmin();show('s-pricing');history=['s-cover'];
 }
@@ -2052,7 +2068,7 @@ function openPortalLead(L){
   CURRENT_LEAD=L;
   const voucher=L.voucher||null, vActive=!!(voucher&&voucher.active);
   if(vActive&&Number(voucher.amount)>0)CFG.vsl=Number(voucher.amount);   // honour the actual voucher amount
-  const vc=document.getElementById('vsl-chk');if(vc)vc.checked=vActive;   // $ voucher → VSL discount auto-applied
+  setVslAll(vActive);   // an active voucher means every step is banked → full amount applied
   renderLeadSummary(L);renderPricing();
   if(typeof closeAdmin==='function')closeAdmin();
   show('s-pricing');history=['s-cover'];
