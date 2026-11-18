@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light" data-version="2026-11-18b">
+<html lang="en" data-theme="light" data-version="2026-11-18c">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -135,10 +135,21 @@ input:focus,select,textarea:focus{outline:none;border-color:var(--red)}
 /* ===== workout runner — coach logs a client's completed session (saves a log identical to the client's) ===== */
 .wk-sec{font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-size:12px;margin:14px 2px 6px}
 .wk-ex{border:1px solid var(--border);border-radius:14px;background:var(--surface);padding:11px 12px;margin-bottom:11px;box-shadow:var(--shadow)}
-.wk-ex-h{display:flex;align-items:center;gap:8px;margin-bottom:7px}
-.wk-ex-nm{flex:1;min-width:0;font-family:var(--disp);font-weight:800;font-size:16px;border:0;border-bottom:2px solid var(--border);border-radius:0;background:transparent;padding:4px 2px}
+.wk-ex-h{display:flex;align-items:center;gap:6px;margin-bottom:7px;flex-wrap:wrap}
+.wk-ex-nm{flex:1;min-width:140px;font-family:var(--disp);font-weight:800;font-size:16px;border:0;border-bottom:2px solid var(--border);border-radius:0;background:transparent;padding:4px 2px}
 .wk-ex-nm:focus{border-bottom-color:var(--red)}
 .wk-x{flex:none;border:1px solid var(--border);background:var(--card);color:var(--muted);border-radius:8px;width:30px;height:30px;font-size:17px;line-height:1;cursor:pointer}
+.wk-mini{flex:none;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:8px;min-width:30px;height:30px;padding:0 7px;font-size:14px;line-height:1;cursor:pointer}
+.wk-mini.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.wk-chips{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:0 0 7px}
+.wk-chlab{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin-right:2px}
+.wk-chip{border:1px solid var(--border);background:var(--card2);color:var(--muted);border-radius:16px;padding:4px 10px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+.wk-chip.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.wk-chip.add{color:var(--brand);font-weight:900}
+.wk-info{border:1px solid var(--border);border-left:3px solid var(--brand);border-radius:9px;background:var(--card2);padding:9px 11px;margin:0 0 8px;font-size:12.5px;line-height:1.5}
+.wk-info div{margin-bottom:4px}
+.wk-info div:last-child{margin-bottom:0}
+.wk-info b{font-weight:800}
 .wk-target{font-size:12px;color:var(--muted);margin:0 0 6px}
 .wk-row{display:grid;gap:6px;align-items:center;margin-bottom:5px}
 .wk-th{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.02em;color:var(--muted);text-align:center;overflow:hidden}
@@ -638,13 +649,22 @@ function saveTask(){
    that is byte-for-byte compatible with the client's own runner — so it shows up in the client portal,
    the admin editor, and this app's Activity/Progress tabs, and marks the day done on the client's calendar. */
 var WK=null, WK_START=0;
+var WK_LIB=null, WK_EXBYID={}, WK_EXBYNAME={}, WK_GENURL=null;   // shared exercise library + Smart-webhook URL
+var WK_DEFAULT_TRACK=['reps','weight','rir'];                    // RIR column on by default
 function wkVarLabel(v){return ({reps:'Reps',weight:'Wt kg',rir:'RIR',rest:'Rest',tempo:'Tempo',time:'Time',distance:'Dist',height:'Ht'})[v]||v;}
 function wkExCount(w){return (w&&w.sections||[]).reduce(function(a,s){return a+((s.exercises||[]).length);},0);}
 function wkDayExCount(dy){return (dy&&(dy.sections||[dy])||[]).reduce(function(a,s){return a+((s.exercises||[]).length);},0);}
-/* per-set targets for an exercise (mirrors the portal's wdExSets): explicit e.sets[] else scheme.sets rows */
-function wkExSets(e){
-  if(Array.isArray(e.sets)&&e.sets.length)return e.sets;
-  var track=(e.track&&e.track.length)?e.track:['reps','weight'];
+/* ---- shared exercise library (same dp_config 'exercise_library' the portal/client use) ---- */
+function wkIndexLib(){WK_EXBYID={};WK_EXBYNAME={};(WK_LIB||[]).forEach(function(e){if(!e)return;if(e.id)WK_EXBYID[e.id]=e;if(e.name)WK_EXBYNAME[String(e.name).toLowerCase()]=e;});}
+function wkEnsureLib(){
+  if(WK_LIB)return Promise.resolve(WK_LIB);
+  return api('getExercises').then(function(arr){WK_LIB=Array.isArray(arr)?arr:[];wkIndexLib();return WK_LIB;}).catch(function(){WK_LIB=[];wkIndexLib();return WK_LIB;});
+}
+function wkExLib(en){if(!en)return null;if(en.exId&&WK_EXBYID[en.exId])return WK_EXBYID[en.exId];var k=en.name&&String(en.name).toLowerCase();return (k&&WK_EXBYNAME[k])||null;}
+/* per-set targets (mirrors the portal's wdExSets): explicit e.sets[] else scheme.sets rows, keyed to `track` */
+function wkExSets(e,track){
+  track=(track&&track.length)?track:((e.track&&e.track.length)?e.track:WK_DEFAULT_TRACK);
+  if(Array.isArray(e.sets)&&e.sets.length)return e.sets.map(function(st){var o=Object.assign({},st);track.forEach(function(v){if(o[v]==null)o[v]=(e.scheme&&e.scheme[v]!=null)?e.scheme[v]:'';});return o;});
   var n=Math.max(1,Math.min(20,parseInt(e.scheme&&e.scheme.sets)||3));
   var base={};track.forEach(function(v){base[v]=(e.scheme&&e.scheme[v]!=null&&e.scheme[v]!=='')?e.scheme[v]:'';});
   var out=[];for(var i=0;i<n;i++)out.push(Object.assign({},base));return out;
@@ -657,10 +677,55 @@ function wkTargetLine(e){
   return b.join(' · ');
 }
 function wkEntryFromEx(e,secName){
-  var track=(e.track&&e.track.length)?e.track.slice():['reps','weight'];
-  var tsets=wkExSets(e);
-  return {name:e.name||e.exercise||'Exercise',track:track,note:e.notes||'',target:wkTargetLine(e),sec:secName||'',
+  var track=(e.track&&e.track.length)?e.track.slice():WK_DEFAULT_TRACK.slice();
+  if(track.indexOf('rir')<0)track.push('rir');                 // ensure an RIR column
+  var tsets=wkExSets(e,track);
+  var lib=(e.exId&&WK_EXBYID[e.exId])||(e.name&&WK_EXBYNAME[String(e.name).toLowerCase()])||null;
+  return {name:e.name||e.exercise||'Exercise',origName:e.name||e.exercise||'Exercise',exId:e.exId||(lib&&lib.id)||'',
+    alts:Array.isArray(e.alts)?e.alts.filter(Boolean):[],track:track,note:e.notes||'',target:wkTargetLine(e),sec:secName||'',
+    brand:'',equipment:(lib&&lib.equipment)||'',showInfo:false,
+    lib:lib?{video:lib.video||'',howto:lib.howto||'',mistakes:lib.mistakes||'',cues:lib.cues||'',breathing:lib.breathing||''}:{video:'',howto:'',mistakes:'',cues:'',breathing:''},
     sets:tsets.map(function(st){var s={done:false,t:st||{}};track.forEach(function(v){s[v]='';});return s;})};
+}
+/* equipment / brand suggestions — from this client's past sessions + the library (like the client runner's chips) */
+function wkHistEntries(){return (cur().workouts||[]).reduce(function(a,w){return a.concat(w.entries||[]);},[]);}
+function wkMatch(en,e){return !!((en.exId&&e.exId===en.exId)||(e.name&&en.name&&e.name===en.name));}
+function wkEquipFor(en){var set={};wkHistEntries().forEach(function(e){if(wkMatch(en,e)&&e.equipment)set[e.equipment]=1;});var lib=wkExLib(en);if(lib&&lib.equipment)set[lib.equipment]=1;var arr=Object.keys(set);if(en.equipment&&arr.indexOf(en.equipment)<0)arr.push(en.equipment);return arr;}
+function wkBrandsFor(en){var set={};wkHistEntries().forEach(function(e){if(wkMatch(en,e)&&e.brand)set[e.brand]=1;});var arr=Object.keys(set);if(en.brand&&arr.indexOf(en.brand)<0)arr.push(en.brand);return arr;}
+/* ---- Smart (AI) generation — same n8n webhook (KV exercise_gen_webhook_url) the admin library uses ---- */
+function wkGenUrl(){if(WK_GENURL!=null)return Promise.resolve(WK_GENURL);return api('getKV',{key:'exercise_gen_webhook_url'}).then(function(v){WK_GENURL=((v&&typeof v==='object')?(v.value||''):(v||''))||'';return WK_GENURL;}).catch(function(){WK_GENURL='';return WK_GENURL;});}
+function wkGenPick(o,keys){for(var i=0;i<keys.length;i++){var k=keys[i];if(o&&o[k]!=null&&String(o[k]).trim())return String(o[k]).trim();}return '';}
+function wkGenExtract(d){
+  if(Array.isArray(d))d=d[0]||{};
+  var o=(d&&typeof d==='object')?((d.howto||d.mistakes||d.cues||d.breathing||d.bodyPart||d.category||d.equipment)?d:(d.output||d.result||d.data||d.json||d)):{};
+  if(Array.isArray(o))o=o[0]||{};
+  return {howto:wkGenPick(o,['howto','how_to','execution','steps','instructions']),mistakes:wkGenPick(o,['mistakes','avoid','common_mistakes','things_to_avoid','mistakes_to_avoid']),cues:wkGenPick(o,['cues','posture','posture_guidance','form_cues','perfect_form_cues']),breathing:wkGenPick(o,['breathing','breath','breathing_pattern','core_bracing','bracing']),bodyPart:wkGenPick(o,['bodyPart','body_part','bodypart','muscle','muscle_group','target']),category:wkGenPick(o,['category','cat','type','movement_type']),equipment:wkGenPick(o,['equipment','equip','gear','machine']),video:wkGenPick(o,['video','videoUrl','video_url','youtube','youtube_url','url'])};
+}
+function wkGen(ei){
+  var en=WK&&WK.entries[ei];if(!en)return;
+  var name=(en.name||'').trim();if(!name){toast('Type the exercise name first',true);return;}
+  toast('✨ Generating…');
+  wkGenUrl().then(function(url){
+    if(!url){toast('Set up the Smart webhook in the portal (Exercise library → ⚙) first',true);return;}
+    return fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify({name:name,bodyPart:'',equipment:en.equipment||'',category:'',allowed:{bodyParts:[],categories:[],equipment:[]}})})
+      .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+      .then(function(data){
+        var g=wkGenExtract(data);
+        if(!(g.howto||g.mistakes||g.cues||g.breathing||g.video||g.equipment))throw new Error('empty reply');
+        en.lib=en.lib||{};
+        if(g.howto)en.lib.howto=g.howto;if(g.mistakes)en.lib.mistakes=g.mistakes;if(g.cues)en.lib.cues=g.cues;if(g.breathing)en.lib.breathing=g.breathing;if(g.video)en.lib.video=g.video;
+        if(g.equipment&&!en.equipment)en.equipment=g.equipment;
+        en.showInfo=true;wkGenSaveLib(en,g);wkRender();toast('✨ Generated — details filled');
+      });
+  }).catch(function(e){toast('Could not generate — '+((e&&e.message)||'error'),true);});
+}
+/* if this exercise is already in the shared library, persist the generated details back (so every client reuses them) */
+function wkGenSaveLib(en,g){
+  try{if(!WK_LIB||!en.exId||!WK_EXBYID[en.exId])return;var ex=WK_EXBYID[en.exId];
+    if(g.howto)ex.howto=g.howto;if(g.mistakes)ex.mistakes=g.mistakes;if(g.cues)ex.cues=g.cues;if(g.breathing)ex.breathing=g.breathing;if(g.video)ex.video=g.video;
+    if(g.equipment&&!ex.equipment)ex.equipment=g.equipment;if(g.bodyPart&&!ex.bodyPart)ex.bodyPart=g.bodyPart;if(g.category&&!ex.category)ex.category=g.category;
+    api('saveExercises',{exercises:WK_LIB}).catch(function(){});
+  }catch(e){}
 }
 /* ---- step 1: pick a workout + date ---- */
 function wkOpen(){
@@ -698,7 +763,8 @@ function wkRenderPick(){
   host.innerHTML=html;
 }
 /* ---- step 2: build WK from the chosen workout and run the entry screen ---- */
-function wkStart(kind,id){
+function wkStart(kind,id){ wkEnsureLib().then(function(){wkStartBuild(kind,id);}); }
+function wkStartBuild(kind,id){
   var p=CURPLAN||{};var entries=[],dayName='Workout',dayId='';
   if(kind==='v2'){
     var ws=((p.training&&p.training.v2&&p.training.v2.workouts)||[]);
@@ -728,9 +794,29 @@ function wkTotals(){
 function wkExHTML(en,ei){
   var cols=en.track&&en.track.length?en.track:['reps','weight'];
   var gt='24px repeat('+cols.length+',1fr) 34px';
-  var h='<div class="wk-ex"><div class="wk-ex-h"><input class="wk-ex-nm" value="'+esc(en.name||'')+'" placeholder="Exercise name" oninput="wkName('+ei+',this.value)"><button class="wk-x" onclick="wkDelEx('+ei+')" title="Remove exercise">×</button></div>';
+  var vid=en.lib&&en.lib.video;
+  var hasInfo=en.lib&&(en.lib.howto||en.lib.mistakes||en.lib.cues||en.lib.breathing);
+  var hdr=(en.alts&&en.alts.length?'<button class="wk-mini" onclick="wkSwapAlt('+ei+')" title="Swap for an alternative">⇄</button>':'')+
+    (vid?'<button class="wk-mini" onclick="wkDemo('+ei+')" title="Watch demo video">▶</button>':'')+
+    (hasInfo?'<button class="wk-mini'+(en.showInfo?' on':'')+'" onclick="wkInfo('+ei+')" title="How-to &amp; cues">ℹ</button>':'')+
+    '<button class="wk-mini" onclick="wkGen('+ei+')" title="Auto-generate execution, cues, equipment &amp; demo (Smart)">✨</button>'+
+    '<button class="wk-x" onclick="wkDelEx('+ei+')" title="Remove exercise">×</button>';
+  var h='<div class="wk-ex"><div class="wk-ex-h"><input class="wk-ex-nm" value="'+esc(en.name||'')+'" placeholder="Exercise name" oninput="wkName('+ei+',this.value)">'+hdr+'</div>';
   if(en.target)h+='<div class="wk-target">🎯 '+esc(en.target)+'</div>';
   if(en.note)h+='<div class="wk-target" style="color:var(--text)">📝 '+esc(en.note)+'</div>';
+  if(en.showInfo&&hasInfo)h+='<div class="wk-info">'+
+    (en.lib.howto?'<div><b>✅ How to</b> '+esc(en.lib.howto)+'</div>':'')+
+    (en.lib.mistakes?'<div><b>⚠️ Avoid</b> '+esc(en.lib.mistakes)+'</div>':'')+
+    (en.lib.cues?'<div><b>⭐ Cues</b> '+esc(en.lib.cues)+'</div>':'')+
+    (en.lib.breathing?'<div><b>🫁 Breathing</b> '+esc(en.lib.breathing)+'</div>':'')+'</div>';
+  var equips=wkEquipFor(en);
+  h+='<div class="wk-chips"><span class="wk-chlab">Equip</span><button class="wk-chip'+(!en.equipment?' on':'')+'" onclick="wkSetEquip('+ei+',\'\')">Any</button>'+
+    equips.map(function(x){return '<button class="wk-chip'+(en.equipment===x?' on':'')+'" onclick="wkSetEquip('+ei+',\''+encodeURIComponent(x)+'\')">'+esc(x)+'</button>';}).join('')+
+    '<button class="wk-chip add" onclick="wkAddEquip('+ei+')">＋</button></div>';
+  var brands=wkBrandsFor(en);
+  h+='<div class="wk-chips"><span class="wk-chlab">Brand</span><button class="wk-chip'+(!en.brand?' on':'')+'" onclick="wkSetBrand('+ei+',\'\')">Default</button>'+
+    brands.map(function(b){return '<button class="wk-chip'+(en.brand===b?' on':'')+'" onclick="wkSetBrand('+ei+',\''+encodeURIComponent(b)+'\')">'+esc(b)+'</button>';}).join('')+
+    '<button class="wk-chip add" onclick="wkAddBrand('+ei+')">＋</button></div>';
   h+='<div class="wk-row" style="grid-template-columns:'+gt+'"><div class="wk-th">#</div>'+cols.map(function(v){return '<div class="wk-th">'+esc(wkVarLabel(v))+'</div>';}).join('')+'<div class="wk-th">✓</div></div>';
   en.sets.forEach(function(s,si){
     h+='<div class="wk-row" style="grid-template-columns:'+gt+'"><div class="wk-no">'+(si+1)+'</div>'+
@@ -759,7 +845,14 @@ function wkDone(ei,si){if(!WK)return;var en=WK.entries[ei];if(!en||!en.sets[si])
 function wkAddSet(ei){if(!WK)return;var en=WK.entries[ei];if(!en)return;var track=en.track&&en.track.length?en.track:['reps','weight'];var last=en.sets[en.sets.length-1]||{};var s={done:false,t:(last.t||{})};track.forEach(function(v){s[v]='';});en.sets.push(s);wkRender();}
 function wkDelSet(ei){if(!WK)return;var en=WK.entries[ei];if(!en||en.sets.length<=1)return;en.sets.pop();wkRender();}
 function wkDelEx(ei){if(!WK)return;WK.entries.splice(ei,1);wkRender();}
-function wkAddFreeEx(quiet){if(!WK)return;WK.entries.push({name:'',track:['reps','weight'],note:'',target:'',sec:'',sets:[{done:false,t:{},reps:'',weight:''}]});if(!quiet)wkRender();}
+function wkSetEquip(ei,v){v=decodeURIComponent(v);var en=WK&&WK.entries[ei];if(!en)return;en.equipment=(en.equipment===v?'':v);wkRender();}
+function wkAddEquip(ei){var en=WK&&WK.entries[ei];if(!en)return;var v=prompt('Equipment used for “'+(en.name||'exercise')+'”\n(e.g. Barbell, Dumbbell, Machine, Cable, Smith, Kettlebell):',en.equipment||'');if(v==null)return;en.equipment=v.trim();wkRender();}
+function wkSetBrand(ei,b){b=decodeURIComponent(b);var en=WK&&WK.entries[ei];if(!en)return;en.brand=(en.brand===b?'':b);wkRender();}
+function wkAddBrand(ei){var en=WK&&WK.entries[ei];if(!en)return;var b=prompt('Machine brand / variation for “'+(en.name||'exercise')+'”\n(e.g. Hammer Strength, Cybex, Life Fitness):',en.brand||'');if(b==null)return;en.brand=b.trim();wkRender();}
+function wkSwapAlt(ei){var en=WK&&WK.entries[ei];if(!en)return;var opts=[en.origName||en.name].concat(en.alts||[]);if(opts.length<2)return;var i=opts.indexOf(en.name);en.name=opts[(i+1)%opts.length];wkRender();}
+function wkDemo(ei){var en=WK&&WK.entries[ei];var v=en&&en.lib&&en.lib.video;if(!v){toast('No demo video for this exercise',true);return;}try{window.open(v,'_blank','noopener');}catch(e){location.href=v;}}
+function wkInfo(ei){var en=WK&&WK.entries[ei];if(!en)return;en.showInfo=!en.showInfo;wkRender();}
+function wkAddFreeEx(quiet){if(!WK)return;var tr=WK_DEFAULT_TRACK.slice();var s={done:false,t:{}};tr.forEach(function(v){s[v]='';});WK.entries.push({name:'',origName:'',exId:'',alts:[],track:tr,note:'',target:'',sec:'',brand:'',equipment:'',showInfo:false,lib:{video:'',howto:'',mistakes:'',cues:'',breathing:''},sets:[s]});if(!quiet)wkRender();}
 function wkCancel(){if(WK&&wkTotals().sets>0&&!confirm('Discard this unsaved session?'))return;WK=null;renderClient();}
 function wkFinish(){
   if(!WK)return;
@@ -770,17 +863,17 @@ function wkFinish(){
   if(!entries.length){toast('Add at least one exercise or set first',true);return;}
   var totalSets=0,totalReps=0,volume=0,exs=[];
   entries.forEach(function(en){
-    var best=0;
+    var best=0,evol=0,esets=0,ereps=0;
     (en.sets||[]).forEach(function(s){
       var any=(en.track||['reps','weight']).some(function(v){return String(s[v]||'').trim()!=='';});
-      if(s.done||any){totalSets++;var r=num(s.reps),w=num(s.weight);totalReps+=r;volume+=r*w;if(w&&r)best=Math.max(best,est1RM(w,r));}
+      if(s.done||any){totalSets++;esets++;var r=num(s.reps),w=num(s.weight);totalReps+=r;ereps+=r;var sv=w?w*r:r;volume+=w?w*r:0;evol+=sv;if(w&&r)best=Math.max(best,est1RM(w,r));}
     });
-    exs.push({name:en.name||'Exercise',est1rm:best||0});
+    exs.push({name:en.name||'Exercise',brand:en.brand||'',equipment:en.equipment||'',est1rm:best||0,vol:Math.round(evol),sets:esets,reps:ereps});
   });
   var all=0,dn=0;entries.forEach(function(en){(en.sets||[]).forEach(function(s){all++;if(s.done)dn++;});});
   var completion=all?Math.round(dn/all*100):0;
   var log={id:uid(),client_id:CUR.id,date:WK.date,day_id:WK.day_id||'',day_name:WK.day_name||'Workout',
-    entries:entries.map(function(en){return {name:en.name||'Exercise',track:en.track,note:en.note||'',sec:en.sec||'',
+    entries:entries.map(function(en){return {name:en.name||'Exercise',exId:en.exId||'',origName:en.origName||en.name||'',brand:en.brand||'',equipment:en.equipment||'',track:en.track,note:en.note||'',sec:en.sec||'',
       sets:en.sets.map(function(s){var o={done:!!s.done};(en.track||[]).forEach(function(v){o[v]=s[v]||'';});return o;})};}),
     summary:{totalSets:totalSets,totalReps:totalReps,volume:Math.round(volume),exercises:exs,loggedBy:(ME.name||'Coach'),by:'coach'},
     completion:completion,duration_sec:Math.max(0,Math.round((Date.now()-WK_START)/1000)),done:completion>=100};
