@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light" data-version="2026-11-18a">
+<html lang="en" data-theme="light" data-version="2026-11-18b">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -132,6 +132,20 @@ input:focus,select,textarea:focus{outline:none;border-color:var(--red)}
 .tsk .cb{width:22px;height:22px;border-radius:7px;border:2px solid var(--border);flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px}
 .tsk.done .cb{background:var(--good);border-color:var(--good);color:#fff}
 .tsk.done .ttl{text-decoration:line-through;color:var(--muted)}
+/* ===== workout runner — coach logs a client's completed session (saves a log identical to the client's) ===== */
+.wk-sec{font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-size:12px;margin:14px 2px 6px}
+.wk-ex{border:1px solid var(--border);border-radius:14px;background:var(--surface);padding:11px 12px;margin-bottom:11px;box-shadow:var(--shadow)}
+.wk-ex-h{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.wk-ex-nm{flex:1;min-width:0;font-family:var(--disp);font-weight:800;font-size:16px;border:0;border-bottom:2px solid var(--border);border-radius:0;background:transparent;padding:4px 2px}
+.wk-ex-nm:focus{border-bottom-color:var(--red)}
+.wk-x{flex:none;border:1px solid var(--border);background:var(--card);color:var(--muted);border-radius:8px;width:30px;height:30px;font-size:17px;line-height:1;cursor:pointer}
+.wk-target{font-size:12px;color:var(--muted);margin:0 0 6px}
+.wk-row{display:grid;gap:6px;align-items:center;margin-bottom:5px}
+.wk-th{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.02em;color:var(--muted);text-align:center;overflow:hidden}
+.wk-no{text-align:center;font-family:var(--disp);font-weight:900;font-size:15px;color:var(--muted)}
+.wk-row input{padding:8px 3px;text-align:center;border-radius:9px;font-size:15px}
+.wk-done{border:1px solid var(--border);background:var(--card2);border-radius:9px;height:38px;font-size:15px;font-weight:800;color:var(--muted);cursor:pointer}
+.wk-done.on{background:var(--good);border-color:var(--good);color:#fff}
 </style>
 </head>
 <body>
@@ -176,6 +190,8 @@ function calOf(t){t=t||{};if(t.cal!=null)return num(t.cal);return num(t.p)*4+num
 function sumNutr(items){return (items||[]).reduce(function(a,it){a.cal+=num(it&&it.cal);a.p+=num(it&&it.p);a.c+=num(it&&it.c);a.f+=num(it&&it.f);return a;},{cal:0,p:0,c:0,f:0});}
 function round(n){return Math.round(num(n));}
 function kg(v){v=String(v||'').trim();if(!v)return 0;var m=v.match(/[\d.]+/);return m?num(m[0]):0;}
+function est1RM(w,r){w=num(w);r=num(r);if(w<=0||r<=0)return 0;if(r===1)return Math.round(w);return Math.round(w*(1+r/30));}  /* Epley — matches the portal/client runner */
+function uid(){return 'wk'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 
 /* ========================= state ========================= */
 var ME={name:'Coach'};         // signed-in coach (best-effort)
@@ -326,8 +342,9 @@ function overviewHTML(){
   '</div>';
   var open=d.tasks&&d.tasks.filter(function(t){return t.status!=='done';}).length;
   var tasksLine=open?('<div class="pill crit" style="display:block;text-align:center;margin-top:10px">✅ '+open+' open task'+(open===1?'':'s')+' — see the Activity tab chart below</div>'):'';
-  var openBtn='<button class="btn ghost" style="margin:2px 0 10px" onclick="openPortalEdit()">✏️ Open full profile to edit ↗</button>';
-  return qa+openBtn+stats+profCard+tasksSection();
+  var wkoBtn='<button class="btn" style="margin:2px 0 8px" onclick="wkOpen()">🏋 Log a workout for '+esc((CUR.name||'client').split(' ')[0])+'</button>';
+  var openBtn='<button class="btn ghost" style="margin:0 0 10px" onclick="openPortalEdit()">✏️ Open full profile to edit ↗</button>';
+  return qa+wkoBtn+openBtn+stats+profCard+tasksSection();
 }
 /* deep-link into the full Transformation Portal editor for this client (edit plans, progress, everything) */
 function openPortalEdit(){if(!CUR)return;var u=PORTAL_URL+'#coach-edit='+encodeURIComponent(CUR.id);try{window.open(u,'_blank','noopener');}catch(e){location.href=u;}toast('Opening full profile in the portal…');}
@@ -613,6 +630,166 @@ function saveTask(){
   var a={id:'t'+Date.now(),client_id:CUR.id,title:title,detail:($('tk-detail')&&$('tk-detail').value||'').trim(),due_date:($('tk-due')&&$('tk-due').value)||todayISO(),recurrence:($('tk-rec')&&$('tk-rec').value)||'none',status:'open'};
   closeSheet();toast('Assigning…');
   api('saveAssignment',{assignment:a}).then(function(){reloadTasks();toast('Task assigned ✓');}).catch(function(e){toast((e&&e.message)||'Could not assign',true);});
+}
+
+/* ========================= WORKOUT RUNNER (coach logs a client's session) =========================
+   Reads the client's training plan (new v2 workouts, or legacy training.days), lets the coach enter
+   what the client actually did (reps/weight/… per set, tick off each set), then saves a workout log
+   that is byte-for-byte compatible with the client's own runner — so it shows up in the client portal,
+   the admin editor, and this app's Activity/Progress tabs, and marks the day done on the client's calendar. */
+var WK=null, WK_START=0;
+function wkVarLabel(v){return ({reps:'Reps',weight:'Wt kg',rir:'RIR',rest:'Rest',tempo:'Tempo',time:'Time',distance:'Dist',height:'Ht'})[v]||v;}
+function wkExCount(w){return (w&&w.sections||[]).reduce(function(a,s){return a+((s.exercises||[]).length);},0);}
+function wkDayExCount(dy){return (dy&&(dy.sections||[dy])||[]).reduce(function(a,s){return a+((s.exercises||[]).length);},0);}
+/* per-set targets for an exercise (mirrors the portal's wdExSets): explicit e.sets[] else scheme.sets rows */
+function wkExSets(e){
+  if(Array.isArray(e.sets)&&e.sets.length)return e.sets;
+  var track=(e.track&&e.track.length)?e.track:['reps','weight'];
+  var n=Math.max(1,Math.min(20,parseInt(e.scheme&&e.scheme.sets)||3));
+  var base={};track.forEach(function(v){base[v]=(e.scheme&&e.scheme[v]!=null&&e.scheme[v]!=='')?e.scheme[v]:'';});
+  var out=[];for(var i=0;i<n;i++)out.push(Object.assign({},base));return out;
+}
+function wkTargetLine(e){
+  var s=e.scheme||{};var b=[];
+  if(s.sets)b.push(s.sets+' sets');if(s.reps)b.push(s.reps+' reps');if(s.weight)b.push('@ '+s.weight+'kg');
+  if(s.rir)b.push('RIR '+s.rir);if(s.tempo)b.push('tempo '+s.tempo);if(s.time)b.push(s.time+'s');
+  if(s.distance)b.push(s.distance+'m');if(s.rest)b.push('rest '+s.rest+'s');
+  return b.join(' · ');
+}
+function wkEntryFromEx(e,secName){
+  var track=(e.track&&e.track.length)?e.track.slice():['reps','weight'];
+  var tsets=wkExSets(e);
+  return {name:e.name||e.exercise||'Exercise',track:track,note:e.notes||'',target:wkTargetLine(e),sec:secName||'',
+    sets:tsets.map(function(st){var s={done:false,t:st||{}};track.forEach(function(v){s[v]='';});return s;})};
+}
+/* ---- step 1: pick a workout + date ---- */
+function wkOpen(){
+  if(!CUR)return;
+  var head='<div class="cm-top"><button class="cm-back" onclick="renderClient()">‹</button><div style="flex:1;min-width:0"><div class="cm-title" style="font-size:16px">Log a workout</div><div class="cm-sub">'+esc(CUR.name||'Client')+'</div></div></div>';
+  var body='<div class="cm-body"><div class="field"><label>Session date</label><input id="wk-date" type="date" value="'+todayISO()+'" onchange="wkRenderPick()"></div><div id="wk-pick"></div></div>';
+  app(head+body);
+  wkRenderPick();
+}
+function wkCard(kind,id,name,focus,nx,sched){
+  var sub=(focus?esc(focus)+' · ':'')+(nx?nx+' exercise'+(nx===1?'':'s'):'build it as you go');
+  return '<button class="cm-cl" style="margin-bottom:9px" onclick="wkStart(\''+kind+'\',\''+esc(String(id))+'\')">'+
+    '<div style="flex:1;min-width:0"><div class="cm-cl-nm">'+(sched?'📅 ':'')+esc(name||'Workout')+'</div><div class="cm-cl-sub">'+sub+'</div></div><span class="cm-go">›</span></button>';
+}
+function wkRenderPick(){
+  var host=$('wk-pick');if(!host)return;
+  var p=CURPLAN||{};var v2=(p.training&&p.training.v2)||{};
+  var ws=Array.isArray(v2.workouts)?v2.workouts:[];
+  var days=(p.training&&Array.isArray(p.training.days))?p.training.days:[];
+  var cal=(v2.calendar&&typeof v2.calendar==='object')?v2.calendar:{};
+  var date=($('wk-date')&&$('wk-date').value)||todayISO();
+  var html='';
+  var schedIds=(cal[date]||[]);
+  if(schedIds.length){
+    var sh='';schedIds.forEach(function(id){var w=ws.find(function(x){return x.id===id;});if(w)sh+=wkCard('v2',w.id,w.name,w.focus,wkExCount(w),true);});
+    if(sh)html+='<div class="uline">📅 Scheduled for '+esc(fmtDate(date))+'</div>'+sh;
+  }
+  if(ws.length){
+    html+='<div class="uline">From the training plan</div>'+ws.map(function(w){return wkCard('v2',w.id,w.name,w.focus,wkExCount(w),false);}).join('');
+  }else if(days.length){
+    html+='<div class="uline">From the training plan</div>'+days.map(function(dy,i){return wkCard('day',String(i),dy.name,dy.focus,wkDayExCount(dy),false);}).join('');
+  }
+  html+='<div class="uline">Off-plan</div>'+wkCard('free','','Freestyle session','',0,false);
+  if(!ws.length&&!days.length)html='<div class="small muted" style="margin:4px 2px 12px">No training plan set up for this client yet — log a freestyle session below, or build a plan in the full profile.</div>'+html;
+  host.innerHTML=html;
+}
+/* ---- step 2: build WK from the chosen workout and run the entry screen ---- */
+function wkStart(kind,id){
+  var p=CURPLAN||{};var entries=[],dayName='Workout',dayId='';
+  if(kind==='v2'){
+    var ws=((p.training&&p.training.v2&&p.training.v2.workouts)||[]);
+    var w=ws.find(function(x){return x.id===id;});if(!w){toast('Workout not found',true);return;}
+    dayName=w.name||'Workout';dayId=w.id;
+    (w.sections||[]).forEach(function(sec){(sec.exercises||[]).forEach(function(e){entries.push(wkEntryFromEx(e,sec.name||''));});});
+  }else if(kind==='day'){
+    var days=((p.training&&p.training.days)||[]);var dy=days[+id];if(!dy){toast('Day not found',true);return;}
+    dayName=dy.name||'Workout';dayId=dy.id||('day'+id);
+    (dy.sections||[dy]).forEach(function(sec){((sec.exercises)||[]).forEach(function(e){entries.push(wkEntryFromEx(e,(sec!==dy&&sec.name)||''));});});
+  }else{dayName='Freestyle session';}
+  var date=($('wk-date')&&$('wk-date').value)||todayISO();
+  WK={client_id:CUR.id,date:date,day_id:dayId,day_name:dayName,entries:entries,kind:kind};
+  WK_START=Date.now();
+  if(!entries.length&&kind!=='free')wkAddFreeEx(true);
+  wkRender();
+}
+function wkTotals(){
+  var sets=0,done=0,all=0,reps=0,vol=0;
+  (WK?WK.entries:[]).forEach(function(en){(en.sets||[]).forEach(function(s){
+    all++;if(s.done)done++;
+    var any=(en.track||['reps','weight']).some(function(v){return String(s[v]||'').trim()!=='';});
+    if(s.done||any){sets++;var r=num(s.reps),w=num(s.weight);reps+=r;vol+=r*w;}
+  });});
+  return {sets:sets,done:done,all:all,reps:reps,vol:vol,pct:all?Math.round(done/all*100):0};
+}
+function wkExHTML(en,ei){
+  var cols=en.track&&en.track.length?en.track:['reps','weight'];
+  var gt='24px repeat('+cols.length+',1fr) 34px';
+  var h='<div class="wk-ex"><div class="wk-ex-h"><input class="wk-ex-nm" value="'+esc(en.name||'')+'" placeholder="Exercise name" oninput="wkName('+ei+',this.value)"><button class="wk-x" onclick="wkDelEx('+ei+')" title="Remove exercise">×</button></div>';
+  if(en.target)h+='<div class="wk-target">🎯 '+esc(en.target)+'</div>';
+  if(en.note)h+='<div class="wk-target" style="color:var(--text)">📝 '+esc(en.note)+'</div>';
+  h+='<div class="wk-row" style="grid-template-columns:'+gt+'"><div class="wk-th">#</div>'+cols.map(function(v){return '<div class="wk-th">'+esc(wkVarLabel(v))+'</div>';}).join('')+'<div class="wk-th">✓</div></div>';
+  en.sets.forEach(function(s,si){
+    h+='<div class="wk-row" style="grid-template-columns:'+gt+'"><div class="wk-no">'+(si+1)+'</div>'+
+      cols.map(function(v){return '<input type="'+(v==='tempo'?'text':'number')+'" inputmode="'+(v==='tempo'?'text':'decimal')+'" value="'+esc(s[v]||'')+'" placeholder="'+esc((s.t&&s.t[v])||'')+'" oninput="wkSet('+ei+','+si+',\''+v+'\',this.value)">';}).join('')+
+      '<button class="wk-done'+(s.done?' on':'')+'" onclick="wkDone('+ei+','+si+')">'+(s.done?'✓':'')+'</button></div>';
+  });
+  h+='<div style="display:flex;gap:8px;margin-top:7px"><button class="cm-back" style="padding:5px 11px" onclick="wkAddSet('+ei+')">＋ set</button><button class="cm-back" style="padding:5px 11px" onclick="wkDelSet('+ei+')">－ set</button></div></div>';
+  return h;
+}
+function wkRender(){
+  if(!WK)return;
+  var head='<div class="cm-top"><button class="cm-back" onclick="wkCancel()">‹</button><div style="flex:1;min-width:0"><div class="cm-title" style="font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(WK.day_name||'Workout')+'</div><div class="cm-sub">'+esc(CUR.name||'Client')+' · '+esc(fmtDate(WK.date))+'</div></div></div>';
+  var t=wkTotals();
+  var body='<div class="cm-body"><div class="small muted" style="margin:0 0 10px">Enter what '+esc((CUR.name||'the client').split(' ')[0])+' actually did, then tick ✓ each set completed.</div>';
+  var lastSec=null;
+  WK.entries.forEach(function(en,ei){var sc=en.sec||'';if(sc!==lastSec){lastSec=sc;if(sc)body+='<div class="wk-sec">'+esc(sc)+'</div>';}body+=wkExHTML(en,ei);});
+  body+='<button class="btn ghost" style="margin:4px 0 14px" onclick="wkAddFreeEx()">＋ Add exercise</button>';
+  body+='<div class="cm-st" style="margin-bottom:10px"><div class="k">Session so far</div><div class="v">'+t.sets+' set'+(t.sets===1?'':'s')+' · '+round(t.vol).toLocaleString()+' kg</div><div class="d">'+t.done+'/'+t.all+' ticked done · '+t.pct+'%</div></div>';
+  body+='<button class="btn" onclick="wkFinish()">✓ Save session</button><button class="btn ghost" style="margin-top:8px" onclick="wkCancel()">Cancel</button></div>';
+  app(head+body);
+}
+/* input handlers — commit into the model WITHOUT re-rendering (so typing never loses focus); only ✓/add/del re-render */
+function wkSet(ei,si,v,val){if(!WK)return;var en=WK.entries[ei];if(en&&en.sets[si])en.sets[si][v]=val;}
+function wkName(ei,val){if(!WK)return;var en=WK.entries[ei];if(en)en.name=val;}
+function wkDone(ei,si){if(!WK)return;var en=WK.entries[ei];if(!en||!en.sets[si])return;en.sets[si].done=!en.sets[si].done;wkRender();}
+function wkAddSet(ei){if(!WK)return;var en=WK.entries[ei];if(!en)return;var track=en.track&&en.track.length?en.track:['reps','weight'];var last=en.sets[en.sets.length-1]||{};var s={done:false,t:(last.t||{})};track.forEach(function(v){s[v]='';});en.sets.push(s);wkRender();}
+function wkDelSet(ei){if(!WK)return;var en=WK.entries[ei];if(!en||en.sets.length<=1)return;en.sets.pop();wkRender();}
+function wkDelEx(ei){if(!WK)return;WK.entries.splice(ei,1);wkRender();}
+function wkAddFreeEx(quiet){if(!WK)return;WK.entries.push({name:'',track:['reps','weight'],note:'',target:'',sec:'',sets:[{done:false,t:{},reps:'',weight:''}]});if(!quiet)wkRender();}
+function wkCancel(){if(WK&&wkTotals().sets>0&&!confirm('Discard this unsaved session?'))return;WK=null;renderClient();}
+function wkFinish(){
+  if(!WK)return;
+  var entries=WK.entries.filter(function(en){
+    if((en.name||'').trim())return true;
+    return (en.sets||[]).some(function(s){return s.done||(en.track||[]).some(function(v){return String(s[v]||'').trim()!=='';});});
+  });
+  if(!entries.length){toast('Add at least one exercise or set first',true);return;}
+  var totalSets=0,totalReps=0,volume=0,exs=[];
+  entries.forEach(function(en){
+    var best=0;
+    (en.sets||[]).forEach(function(s){
+      var any=(en.track||['reps','weight']).some(function(v){return String(s[v]||'').trim()!=='';});
+      if(s.done||any){totalSets++;var r=num(s.reps),w=num(s.weight);totalReps+=r;volume+=r*w;if(w&&r)best=Math.max(best,est1RM(w,r));}
+    });
+    exs.push({name:en.name||'Exercise',est1rm:best||0});
+  });
+  var all=0,dn=0;entries.forEach(function(en){(en.sets||[]).forEach(function(s){all++;if(s.done)dn++;});});
+  var completion=all?Math.round(dn/all*100):0;
+  var log={id:uid(),client_id:CUR.id,date:WK.date,day_id:WK.day_id||'',day_name:WK.day_name||'Workout',
+    entries:entries.map(function(en){return {name:en.name||'Exercise',track:en.track,note:en.note||'',sec:en.sec||'',
+      sets:en.sets.map(function(s){var o={done:!!s.done};(en.track||[]).forEach(function(v){o[v]=s[v]||'';});return o;})};}),
+    summary:{totalSets:totalSets,totalReps:totalReps,volume:Math.round(volume),exercises:exs,loggedBy:(ME.name||'Coach'),by:'coach'},
+    completion:completion,duration_sec:Math.max(0,Math.round((Date.now()-WK_START)/1000)),done:completion>=100};
+  toast('Saving…');
+  api('saveWorkoutLog',{log:log}).then(function(){
+    var c=cur();c.workouts=c.workouts||[];c.workouts.unshift(log);
+    WK=null;CTAB='activity';renderClient();
+    toast('Workout logged ✓ '+totalSets+' set'+(totalSets===1?'':'s')+' · '+round(volume).toLocaleString()+' kg');
+  }).catch(function(e){toast((e&&e.message)||'Could not save',true);});
 }
 
 /* ========================= CHAT ========================= */
