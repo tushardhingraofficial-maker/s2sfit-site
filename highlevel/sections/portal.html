@@ -7596,7 +7596,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04uc';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04ud';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -18384,6 +18384,7 @@ async function wkoColPublish(){try{await DB.setKV('workout_log_cols',WKOCOL);WKO
 let ACT_TYPE='all';
 let ACT_PLANS={};   /* cid → migrated plan, cached across renders (for log macro targets) */
 let ACT_WKS=[];     /* every workout log from the last render — used to compare a session to the client's history */
+let ACT_WK_REG={}, ACT_WK_SEQ=0;   /* per-render registry: render-key → the exact workout log object (robust to missing/duplicate log ids) */
 function openActivity(){ACT_PLANS={};ACT_SEEN=Date.now();try{localStorage.setItem('s2s_act_seen',String(ACT_SEEN));}catch(e){}const b=$('act-nav-badge');if(b)b.classList.add('hidden');$('activity-modal').classList.add('open');fillActClients();renderActivity();}
 function closeActivity(){$('activity-modal').classList.remove('open');}
 /* Notification badge: count of client activity newer than the coach last opened the feed. */
@@ -18441,6 +18442,7 @@ async function renderActivity(){
   ACT_COMMENTS={};try{const allC=await DB.listComments({});(allC||[]).forEach(c=>{const k=c.client_id+'|'+c.post_type+'|'+c.post_key;(ACT_COMMENTS[k]=ACT_COMMENTS[k]||[]).push(c);});}catch(e){}
   ACT_LIKES={};try{const allL=await DB.listLikes({});(allL||[]).forEach(l=>{const k=l.client_id+'|'+l.post_type+'|'+l.post_key;(ACT_LIKES[k]=ACT_LIKES[k]||[]).push(l);});}catch(e){}
   const yst=addDaysISO(today,-1);let html='',lastDay=null;
+  ACT_WK_REG={};ACT_WK_SEQ=0;   // fresh workout-detail registry for this render
   list.forEach(e=>{ if(e.date!==lastDay){lastDay=e.date;const lbl=e.date===today?'Today':(e.date===yst?'Yesterday':fmtDate(e.date));html+='<div class="act-day">'+esc(lbl)+'</div>';}
     html+=actItemHTML(e); });
   host.innerHTML=html;
@@ -18474,7 +18476,7 @@ function actItemHTML(e){
       '<span class="pill" style="margin:0 6px 6px 0">Volume: <b>'+(s.volume||0)+' kg</b></span>'+
       (w.duration_sec?'<span class="pill" style="margin:0 6px 6px 0">Time: <b>'+Math.round(w.duration_sec/60)+'m</b></span>':'')+
       '<span class="pill" style="margin:0 6px 6px 0">Done: <b>'+(w.completion||0)+'%</b></span></div>'+
-      (hasDetail?('<button class="awd-toggle" data-nm="'+esc((e.name||'Client').split(' ')[0])+'" onclick="actWkToggle(this,\''+esc(e.pk)+'\')">▾ View full workout</button><div class="awd-detail" id="awd-'+esc(e.pk)+'" style="display:none"></div>'):'')+
+      (hasDetail?(function(){const rk='awk'+(ACT_WK_SEQ++);ACT_WK_REG[rk]=w;return '<button class="awd-toggle" data-nm="'+esc((e.name||'Client').split(' ')[0])+'" onclick="actWkToggle(this,\''+rk+'\')">▾ View full workout</button><div class="awd-detail" id="awd-'+rk+'" style="display:none"></div>';})():'')+
       '</div>';
   }else{
     body='<div class="act-body">'+actMacroHTML(e)+
@@ -18509,10 +18511,10 @@ function actMealsHTML(items){
       '<div class="act-meal-items">'+names+'</div></div>';}).join('');
 }
 /* ───── admin activity: full workout detail (every exercise, set, reps/weight/RIR, comment, history comparison, PR) ───── */
-function actWkToggle(btn,id){
-  const d=$('awd-'+id);if(!d)return;
+function actWkToggle(btn,rk){
+  const d=$('awd-'+rk);if(!d)return;
   if(d.style.display!=='none'){d.style.display='none';d.innerHTML='';btn.innerHTML='▾ View full workout';return;}
-  const w=(ACT_WKS||[]).find(x=>x.id===id);
+  const w=ACT_WK_REG[rk];
   d.innerHTML=w?actWorkoutDetailHTML(w,(btn.dataset.nm||'Client')):'<div class="small" style="color:var(--muted)">Workout not found.</div>';
   d.style.display='';btn.innerHTML='▴ Hide full workout';
 }
@@ -18527,12 +18529,12 @@ function actWkEntryStat(en){
   return {best1:Math.round(best1),topW:topW,topR:topR,sets:sets,reps:reps,vol:Math.round(vol)};
 }
 /* compare an entry to the client's history: most-recent prior session with this exercise + all-time best est-1RM */
-function actWkCompare(cid,curId,curDate,en){
+function actWkCompare(cid,curW,curDate,en){
   const nm=(en.name||'').toLowerCase();
   const match=function(log){return (log.entries||[]).find(function(x){return (en.exId&&x.exId&&x.exId===en.exId)||(x.name&&nm&&String(x.name).toLowerCase()===nm);});};
   let prevDate=null,prevStat=null,allBest=0;
   (ACT_WKS||[]).forEach(function(log){
-    if(log.client_id!==cid||log.id===curId)return;
+    if(log.client_id!==cid||log===curW)return;   // exclude the current session by reference (robust to missing/duplicate ids)
     const m=match(log);if(!m)return;
     const st=actWkEntryStat(m);if(st.best1>allBest)allBest=st.best1;
     const d=String(log.date||'').slice(0,10);
@@ -18578,7 +18580,7 @@ function actWkExCardHTML(w,en,clientName){
   }).join('');
   const head='<div class="awd-sethead"><span>Set</span><span>Kg</span><span>'+(isTime?'Time':'Reps')+'</span><span>'+esc(eff)+'</span><span>✓</span></div>';
   const cmt=(en.comment&&String(en.comment).trim())?('<div class="awd-cmt">💬 <b>'+esc(clientName||'Client')+':</b> '+esc(en.comment)+'</div>'):'';
-  const cur=actWkEntryStat(en),cmp=actWkCompare(w.client_id,w.id,String(w.date||'').slice(0,10),en);
+  const cur=actWkEntryStat(en),cmp=actWkCompare(w.client_id,w,String(w.date||'').slice(0,10),en);
   let cmpHTML='';
   if(cur.best1||cur.topW){
     const parts=[];
