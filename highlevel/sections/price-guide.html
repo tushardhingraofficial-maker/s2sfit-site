@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-version="v2026-11-19a">
+<html lang="en" data-version="v2026-11-19b">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -1120,20 +1120,16 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
         <p class="po-sub" id="wo-pay">Or split it across 4 payments — $700 to start, then $500 each, spread across the program.</p>
       </div>
 
-      <div class="po-card">
-        <div class="po-h">2 · You're probably already spending it</div>
-        <p class="po-sub">On things that change nothing — a gym membership you barely use, takeaways, random supplements, the last program that didn't work. A year of "getting by" quietly costs <b>more than this</b>, with nothing to show for it. This is the same money, finally pointed at a result you actually keep.</p>
-      </div>
 
       <div class="po-card save" id="wo-cmp">
-        <div class="po-h good">3 · It's the cheaper path — not the expensive one</div>
+        <div class="po-h good">2 · It's the cheaper path — not the expensive one</div>
         <div class="po-save-row"><span class="l">A personal trainer for your goal <small>(your numbers)</small></span><span class="v bad" id="wo-pt">$6,240</span></div>
         <div class="po-save-row"><span class="l" id="wo-s2s-l">The S2S Hybrid — done &amp; yours to keep</span><span class="v good" id="wo-s2s">$2,200</span></div>
         <div class="po-save-big">You <b>save <span id="wo-save">$4,040</span></b> — <span id="wo-voucher"></span>and you own the result for life.</div>
       </div>
 
       <div class="po-wait">
-        <div class="po-h">4 · And the real cost of waiting…</div>
+        <div class="po-h">3 · And the real cost of waiting…</div>
         <div class="wait-pick">
           <span class="wp-lbl">If you put it off another…</span>
           <div class="wp-btns">
@@ -1150,7 +1146,7 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
       </div>
 
       <div class="po-card reward">
-        <div class="po-h gold">5 · You earn rewards for every bit of effort</div>
+        <div class="po-h gold">4 · You earn rewards for every bit of effort</div>
         <p class="po-sub">Our Transformation Portal pays you back in <b>reward points</b> for staying consistent. Every action banks points:</p>
         <div class="rwd-grid">
           <div class="rwd-i"><span class="rwd-n">✅ Weekly check-in</span><span class="rwd-p">75 pts</span></div>
@@ -1662,7 +1658,7 @@ function renderWait(){
     let fhtml='';
     if(String(CFG.fb1Title||'').trim())fhtml+=card(CFG.fb1Title,momPrice,CFG.fb1Desc,CFG.fb1Bullets,CFG.fb1Cta,CFG.fb1Url,'paid');
     if(String(CFG.fb2Title||'').trim())fhtml+=card(CFG.fb2Title,bpPrice,CFG.fb2Desc,CFG.fb2Bullets,CFG.fb2Cta,CFG.fb2Url,'step');
-    fbEl.innerHTML=fhtml?('<div class="po-h gold">6 · Not ready for full coaching? Start smaller.</div><p class="po-sub">You don’t have to do nothing. Pick a lighter way in — and step up to full coaching whenever you’re ready.</p><div class="fb-wrap">'+fhtml+'</div>'):'';
+    fbEl.innerHTML=fhtml?('<div class="po-h gold">5 · Not ready for full coaching? Start smaller.</div><p class="po-sub">You don’t have to do nothing. Pick a lighter way in — and step up to full coaching whenever you’re ready.</p><div class="fb-wrap">'+fhtml+'</div>'):'';
     fbEl.style.display=fhtml?'':'none';
   }
   renderPlanGrid();
@@ -1709,7 +1705,7 @@ function renderPlanGrid(){
     h+='</div>';
   });
   h+='</div>';
-  el.innerHTML='<div class="po-h">7 · Every option, side by side</div><p class="po-sub">Same team, same app — different levels of hands-on. Here’s what each one costs, commits you to, and who it suits.</p><div class="pg-scroll">'+h+'</div>';
+  el.innerHTML='<div class="po-h">6 · Every option, side by side</div><p class="po-sub">Same team, same app — different levels of hands-on. Here’s what each one costs, commits you to, and who it suits.</p><div class="pg-scroll">'+h+'</div>';
 }
 
 /* ═══════════ TRILEMMA — pick two ═══════════ */
@@ -1757,8 +1753,8 @@ function renderTri(){
 
 /* ═══════════ SLIDE ENGINE ═══════════ */
 // two paths from the preference branch: online-only skips the PT-cost calc and the PT face-off
-const ORDER_HYBRID=['s-cover','s-problem','s-trilemma','s-prefer','s-ptcost','s-system','s-commit','s-pricing','s-final','s-decision','s-wait','s-close'];
-const ORDER_ONLINE=['s-cover','s-problem','s-trilemma','s-prefer','s-system','s-commit','s-pricing','s-decision','s-wait','s-close'];
+const ORDER_HYBRID=['s-cover','s-problem','s-prefer','s-ptcost','s-system','s-commit','s-pricing','s-final','s-decision','s-wait','s-close'];
+const ORDER_ONLINE=['s-cover','s-problem','s-prefer','s-system','s-commit','s-pricing','s-decision','s-wait','s-close'];
 let COACH_PREF='oneonone';   // 'online' | 'oneonone' — chosen on the s-prefer branch
 function FLOW(){return COACH_PREF==='online'?ORDER_ONLINE:ORDER_HYBRID;}
 let current='s-start', history=[];
