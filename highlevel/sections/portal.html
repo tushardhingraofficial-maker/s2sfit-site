@@ -2168,6 +2168,8 @@ details.mcx-map .mapwrap{padding-bottom:12px}
 .rmt-bar{height:6px;border-radius:4px;background:var(--border);overflow:hidden;margin:9px 0 4px}
 .rmt-bar>span{display:block;height:100%;background:var(--good)}
 .rmt-pct{font-size:11px;color:var(--muted);font-weight:700}
+.rmt-ic{width:13px;height:13px;vertical-align:-2px;flex:none;display:inline-block}
+.rmt-step-ic{width:15px;height:15px}
 .rd-badge{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:20px;white-space:nowrap}
 .rd-bactive{background:rgba(232,23,13,.1);color:var(--red)}.rd-bdone{background:rgba(21,163,74,.12);color:var(--good)}.rd-bup{background:var(--card2);color:var(--muted)}
 .rd-focus{font-size:11.5px;color:var(--text);line-height:1.5;margin-top:9px;background:var(--card2);border-radius:9px;padding:8px 10px}
@@ -5581,7 +5583,7 @@ img,svg,canvas,video{max-width:100%}
               <button class="adash-navbtn" onclick="openAlloc()" title="Training &amp; nutrition plan updates — record when each client was last updated, set the review cycle (e.g. 4 weeks) and see who's overdue"><svg class="nav-ic"><use href="#ic-refresh"/></svg> Plan updates</button>
               <button class="adash-navbtn" onclick="openOnb()" title="Onboarding tracker — every client's onboarding stage (strategy call → setup → assessment → allocation → demo → portal tour) on a timeline"><svg class="nav-ic"><use href="#ic-compass"/></svg> Onboarding tracker</button>
               <button class="adash-navbtn" onclick="openTimeline()" title="Client timeline — every client's time with you (days &amp; weeks) on a Gantt, with custom phases that flag when it's time to act (offers, check-ins, milestones)"><svg class="nav-ic"><use href="#ic-cal-week"/></svg> Client timeline <span id="tl-nav-badge" class="pill warn hidden" style="margin-left:4px"></span></button>
-              <button class="adash-navbtn" onclick="openRmTracker()" title="Roadmap tracker — every client's Progress → Roadmap at a glance: which block they're on, what's complete, and whose roadmap needs attention (no roadmap set, a block overdue, or a finished roadmap that needs the next goal)."><svg class="nav-ic"><use href="#ic-trending"/></svg> Roadmap tracker</button>
+              <button class="adash-navbtn" onclick="openRmTracker()" title="Roadmap tracker — every client's Progress → Roadmap at a glance: which block they're on, what's complete, and whose roadmap needs attention (no roadmap set, a block overdue, or a finished roadmap that needs the next goal)."><svg class="nav-ic"><use href="#ic-trending"/></svg> Roadmap tracker <span id="rmt-nav-badge" class="pill warn hidden" style="margin-left:4px"></span></button>
               <button class="adash-navbtn" onclick="mcWatchOpen()" title="Metric watch — clients whose tracked metrics are moving against their current training phase">📊 Metric watch <span id="mc-watch-badge" class="pill warn hidden" style="margin-left:4px"></span></button>
               <button class="adash-navbtn" onclick="openIngLib()" title="Ingredient library — the master food + macro list the whole app uses. Import your list, add/edit ingredients &amp; macros, set diet type (veg / vegan / non-veg)."><svg class="nav-ic"><use href="#ic-bowl"/></svg> Ingredient library</button>
               <button class="adash-navbtn" onclick="openRecipeMod()" title="Moderate the shared community recipe book — review every recipe clients have added (macros, author, Smart vs personal) and remove anything inappropriate for everyone."><svg class="nav-ic"><use href="#ic-pot"/></svg> Recipes</button>
@@ -7491,7 +7493,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04tu';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04tv';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -9077,6 +9079,7 @@ const SVG_ICONS={
   link:'<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
   settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
   bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
   breath:'<path d="M12 4V8"/><path d="M12 8 11.3 9.5"/><path d="M12 8 12.7 9.5"/><path d="M11.3 9.5C11.3 11 10.5 11.3 9.4 11.8 7.8 12.5 7.2 14.3 7.2 16.2 7.2 18.1 7.9 19.4 9.4 19.4 11 19.4 11.3 18 11.3 16.3Z"/><path d="M12.7 9.5C12.7 11 13.5 11.3 14.6 11.8 16.2 12.5 16.8 14.3 16.8 16.2 16.8 18.1 16.1 19.4 14.6 19.4 13 19.4 12.7 18 12.7 16.3Z"/>'
 };
 function svgIcon(name,cls){const p=SVG_ICONS[name];if(!p)return '';return '<svg class="ic '+(cls||'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';}
@@ -19715,6 +19718,8 @@ async function openRmTracker(){
   rmtRender();
 }
 function closeRmTracker(){$('rmt-modal').classList.remove('open');}
+/* rail badge — count of non-archived clients whose roadmap needs attention (from OV_ROWS.rm, built in the overview) */
+function rmtNavBadge(){const b=$('rmt-nav-badge');if(!b)return;const n=(OV_ROWS||[]).filter(r=>r&&!r.archived&&r.rm&&r.rm.attn).length;if(n>0){b.textContent=n;b.classList.remove('hidden');}else b.classList.add('hidden');}
 function rmtSetFilter(f){RMT_FILTER=f;rmtRender();}
 function rmtOpenClient(cid){closeRmTracker();editClient(cid);}
 function rmtRender(){
@@ -19725,16 +19730,16 @@ function rmtRender(){
   const chip=(v,l,col)=>'<div class="macro" style="text-align:left"><div class="k">'+l+'</div><div style="font-family:var(--disp);font-weight:800;font-size:22px;color:'+col+'">'+v+'</div></div>';
   let h='<div class="small" style="color:var(--muted);margin:0 0 12px">Each row is a client and the blocks on their <b>Progress → Roadmap</b>. <b style="color:var(--good)">Green = complete</b>, <b style="color:var(--prot)">blue ring = current block</b>, faded = upcoming. A block completes when its goals are hit (or you tick it in the client’s Roadmap builder). Click a name to open the client.</div>'+
     '<div class="macro-grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));margin-bottom:14px">'+
-    chip(n('active'),'In progress','var(--prot)')+chip(attn.length,'🔔 Need attention','var(--crit)')+chip(n('finished'),'Finished','var(--good)')+chip(n('none'),'No roadmap','var(--muted)')+'</div>';
+    chip(n('active'),'In progress','var(--prot)')+chip(attn.length,svgIcon('bell','rmt-ic')+' Need attention','var(--crit)')+chip(n('finished'),'Finished','var(--good)')+chip(n('none'),'No roadmap','var(--muted)')+'</div>';
   if(attn.length){
-    h+='<div class="rmt-alert"><div class="rmt-alert-h">🔔 Roadmaps needing attention ('+attn.length+')</div>'+
+    h+='<div class="rmt-alert"><div class="rmt-alert-h">'+svgIcon('bell','rmt-ic')+' Roadmaps needing attention ('+attn.length+')</div>'+
       attn.map(r=>{const f=r.flags[0]||{};const sevc=f.sev==='crit'?'var(--crit)':(f.sev==='warn'?'var(--gold,#f5c842)':'var(--prot)');
         return '<div class="rmt-alert-row"><span class="rmt-alert-dot" style="background:'+sevc+'"></span>'+
           '<button class="rmt-alert-name" onclick="rmtOpenClient(\''+r.c.id+'\')">'+esc(r.c.name||r.c.email||'Client')+'</button>'+
           '<span class="rmt-alert-msg">'+esc(f.label||'')+'</span>'+
           '<button class="btn-xxs rmt-alert-open" onclick="rmtOpenClient(\''+r.c.id+'\')">Open →</button></div>';}).join('')+
       '</div>';
-  } else h+='<div class="rmt-alert ok"><div class="rmt-alert-h">✓ All roadmaps on track</div></div>';
+  } else h+='<div class="rmt-alert ok"><div class="rmt-alert-h">'+svgIcon('check','rmt-ic')+' All roadmaps on track</div></div>';
   const F=[['active','In progress'],['attention','Need attention'],['none','No roadmap'],['finished','Finished'],['all','All']];
   h+='<div class="onb-filter">'+F.map(f=>{const cnt=f[0]==='all'?rows.length:(f[0]==='attention'?attn.length:n(f[0]));return '<button class="btn-sm'+(RMT_FILTER===f[0]?' on':'')+'" onclick="rmtSetFilter(\''+f[0]+'\')">'+f[1]+' ('+cnt+')</button>';}).join('')+'</div>';
   let list=rows.filter(r=>RMT_FILTER==='all'||(RMT_FILTER==='attention'?rmtAttention(r.sm):r.kind===RMT_FILTER));
@@ -19748,19 +19753,19 @@ function rmtRowHTML(r){
   let statusLabel,statusCol;
   if(!sm.has){statusLabel='No roadmap';statusCol='var(--muted)';}
   else if(sm.noBlocks){statusLabel='No blocks yet';statusCol='var(--gold,#f5c842)';}
-  else if(sm.finished){statusLabel='Finished ✓';statusCol='var(--good)';}
+  else if(sm.finished){statusLabel='Finished '+svgIcon('check','rmt-ic');statusCol='var(--good)';}
   else{statusLabel='Block '+(sm.activeIdx+1)+'/'+sm.total+((sm.activeBlock&&sm.activeBlock.name)?' · '+esc(sm.activeBlock.name):'')+(sm.overdue?' · <span class="rmt-over">overdue</span>':'');statusCol='var(--prot)';}
   let steps;
   if(sm.total){
     steps=sm.blocks.map((b,i)=>{const done=rmtDone(b),active=(i===sm.activeIdx);const cls=done?'done':(active?'active':'pending');const ph=rmPhaseCls(b.phase);
       const tip=((b.name||('Block '+(i+1)))+(b.phase?' · '+b.phase:'')+(rmBlockDatesText(b)?' · '+rmBlockDatesText(b):'')+' — '+(done?'complete':(active?'current':'upcoming')));
-      return '<span class="rmt-step '+cls+' '+ph+((active&&sm.overdue)?' over':'')+'" title="'+esc(tip)+'">'+(done?'✓':(i+1))+'</span>';
+      return '<span class="rmt-step '+cls+' '+ph+((active&&sm.overdue)?' over':'')+'" title="'+esc(tip)+'">'+(done?svgIcon('check','rmt-step-ic'):(i+1))+'</span>';
     }).join('<span class="rmt-conn"></span>');
   } else steps='<span class="rmt-none">'+(sm.has?'No blocks added yet':'No roadmap set')+'</span>';
   return '<div class="rmt-row'+(rmtAttention(sm)?' attn':'')+'">'+
     '<div class="rmt-row-top">'+
       '<button class="rmt-name" onclick="rmtOpenClient(\''+cid+'\')" title="Open client">'+esc(r.c.name||r.c.email||'Client')+'</button>'+
-      (vis?'<span class="rmt-vision" title="Vision">🎯 '+esc(vis)+'</span>':'')+
+      (vis?'<span class="rmt-vision" title="Vision">'+svgIcon('goal','rmt-ic')+' '+esc(vis)+'</span>':'')+
       '<span class="rmt-status" style="color:'+statusCol+'">'+statusLabel+'</span>'+
     '</div>'+
     '<div class="rmt-steps">'+steps+'</div>'+
@@ -24387,6 +24392,7 @@ async function renderOverview(){
       lastCall:lastCallBy[c.id]||null,
       trainDays:((tr.days||[]).length),startDate:pf.startDate||'',traffic:(plan&&plan.staff_feedback&&plan.staff_feedback.traffic)||'',
       tl:((plan&&plan.milestones&&plan.milestones.timeline)||null),
+      rm:(function(){try{const s=rmtSummary(plan);const f=rmtFlags(s)[0]||null;return {attn:rmtAttention(s),type:f?f.type:'',label:f?f.label:''};}catch(e){return {attn:false,type:'',label:''};}})(),   // roadmap-tracker attention summary → nav badge
       redeemReq:!!(plan&&plan.milestones&&plan.milestones.rewards&&plan.milestones.rewards.request&&plan.milestones.rewards.request.at),
       pointReq:((plan&&plan.milestones&&plan.milestones.rewards&&Array.isArray(plan.milestones.rewards.claims))?plan.milestones.rewards.claims.filter(c=>c&&c.status==='pending').length:0),
       claims:((plan&&plan.milestones&&plan.milestones.rewards&&Array.isArray(plan.milestones.rewards.claims))?plan.milestones.rewards.claims.filter(c=>c&&c.status==='pending'):[]),
@@ -24400,6 +24406,7 @@ async function renderOverview(){
   }));
   renderOverviewSummary();renderOverviewTable();
   try{mcWatchBadge();}catch(e){}
+  try{rmtNavBadge();}catch(e){}
   try{refreshActivityBadge();}catch(e){}
   try{if(DB.mode==='api')slReload(false);}catch(e){}
   try{renderNotifications();}catch(e){}
