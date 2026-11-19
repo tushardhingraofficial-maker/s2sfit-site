@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light" data-version="2026-11-18d">
+<html lang="en" data-theme="light" data-version="2026-11-19a">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -147,6 +147,11 @@ input:focus,select,textarea:focus{outline:none;border-color:var(--red)}
 .wk-chip{border:1px solid var(--border);background:var(--card2);color:var(--muted);border-radius:16px;padding:4px 10px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap}
 .wk-chip.on{background:var(--brand);border-color:var(--brand);color:#fff}
 .wk-chip.add{color:var(--brand);font-weight:900}
+.wk-swap-item{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:var(--card);border:1px solid var(--border);border-radius:11px;padding:11px 13px;margin-bottom:7px;cursor:pointer}
+.wk-swap-item:active{background:var(--card2)}
+.wk-swap-nm{display:block;font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wk-swap-sub{display:block;font-size:11px;color:var(--muted);margin-top:1px}
+.wk-swap-vid{flex:none;color:var(--red);font-size:13px}
 .wk-info{border:1px solid var(--border);border-left:3px solid var(--brand);border-radius:9px;background:var(--card2);padding:9px 11px;margin:0 0 8px;font-size:12.5px;line-height:1.5}
 .wk-info div{margin-bottom:4px}
 .wk-info div:last-child{margin-bottom:0}
@@ -915,7 +920,7 @@ function wkExHTML(en,ei){
   var gt='24px repeat('+cols.length+',1fr) 34px';
   var vid=en.lib&&en.lib.video;
   var hasInfo=en.lib&&(en.lib.howto||en.lib.mistakes||en.lib.cues||en.lib.breathing);
-  var hdr=(en.alts&&en.alts.length?'<button class="wk-mini" onclick="wkSwapAlt('+ei+')" title="Swap for an alternative">⇄</button>':'')+
+  var hdr='<button class="wk-mini" onclick="wkSwapOpen('+ei+')" title="Swap this exercise — pick another from your library">⇄</button>'+
     (vid?'<button class="wk-mini" onclick="wkDemo('+ei+')" title="Watch demo video">▶</button>':'')+
     (hasInfo?'<button class="wk-mini'+(en.showInfo?' on':'')+'" onclick="wkInfo('+ei+')" title="How-to &amp; cues">ℹ</button>':'')+
     '<button class="wk-mini" onclick="wkGen('+ei+')" title="Auto-generate execution, cues, equipment &amp; demo (Smart)">✨</button>'+
@@ -969,6 +974,51 @@ function wkAddEquip(ei){var en=WK&&WK.entries[ei];if(!en)return;var v=prompt('Eq
 function wkSetBrand(ei,b){b=decodeURIComponent(b);var en=WK&&WK.entries[ei];if(!en)return;en.brand=(en.brand===b?'':b);wkRender();}
 function wkAddBrand(ei){var en=WK&&WK.entries[ei];if(!en)return;var b=prompt('Machine brand / variation for “'+(en.name||'exercise')+'”\n(e.g. Hammer Strength, Cybex, Life Fitness):',en.brand||'');if(b==null)return;en.brand=b.trim();wkRender();}
 function wkSwapAlt(ei){var en=WK&&WK.entries[ei];if(!en)return;var opts=[en.origName||en.name].concat(en.alts||[]);if(opts.length<2)return;var i=opts.indexOf(en.name);en.name=opts[(i+1)%opts.length];wkRender();}
+/* ── Swap an exercise: pick any exercise from the library (keeps the logged sets); programmed alternatives show as quick-picks ── */
+var WK_SWAP_EI=-1;
+function wkSwapOpen(ei){
+  if(!WK)return;
+  if(!WK_LIB){wkEnsureLib().then(function(){wkSwapOpen(ei);});toast('Loading library…');return;}
+  WK_SWAP_EI=ei;var en=WK.entries[ei];if(!en)return;
+  var quick=[];[en.origName].concat(en.alts||[]).forEach(function(n){if(n&&quick.indexOf(n)<0&&n!==en.name)quick.push(n);});
+  var quickHTML=quick.length?('<div class="small muted" style="margin:0 0 6px">Programmed alternatives</div><div class="wk-chips" style="margin-bottom:14px">'+quick.map(function(n){return '<button class="wk-chip" onclick="wkSwapToName(\''+encodeURIComponent(n)+'\')">⇄ '+esc(n)+'</button>';}).join('')+'</div>'):'';
+  var head='<div class="cm-top"><button class="cm-back" onclick="wkRender()">‹</button><div style="flex:1;min-width:0"><div class="cm-title" style="font-size:16px">Swap exercise</div><div class="cm-sub" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Replacing: '+esc(en.name||'—')+'</div></div></div>';
+  var body='<div class="cm-body"><div class="small muted" style="margin:0 0 10px">Pick a replacement — the sets you’ve logged stay, and its demo, cues &amp; equipment come along.</div>'+
+    quickHTML+
+    '<input id="wk-swap-q" class="wk-ex-nm" style="width:100%;margin-bottom:10px" placeholder="🔍 Search the exercise library…" oninput="wkSwapFilter()" autocomplete="off">'+
+    '<div id="wk-swap-list"></div>'+
+    '<button class="btn ghost" style="margin-top:12px" onclick="wkRender()">Cancel</button></div>';
+  app(head+body);wkSwapFilter();
+  try{setTimeout(function(){var q=document.getElementById('wk-swap-q');if(q)q.focus();},60);}catch(e){}
+}
+function wkSwapFilter(){
+  var host=document.getElementById('wk-swap-list');if(!host)return;
+  var q=((document.getElementById('wk-swap-q')||{}).value||'').trim().toLowerCase();
+  var list=(WK_LIB||[]).filter(function(e){return e&&e.name&&(!q||String(e.name).toLowerCase().indexOf(q)>=0||String(e.category||e.muscle||e.group||'').toLowerCase().indexOf(q)>=0);});
+  list.sort(function(a,b){return String(a.name).localeCompare(String(b.name));});
+  var shown=list.slice(0,60);
+  if(!shown.length){host.innerHTML='<div class="small muted" style="padding:8px 2px">No library matches'+(q?' for “'+esc(q)+'”':'')+'.</div>'+(q?'<button class="btn ghost" onclick="wkSwapCustom()">Use “'+esc(q)+'” as a custom exercise</button>':'');return;}
+  host.innerHTML=shown.map(function(e){
+    var sub=[e.category||e.muscle||e.group||'',e.equipment||''].filter(Boolean).join(' · ');
+    return '<button class="wk-swap-item" onclick="wkSwapTo(\''+esc(e.id||'')+'\')"><span style="flex:1;min-width:0"><span class="wk-swap-nm">'+esc(e.name)+'</span>'+(sub?'<span class="wk-swap-sub">'+esc(sub)+'</span>':'')+'</span>'+(e.video?'<span class="wk-swap-vid">▶</span>':'')+'</button>';
+  }).join('')+(list.length>60?'<div class="small muted" style="padding:6px 2px">+'+(list.length-60)+' more — keep typing to narrow it down.</div>':'');
+}
+function wkSwapTo(exId){
+  var en=WK&&WK.entries[WK_SWAP_EI];if(!en)return;
+  var e=WK_EXBYID[exId];if(!e){toast('Could not load that exercise',true);return;}
+  en.name=e.name||en.name;en.origName=e.name||en.name;en.exId=e.id||'';
+  en.alts=Array.isArray(e.alts)?e.alts.filter(Boolean):[];
+  en.brand='';en.equipment=e.equipment||'';en.showInfo=false;
+  en.lib={video:e.video||'',howto:e.howto||'',mistakes:e.mistakes||'',cues:e.cues||'',breathing:e.breathing||''};
+  wkRender();toast('Swapped to '+(e.name||'exercise'));
+}
+function wkSwapToName(name){
+  name=decodeURIComponent(name);var en=WK&&WK.entries[WK_SWAP_EI];if(!en)return;
+  var lib=WK_EXBYNAME[String(name).toLowerCase()];if(lib){wkSwapTo(lib.id);return;}
+  en.name=name;en.origName=name;en.exId='';en.brand='';en.equipment='';en.showInfo=false;en.lib={video:'',howto:'',mistakes:'',cues:'',breathing:''};
+  wkRender();toast('Swapped to '+name);
+}
+function wkSwapCustom(){var q=((document.getElementById('wk-swap-q')||{}).value||'').trim();if(!q)return;wkSwapToName(encodeURIComponent(q));}
 function wkDemo(ei){var en=WK&&WK.entries[ei];var v=en&&en.lib&&en.lib.video;if(!v){toast('No demo video for this exercise',true);return;}try{window.open(v,'_blank','noopener');}catch(e){location.href=v;}}
 function wkInfo(ei){var en=WK&&WK.entries[ei];if(!en)return;en.showInfo=!en.showInfo;wkRender();}
 function wkAddFreeEx(quiet){if(!WK)return;var tr=WK_DEFAULT_TRACK.slice();var s={done:false,t:{}};tr.forEach(function(v){s[v]='';});WK.entries.push({name:'',origName:'',exId:'',alts:[],track:tr,note:'',target:'',sec:'',brand:'',equipment:'',showInfo:false,lib:{video:'',howto:'',mistakes:'',cues:'',breathing:''},sets:[s]});if(!quiet)wkRender();}
