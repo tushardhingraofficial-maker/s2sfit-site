@@ -4133,6 +4133,28 @@ body.chat-thread-open #chat-thread-view .chat-thread-head{padding-top:calc(12px 
 .onbans-k{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 .onbans-v{font-weight:800;font-size:14px;color:var(--text)}
 .onbans-note{margin-top:10px;font-size:13px;line-height:1.5;background:rgba(74,158,232,.08);border:1px solid rgba(74,158,232,.3);border-radius:10px;padding:9px 11px}
+.onbans-sec{font-family:var(--disp);font-weight:800;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:14px 0 8px}
+.onbans-sec:first-child{margin-top:0}
+/* PAR-Q health screen */
+.parq-list{display:flex;flex-direction:column;gap:9px}
+.parq-q{border:1px solid var(--border);border-radius:11px;background:var(--card2);padding:10px 11px}
+.parq-qt{font-size:13px;line-height:1.4;margin-bottom:8px}
+.parq-yn{display:flex;gap:8px}
+.parq-btn{flex:1;border:1px solid var(--border);background:var(--card);color:var(--muted);border-radius:9px;padding:8px;font-weight:800;font-size:13px;cursor:pointer}
+.parq-btn.yes.on{background:var(--crit);border-color:var(--crit);color:#fff}
+.parq-btn.no.on{background:var(--good);border-color:var(--good);color:#fff}
+.parq-warn{margin-top:12px;font-size:12.5px;line-height:1.5;background:rgba(255,107,94,.12);border:1px solid rgba(255,107,94,.45);color:var(--crit);border-radius:10px;padding:10px 12px}
+/* PAR-Q in the editor profile */
+.parq-row{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-top:1px solid var(--border);font-size:12.5px;line-height:1.4}
+.parq-row:first-child{border-top:none}
+.parq-row .pq-n{flex:none;width:18px;font-weight:800;color:var(--muted)}
+.parq-row .pq-q{flex:1;min-width:0;color:var(--text)}
+.parq-row .pq-a{flex:none;font-weight:800;font-size:11px;text-transform:uppercase;border-radius:14px;padding:2px 9px}
+.parq-row .pq-a.yes{background:rgba(255,107,94,.16);color:var(--crit)}
+.parq-row .pq-a.no{background:rgba(34,197,94,.14);color:var(--good)}
+.parq-row .pq-a.na{background:var(--card2);color:var(--muted)}
+.parq-flag{display:flex;gap:9px;align-items:flex-start;background:rgba(255,107,94,.12);border:1px solid rgba(255,107,94,.45);color:var(--crit);border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;margin-bottom:10px;font-weight:600}
+.parq-ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.35);color:var(--good);border-radius:10px;padding:9px 12px;font-size:12.5px;margin-bottom:10px;font-weight:600}
 /* weekly log — tabular layout */
 .pg-week-tbl td{vertical-align:top}
 /* freeze the client-name column while scrolling sideways */
@@ -5959,12 +5981,16 @@ img,svg,canvas,video{max-width:100%}
             <textarea id="ed-internal-notes" rows="6" placeholder="Type internal notes here…" onblur="edSaveNotes(true)"></textarea>
           </div></div>
 
-        <div class="card" data-edtab="client" id="ed-onb-ans-card" style="display:none"><div class="card-head"><span class="step-no">📝</span><h2>Client's welcome answers</h2>
+        <div class="card" data-edtab="client" id="ed-onb-ans-card" style="display:none"><div class="card-head"><span class="step-no">📝</span><h2>Sign-up &amp; welcome answers</h2>
           <span class="sp"></span><span class="small" id="ed-onb-ans-when"></span></div>
           <div class="card-body">
-            <p class="small" style="margin-bottom:8px;color:var(--muted)">What this client filled in on their first-login setup wizard. <b>Apply</b> copies it into the profile above — review, then Save the plan.</p>
+            <p class="small" style="margin-bottom:8px;color:var(--muted)">Everything this client filled in when registering and on their first-login setup. <b>Apply</b> copies the setup answers into the profile above — review, then Save the plan.</p>
             <div id="ed-onb-answers"></div>
           </div></div>
+
+        <div class="card" data-edtab="client" id="ed-parq-card" style="display:none"><div class="card-head"><span class="step-no">❤️</span><h2>Health screen (PAR-Q)</h2>
+          <span class="sp"></span><span class="small" id="ed-parq-when"></span></div>
+          <div class="card-body"><div id="ed-parq-host"></div></div></div>
 
         <div class="card" data-edtab="client"><div class="card-head"><span class="step-no">🧭</span><h2>Onboarding stages</h2>
           <span class="sp"></span><span class="pill muted" id="ed-onb-badge"></span></div>
@@ -7631,7 +7657,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04ug';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04uh';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -9054,6 +9080,17 @@ const ONB_WIZ_DIETS=['No preference','Non-vegetarian','Vegetarian','Eggetarian',
 const ONB_WIZ_LEVELS=['Beginner','Intermediate','Advanced','Returning'];
 const ONB_WIZ_ACT=['Sedentary','Lightly active','Moderately active','Very active'];
 const ONB_WIZ_BODYTYPES=['Ectomorph','Mesomorph','Endomorph'];
+/* PAR-Q — standard physical-activity readiness screen (a "Yes" to any question = see a doctor before increasing activity) */
+const PARQ_QS=[
+ 'Has your doctor ever said that you have a heart condition and that you should only do physical activity recommended by a doctor?',
+ 'Do you feel pain in your chest when you do physical activity?',
+ 'In the past month, have you had chest pain when you were not doing physical activity?',
+ 'Do you lose your balance because of dizziness, or do you ever lose consciousness?',
+ 'Do you have a bone or joint problem that could be made worse by a change in your physical activity?',
+ 'Is a doctor currently prescribing medication (for example, for your blood pressure or a heart condition)?',
+ 'Do you know of any other reason why you should not do physical activity?'
+];
+function onbParqSet(i,v){ONB_WIZ.parq=ONB_WIZ.parq||[];ONB_WIZ.parq[i]=v;const wrap=document.querySelectorAll('#onb-wiz-body .parq-q')[i];if(wrap){const y=wrap.querySelector('.parq-btn.yes'),n=wrap.querySelector('.parq-btn.no');if(y)y.classList.toggle('on',v==='yes');if(n)n.classList.toggle('on',v==='no');}const w=$('onb-parq-warn');if(w)w.style.display=(ONB_WIZ.parq||[]).some(x=>x==='yes')?'':'none';}
 function pfNum(v){if(v==null)return '';const m=String(v).match(/[\d.]+/);return m?m[0]:'';}
 function onbWizStart(){
   const o=$('onb-wizard');if(!o||o.classList.contains('open'))return;
@@ -9061,7 +9098,8 @@ function onbWizStart(){
   let lw=null;try{lw=(typeof latestLoggedWeight==='function')?latestLoggedWeight():null;}catch(e){}
   ONB_WIZ={goal:pf.goal||lp.goal||'',goalWeight:pfNum(pf.goalWeight),weight:lw?String(lw.value):pfNum(pf.weight),
     height:pfNum(pf.height),sex:pf.sex||lp.gender||'',age:pf.age||lp.age||'',diet:pf.diet||'',
-    level:pf.trainingLevel||lp.experience||'',activity:pf.activity||'',bodyFat:pfNum(pf.bodyFat),bodyType:pf.bodyType||'',waist:'',hips:'',note:''};
+    level:pf.trainingLevel||lp.experience||'',activity:pf.activity||'',bodyFat:pfNum(pf.bodyFat),bodyType:pf.bodyType||'',waist:'',hips:'',note:'',
+    parq:(((PLAN&&PLAN.milestones&&PLAN.milestones.parq&&PLAN.milestones.parq.answers)||[]).slice())};
   ONB_WIZ_STEP=0;
   const fn=((SESSION&&(SESSION.name||''))||'').trim().split(' ')[0]||'there';
   $('onb-wiz-title').textContent='Welcome, '+fn+'! 🎉';
@@ -9073,7 +9111,7 @@ function onbWizClose(){const o=$('onb-wizard');if(o)o.classList.remove('open');d
 function onbWizCapture(){const g=id=>{const e=$('onbw-'+id);return e?e.value:undefined;};
   ['goal','goalWeight','weight','height','sex','age','diet','level','activity','bodyFat','bodyType','waist','hips','note'].forEach(k=>{const v=g(k);if(v!==undefined)ONB_WIZ[k]=v;});}
 function onbWizRender(){
-  const n=4;if(ONB_WIZ_STEP<0)ONB_WIZ_STEP=0;if(ONB_WIZ_STEP>n-1)ONB_WIZ_STEP=n-1;
+  const n=5;if(ONB_WIZ_STEP<0)ONB_WIZ_STEP=0;if(ONB_WIZ_STEP>n-1)ONB_WIZ_STEP=n-1;
   $('onb-wiz-dots').innerHTML=Array.from({length:n}).map((_,i)=>'<span class="onb-dot'+(i===ONB_WIZ_STEP?' on':(i<ONB_WIZ_STEP?' done':''))+'"></span>').join('');
   const opt=(arr,val)=>'<option value="">—</option>'+arr.map(a=>'<option'+(a===val?' selected':'')+'>'+esc(a)+'</option>').join('');
   let body='';
@@ -9094,18 +9132,24 @@ function onbWizRender(){
       '<div class="field"><label class="lab">Training experience</label><select id="onbw-level">'+opt(ONB_WIZ_LEVELS,ONB_WIZ.level)+'</select></div>'+
       '<div class="field"><label class="lab">Daily activity</label><select id="onbw-activity">'+opt(ONB_WIZ_ACT,ONB_WIZ.activity)+'</select></div>'+
       '<div class="field"><label class="lab">Body type <span class="onb-opt">· optional</span></label><select id="onbw-bodyType">'+opt(ONB_WIZ_BODYTYPES,ONB_WIZ.bodyType)+'</select></div>';
-  } else {
+  } else if(ONB_WIZ_STEP===3){
     body='<div class="onb-wiz-h">📏 Your starting point <span class="onb-opt">· all optional</span></div>'+
       '<p class="small" style="color:var(--muted);margin:0 0 10px">Snapshot a couple of measurements so you can watch them change. Measure relaxed, in cm.</p>'+
       '<div class="onb-wiz-row"><div class="field"><label class="lab">Waist (cm)</label><input id="onbw-waist" type="number" inputmode="decimal" value="'+esc(ONB_WIZ.waist||'')+'" placeholder="e.g. 88"></div>'+
       '<div class="field"><label class="lab">Hips (cm)</label><input id="onbw-hips" type="number" inputmode="decimal" value="'+esc(ONB_WIZ.hips||'')+'" placeholder="e.g. 102"></div></div>'+
       '<div class="field"><label class="lab">Anything you’d like your coach to know?</label><textarea id="onbw-note" rows="3" placeholder="Injuries, schedule, foods you avoid…">'+esc(ONB_WIZ.note||'')+'</textarea></div>';
+  } else {
+    const pa=ONB_WIZ.parq||[];
+    body='<div class="onb-wiz-h">❤️ Health check (PAR-Q)</div>'+
+      '<p class="small" style="color:var(--muted);margin:0 0 12px">A quick physical-activity readiness screen. Answer honestly — it helps your coach keep training safe for you.</p>'+
+      '<div class="parq-list">'+PARQ_QS.map(function(q,i){const v=pa[i]||'';return '<div class="parq-q"><div class="parq-qt">'+(i+1)+'. '+esc(q)+'</div><div class="parq-yn"><button type="button" class="parq-btn yes'+(v==='yes'?' on':'')+'" onclick="onbParqSet('+i+',\'yes\')">Yes</button><button type="button" class="parq-btn no'+(v==='no'?' on':'')+'" onclick="onbParqSet('+i+',\'no\')">No</button></div></div>';}).join('')+'</div>'+
+      '<div id="onb-parq-warn" class="parq-warn" style="display:'+(pa.some(function(x){return x==='yes';})?'':'none')+'">⚠️ You answered <b>Yes</b> to one or more. Please check with your doctor before starting or increasing exercise — your coach will see this and guide you.</div>';
   }
   $('onb-wiz-body').innerHTML=body;
   const bk=$('onb-wiz-back');if(bk)bk.style.visibility=ONB_WIZ_STEP===0?'hidden':'';
   const nx=$('onb-wiz-next');if(nx){nx.disabled=false;nx.textContent=ONB_WIZ_STEP===n-1?'🎉 Finish setup':'Next →';}
 }
-function onbWizNext(){onbWizCapture();if(ONB_WIZ_STEP>=3){onbWizFinish();return;}ONB_WIZ_STEP++;onbWizRender();}
+function onbWizNext(){onbWizCapture();if(ONB_WIZ_STEP>=4){onbWizFinish();return;}ONB_WIZ_STEP++;onbWizRender();}
 function onbWizBack(){onbWizCapture();if(ONB_WIZ_STEP>0){ONB_WIZ_STEP--;onbWizRender();}}
 async function onbWizSkip(){try{PLAN.milestones=PLAN.milestones||{goals:[]};PLAN.milestones.onboardDone=true;PLAN.milestones.onboardPending=false;await DB.saveMilestones(SESSION.id,PLAN.milestones);}catch(e){}onbWizClose();try{setSection('home');}catch(e){}}
 async function onbWizFinish(){
@@ -9118,6 +9162,7 @@ async function onbWizFinish(){
   if(!isNaN(waist)&&waist>0)mv.waist=waist;if(!isNaN(hips)&&hips>0)mv.hips=hips;
   if(Object.keys(mv).length){const m=PLAN.milestones.measurements=PLAN.milestones.measurements||{logs:[]};m.logs=Array.isArray(m.logs)?m.logs:[];m.logs.push({id:uid(),date:today,unit:'cm',values:mv,at:new Date().toISOString()});PLAN.milestones.measLatest=Object.assign({},PLAN.milestones.measLatest,mv,{date:today,unit:'cm'});}
   PLAN.milestones.onboardProfile={goal:ONB_WIZ.goal,goalWeight:(isNaN(gw)?'':gw),height:(isNaN(ht)?'':ht),sex:ONB_WIZ.sex,age:ONB_WIZ.age,diet:ONB_WIZ.diet,level:ONB_WIZ.level,activity:ONB_WIZ.activity,bodyFat:ONB_WIZ.bodyFat||'',bodyType:ONB_WIZ.bodyType||'',note:ONB_WIZ.note,at:new Date().toISOString()};
+  {const pa=(ONB_WIZ.parq||[]).slice();if(pa.some(function(x){return x==='yes'||x==='no';}))PLAN.milestones.parq={answers:pa,flagged:pa.some(function(x){return x==='yes';}),at:new Date().toISOString()};}
   PLAN.milestones.leadProfile=Object.assign({},PLAN.milestones.leadProfile,{goal:ONB_WIZ.goal||((PLAN.milestones.leadProfile||{}).goal),gender:ONB_WIZ.sex||((PLAN.milestones.leadProfile||{}).gender),age:ONB_WIZ.age||((PLAN.milestones.leadProfile||{}).age),experience:ONB_WIZ.level||((PLAN.milestones.leadProfile||{}).experience)});
   PLAN.milestones.onboardDone=true;PLAN.milestones.onboardPending=false;
   PLAN.profile=PLAN.profile||{};
@@ -19891,20 +19936,41 @@ function edRenderOnbStages(){const host=$('ed-onb-stages');if(!host)return;const
   if(b){b.className='pill '+(sm.complete?'good':'muted');b.style.cssText=sm.complete?'':'background:color-mix(in srgb,var(--gold,#f5c842) 20%,transparent);color:var(--text)';
     b.textContent=sm.complete?'Onboarded ✓':('Stage '+(sm.curIdx+1)+' of '+sm.total+' · '+sm.cur.t);}
   host.innerHTML=onbStepperHTML(ob,'ed');
-  try{edRenderOnbAnswers();}catch(e){}}
+  try{edRenderOnbAnswers();}catch(e){}try{edRenderParq();}catch(e){}}
 /* the client's first-login wizard answers, shown in the coach editor + one-tap apply to the profile */
 function edRenderOnbAnswers(){
   const card=$('ed-onb-ans-card'),host=$('ed-onb-answers');if(!card||!host)return;
   const op=(edPlan&&edPlan.milestones&&edPlan.milestones.onboardProfile)||null;
-  if(!op){card.style.display='none';host.innerHTML='';return;}
+  const lp=(edPlan&&edPlan.milestones&&edPlan.milestones.leadProfile)||null;
+  if(!op&&!lp){card.style.display='none';host.innerHTML='';return;}
   card.style.display='';
-  const when=$('ed-onb-ans-when');if(when)when.textContent=op.at?('submitted '+fmtDT(op.at)):'';
-  let curW='';try{const lw=latestWeightEntry(edPlan);if(lw&&lw.value!=null)curW=round(lw.value,1)+' kg';}catch(e){}
-  const row=(label,val)=>(val!=null&&val!=='')?('<div class="onbans-row"><span class="onbans-k">'+label+'</span><span class="onbans-v">'+esc(String(val))+'</span></div>'):'';
-  const grid=row('Goal',op.goal)+row('Goal weight',op.goalWeight?(op.goalWeight+' kg'):'')+row('Current weight',curW)+row('Height',op.height?(op.height+' cm'):'')+row('Sex',op.sex)+row('Age',op.age)+row('Diet',op.diet)+row('Experience',op.level)+row('Activity',op.activity);
-  const note=op.note?('<div class="onbans-note">🗒 <b>Note for you:</b> '+esc(op.note)+'</div>'):'';
-  host.innerHTML='<div class="onbans-grid">'+(grid||'<span class="funit">No fields entered.</span>')+'</div>'+note+
-    '<div style="margin-top:12px"><button class="btn-sm solid" onclick="onbApplyAnswers()">⬆ Apply to profile</button></div>';
+  const when=$('ed-onb-ans-when');if(when)when.textContent=(op&&op.at)?('setup '+fmtDT(op.at)):((lp&&lp.submittedAt)?('signed up '+fmtDate(String(lp.submittedAt).slice(0,10))):'');
+  const row=(label,val)=>(val!=null&&String(val)!=='')?('<div class="onbans-row"><span class="onbans-k">'+label+'</span><span class="onbans-v">'+esc(String(val))+'</span></div>'):'';
+  let h='';
+  if(lp){
+    const sg=row('Gender',lp.gender)+row('Age',lp.age)+row('Location',lp.location)+row('Occupation',lp.occupation)+row('Primary goal',lp.goal)+row('Experience',lp.experience)+row('Training style',lp.training)+row('Motivation',lp.motivation)+row('Interests',lp.interests)+row('Main challenge',lp.painPoint)+row('Found us via',lp.channel)+row('Budget',lp.budget);
+    if(sg.trim())h+='<div class="onbans-sec">🖊 Sign-up answers</div><div class="onbans-grid">'+sg+'</div>'+(lp.notes?'<div class="onbans-note">🗒 <b>At sign-up:</b> '+esc(lp.notes)+'</div>':'');
+  }
+  if(op){
+    let curW='';try{const lw=latestWeightEntry(edPlan);if(lw&&lw.value!=null)curW=round(lw.value,1)+' kg';}catch(e){}
+    const og=row('Goal',op.goal)+row('Goal weight',op.goalWeight?(op.goalWeight+' kg'):'')+row('Current weight',curW)+row('Height',op.height?(op.height+' cm'):'')+row('Sex',op.sex)+row('Age',op.age)+row('Body fat %',op.bodyFat?(op.bodyFat+'%'):'')+row('Body type',op.bodyType)+row('Diet',op.diet)+row('Experience',op.level)+row('Activity',op.activity);
+    h+='<div class="onbans-sec">🎉 Welcome setup</div><div class="onbans-grid">'+(og||'<span class="funit">No fields entered.</span>')+'</div>'+(op.note?'<div class="onbans-note">🗒 <b>Note for you:</b> '+esc(op.note)+'</div>':'');
+  }
+  h+='<div style="margin-top:12px"><button class="btn-sm solid" onclick="onbApplyAnswers()"'+(op?'':' disabled style="opacity:.5" title="No setup answers to apply"')+'>⬆ Apply to profile</button></div>';
+  host.innerHTML=h;
+}
+/* PAR-Q health screen on the client profile (editor) */
+function edRenderParq(){
+  const card=$('ed-parq-card'),host=$('ed-parq-host');if(!card||!host)return;
+  const pq=(edPlan&&edPlan.milestones&&edPlan.milestones.parq)||null;
+  if(!pq||!Array.isArray(pq.answers)||!pq.answers.some(function(x){return x==='yes'||x==='no';})){card.style.display='none';host.innerHTML='';return;}
+  card.style.display='';
+  const when=$('ed-parq-when');if(when)when.textContent=pq.at?('completed '+fmtDate(String(pq.at).slice(0,10))):'';
+  const flagged=pq.answers.some(function(x){return x==='yes';});
+  const head=flagged
+    ? '<div class="parq-flag">⚠️ <div>Answered <b>Yes</b> to '+pq.answers.filter(function(x){return x==='yes';}).length+' question'+(pq.answers.filter(function(x){return x==='yes';}).length===1?'':'s')+'. Recommend medical clearance before increasing training intensity, and ease into load.</div></div>'
+    : '<div class="parq-ok">✓ No flags — cleared the standard PAR-Q health screen.</div>';
+  host.innerHTML=head+PARQ_QS.map(function(q,i){const a=pq.answers[i]||'';const cls=a==='yes'?'yes':(a==='no'?'no':'na');return '<div class="parq-row"><span class="pq-n">'+(i+1)+'</span><span class="pq-q">'+esc(q)+'</span><span class="pq-a '+cls+'">'+(a==='yes'?'Yes':(a==='no'?'No':'—'))+'</span></div>';}).join('');
 }
 function onbApplyAnswers(){
   const op=(edPlan&&edPlan.milestones&&edPlan.milestones.onboardProfile)||null;if(!op){toast('No answers to apply',true);return;}
@@ -19918,6 +19984,8 @@ function onbApplyAnswers(){
   set('pf-sex',op.sex);
   set('pf-age',op.age);
   set('pf-height',op.height);
+  set('pf-bodyFat',op.bodyFat);
+  set('pf-bodyType',op.bodyType);
   set('pf-goalWeight',op.goalWeight?(op.goalWeight+' kg'):'');
   try{const lw=latestWeightEntry(edPlan);if(lw&&lw.value!=null)set('pf-weight',round(lw.value,1));}catch(e){}
   try{if(typeof pfCmToFtIn==='function')pfCmToFtIn();}catch(e){}
