@@ -2772,6 +2772,15 @@ details.meal-add-choose[open]>summary{background:none;color:var(--muted);box-sha
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(30px);background:var(--card);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:10px;padding:12px 18px;font-size:13px;box-shadow:var(--shadow);z-index:2000;opacity:0;transition:.25s;pointer-events:none;max-width:90vw}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast.err{border-left-color:var(--crit)}
+.iostip{position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:3000;display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:14px;padding:11px 13px;box-shadow:0 14px 44px rgba(0,0,0,.3);transform:translateY(160%);transition:transform .32s cubic-bezier(.2,.8,.2,1)}
+.iostip.inapp{border-left-color:var(--amber,#f59e0b)}
+.iostip.show{transform:translateY(0)}
+.iostip-ic{font-size:23px;flex:none;line-height:1}
+.iostip-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;line-height:1.32}
+.iostip-tx b{font-size:13.5px}
+.iostip-tx span{font-size:11.5px;color:var(--muted)}
+.iostip-cta{flex:none;border:0;border-radius:10px;background:var(--red);color:#fff;font-weight:800;font-size:12px;padding:8px 12px;cursor:pointer}
+.iostip-x{flex:none;border:0;background:transparent;color:var(--muted);font-size:21px;line-height:1;cursor:pointer;padding:0 2px}
 /* Global network loading indicator — a thin top progress bar + a small "Loading…" pill, shown
    whenever the app is fetching data before it can render (hooked into DB._api). */
 #net-bar{position:fixed;top:env(safe-area-inset-top);left:0;right:0;height:3px;z-index:3000;pointer-events:none;opacity:0;transition:opacity .2s}
@@ -7665,7 +7674,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04uj';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04uk';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -30721,6 +30730,28 @@ function a2hsRefresh(){
   const ai=$('admin-install-btn');if(ai)ai.style.display=installed?'none':'';
 }
 function closeA2HS(){$('a2hs-modal').classList.remove('open');}
+/* iOS has no one-click install prompt — proactively nudge Safari users to Add to Home Screen, and tell in-app-browser users to open in Safari */
+function isIOSDevice(){const ua=navigator.userAgent||'';return /iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);}
+function iosInAppBrowser(){const ua=navigator.userAgent||'';if(!isIOSDevice())return false;
+  if(/CriOS|FxiOS|EdgiOS|OPiOS|mercury|DuckDuckGo/i.test(ua))return true;                                              // other iOS browsers (can't Add to Home Screen)
+  if(/Instagram|FBAN|FBAV|FB_IAB|FBIOS|Line\/|GSA\/|Snapchat|musical_ly|Twitter|Pinterest|LinkedIn|WhatsApp|TikTok/i.test(ua))return true;   // social / messaging in-app webviews
+  if(!/Safari/i.test(ua))return true;                                                                                   // generic WKWebView without a Safari token
+  return false;}
+function iosTipDismiss(remember){try{if(remember)localStorage.setItem('s2s_ios_tip',String(Date.now()));}catch(e){}const el=$('ios-install-tip');if(el){el.classList.remove('show');setTimeout(function(){if(el)el.remove();},300);}}
+function maybeShowIosInstallTip(){
+  try{
+    if(!isIOSDevice()||isStandalone()||$('ios-install-tip'))return;
+    let last=0;try{last=+localStorage.getItem('s2s_ios_tip')||0;}catch(e){}
+    if(last&&(Date.now()-last)<7*86400000)return;   // snooze a week after dismiss
+    const inApp=iosInAppBrowser();
+    const el=document.createElement('div');el.id='ios-install-tip';el.className='iostip'+(inApp?' inapp':'');
+    el.innerHTML=inApp
+      ? '<span class="iostip-ic">🧭</span><div class="iostip-tx"><b>Open in Safari to install</b><span>This browser can’t add apps to the home screen. Tap the ••• / share icon → <b>Open in Safari</b>, then install.</span></div><button class="iostip-x" aria-label="Dismiss" onclick="iosTipDismiss(1)">×</button>'
+      : '<span class="iostip-ic">📲</span><div class="iostip-tx"><b>Install S2S on your iPhone</b><span>Add it to your home screen — opens full-screen like an app.</span></div><button class="iostip-cta" onclick="iosTipDismiss(1);showA2HSHelp()">Show me how</button><button class="iostip-x" aria-label="Dismiss" onclick="iosTipDismiss(1)">×</button>';
+    document.body.appendChild(el);
+    requestAnimationFrame(function(){el.classList.add('show');});
+  }catch(e){}
+}
 function showA2HSHelp(){
   const ua=navigator.userAgent||'';
   const iOS=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
@@ -30919,6 +30950,7 @@ try{applyTheme(getThemePref());}catch(e){}
   try{featWrapOpeners();}catch(_){}   // record feature usage when an admin opens a tool
   const av=$('app-ver');if(av)av.textContent='v'+APP_VERSION;
   a2hsRefresh();
+  setTimeout(function(){try{maybeShowIosInstallTip();}catch(e){}},2600);   // iPhone has no install button — nudge Safari / redirect in-app browsers
   DB.init();loadIngredients();loadSupplements();
   try{const cfg=await DB.getConfig();if(cfg&&typeof cfg==='object')SECTION_LIVE=Object.assign({nutrition:true,training:false,cardio:false,time:true,availability:true,goals:false,checkins:false,habits:false,mytasks:false,reports:false,rewards:false,livechal:false,buddy:false,knowledge:false,suspension:false,sleep:false,formcheck:true},cfg);}catch(e){}
   try{const sp=await DB.getSops();if(sp&&typeof sp==='object')SOPS=sp;}catch(e){}
