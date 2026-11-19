@@ -3412,6 +3412,11 @@ body.gm-has-switch #custom-host{top:var(--gm-h,48px)}
 .mom-pop-row .k{flex:none;width:130px;color:var(--muted);font-weight:700}
 .mom-pop-row .v{flex:1;min-width:0;font-weight:600}
 .mom-pop-row .v.yes{color:var(--good)}.mom-pop-row .v.no{color:var(--crit)}
+/* one-way-per-meal warning */
+#meal-excl-modal{z-index:3000}
+.mex-ic{font-size:34px;text-align:center;margin:2px 0 6px}
+.mex-title{font-family:var(--disp);font-weight:900;font-size:18px;text-align:center;margin-bottom:12px}
+.mex-body{font-size:13.5px;line-height:1.55;color:var(--text);margin:0 0 9px}
 .comp-test{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;flex-wrap:wrap}
 .comp-test .cdate{font-weight:800;min-width:92px}
 .comp-split{display:flex;height:16px;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:var(--card)}
@@ -5266,6 +5271,12 @@ img,svg,canvas,video{max-width:100%}
                 </div>
                 <div id="as-cap-host"></div>
               </div>
+            </div>
+          </div>
+          <!-- one-way-per-meal warning (ingredients OR journal, not both) -->
+          <div class="overlay" id="meal-excl-modal">
+            <div class="modal modal-sm">
+              <div class="modal-body"><div id="meal-excl-host"></div></div>
             </div>
           </div>
           <div id="log-sections"></div>
@@ -7555,7 +7566,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04ty';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04tz';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -17010,7 +17021,23 @@ function foodAddTrack(){try{const s=$('log-sections');if(s)s.scrollIntoView({beh
 function mealShowTrack(key){const w=$('logaddwrap-'+key),c=$('mealchoose-'+key);if(w)w.style.display='';if(c)c.style.display='none';const inp=$('logadd-'+key);if(inp)setTimeout(function(){try{inp.focus();}catch(e){}},80);}
 function mealHideTrack(key){const w=$('logaddwrap-'+key),c=$('mealchoose-'+key);if(w)w.style.display='none';if(c)c.style.display='';const m=$('logac-'+key);if(m)m.classList.remove('open');}
 function foodAddOpen(){try{const s=$('log-sections');if(s)s.scrollIntoView({behavior:'smooth',block:'start'});const first=document.querySelector('#log-sections .meal-add-choose');if(first){try{first.open=true;}catch(e){}first.classList.add('flash');setTimeout(function(){try{first.classList.remove('flash');}catch(e){}},1200);}}catch(e){}}
+/* One way per meal: a meal is logged with ingredients OR a journal photo, never both (so macros aren't double-counted). */
+function mealLogState(name){name=name||'';const tracked=((DAYLOG&&DAYLOG.items)||[]).some(function(it){return (it&&(it.meal||'Extra'))===name;});const journaled=(DAY_JOURNAL||[]).some(function(e){return (e&&(e.meal||''))===name;});return {tracked:tracked,journaled:journaled};}
+function mealExclusiveBlock(name,existing){   // existing: 'journal' | 'ingredients' — the kind already logged on this meal
+  const m0=$('meal-excl-modal');if(m0&&m0.parentElement!==document.body)document.body.appendChild(m0);   // lift out of any hidden subtab so it always shows
+  const host=$('meal-excl-host');if(!host)return;
+  const isJ=(existing==='journal');
+  const where=isJ?'the 📸 journaled card on this meal (tap × / Delete on it)':'the ingredients on this meal (tap × on each food)';
+  host.innerHTML='<div class="mex-ic">⚠️</div>'+
+    '<div class="mex-title">One way per meal</div>'+
+    '<p class="mex-body"><b>'+esc(name||'This meal')+'</b> is already logged with <b>'+(isJ?'a journal photo 📸':'ingredients 🔍')+'</b>. Each meal can be logged with <b>ingredients</b> or a <b>journal</b> — not both, so your calories &amp; macros aren’t counted twice.</p>'+
+    '<p class="mex-body">To switch, first clear '+where+', then add it the other way.</p>'+
+    '<div style="text-align:right;margin-top:14px"><button class="btn-sm solid" onclick="closeMealExcl()">Got it</button></div>';
+  const m=$('meal-excl-modal');if(m)m.classList.add('open');
+}
+function closeMealExcl(){const m=$('meal-excl-modal');if(m)m.classList.remove('open');}
 function foodAddJournal(mealName,focus){
+  if(mealName&&DAYLOG&&mealLogState(mealName).tracked){mealExclusiveBlock(mealName,'ingredients');return;}   // meal already has tracked ingredients → block journaling it
   const cap=$('jr-capture');if(!cap)return;
   JR_PHOTOS=[];JR_NUTRI=null;JR_NUTRI_SKIPPED=false;JR_NUTRI_SKIP_RECO='';
   const dd=$('jr-date');if(dd)dd.value=(($('log-date')&&$('log-date').value)||todayISO());
@@ -17130,6 +17157,8 @@ function addSheetTab(tab){
 }
 function addSheetAdd(){
   const key='as';
+  const mealNm=ADDSHEET_MEAL||'Extra';
+  if(mealLogState(mealNm).journaled){mealExclusiveBlock(mealNm,'journal');return;}   // meal already journaled → block adding ingredients
   const f=LOG_PICK[key]||findIngByLabel(($('logadd-'+key)||{}).value||'');
   if(!f){toast('Pick a food from the list',true);return;}
   const qty=Number(($('logqty-'+key)||{}).value)||1;const unit=(($('logunit-'+key)||{}).value)||f.units;
@@ -17848,6 +17877,8 @@ function jrPhotos(e){
   return [p];
 }
 async function jrAdd(){
+  const _jrMeal=(($('jr-meal')&&$('jr-meal').value)||'');
+  if(_jrMeal&&DAYLOG&&mealLogState(_jrMeal).tracked){mealExclusiveBlock(_jrMeal,'ingredients');return;}   // target meal already has tracked ingredients → block journaling
   let desc=($('jr-desc').value||'').trim();const hasPhoto=!!(JR_PHOTOS&&JR_PHOTOS[0]);
   if(!desc&&!hasPhoto&&!JR_NUTRI){toast('Add a photo of your meal or describe it first',true);try{const d=$('jr-desc');if(d){d.focus();d.scrollIntoView({block:'center',behavior:'smooth'});}}catch(e){}return;}
   if(!desc&&JR_NUTRI&&JR_NUTRI.name)desc=String(JR_NUTRI.name).slice(0,60);   // photo-only entry → use the AI's meal name as the description
