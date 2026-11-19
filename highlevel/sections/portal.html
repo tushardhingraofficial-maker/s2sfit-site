@@ -4825,6 +4825,7 @@ img,svg,canvas,video{max-width:100%}
 <symbol id="ic-bowl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h18a9 9 0 0 1-18 0z"/><path d="M8 11c0-2 1.5-4 4-4s4 2 4 4"/></symbol>
 <symbol id="ic-pot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M2 9.5h20M8 6.5h8"/></symbol>
 <symbol id="ic-trending" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 7-7"/><path d="M15 8h5v5"/></symbol>
+<symbol id="ic-trending-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l6 6 4-4 7 7"/><path d="M15 16h5v-5"/></symbol>
 <symbol id="ic-megaphone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4a1 1 0 0 0 1 1h2l6 4V5L7 9H5a1 1 0 0 0-1 1z"/><path d="M17 8a5 5 0 0 1 0 8"/></symbol>
 <symbol id="ic-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></symbol>
 <symbol id="ic-triage" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M8 13h2l1.5 3 2-6 1.5 3h2"/></symbol>
@@ -5554,6 +5555,7 @@ img,svg,canvas,video{max-width:100%}
               <button class="adash-navbtn" onclick="openIngLib()" title="Ingredient library — the master food + macro list the whole app uses. Import your list, add/edit ingredients &amp; macros, set diet type (veg / vegan / non-veg)."><svg class="nav-ic"><use href="#ic-bowl"/></svg> Ingredient library</button>
               <button class="adash-navbtn" onclick="openRecipeMod()" title="Moderate the shared community recipe book — review every recipe clients have added (macros, author, Smart vs personal) and remove anything inappropriate for everyone."><svg class="nav-ic"><use href="#ic-pot"/></svg> Recipes</button>
               <button class="adash-navbtn" onclick="openSL()" title="Strategy Call leads — who opened your VSL page, watched the video, downloaded the guide and did the 7-Level assessment, with a call-prep report for each" style="position:relative"><svg class="nav-ic"><use href="#ic-phone"/></svg> Strategy leads <span class="chat-badge hidden" id="sl-nav-badge" style="position:absolute;top:6px;right:8px"></span></button>
+              <button class="adash-navbtn" onclick="openChurn()" title="Churn &amp; retention — log client cancellations (reason, feedback, win-back actions), see why clients leave and how long they stay. Recording a cancellation archives the client; they stay off the list until you reactivate them."><svg class="nav-ic"><use href="#ic-trending-down"/></svg> Churn</button>
               <button class="adash-navbtn" id="bh-navbtn" onclick="openBH()" title="Business health (private)" style="display:none"><svg class="nav-ic"><use href="#ic-trending"/></svg> Business health</button>
               <button class="adash-navbtn" onclick="updAnnounce()" title="Announce an update — every client &amp; coach sees an in-app notice telling them what changed, so they refresh to the latest version."><svg class="nav-ic"><use href="#ic-megaphone"/></svg> Announce update</button>
               <button class="adash-navbtn" onclick="pushCenterOpen()" title="Notifications control-center — choose what automated push notifications clients receive (experience, compliance, retention), set schedules & messages, or send a one-off broadcast."><svg class="nav-ic"><use href="#ic-bell"/></svg> Notifications</button>
@@ -6285,6 +6287,20 @@ img,svg,canvas,video{max-width:100%}
   <div class="modal">
     <div class="modal-head"><div class="brand-logo admin-logo" role="img" aria-label="S2S Fit"></div><h2><svg class="hd-ic"><use href="#ic-trending"/></svg>Business health</h2><span class="sync"><span class="small">sign-ups · churn · referrals</span></span><span class="sp"></span><button class="icon-x" onclick="closeBH()">×</button></div>
     <div class="modal-body"><div id="bh-host"><div class="empty">Loading…</div></div></div>
+  </div>
+</div>
+<!-- ============ ADMIN · CHURN & RETENTION (live; shares BH.churn in business_health KV) ============ -->
+<div class="overlay" id="churn-modal">
+  <div class="modal">
+    <div class="modal-head"><div class="brand-logo admin-logo" role="img" aria-label="S2S Fit"></div><h2><svg class="hd-ic"><use href="#ic-trending-down"/></svg>Churn &amp; retention</h2><span class="sync"><span class="small">cancellations · reasons · win-back</span></span><span class="sp"></span><button class="icon-x" onclick="closeChurn()">×</button></div>
+    <div class="modal-body"><div id="churn-host"><div class="empty">Loading…</div></div></div>
+  </div>
+</div>
+<!-- Archive-a-client → record the cancellation (churn), then archive -->
+<div class="overlay" id="archive-churn-modal">
+  <div class="modal modal-sm">
+    <div class="modal-head"><div class="brand-logo admin-logo" role="img" aria-label="S2S Fit"></div><h2><svg class="hd-ic"><use href="#ic-trending-down"/></svg>Archive &amp; record cancellation</h2><span class="sp"></span><button class="icon-x" onclick="closeArchiveChurn()">×</button></div>
+    <div class="modal-body"><div id="acm-host"></div></div>
   </div>
 </div>
 <div class="overlay" id="coaches-modal">
@@ -7437,7 +7453,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04tr';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04ts';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -25566,7 +25582,11 @@ function bhSignupsHTML(){const cs=BH_CLIENTS||[],cur=bhCur();
   return h;}
 /* ---- Churn ---- */
 function bhChurnHTML(){const cs=BH_CLIENTS||[];
-  const opts='<option value="">— select client —</option>'+cs.map(c=>'<option value="'+c.id+'">'+esc(c.name||c.email)+'</option>').join('');
+  // Only active clients can be logged as churned — a client already churned (archived) drops off until they're reactivated.
+  const arch=churnArchivedSet();
+  const active=cs.filter(c=>!arch.has(c.id));
+  const opts='<option value="">— select client —</option>'+active.map(c=>'<option value="'+c.id+'">'+esc(c.name||c.email)+'</option>').join('');
+  const hiddenN=cs.length-active.length;
   const REASONS=['Price / affordability','Results not as expected','Lack of time','Moving away','Injury / health','Went to a competitor','Personal reasons','Unhappy with service','Paused / life event','Other'];
   const rl='<datalist id="bh-reason-list">'+REASONS.map(r=>'<option value="'+esc(r)+'">').join('')+'</datalist>';
   let h='<div class="card" style="margin:0 0 14px"><div class="card-body">'+
@@ -25578,7 +25598,8 @@ function bhChurnHTML(){const cs=BH_CLIENTS||[];
     '</div>'+
     '<div class="field" style="margin:10px 0 0"><label class="lab">Feedback (their words)</label><textarea id="bh-ch-fb" rows="2" placeholder="What the client told you"></textarea></div>'+
     '<div class="field" style="margin:10px 0 0"><label class="lab">Actions to take</label><textarea id="bh-ch-act" rows="2" placeholder="Win-back offer, follow-up, process fix… (can become a task)"></textarea></div>'+
-    '<div style="text-align:right;margin-top:8px"><button class="btn-sm solid" onclick="bhAddChurn()">＋ Log cancellation</button></div>'+
+    '<div class="small" style="color:var(--muted);margin-top:8px">Logging a cancellation <b>archives the client</b> (portal access suspended, moved off the active roster). They stay off this list until you reactivate them from 📦 Archived clients — and all their churn history is kept if they ever return and churn again.'+(hiddenN>0?' <b>'+hiddenN+'</b> already-churned client'+(hiddenN===1?' is':'s are')+' hidden until reactivated.':'')+'</div>'+
+    '<div style="text-align:right;margin-top:8px"><button class="btn-sm solid" onclick="bhAddChurn()">＋ Log cancellation &amp; archive</button></div>'+
     '</div></div>';
   h+=bhChurnStatsHTML();
   const list=(BH.churn||[]).slice().sort((a,b)=>((a.date||'')<(b.date||'')?1:-1));
@@ -25617,14 +25638,75 @@ function bhChurnStatsHTML(){bhEnsure();const list=BH.churn||[];if(!list.length)r
 async function bhAddChurn(){bhEnsure();const cid=($('bh-ch-cid')||{}).value||'';if(!cid){toast('Pick a client',true);return;}
   const c=(BH_CLIENTS||[]).find(x=>x.id===cid);
   BH.churn.push({id:uid(),cid,clientName:c?(c.name||c.email):'',date:($('bh-ch-date')||{}).value||todayISO(),reason:(($('bh-ch-reason')||{}).value||'').trim(),feedback:(($('bh-ch-fb')||{}).value||'').trim(),actions:(($('bh-ch-act')||{}).value||'').trim(),taskId:null,created_at:new Date().toISOString()});
-  await bhSave();toast('Cancellation logged');bhRender();}
-async function bhDelChurn(id){if(!confirm('Delete this cancellation record?'))return;BH.churn=(BH.churn||[]).filter(r=>r.id!==id);await bhSave();bhRender();}
+  await bhSave();
+  try{await doArchive(cid,true,{silent:true});}catch(e){bhChurnRefresh();return;}   // churn ⇒ archive; archived client now drops off the list
+  toast('Cancellation logged · client archived 📦');bhChurnRefresh();}
+async function bhDelChurn(id){if(!confirm('Delete this cancellation record?\n\n(This only removes the churn record — it does NOT reactivate the client. Restore them from 📦 Archived clients if needed.)'))return;BH.churn=(BH.churn||[]).filter(r=>r.id!==id);await bhSave();bhChurnRefresh();}
 async function bhChurnTask(id){const r=(BH.churn||[]).find(x=>x.id===id);if(!r||!r.actions){toast('No actions to convert',true);return;}
   const tid=uid();
   try{await DB.saveTask({id:tid,client_id:r.cid,client_name:r.clientName||'',title:'Win-back: '+(r.clientName||'client'),details:'Churn actions — '+r.actions+(r.reason?(' (reason: '+r.reason+')'):''),due_date:null,recurrence:'none',priority:'high',status:'open',created_at:new Date().toISOString()});
     r.taskId=tid;await bhSave();try{if(typeof renderTasks==='function')renderTasks();}catch(e){}try{if(typeof renderDrawerTasks==='function')renderDrawerTasks();}catch(e){}
-    toast('✓ Task created');bhRender();}
+    toast('✓ Task created');bhChurnRefresh();}
   catch(e){toast('Could not create task — '+((e&&e.message)||'error'),true);}}
+/* ---- Churn: standalone module (live from the admin rail) + shared helpers ---- */
+function churnArchivedSet(){try{const rows=(typeof OV_ROWS!=='undefined'&&Array.isArray(OV_ROWS))?OV_ROWS:[];return new Set(rows.filter(r=>r&&r.archived).map(r=>r.id));}catch(e){return new Set();}}
+function bhChurnRefresh(){try{if($('bh-modal')&&$('bh-modal').classList.contains('open'))bhRender();}catch(e){}try{if($('churn-modal')&&$('churn-modal').classList.contains('open'))churnRender();}catch(e){}}
+/* Load the business_health KV (churn lives in BH.churn) + the client list, without the private-BH password.
+   Always re-reads from the KV so we merge with the latest and never clobber other Business-Health data. */
+async function churnEnsureLoaded(){
+  try{BH_CLIENTS=await DB.listClients();}catch(e){BH_CLIENTS=BH_CLIENTS||[];}
+  try{const v=await DB.getKV('business_health');BH=(v&&typeof v==='object'&&!Array.isArray(v))?v:{};BH_LOADED_OK=true;}
+  catch(e){if(!BH_LOADED_OK){BH=BH&&typeof BH==='object'?BH:{};}}
+  bhEnsure();return BH_LOADED_OK;
+}
+async function openChurn(){
+  if(typeof ADMIN_OK==='undefined'||!ADMIN_OK)return;   // admin (owner or coach)
+  $('churn-modal').classList.add('open');
+  const host=$('churn-host');if(host)host.innerHTML='<div class="empty" style="padding:30px">Loading…</div>';
+  await churnEnsureLoaded();
+  churnRender();
+}
+function closeChurn(){$('churn-modal').classList.remove('open');}
+function churnRender(){const host=$('churn-host');if(!host)return;host.innerHTML=bhChurnHTML();}
+/* ---- Archive-a-client → record the cancellation first ---- */
+let ACM_CID=null;
+function archiveChurnOpen(clientId){
+  ACM_CID=clientId;
+  const row=(typeof OV_ROWS!=='undefined'&&Array.isArray(OV_ROWS)?OV_ROWS:[]).find(r=>r&&r.id===clientId);
+  const nm=(row&&(row.name||row.email))||((typeof edClient!=='undefined'&&edClient&&edClient.id===clientId)?(edClient.name||edClient.email):'')||'this client';
+  const REASONS=['Price / affordability','Results not as expected','Lack of time','Moving away','Injury / health','Went to a competitor','Personal reasons','Unhappy with service','Paused / life event','Completed their program','Other'];
+  const rl='<datalist id="acm-reason-list">'+REASONS.map(r=>'<option value="'+esc(r)+'">').join('')+'</datalist>';
+  $('acm-host').innerHTML=rl+
+    '<div class="small" style="margin:0 0 10px;line-height:1.5">Archiving <b>'+esc(nm)+'</b> moves them off your active roster and suspends their portal access (reversible). Record why they’re leaving so it shows in <b>Churn</b> — their churn history is kept even if they return later.</div>'+
+    '<div class="field" style="max-width:190px;margin:0 0 10px"><label class="lab">Cancelled on</label><input id="acm-date" type="date" value="'+todayISO()+'"></div>'+
+    '<div class="field" style="margin:0 0 10px"><label class="lab">Reason</label><input id="acm-reason" list="acm-reason-list" placeholder="Why are they leaving?"></div>'+
+    '<div class="field" style="margin:0 0 10px"><label class="lab">Feedback (their words)</label><textarea id="acm-fb" rows="2" placeholder="What the client told you"></textarea></div>'+
+    '<div class="field" style="margin:0 0 12px"><label class="lab">Actions to take</label><textarea id="acm-act" rows="2" placeholder="Win-back offer, follow-up, process fix… (can become a task)"></textarea></div>'+
+    '<div class="row" style="gap:8px;flex-wrap:wrap;justify-content:flex-end">'+
+      '<button class="btn-sm" onclick="archiveChurnGo(false)" title="Archive without logging a cancellation (e.g. program completed, not a churn)">Archive only</button>'+
+      '<button class="btn-sm solid" onclick="archiveChurnGo(true)">📦 Archive &amp; log cancellation</button>'+
+    '</div>';
+  $('archive-churn-modal').classList.add('open');
+}
+function closeArchiveChurn(){$('archive-churn-modal').classList.remove('open');ACM_CID=null;}
+async function archiveChurnGo(logIt){
+  const cid=ACM_CID;if(!cid)return;
+  if(logIt){
+    await churnEnsureLoaded();
+    if(BH_LOADED_OK){
+      bhEnsure();
+      const c=(BH_CLIENTS||[]).find(x=>x.id===cid);
+      const row=(typeof OV_ROWS!=='undefined'&&Array.isArray(OV_ROWS)?OV_ROWS:[]).find(r=>r&&r.id===cid);
+      BH.churn.push({id:uid(),cid,clientName:(c&&(c.name||c.email))||(row&&(row.name||row.email))||'',date:(($('acm-date')||{}).value)||todayISO(),reason:(($('acm-reason')||{}).value||'').trim(),feedback:(($('acm-fb')||{}).value||'').trim(),actions:(($('acm-act')||{}).value||'').trim(),taskId:null,created_at:new Date().toISOString()});
+      await bhSave();
+    } else { toast('Couldn’t reach the churn records — client will still be archived, but the cancellation wasn’t saved.',true); }
+  }
+  try{await doArchive(cid,true,{silent:true});}
+  catch(e){return;}   // doArchive already toasts on failure; keep the dialog open to retry
+  closeArchiveChurn();
+  toast(logIt?'📦 Archived · cancellation logged':'📦 Client archived');
+  bhChurnRefresh();
+}
 /* ---- Referrals ---- */
 function bhReferralsHTML(){const cs=BH_CLIENTS||[],cur=bhCur();
   const opts='<option value="">— select client —</option>'+cs.map(c=>'<option value="'+c.id+'">'+esc(c.name||c.email)+'</option>').join('');
@@ -26983,19 +27065,25 @@ async function togglePause(clientId,paused){
   catch(e){console.error(e);toast('Could not update — '+((e&&e.message)||'error'),true);}
 }
 function edRenderPauseBtn(){const b=$('ed-pause-btn');if(!b||!edPlan)return;const p=!!edPlan.paused;b.textContent=p?'▶ Resume account':'⏸ Pause account';b.className='btn-sm'+(p?' solid':' btn-danger');const s=$('ed-pause-state');if(s)s.textContent=p?'Paused — client sees the paused screen':'Active';}
-/* Archive a client: hides them from the active roster but keeps every record. Reversible — stored on the plan. */
+/* Archive a client: hides them from the active roster but keeps every record. Reversible — stored on the plan.
+   Archiving now opens the "record cancellation" (churn) popup first; restoring (reactivating) goes straight through. */
 async function toggleArchive(clientId,archived){
   archived=(archived===true||archived==='true');
-  if(archived&&!confirm('Archive this client?\n\nThey’ll be moved off your active roster into “📦 Archived clients” and their portal access is suspended (they’ll see an “account inactive” screen until you restore them). All their data — plans, logs, call history and stats — is kept and they can be restored anytime.'))return;
+  if(archived){archiveChurnOpen(clientId);return;}   // archive = record churn first (archiveChurnGo → doArchive)
+  await doArchive(clientId,false);                    // restore / reactivate — no churn prompt
+}
+/* The actual write. opts.silent suppresses the toast (the churn flow shows its own). */
+async function doArchive(clientId,archived,opts){
+  opts=opts||{};
   let raw=null;try{raw=await DB.getPlan(clientId);}catch(e){}
   if(!raw)raw={client_id:clientId,title:'Diet Plan'};
   raw.archived=archived;raw.archived_at=archived?new Date().toISOString():'';raw.updated_at=new Date().toISOString();
-  try{await DB.savePlanRow(raw);await DB.addAudit({client_id:clientId,actor:'admin',action:archived?'Archived client':'Restored client',detail:''});toast(archived?'📦 Client archived':'♻ Client restored');
+  try{await DB.savePlanRow(raw);await DB.addAudit({client_id:clientId,actor:'admin',action:archived?'Archived client':'Restored client',detail:''});if(!opts.silent)toast(archived?'📦 Client archived':'♻ Client restored');
     const row=(OV_ROWS||[]).find(r=>r.id===clientId);if(row){row.archived=archived;row.archivedAt=raw.archived_at;}
-    if(edClient&&edClient.id===clientId){edPlan.archived=archived;edPlan.archived_at=raw.archived_at;edRenderArchiveBtn();}
+    if(typeof edClient!=='undefined'&&edClient&&edClient.id===clientId){edPlan.archived=archived;edPlan.archived_at=raw.archived_at;edRenderArchiveBtn();}
     if($('admin-list')&&!$('admin-list').classList.contains('hidden')){try{renderOverviewSummary();renderOverviewTable();}catch(e){}}
-    if(archived)backToList();}
-  catch(e){console.error(e);toast('Could not update — '+((e&&e.message)||'error'),true);}
+    if(archived&&typeof edClient!=='undefined'&&edClient&&edClient.id===clientId)backToList();}   // only leave the editor when we're archiving the client being edited
+  catch(e){console.error(e);toast('Could not update — '+((e&&e.message)||'error'),true);throw e;}
 }
 function edRenderArchiveBtn(){const b=$('ed-archive-btn');if(!b||!edPlan)return;const a=!!edPlan.archived;b.textContent=a?'♻ Restore client':'📦 Archive client';b.className='btn-sm'+(a?' solid':'');b.setAttribute('onclick','toggleArchive(edClient.id,'+(a?'false':'true')+')');}
 /* Client-switcher side rail: jump straight to another client's profile from inside the editor */
