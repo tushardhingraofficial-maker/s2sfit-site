@@ -1432,6 +1432,25 @@ body{overflow-x:hidden}
 .dash-glance .mom-tile .v small{margin-left:1px}
 .dash-glance-h{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 4px 8px}
 .dh2-streak{flex:none;align-self:center;background:var(--card);border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-family:var(--disp);font-weight:900;font-size:15px;color:var(--text);white-space:nowrap;box-shadow:0 8px 20px -16px rgba(16,24,40,.4)}
+/* Minimal Home: vertically centre the short stack in the viewport + enlarge the key blocks so it doesn't read as empty */
+#view-dashboard:not(.hidden) #dash-host{display:flex;flex-direction:column;justify-content:center;min-height:calc(100dvh - 150px)}
+#dash-host .dash-hero2{margin:0 2px 22px}
+#dash-host .focus-card{margin:0 2px 20px;border-radius:20px}
+#dash-host .focus-inner{padding:22px 20px}
+#dash-host .focus-kick{font-size:12px}
+#dash-host .focus-title{font-size:24px}
+#dash-host .focus-sub{font-size:13.5px}
+#dash-host .focus-cta{padding:15px;font-size:14px;margin-top:15px;border-radius:14px}
+#dash-host .dash-glance-h{margin:0 4px 11px;font-size:12px}
+#dash-host .dash-glance{gap:11px;margin:0 2px 20px}
+#dash-host .dash-glance .mom-tile{padding:20px 8px;border-radius:18px}
+#dash-host .dash-glance .mom-tile .ic{font-size:21px}
+#dash-host .dash-glance .mom-tile .v{font-size:26px;margin-top:7px}
+#dash-host .dash-glance .mom-tile .k{font-size:11px;margin-top:7px}
+#dash-host .focus-row{padding:14px 15px;border-radius:16px}
+#dash-host .focus-row .fr-ic{width:38px;height:38px;font-size:20px}
+#dash-host .focus-row .fr-t{font-size:14.5px}
+#dash-host .focus-row .fr-s{font-size:12px}
 .lvl-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:13px 15px;margin:0 2px 14px;box-shadow:0 8px 20px -16px rgba(16,24,40,.4);cursor:pointer}
 .lvl-head{display:flex;align-items:center;gap:8px;margin-bottom:9px;font-size:13px;font-weight:800}
 .lvl-head .sp{margin-left:auto;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
@@ -7681,7 +7700,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04ul';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04um';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
