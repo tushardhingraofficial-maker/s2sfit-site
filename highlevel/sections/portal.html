@@ -7453,7 +7453,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04ts';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04tt';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -25601,6 +25601,7 @@ function bhChurnHTML(){const cs=BH_CLIENTS||[];
     '<div class="small" style="color:var(--muted);margin-top:8px">Logging a cancellation <b>archives the client</b> (portal access suspended, moved off the active roster). They stay off this list until you reactivate them from 📦 Archived clients — and all their churn history is kept if they ever return and churn again.'+(hiddenN>0?' <b>'+hiddenN+'</b> already-churned client'+(hiddenN===1?' is':'s are')+' hidden until reactivated.':'')+'</div>'+
     '<div style="text-align:right;margin-top:8px"><button class="btn-sm solid" onclick="bhAddChurn()">＋ Log cancellation &amp; archive</button></div>'+
     '</div></div>';
+  h+=bhChurnChartsHTML();
   h+=bhChurnStatsHTML();
   const list=(BH.churn||[]).slice().sort((a,b)=>((a.date||'')<(b.date||'')?1:-1));
   const nameById={};cs.forEach(c=>nameById[c.id]=c.name||c.email);
@@ -25612,6 +25613,38 @@ function bhChurnHTML(){const cs=BH_CLIENTS||[];
     (r.actions?'<div style="margin-top:8px">'+(r.taskId?'<span class="pill good">✓ task created</span>':'<button class="btn-xxs" onclick="bhChurnTask(\''+r.id+'\')">✓ Turn actions into a task</button>')+'</div>':'')+
     '</div>').join('');
   return h;}
+/* churn-rate & sign-ups over time (shares the Business-Health date window + chart helpers) */
+function bhChurnChartsHTML(){bhEnsure();
+  const w=bhWindow(),from=w.from,to=w.to;
+  const spanDays=Math.round((Date.parse(to)-Date.parse(from))/86400000)+1;
+  const mode=spanDays<=45?'day':spanDays<=200?'week':'month';
+  const seq=bhBucketSeq(from,to,mode);
+  const sign=bhSeries(from,to,'signups',mode,seq),churn=bhSeries(from,to,'churn',mode,seq);
+  const signPts=seq.map(k=>({date:k,value:sign[k]||0}));
+  const churnPts=seq.map(k=>({date:k,value:churn[k]||0}));
+  const totSign=signPts.reduce((a,p)=>a+p.value,0),totChurn=churnPts.reduce((a,p)=>a+p.value,0);
+  const net=totSign-totChurn;
+  // running active base (for churn-rate %) from BH data: sign-ups to date − cancellations to date
+  const startDates=[];Object.keys(BH.signups||{}).forEach(cid=>{const s=BH.signups[cid];if(s&&s.startDate)startDates.push(String(s.startDate).slice(0,10));});
+  const churnDates=(BH.churn||[]).map(r=>String(r.date||'').slice(0,10)).filter(Boolean);
+  const activeBefore=iso=>{let a=0;for(const d of startDates)if(d<iso)a++;for(const d of churnDates)if(d<iso)a--;return a;};
+  const haveBase=startDates.length>0;
+  const ratePts=seq.map(k=>{const base=activeBefore(k),c=churn[k]||0;return {date:k,value:(base>0)?Math.round((c/base)*1000)/10:0};});
+  const served=activeBefore(from)+totSign,winRate=(served>0)?Math.round((totChurn/served)*1000)/10:null;   // churn ÷ clients active at any point in the window (active at start + joined during)
+  const cmpChart=seq.length?lineChartSVG([{label:'🟢 Sign-ups',color:'var(--good)',pts:signPts},{label:'🔴 Churn',color:'var(--red)',pts:churnPts}],{min:0}):'<div class="empty">Pick a wider range.</div>';
+  const rateChart=(seq.length&&haveBase)?lineChartSVG([{label:'Churn rate %',color:'#ef4444',pts:ratePts}],{min:0}):'<div class="empty">Churn-rate % needs client start dates — set them in the <b>🟢 Sign-ups</b> tab of Business health.</div>';
+  const chip=(v,l,col)=>'<div class="macro" style="text-align:left"><div class="k">'+l+'</div><div style="font-family:var(--disp);font-weight:800;font-size:22px'+(col?';color:'+col:'')+'">'+v+'</div></div>';
+  return '<div class="card" style="margin:0 0 14px"><div class="card-body">'+
+    '<div class="uline" style="margin:0 0 8px">📉 Churn vs sign-ups over time</div>'+
+    bhRangeBarHTML()+
+    '<div class="macro-grid" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr));margin:12px 0">'+
+      chip(totSign,'🟢 Sign-ups','var(--good)')+chip(totChurn,'🔴 Churned','var(--red)')+chip((net>=0?'+':'')+net,'Net growth',net>=0?'var(--good)':'var(--red)')+chip(winRate!=null?winRate+'%':'—','Churn rate (window)','var(--red)')+
+    '</div>'+
+    '<div class="trend">'+cmpChart+'</div>'+
+    '<div class="uline" style="margin:16px 0 8px">Churn rate % <span class="small" style="text-transform:none;font-weight:400;color:var(--muted)">— cancellations ÷ active clients at the start of each '+mode+'</span></div>'+
+    '<div class="trend">'+rateChart+'</div>'+
+    '<div class="small" style="color:var(--muted);margin-top:8px">Window: '+esc(fmtDate(from))+' → '+esc(fmtDate(to))+' · bucketed by '+mode+'. The active base for churn-rate is built from sign-up start dates minus cancellations to date.</div>'+
+    '</div></div>';}
 /* churn analytics — reason categories + how long people stayed */
 function bhChurnStatsHTML(){bhEnsure();const list=BH.churn||[];if(!list.length)return '';
   const reasons=bhDist(list,r=>r.reason||'Unknown');
@@ -25758,8 +25791,8 @@ function bhSeries(from,to,metric,mode,seq){const map={};seq.forEach(k=>map[k]=0)
   else if(metric==='churn')(BH.churn||[]).forEach(r=>add(r.date,1));
   else if(metric==='referrals')(BH.referrals||[]).forEach(r=>add(r.date,1));
   return map;}
-function bhSetRange(mode){BH_RANGE.mode=mode;if(mode==='custom'){BH_RANGE.from=BH_RANGE.from||addDaysISO(todayISO(),-29);BH_RANGE.to=BH_RANGE.to||todayISO();}bhRender();}
-function bhSetCustom(field,v){BH_RANGE[field]=v;bhRender();}
+function bhSetRange(mode){BH_RANGE.mode=mode;if(mode==='custom'){BH_RANGE.from=BH_RANGE.from||addDaysISO(todayISO(),-29);BH_RANGE.to=BH_RANGE.to||todayISO();}bhChurnRefresh();}
+function bhSetCustom(field,v){BH_RANGE[field]=v;bhChurnRefresh();}
 function bhSetMetric(m){BH_METRIC=m;bhRender();}
 function bhDashHTML(){bhEnsure();const w=bhWindow(),from=w.from,to=w.to;
   const inW=iso=>{iso=String(iso||'').slice(0,10);return iso&&iso>=from&&iso<=to;};
