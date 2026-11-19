@@ -1425,6 +1425,13 @@ body{overflow-x:hidden}
 .mom-tile .v{font-family:var(--disp);font-weight:900;font-size:21px;margin-top:3px;line-height:1}
 .mom-tile .v small{font-size:13px;color:var(--muted);font-weight:800}
 .mom-tile .k{font-size:10px;color:var(--muted);font-weight:800;letter-spacing:.03em;text-transform:uppercase;margin-top:4px;overflow-wrap:anywhere}
+.dash-glance{display:flex;gap:10px;margin:0 2px 14px}
+.dash-glance:empty{display:none}
+.dash-glance .mom-tile{cursor:pointer;color:inherit;font-family:inherit;-webkit-appearance:none;appearance:none;transition:border-color .15s,transform .1s}
+.dash-glance .mom-tile:hover{border-color:var(--red);transform:translateY(-2px)}
+.dash-glance .mom-tile .v small{margin-left:1px}
+.dash-glance-h{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 4px 8px}
+.dh2-streak{flex:none;align-self:center;background:var(--card);border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-family:var(--disp);font-weight:900;font-size:15px;color:var(--text);white-space:nowrap;box-shadow:0 8px 20px -16px rgba(16,24,40,.4)}
 .lvl-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:13px 15px;margin:0 2px 14px;box-shadow:0 8px 20px -16px rgba(16,24,40,.4);cursor:pointer}
 .lvl-head{display:flex;align-items:center;gap:8px;margin-bottom:9px;font-size:13px;font-weight:800}
 .lvl-head .sp{margin-left:auto;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
@@ -7674,7 +7681,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04uk';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04ul';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -9452,217 +9459,68 @@ async function renderDashboard(){
   const first=((SESSION&&(SESSION.name||''))||'').trim().split(/\s+/)[0]||'there';
   const hr=new Date().getHours();const greet=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
   const dstr=new Date(today+'T00:00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
-  let lw=null;try{const ws0=weightSorted();lw=ws0[ws0.length-1]||null;}catch(e){}
-  const wToday=!!(lw&&String(lw.date||'').slice(0,10)===today);
-  let wtHero='';
-  if(sectionLive('goals')){
-    if(lw){
-      const ws=weightSorted();const vals=ws.slice(-12).map(e=>+e.value).filter(v=>!isNaN(v));
-      const cut=addDaysISO(today,-30);const win=ws.filter(e=>String(e.date||'').slice(0,10)>=cut);const base=(win[0]||ws[0]);
-      let md=null;if(base&&base!==lw)md=round(+lw.value-+base.value,1);
-      const spk=dashSpark(vals,96,30,(md!=null&&md>0)?'var(--red)':'var(--good)');
-      const dlt=(md!=null)?('<div class="dh2-delta" style="color:'+(md<0?'var(--good)':md>0?'var(--red)':'var(--muted)')+'">'+(md<0?'▼ '+Math.abs(md):md>0?'▲ '+md:'–')+' kg this month</div>'):'';
-      wtHero='<div class="dh2-wt" onclick="setSection(\'goals\');setTimeout(function(){try{gmBranch(\'weight\')}catch(e){}},60)"><div class="dh2-wtn"><b>'+round(lw.value,1)+'</b><span>kg</span></div>'+spk+dlt+'</div>';
-    } else {
-      wtHero='<div class="dh2-wt" onclick="setSection(\'goals\');setTimeout(function(){try{gmBranch(\'weight\')}catch(e){}},60)"><div class="dh2-wtn"><b style="font-size:16px">Log weight ›</b></div></div>';
-    }
-  }
-  host.innerHTML='<div class="dash-hero2"><div style="flex:1;min-width:0"><div class="dh2-kick">'+greet+'</div><div class="dh2-name">'+esc(first)+'</div><div class="dh2-date">'+esc(dstr)+'</div></div>'+wtHero+'</div>'+
-    '<div id="dash-momentum" class="dash-mom-wrap"><div id="dm-strip"></div><div id="dm-lvl"></div><div id="dm-focus"></div></div>'+
-    (function(){try{return mrDashCardHTML();}catch(e){return '';}})()+
-    '<div class="dash-grid" id="dash-grid"><div class="empty">Loading your day…</div></div>';
-  try{setTimeout(mrPopupCheck,600);}catch(e){}   // nudge the client to log any due metrics
-  // async data
-  let dayLog=null,wlogs=[],journal=[];
-  let tasks=[];
+  host.innerHTML='<div class="dash-hero2"><div style="flex:1;min-width:0"><div class="dh2-kick">'+greet+'</div><div class="dh2-name">'+esc(first)+'</div><div class="dh2-date">'+esc(dstr)+'</div></div><div id="dash-streak"></div></div>'+
+    '<div id="dm-focus" class="dash-mom-wrap"><div class="focus-card" style="cursor:default"><div class="focus-inner"><div class="focus-kick">Your focus today</div><div class="focus-title" style="font-size:16px">Loading your day…</div></div></div></div>'+
+    '<div class="dash-glance-h" id="dash-glance-h" style="display:none">Today at a glance</div>'+
+    '<div class="dash-glance" id="dash-glance"></div>'+
+    '<div id="dash-quick"></div>';
+  try{setTimeout(mrPopupCheck,600);}catch(e){}   // still nudge the client to log any due metrics (popup, not a card)
+  // ── async data ──
+  let dayLog=null,wlogs=[],journal=[],tasks=[];
   try{[dayLog,wlogs,journal,tasks]=await Promise.all([
     (sectionLive('nutrition')?DB.getLog(SESSION.id,today).catch(()=>null):Promise.resolve(null)),
     (sectionLive('training')?DB.listWorkoutLogs(SESSION.id).catch(()=>[]):Promise.resolve([])),
     (sectionLive('nutrition')?DB.listJournal(SESSION.id).catch(()=>[]):Promise.resolve([])),
     (sectionLive('mytasks')?DB.listAssignments(SESSION.id).catch(()=>[]):Promise.resolve([]))
   ]);}catch(e){}
-  // ── Direction B premium top: momentum tiles · S2S Points · focus-of-the-day ──
-  try{
-    const actDates=new Set();try{weightSorted().forEach(function(e){actDates.add(String(e.date||'').slice(0,10));});}catch(_){}
-    (wlogs||[]).forEach(function(l){actDates.add(String(l.date||'').slice(0,10));});
-    (journal||[]).forEach(function(e){actDates.add(String(e.date||'').slice(0,10));});
-    if(dayLog&&((dayLog.items||[]).length))actDates.add(today);
-    let streak=0;{let d=actDates.has(today)?today:addDaysISO(today,-1);while(actDates.has(d)){streak++;d=addDaysISO(d,-1);}}
-    const momTiles=[{ic:'🔥',v:String(streak),k:'Day streak'}];
-    if(sectionLive('training')){const dd=new Set((wlogs||[]).map(function(l){return String(l.date||'').slice(0,10);}));const tcx=t2c();let sW=0,dW=0;for(let i=0;i<7;i++){const iso=addDaysISO(wkStart,i);if((((tcx.calendar||{})[iso])||[]).length)sW++;if(dd.has(iso)&&inWeek(iso))dW++;}momTiles.push({ic:'🏋️',v:dW+(sW?'<small>/'+sW+'</small>':''),k:'This week'});}
-    if(sectionLive('nutrition')){const dt=dayTypeForDate(PLAN,today);const tg=(dt&&dt.target)||{};const tc2=calOf(tg);const tt=sumItems((dayLog&&dayLog.items)||[]);(journal||[]).forEach(function(e){if(e&&e.nutrition&&String(e.date||'').slice(0,10)===today)tt.cal+=+e.nutrition.cal||0;});if(tc2>0)momTiles.push({ic:'🍎',v:Math.min(100,Math.round(tt.cal/tc2*100))+'<small>%</small>',k:'Macros'});}
-    if(momTiles.length<3&&sectionLive('habits')){try{const s=hbDashSummary();if(s.hasAny)momTiles.push({ic:'✅',v:(s.total?s.pct+'<small>%</small>':String(s.active)),k:'Habits'});}catch(_){}}
-    if(momTiles.length<3&&sectionLive('sleep')){try{const lg=(sleepData().logs||[]);const l7=lg.filter(function(l){return l.date>=addDaysISO(today,-6);});momTiles.push({ic:'😴',v:l7.length+'<small>/7</small>',k:'Sleep'});}catch(_){}}
-    const mstrip=$('dm-strip');if(mstrip)mstrip.innerHTML=momTiles.length?('<div class="mom-strip">'+momTiles.slice(0,3).map(function(t){return '<div class="mom-tile"><div class="ic">'+t.ic+'</div><div class="v">'+t.v+'</div><div class="k">'+t.k+'</div></div>';}).join('')+'</div>'):'';
-    // "Your focus today" — the top item is the hero card, the rest drop into an "Also on your list" list (each gated by what's live + still pending)
-    const fitems=[];
-    const openT=(tasks||[]).filter(function(t){return t.status!=='done';}).sort(function(a,b){return ((a.due_date||'9999')<(b.due_date||'9999')?-1:1);});
-    if(sectionLive('mytasks')){openT.slice(0,3).forEach(function(t){const due=t.due_date?(t.due_date<today?'Overdue':t.due_date===today?'Due today':'Due '+fmtDate(t.due_date)):'';fitems.push({ic:'📋',t:(t.title||'Task'),s:(due?due+' · ':'')+'from your coach',c:'Start →',a:"setSection('mytasks')"});});}
-    if(sectionLive('goals')&&!wToday)fitems.push({ic:'⚖️',t:'Log today’s weight',s:'10 seconds · keeps your trend moving',c:'Log weight →',a:"setSection('goals');setTimeout(function(){try{gmBranch('weight')}catch(e){}},60)"});
-    if(sectionLive('nutrition')&&!(dayLog&&((dayLog.items||[]).length)))fitems.push({ic:'🍎',t:'Log your first meal',s:'Stay on top of today’s macros',c:'Log food →',a:"setSection('nutrition')"});
-    if(sectionLive('training')){try{const schToday=(((t2c().calendar||{})[today])||[]).length>0;const wDoneToday=(wlogs||[]).some(function(l){return String(l.date||'').slice(0,10)===today;});if(schToday&&!wDoneToday)fitems.push({ic:'🏋️',t:'Today’s workout',s:'You’ve got a session scheduled',c:'Start →',a:"setSection('training')"});}catch(_){}}
-    if(sectionLive('habits')){try{const hs=hbDashSummary();if(hs&&hs.hasAny&&hs.total&&hs.pct<100)fitems.push({ic:'✅',t:'Tick today’s habits',s:hs.pct+'% done — keep the chain going',c:'Open →',a:"setSection('habits')"});}catch(_){}}
-    const mfocus=$('dm-focus');
-    if(mfocus){
-      if(!fitems.length){
-        mfocus.innerHTML='<div class="focus-card"><div class="focus-inner"><div class="focus-kick">Your focus today</div><div class="focus-title">You’re all caught up</div><div class="focus-sub">Nice work today — keep the streak going 🔥</div></div></div>';
-      } else {
-        const hero=fitems[0];
-        let fhtml='<div class="focus-card"'+(hero.a?' onclick="'+hero.a+'"':'')+'><div class="focus-inner"><div class="focus-kick">Your focus today</div><div class="focus-title">'+esc(hero.t)+'</div><div class="focus-sub">'+esc(hero.s)+'</div>'+(hero.c?'<button class="focus-cta" onclick="event.stopPropagation();'+(hero.a||'')+'">'+esc(hero.c)+'</button>':'')+'</div></div>';
-        const rest=fitems.slice(1);
-        if(rest.length){fhtml+='<div class="focus-more-h">Also on your list</div><div class="focus-more">'+rest.map(function(it){return '<button type="button" class="focus-row"'+(it.a?' onclick="'+it.a+'"':'')+'><span class="fr-ic">'+it.ic+'</span><span class="fr-main"><span class="fr-t">'+esc(it.t)+'</span><span class="fr-s">'+esc(it.s)+'</span></span><span class="fr-go">›</span></button>';}).join('')+'</div>';}
-        mfocus.innerHTML=fhtml;
-      }
-    }
-    if(sectionLive('rewards')&&!isMomentumMember()){(async function(){try{
-      const cfg=await rewardsCfg();
-      // pull the live balance the same way the Rewards section does (coach may have awarded/redeemed since login)
-      try{if(SESSION){const fresh=await DB.getPlan(SESSION.id);if(fresh&&fresh.milestones){PLAN.milestones=PLAN.milestones||{goals:[]};if(Array.isArray(fresh.milestones.rewardsEarned)&&!Array.isArray(PLAN.milestones.rewardsEarned))PLAN.milestones.rewardsEarned=fresh.milestones.rewardsEarned;PLAN.milestones.rewards=rwUnionEarned(fresh.milestones.rewards);}}}catch(_){}
-      const rd=rwClientData(PLAN);const total=+rd.total||0;const limit=+((cfg&&cfg.redeemLimit))||0;const h2=$('dm-lvl');if(!h2)return;
-      if(limit>0){const pct=Math.min(100,Math.round(total/limit*100));const left=Math.max(0,limit-total);h2.innerHTML='<div class="lvl-card" onclick="setSection(\'rewards\')"><div class="lvl-head"><span>🏅</span>S2S Points<span class="sp"><b>'+total.toLocaleString()+'</b> / '+limit.toLocaleString()+' pts</span></div><div class="lvl-bar"><div class="lvl-fill" style="width:'+pct+'%"></div></div><div class="lvl-note">'+(total>=limit?'🎉 You can redeem a reward now — tap to claim':left.toLocaleString()+' pts to your next reward · log today’s weight for +'+rwWeightPts(cfg))+'</div></div>';}
-      else if(total>0){h2.innerHTML='<div class="lvl-card" onclick="setSection(\'rewards\')"><div class="lvl-head"><span>🏅</span>S2S Points<span class="sp"><b>'+total.toLocaleString()+'</b> pts</span></div><div class="lvl-note" style="margin-top:0">Keep earning — log weight, food &amp; check-ins</div></div>';}
-      else{h2.innerHTML='';}
-    }catch(_){}})();}
-  }catch(e){}
-  const cards=[];
-  // ---- Tasks (coach-allocated) ----
-  if(sectionLive('mytasks')){
-    const open=(tasks||[]).filter(function(t){return t.status!=='done';});
-    const overdue=open.filter(function(t){return t.due_date&&t.due_date<today;});
-    const dueToday=open.filter(function(t){return t.due_date===today;});
-    const next=open.slice().sort(function(a,b){return ((a.due_date||'9999')<(b.due_date||'9999')?-1:1);})[0];
-    if(open.length){
-      cards.push(dashCard({key:'mytasks',sec:'mytasks',ic:svgIcon('mytasks'),title:'Tasks',done:false,
-        badge:overdue.length?(overdue.length+' overdue'):(open.length+' open'),badgeCls:overdue.length?'wait':'',
-        main:open.length+' <small>to do</small>',
-        body:'<div class="dc-stats">'+dStat('Due today',dueToday.length)+dStat('Overdue',overdue.length)+dStat('Open',open.length)+'</div>',
-        sub:next?('Next: '+esc((next.title||'task').slice(0,30))+(next.due_date?' · '+esc(fmtDate(next.due_date)):'')):'Tap to view your tasks'}));
+  // weight
+  let lw=null;try{const ws0=weightSorted();lw=ws0[ws0.length-1]||null;}catch(e){}
+  const wToday=!!(lw&&String(lw.date||'').slice(0,10)===today);
+  // day streak (any logged activity on consecutive days)
+  const actDates=new Set();try{weightSorted().forEach(e=>actDates.add(String(e.date||'').slice(0,10)));}catch(_){}
+  (wlogs||[]).forEach(l=>actDates.add(String(l.date||'').slice(0,10)));
+  (journal||[]).forEach(e=>actDates.add(String(e.date||'').slice(0,10)));
+  if(dayLog&&((dayLog.items||[]).length))actDates.add(today);
+  let streak=0;{let d=actDates.has(today)?today:addDaysISO(today,-1);while(actDates.has(d)){streak++;d=addDaysISO(d,-1);}}
+  {const sc=$('dash-streak');if(sc)sc.innerHTML=streak>0?('<div class="dh2-streak" title="Day streak">🔥 '+streak+'</div>'):'';}
+  // workout status today / this week
+  let wDoneToday=false,wSchedToday=false,doneWk=0,schedWk=0;
+  if(sectionLive('training')){try{const tc=t2c();const doneDates=new Set((wlogs||[]).map(l=>String(l.date||'').slice(0,10)));wDoneToday=doneDates.has(today);wSchedToday=(((tc.calendar||{})[today])||[]).length>0;for(let i=0;i<7;i++){const iso=addDaysISO(wkStart,i);if(((tc.calendar||{})[iso]||[]).length)schedWk++;if(doneDates.has(iso)&&inWeek(iso))doneWk++;}}catch(_){}}
+  // macros today
+  let mPct=null;
+  if(sectionLive('nutrition')){try{const dt=dayTypeForDate(PLAN,today);const tgt=(dt&&dt.target)||{};const tcal=calOf(tgt);const tot=sumItems((dayLog&&dayLog.items)||[]);(journal||[]).forEach(e=>{if(e&&e.nutrition&&String(e.date||'').slice(0,10)===today)tot.cal+=+e.nutrition.cal||0;});if(tcal>0)mPct=Math.min(100,Math.round(tot.cal/tcal*100));}catch(_){}}
+  // cardio today
+  let cPct=null,cHit=false,cBurn=0,cTgt=0;
+  if(sectionLive('cardio')){try{const weekly=cardioWeeklyTarget(),days=cardioDays();const perDay=trCardioPerDay(weekly,days);const logs=cardioFLLogs();const tl=logs.find(l=>l.date===today)||null;cBurn=cardioDayBurn(tl);cTgt=Math.round(perDay.cals||0);if(cTgt>0){cPct=Math.min(100,Math.round(cBurn/cTgt*100));cHit=cBurn>=cTgt;}}catch(_){}}
+  // ── Today at a glance: weight · macros · workout (cardio fills in when training isn't live); capped at 3 ──
+  const tiles=[];
+  if(sectionLive('goals')){
+    let delta='';try{const ws=weightSorted();const cut=addDaysISO(today,-30);const win=ws.filter(e=>String(e.date||'').slice(0,10)>=cut);const base=(win[0]||ws[0]);if(lw&&base&&base!==lw){const md=round(+lw.value-+base.value,1);if(md)delta=' <small style="color:'+(md<0?'var(--good)':'var(--red)')+'">'+(md<0?'▼':'▲')+Math.abs(md)+'</small>';}}catch(_){}
+    tiles.push({a:"setSection('goals');setTimeout(function(){try{gmBranch('weight')}catch(e){}},60)",ic:'⚖️',v:lw?round(lw.value,1):'—',k:lw?('kg'+delta):'log weight'});
+  }
+  if(sectionLive('nutrition'))tiles.push({a:"setSection('nutrition');setTimeout(function(){try{setNutri('log')}catch(e){}},40)",ic:'🍎',v:mPct!=null?(mPct+'<small>%</small>'):'—',k:'macros'});
+  if(sectionLive('training'))tiles.push({a:"setSection('training')",ic:'🏋️',v:wSchedToday?(wDoneToday?'<span style="color:var(--good)">✓</span>':'To&nbsp;do'):(schedWk?doneWk+'<small>/'+schedWk+'</small>':'—'),k:'workout'});
+  if(sectionLive('cardio'))tiles.push({a:"setSection('cardio')",ic:'🔥',v:cTgt>0?(cHit?'<span style="color:var(--good)">✓</span>':cPct+'<small>%</small>'):'—',k:'cardio'});
+  {const g=$('dash-glance'),gh=$('dash-glance-h');const show=tiles.slice(0,3);if(g){if(show.length){if(gh)gh.style.display='';g.innerHTML=show.map(t=>'<button type="button" class="mom-tile" onclick="'+t.a+'"><div class="ic">'+t.ic+'</div><div class="v">'+t.v+'</div><div class="k">'+t.k+'</div></button>').join('');}else{if(gh)gh.style.display='none';g.innerHTML='';}}}
+  // ── Your focus today (the single most important pending action) + one quick row ──
+  const fitems=[];
+  const openT=(tasks||[]).filter(t=>t.status!=='done').sort((a,b)=>((a.due_date||'9999')<(b.due_date||'9999')?-1:1));
+  if(sectionLive('mytasks'))openT.slice(0,3).forEach(t=>{const due=t.due_date?(t.due_date<today?'Overdue':t.due_date===today?'Due today':'Due '+fmtDate(t.due_date)):'';fitems.push({ic:'📋',t:(t.title||'Task'),s:(due?due+' · ':'')+'from your coach',c:'Start →',a:"setSection('mytasks')"});});
+  if(sectionLive('training')&&wSchedToday&&!wDoneToday)fitems.push({ic:'🏋️',t:'Today’s workout',s:'You’ve got a session scheduled',c:'Start →',a:"setSection('training')"});
+  if(sectionLive('goals')&&!wToday)fitems.push({ic:'⚖️',t:'Log today’s weight',s:'10 seconds · keeps your trend moving',c:'Log weight →',a:"setSection('goals');setTimeout(function(){try{gmBranch('weight')}catch(e){}},60)"});
+  if(sectionLive('nutrition')&&!(dayLog&&((dayLog.items||[]).length))&&!(journal||[]).some(e=>String(e.date||'').slice(0,10)===today))fitems.push({ic:'🍎',t:'Log your first meal',s:'Stay on top of today’s macros',c:'Log food →',a:"setSection('nutrition');setTimeout(function(){try{setNutri('log')}catch(e){}},40)"});
+  if(sectionLive('cardio')&&cTgt>0&&!cHit)fitems.push({ic:'🔥',t:'Today’s cardio',s:Math.max(0,cTgt-cBurn).toLocaleString()+' kcal to your target',c:'Log →',a:"setSection('cardio')"});
+  if(sectionLive('habits')){try{const hs=hbDashSummary();if(hs&&hs.hasAny&&hs.total&&hs.pct<100)fitems.push({ic:'✅',t:'Tick today’s habits',s:hs.pct+'% done — keep the chain going',c:'Open →',a:"setSection('habits')"});}catch(_){}}
+  const mfocus=$('dm-focus');
+  if(mfocus){
+    if(!fitems.length){
+      mfocus.innerHTML='<div class="focus-card" style="cursor:default"><div class="focus-inner"><div class="focus-kick">Your focus today</div><div class="focus-title">You’re all caught up</div><div class="focus-sub">Nice work today — keep the streak going 🔥</div></div></div>';
     } else {
-      cards.push(dashCard({key:'mytasks',sec:'mytasks',ic:svgIcon('mytasks'),title:'Tasks',done:true,badge:'All done',badgeCls:'on',main:'All clear 🎉',sub:'No open tasks from your coach'}));
+      const hero=fitems[0];
+      mfocus.innerHTML='<div class="focus-card"'+(hero.a?' onclick="'+hero.a+'"':'')+'><div class="focus-inner"><div class="focus-kick">Your focus today</div><div class="focus-title">'+esc(hero.t)+'</div><div class="focus-sub">'+esc(hero.s)+'</div>'+(hero.c?'<button class="focus-cta" onclick="event.stopPropagation();'+(hero.a||'')+'">'+esc(hero.c)+'</button>':'')+'</div></div>';
     }
   }
-  // ---- Training ----
-  if(sectionLive('training')){
-    const tc=t2c();const ids=(tc.calendar&&tc.calendar[today])||[];
-    const doneDates=new Set((wlogs||[]).map(l=>String(l.date||'').slice(0,10)));
-    const doneToday=doneDates.has(today);
-    let schedWk=0,doneWk=0;for(let i=0;i<7;i++){const iso=addDaysISO(wkStart,i);if(((tc.calendar||{})[iso]||[]).length)schedWk++;if(doneDates.has(iso)&&inWeek(iso))doneWk++;}
-    if(tc.active&&ids.length){const w0=t2cWorkout(ids[0])||{};const nx=(w0.sections||[]).reduce((a,s)=>a+((s.exercises||[]).length),0);
-      const names=ids.map(id=>((t2cWorkout(id)||{}).name)||'Workout').join(' + ');
-      cards.push(dashCard({key:'training',sec:'training',ic:svgIcon('training'),title:'Today’s workout',done:doneToday,
-        badge:doneToday?'Done':'To do',badgeCls:doneToday?'on':'wait',
-        main:esc(names),
-        body:'<div class="dc-stats">'+dStat('Exercises',nx||'—')+dStat('This week',doneWk+'/'+(schedWk||'—'))+(w0.focus?dStat('Focus',esc(String(w0.focus).slice(0,8))):dStat('Status',doneToday?'✓':'Open'))+'</div>',
-        sub:doneToday?'Great work — tap to review':'Tap to start your session'}));
-    } else {
-      cards.push(dashCard({key:'training',sec:'training',ic:svgIcon('training'),title:'Training',badge:tc.active?'Rest':'Plan',
-        main:tc.active?'Rest day 💤':'View your plan',
-        body:'<div class="dc-stats">'+dStat('This week',doneWk+'/'+(schedWk||'—'))+dStat('Logged',doneDates.size||0)+'</div>',
-        sub:tc.active?'Recovery is where you grow':'Open your training'}));
-    }
-  }
-  // ---- Cardio ----
-  if(sectionLive('cardio')){
-    const weekly=cardioWeeklyTarget(),days=cardioDays();const perDay=trCardioPerDay(weekly,days);
-    const logs=cardioFLLogs();const tl=logs.find(l=>l.date===today)||null;const burn=cardioDayBurn(tl);const tgt=Math.round(perDay.cals||0);
-    const wkBurn=logs.filter(l=>inWeek(l.date)).reduce((a,l)=>a+cardioDayBurn(l),0);
-    const streak=weekly?cardioStreak(logs,Math.round(perDay.cals)):0;
-    if(tgt>0){const pct=Math.min(100,Math.round(burn/tgt*100));const hit=burn>=tgt;
-      cards.push(dashCard({key:'cardio',sec:'cardio',ic:svgIcon('cardio'),title:'Cardio target',done:hit,
-        badge:hit?'Hit':((tgt-burn).toLocaleString()+' to go'),badgeCls:hit?'on':'wait',
-        main:burn.toLocaleString()+' <small>/ '+tgt.toLocaleString()+' kcal today</small>',
-        body:'<div class="dc-prog"><i style="width:'+pct+'%"></i></div><div class="dc-stats" style="margin-top:9px">'+dStat('This week',Math.round(wkBurn).toLocaleString())+dStat('Weekly goal',weekly?weekly.toLocaleString():'—')+dStat('Streak',streak+(streak===1?' day':' days'))+'</div>',
-        sub:hit?'Target smashed for today 🔥':'Log your steps & cardio'}));
-    } else {
-      cards.push(dashCard({key:'cardio',sec:'cardio',ic:svgIcon('cardio'),title:'Cardio',main:'Log today',sub:'Open your cardio plan'}));
-    }
-  }
-  // ---- Macros (nutrition) ----
-  if(sectionLive('nutrition')){
-    const dt=dayTypeForDate(PLAN,today);const tgt=(dt&&dt.target)||{};const tcal=calOf(tgt);const tot=sumItems((dayLog&&dayLog.items)||[]);
-    (journal||[]).forEach(function(e){if(e&&e.nutrition&&String(e.date||'').slice(0,10)===today){const n=e.nutrition;tot.p+=+n.p||0;tot.c+=+n.c||0;tot.f+=+n.f||0;tot.cal+=+n.cal||0;}});   // journaled meals count toward today
-    if(tcal>0){const pct=Math.min(100,Math.round((tot.cal/tcal)*100));const rem=Math.round(tcal-tot.cal);const over=tot.cal>tcal+1;
-      cards.push(dashCard({key:'nutrition',sec:'nutrition',cls:'onclick-log',ic:svgIcon('nutrition'),title:'Today’s macros',done:(pct>=90&&!over),
-        badge:over?('+'+Math.abs(rem).toLocaleString()+' over'):((rem).toLocaleString()+' left'),badgeCls:over?'wait':(pct>=90?'on':''),
-        main:Math.round(tot.cal).toLocaleString()+' <small>/ '+Math.round(tcal).toLocaleString()+' kcal</small>',
-        body:'<div class="dc-prog"><i style="width:'+pct+'%;background:'+(over?'var(--red)':'var(--accent)')+'"></i></div><div class="dc-macros" style="margin-top:9px">'+dMac('P',tot.p,tgt.p||0,'#f87171')+dMac('C',tot.c,tgt.c||0,'#fbbf24')+dMac('F',tot.f,tgt.f||0,'#60a5fa')+'</div>',
-        sub:(dt&&dt.name?esc(dt.name)+' · ':'')+'tap to log food'}));
-    } else {
-      cards.push(dashCard({key:'nutrition',sec:'nutrition',ic:svgIcon('nutrition'),title:'Nutrition',main:'View your plan',sub:'Open today’s meals'}));
-    }
-    // ---- Food journal (quick log) ----
-    const jrWk=(journal||[]).filter(e=>inWeek(String(e.date||'').slice(0,10))).length;const jrToday=(journal||[]).filter(e=>String(e.date||'').slice(0,10)===today).length;
-    const a=DASH_ACC.journal;
-    cards.push('<div class="dash-card" style="--accent:'+a[0]+';--accent-weak:'+a[1]+';--accent-deep:'+(a[2]||a[0])+'"><div class="dc-top"><span class="dc-chip">'+svgIcon('journal')+'</span><span class="dc-t">Food journal</span>'+(jrToday?'<span class="dc-badge on">'+jrToday+' today</span>':'')+'</div><div class="dash-qlog"><input id="dash-jr" placeholder="What did you just eat?" onclick="event.stopPropagation()" onkeydown="if(event.key===\'Enter\'){event.stopPropagation();dashJournalQuick();}"><button class="btn-sm solid" style="flex:none" onclick="event.stopPropagation();dashJournalQuick()">Log</button></div><div class="dc-foot"><span class="dc-sub">'+jrWk+' this week</span><span class="dc-open" onclick="setSection(\'nutrition\');setTimeout(function(){try{setNutri(\'journal\')}catch(e){}},40)">See all ›</span></div></div>');
-  }
-  // ---- Sleep ----
-  if(sectionLive('sleep')){
-    let logs=[];try{logs=(sleepData().logs||[]).slice().sort((a,b)=>((a.date||'')<(b.date||'')?-1:1));}catch(e){}
-    const slast=logs[logs.length-1]||null;const loggedToday=slast&&slast.date===today;
-    const last7=logs.filter(l=>l.date>=addDaysISO(today,-6));
-    const durs=last7.map(l=>sleepDuration(l)).filter(x=>x!=null);const avgMn=durs.length?Math.round(durs.reduce((a,b)=>a+b,0)/durs.length):null;
-    const ens=last7.map(l=>+l.energy).filter(x=>x>0);const avgEn=ens.length?Math.round(ens.reduce((a,b)=>a+b,0)/ens.length*10)/10:null;
-    let dur='';if(slast){const mn=sleepDuration(slast);if(mn!=null)dur=Math.floor(mn/60)+'h '+(mn%60)+'m';}
-    cards.push(dashCard({key:'sleep',sec:'sleep',ic:svgIcon('sleep'),title:'Sleep',done:loggedToday,
-      badge:loggedToday?'Logged':'Log',badgeCls:loggedToday?'on':'wait',
-      main:slast?((dur||'—')+(slast.energy?' <small>energy '+slast.energy+'/10</small>':'')):'Log last night',
-      body:'<div class="dc-stats">'+dStat('7-day avg',avgMn!=null?(Math.floor(avgMn/60)+'h '+(avgMn%60)+'m'):'—')+dStat('Avg energy',avgEn!=null?avgEn+'/10':'—')+dStat('Nights',last7.length+'/7')+'</div>',
-      sub:loggedToday?'Nice — logged for today':(slast?'Last: '+esc(fmtDate(slast.date))+' — tap to log':'Tap to log your sleep')}));
-  }
-  // ---- Habit Lab ----
-  if(sectionLive('habits')){
-    const s=hbDashSummary();
-    if(s.hasAny){
-      cards.push(dashCard({key:'habits',sec:'habits',ic:svgIcon('habits'),title:'Habit Lab',done:(s.total>0&&s.pct>=100),
-        badge:s.total?(s.pct+'% today'):(s.active+' active'),badgeCls:(s.total&&s.pct>=100)?'on':(s.total&&s.pct>0?'wait':''),
-        main:(s.total?s.done+' / '+s.total+' <small>actions today</small>':s.active+' <small>in progress</small>'),
-        body:(s.total?'<div class="dc-prog"><i style="width:'+Math.min(100,s.pct)+'%"></i></div>':'')+'<div class="dc-stats" style="margin-top:9px">'+dStat('Active',s.active)+dStat('Best streak',s.streak)+dStat('Today',s.total?s.pct+'%':'—')+'</div>',
-        sub:'Work on what’s holding you back'}));
-    } else {
-      cards.push(dashCard({key:'habits',sec:'habits',ic:svgIcon('habits'),title:'Habit Lab',main:'Start a habit',sub:'Tackle a habit that’s holding you back'}));
-    }
-  }
-  // ---- Challenge workout (workout-volume challenge) ----
-  if(sectionLive('livechal')){
-    try{ await lcLoad(); const cid=SESSION&&SESSION.id;
-      const ch=((LC_DATA&&LC_DATA.challenges)||[]).find(function(c){return c&&c.live&&c.kind==='volume'&&(c.groups||[]).some(function(g){return (g.members||[]).some(function(m){return m.id===cid;});});});
-      if(ch){ try{cvolMergeMine(ch);}catch(e){} const cd=(typeof lcCountdown==='function')?lcCountdown(ch):{state:'live'}; const done=cvolMyEntryToday(ch); const uw=(cvolScoreMode(ch)==='raw')?'kg':'pts';
-        cards.push(dashCard({key:'livechal',sec:'livechal',ic:svgIcon('training'),title:'Challenge workout',done:!!done,
-          badge:done?'Done':(cd.state==='live'?'To do':cd.state==='upcoming'?'Soon':'Ended'),badgeCls:done?'on':(cd.state==='live'?'wait':''),
-          main:done?(lcNum(done.vp)+' <small>'+uw+' today</small>'):(cd.state==='live'?'Log today':'—'),
-          body:'<div class="dc-sub">'+esc(ch.name||'Team challenge')+((done&&done.sess)?' · '+esc(done.sess.exName):'')+'</div>',
-          sub:done?'Logged for your team 💪':(cd.state==='live'?'1 exercise · 3×10–20 · tap to log':(cd.state==='upcoming'?'Starts '+(ch.startDate?fmtDate(ch.startDate):'soon'):'Challenge ended'))}));
-      }
-    }catch(e){}
-  }
-  // ---- Cheat-meal challenge card (shortcut to the challenge screen) ----
-  if(sectionLive('livechal')){
-    try{ await lcLoad(); const cid=SESSION&&SESSION.id;
-      const ch=((LC_DATA&&LC_DATA.challenges)||[]).find(function(c){return c&&c.live&&c.kind==='cheat'&&(c.groups||[]).some(function(g){return (g.members||[]).some(function(m){return m.id===cid;});});});
-      if(ch){ try{cheatMergeMine(ch);}catch(e){} const cd=(typeof lcCountdown==='function')?lcCountdown(ch):{state:'live'}; const done=(cd.state==='live')?cheatMyEntryToday(ch):null; const tg=cheatTargetFor(ch,PLAN,todayISO());
-        cards.push(dashCard({key:'livechal',sec:'livechal',ic:'🍔',title:'Cheat-meal challenge',done:!!done,
-          badge:done?'Done':(cd.state==='live'?'To do':cd.state==='upcoming'?'Practice':'Ended'),badgeCls:done?'on':(cd.state==='live'?'wait':''),
-          main:done?((done.v>=0?'+':'')+done.v+' <small>pts today</small>'):(cd.state==='live'?lcNum(tg.lo)+'–'+lcNum(tg.hi)+' <small>kcal range</small>':'—'),
-          body:'<div class="dc-sub">'+esc(ch.name||'Cheat-meal challenge')+((done&&done.s)?' · '+esc(done.s.name):'')+'</div>',
-          sub:done?'Logged ✓ 🍔':(cd.state==='live'?'Log today’s cheat meal · tap':(cd.state==='upcoming'?'Starts '+(ch.startDate?fmtDate(ch.startDate):'soon')+' · tap to practice':'Challenge ended'))}));
-      }
-    }catch(e){}
-  }
-  // ---- Knowledge ----
-  if(sectionLive('knowledge')){
-    let xp=0,doneC=0;try{const pr=knProgress();Object.keys(pr).forEach(k=>{xp+=(+((pr[k]||{}).xp)||0);if((pr[k]||{}).done)doneC++;});}catch(e){}
-    const totalC=(typeof KN_COURSES!=='undefined'&&KN_COURSES.length)||0;
-    const rk=(typeof knRank==='function')?knRank(xp):null;
-    const toNext=(rk&&rk.next!=null)?(rk.next-xp):null;const span=(rk&&rk.next!=null)?(rk.next-rk.min):0;const npct=span>0?Math.min(100,Math.round((xp-rk.min)/span*100)):100;
-    cards.push(dashCard({key:'knowledge',sec:'knowledge',ic:svgIcon('knowledge'),title:'Knowledge',
-      badge:rk?rk.name:'',badgeCls:'on',
-      main:xp+' <small>XP</small>',
-      body:(rk&&rk.next!=null?'<div class="dc-prog"><i style="width:'+npct+'%"></i></div><div class="dc-sub" style="margin-top:6px">'+toNext+' XP to '+esc(rk.nextName)+'</div>':'')+'<div class="dc-stats" style="margin-top:9px">'+dStat('Courses',doneC+'/'+(totalC||'—'))+dStat('Rank',rk?esc(rk.name):'—')+'</div>',
-      sub:xp>0?'Keep your streak going':'Start learning & earn XP'}));
-  }
-  const grid=$('dash-grid');if(grid)grid.innerHTML=cards.length?cards.join(''):'<div class="empty">Your sections will appear here as your coach turns them on.</div>';
-  // the macros card should open the day log, not the plan
-  try{const mc=grid&&grid.querySelector('.dash-card.onclick-log');if(mc){mc.classList.remove('onclick-log');mc.onclick=function(){setSection('nutrition');setTimeout(function(){try{setNutri('log')}catch(e){}},40);};}}catch(e){}
+  {const q=$('dash-quick');const second=fitems[1];if(q)q.innerHTML=second?('<div class="focus-more"><button type="button" class="focus-row" onclick="'+(second.a||'')+'"><span class="fr-ic">'+second.ic+'</span><span class="fr-main"><span class="fr-t">'+esc(second.t)+'</span><span class="fr-s">'+esc(second.s)+'</span></span><span class="fr-go">›</span></button></div>'):'';}
 }
 function setSection(sec){
   // A section that's turned off for this client is not shown at all — send them to the first live one.
