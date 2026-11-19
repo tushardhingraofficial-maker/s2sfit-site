@@ -3806,6 +3806,19 @@ body.tw-dragging{user-select:none;-webkit-user-select:none}
 .chat-rcpt.read{color:#4a9ee8;opacity:1}
 .chat-link{color:#2f7fd0;text-decoration:underline;word-break:break-all}
 .chat-msg.me .chat-link{color:#fff}
+/* file / document attachment card in a chat bubble */
+.chat-file{display:flex;align-items:center;gap:10px;margin-top:5px;background:var(--card);border:1px solid var(--border);border-radius:11px;padding:9px 11px;text-decoration:none;color:var(--text);max-width:250px}
+.chat-file:hover{border-color:var(--red)}
+.chat-file-ic{flex:none;width:34px;height:34px;border-radius:8px;background:rgba(232,23,13,.1);color:var(--red);display:flex;align-items:center;justify-content:center}
+.chat-file-ic .ic{width:18px;height:18px}
+.chat-file-meta{flex:1;min-width:0;display:flex;flex-direction:column}
+.chat-file-name{font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chat-file-sub{font-size:11px;color:var(--muted)}
+.chat-file-dl{flex:none;color:var(--muted)}
+.chat-file-dl .ic{width:17px;height:17px}
+.chat-msg.me .chat-file{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3);color:#fff}
+.chat-msg.me .chat-file-sub,.chat-msg.me .chat-file-dl{color:rgba(255,255,255,.8)}
+.chat-msg.me .chat-file-ic{background:rgba(255,255,255,.22);color:#fff}
 /* emoji picker + composer */
 .chat-emoji-btn{flex:none;width:38px;height:38px;border-radius:50%;font-size:18px;background:var(--card2);border:1px solid var(--border);cursor:pointer;color:var(--muted)}
 .chat-emoji-btn:hover{color:var(--text)}
@@ -5438,7 +5451,7 @@ img,svg,canvas,video{max-width:100%}
         <div class="chat-emoji-pop hidden" id="chat-emoji-pop"></div>
         <div class="chat-reply-bar hidden" id="chat-reply-bar"></div>
         <div class="chat-input">
-          <input type="file" id="file-client" accept="image/*,audio/*,video/*" style="display:none" onchange="chatAttach('client',this)">
+          <input type="file" id="file-client" accept="image/*,audio/*,video/*,application/pdf,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv" style="display:none" onchange="chatAttach('client',this)">
           <button class="chat-attach-btn" onclick="$('file-client').click()" title="Attach image / audio / video" aria-label="Attach"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.4 11-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.9-2.9l8.5-8.5"/></svg></button>
           <button class="chat-mic-btn" id="mic-client" onclick="chatRecord('client',this)" title="Record a voice note" aria-label="Voice note"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1"/><path d="M12 18v4M8 22h8"/></svg></button>
           <button class="chat-emoji-btn" id="chat-emoji-btn" onclick="chatToggleEmoji()" title="Emoji" aria-label="Emoji"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01M15 9h.01"/></svg></button>
@@ -6787,7 +6800,7 @@ img,svg,canvas,video{max-width:100%}
       <div class="field"><label class="lab">Message</label><textarea id="bc-text" rows="3" placeholder="Type your announcement…"></textarea></div>
       <div class="chat-pend" id="pend-bc" style="display:none;padding:0 0 8px"></div>
       <div style="display:flex;gap:8px;align-items:center">
-        <input type="file" id="file-bc" accept="image/*,audio/*,video/*" style="display:none" onchange="chatAttach('bc',this)">
+        <input type="file" id="file-bc" accept="image/*,audio/*,video/*,application/pdf,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv" style="display:none" onchange="chatAttach('bc',this)">
         <button class="chat-attach-btn" onclick="$('file-bc').click()" title="Attach image / audio / video">📎</button>
         <button class="btn btn-primary" style="flex:none" onclick="sendBroadcast()">Send broadcast</button>
         <span class="small" id="bc-note"></span>
@@ -7142,7 +7155,7 @@ img,svg,canvas,video{max-width:100%}
     <div class="chat-pend" id="pend-adm" style="display:none"></div>
     <div class="chat-reply-bar hidden" id="chat-adm-reply-bar"></div>
     <div class="chat-input" id="chat-adm-input" style="display:none">
-      <input type="file" id="file-adm" accept="image/*,audio/*,video/*" style="display:none" onchange="chatAttach('adm',this)">
+      <input type="file" id="file-adm" accept="image/*,audio/*,video/*,application/pdf,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv" style="display:none" onchange="chatAttach('adm',this)">
       <button class="chat-attach-btn" onclick="$('file-adm').click()" title="Attach image / audio / video">📎</button>
       <button class="chat-mic-btn" id="mic-adm" onclick="chatRecord('adm',this)" title="Record a voice note">🎙</button>
       <input id="chat-adm-text" placeholder="Reply…" onkeydown="if(event.key==='Enter'){event.preventDefault();chatAdmSend()}"><button class="btn-sm solid" onclick="chatAdmSend()">Send</button></div>
@@ -7493,7 +7506,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04tv';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04tw';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -9080,6 +9093,8 @@ const SVG_ICONS={
   settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
   bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
   check:'<path d="M20 6 9 17l-5-5"/>',
+  file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>',
+  download:'<path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/>',
   breath:'<path d="M12 4V8"/><path d="M12 8 11.3 9.5"/><path d="M12 8 12.7 9.5"/><path d="M11.3 9.5C11.3 11 10.5 11.3 9.4 11.8 7.8 12.5 7.2 14.3 7.2 16.2 7.2 18.1 7.9 19.4 9.4 19.4 11 19.4 11.3 18 11.3 16.3Z"/><path d="M12.7 9.5C12.7 11 13.5 11.3 14.6 11.8 16.2 12.5 16.8 14.3 16.8 16.2 16.8 18.1 16.1 19.4 14.6 19.4 13 19.4 12.7 18 12.7 16.3Z"/>'
 };
 function svgIcon(name,cls){const p=SVG_ICONS[name];if(!p)return '';return '<svg class="ic '+(cls||'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';}
@@ -21552,11 +21567,21 @@ function buddyAdmBackToList(){bdaRenderThreads();}
 
 /* ═══════════════ 10i · CHAT (client ⇄ coach) ═══════════════ */
 let CHAT_OPEN=false, CHAT_POLL=null, CHAT_ADM_CLIENT=null, CHAT_ADM_GROUP=null, CHAT_CLIENT_GROUP=null, CHAT_ADM_LASTUNREAD=0, CHAT_LASTUNREAD=0;
-function mediaHTML(m){if(!m||!m.data)return '';
+function mediaHTML(m){if(!m)return '';
+  if(m.type==='file'&&m.url)return chatFileCardHTML(m);
+  if(!m.data)return '';
   if(m.type==='image')return '<a href="'+m.data+'" target="_blank" rel="noopener"><img src="'+m.data+'" alt="image" style="max-width:230px;max-height:250px;border-radius:10px;display:block;margin-top:4px"></a>';
   if(m.type==='audio')return '<audio controls preload="metadata" src="'+m.data+'" style="margin-top:4px;max-width:230px;display:block"></audio>';
   if(m.type==='video')return '<video controls preload="metadata" src="'+m.data+'" style="margin-top:4px;max-width:230px;max-height:260px;border-radius:10px;display:block"></video>';
   return '';}
+function chatFileCardHTML(m){
+  const name=esc(m.name||'Document');
+  const kind=((m.mime||'').split('/').pop()||(String(m.name||'').split('.').pop())||'file').toUpperCase().slice(0,5);
+  const sz=m.size?(' · '+chatFileSize(m.size)):'';
+  return '<a class="chat-file" href="'+esc(m.url)+'" target="_blank" rel="noopener" download="'+esc(m.name||'')+'" title="Open / download '+name+'">'+
+    '<span class="chat-file-ic">'+svgIcon('file')+'</span>'+
+    '<span class="chat-file-meta"><span class="chat-file-name">'+name+'</span><span class="chat-file-sub">'+esc(kind)+sz+'</span></span>'+
+    '<span class="chat-file-dl">'+svgIcon('download')+'</span></a>';}
 function chatLinkify(t){return esc(t).replace(/\n/g,'<br>').replace(/(https?:\/\/[^\s<]+)/g,function(u){return '<a href="'+u+'" target="_blank" rel="noopener" class="chat-link">'+u+'</a>';});}
 function chatMsgTime(at){try{const s=String(at);return s.length>=16?s.slice(11,16):esc(fmtDT(at));}catch(e){return '';}}
 function chatReceipt(m,mine){if(!mine||m.group_id)return '';const read=(m.sender==='admin')?!!m.read_by_client:!!m.read_by_admin;return '<span class="chat-rcpt'+(read?' read':'')+'" title="'+(read?'Read':'Sent')+'">'+(read?'✓✓':'✓')+'</span>';}
@@ -21584,10 +21609,28 @@ function fileToMedia(file,cb){
   if(file.size>MEDIA_MAX){toast('That '+type+' is over 6 MB — send a shorter clip',true);return;}
   const rd=new FileReader();rd.onload=()=>cb({type,data:rd.result,mime:file.type,name:file.name||type});rd.readAsDataURL(file);
 }
-function chatAttach(ctx,input){const f=input.files&&input.files[0];input.value='';fileToMedia(f,m=>{PEND[ctx]=m;renderPendPreview(ctx);});}
+function chatAttach(ctx,input){const f=input.files&&input.files[0];input.value='';if(!f)return;
+  const t=f.type||'';
+  if(t.indexOf('image')===0||t.indexOf('audio')===0||t.indexOf('video')===0){fileToMedia(f,m=>{PEND[ctx]=m;renderPendPreview(ctx);});return;}
+  chatAttachDoc(ctx,f);   // PDFs / documents: upload to storage, attach as a file card
+}
+const CHAT_DOC_MAX=25*1024*1024;   // 25 MB per document
+function chatFileSize(n){n=+n||0;if(n<1024)return n+' B';if(n<1048576)return Math.round(n/1024)+' KB';return (n/1048576).toFixed(1)+' MB';}
+async function chatAttachDoc(ctx,f){
+  if(f.size>CHAT_DOC_MAX){toast('That file is over 25 MB — please compress it',true);return;}
+  PEND[ctx]={type:'file',name:f.name||'document',mime:f.type||'application/octet-stream',size:f.size,uploading:true};renderPendPreview(ctx);
+  const ext=((String(f.name||'').split('.').pop()||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,6))||'bin';
+  const cid=(ctx==='client')?((SESSION&&SESSION.id)||'chat'):(ctx==='adm'?((typeof CHAT_ADM_CLIENT!=='undefined'&&CHAT_ADM_CLIENT)||(typeof CHAT_ADM_GROUP!=='undefined'&&CHAT_ADM_GROUP)||'chat'):'broadcast');
+  try{
+    const d=await DB._api('climbSignUpload',{clientId:cid,key:'chatdoc-'+Date.now(),ext,contentType:f.type||'application/octet-stream'});
+    await new Promise((res,rej)=>{const x=new XMLHttpRequest();x.open('PUT',d.signedUrl);x.setRequestHeader('content-type',f.type||'application/octet-stream');x.setRequestHeader('x-upsert','true');x.onload=()=>{x.status<300?res():rej(new Error('Upload failed ('+x.status+')'));};x.onerror=()=>rej(new Error('Network error'));x.send(f);});
+    if(PEND[ctx]&&PEND[ctx].uploading){PEND[ctx]={type:'file',url:d.publicUrl,path:d.path,name:f.name||'document',mime:f.type||'application/octet-stream',size:f.size};renderPendPreview(ctx);}
+  }catch(e){if(PEND[ctx]&&PEND[ctx].uploading){PEND[ctx]=null;renderPendPreview(ctx);}toast((e&&e.message)||'Upload failed',true);}
+}
 function renderPendPreview(ctx){const el=$('pend-'+ctx);if(!el)return;const m=PEND[ctx];
   if(!m){el.innerHTML='';el.style.display='none';return;}
-  el.style.display='';el.innerHTML='<span class="pend-chip">'+(m.type==='image'?'🖼':m.type==='audio'?'🎙':'🎬')+' '+esc((m.name||m.type).slice(0,22))+'<button onclick="PEND[\''+ctx+'\']=null;renderPendPreview(\''+ctx+'\')" title="Remove">×</button></span>';}
+  const ico=m.type==='image'?'🖼':m.type==='audio'?'🎙':m.type==='video'?'🎬':'📎';
+  el.style.display='';el.innerHTML='<span class="pend-chip">'+ico+' '+esc((m.name||m.type).slice(0,24))+(m.uploading?' · uploading…':'')+'<button onclick="PEND[\''+ctx+'\']=null;renderPendPreview(\''+ctx+'\')" title="Remove">×</button></span>';}
 async function chatRecord(ctx,btn){
   if(REC[ctx]){try{REC[ctx].stop();}catch(e){}return;}
   if(!navigator.mediaDevices||!window.MediaRecorder){toast('Recording not supported on this browser',true);return;}
@@ -21867,7 +21910,7 @@ async function renderChatThread(){const body=$('chat-body');if(!body||!SESSION)r
   const grp=!!CHAT_CLIENT_GROUP;const mineFn=function(m){return grp?(m.sender==='client'&&m.sender_id===SESSION.id):(m.sender==='client');};
   try{await chatLoadMeta(msgs,chatCtx(),body);}catch(e){}
   chatRenderSmart('chat-body',msgs,grp,mineFn);chatBindScroll();chatBindMenu('chat-body');chatRenderReplyBar(chatCtx());chatStartLive();}
-async function chatSend(){const inp=$('chat-text');const t=(inp.value||'').trim();let media=PEND.client||null;if(!t&&!media)return;inp.value='';chatGrow(inp);const ep=$('chat-emoji-pop');if(ep)ep.classList.add('hidden');PEND.client=null;renderPendPreview('client');
+async function chatSend(){const inp=$('chat-text');const t=(inp.value||'').trim();let media=PEND.client||null;if(!t&&!media)return;if(media&&media.uploading){toast('File still uploading — one sec…',true);return;}inp.value='';chatGrow(inp);const ep=$('chat-emoji-pop');if(ep)ep.classList.add('hidden');PEND.client=null;renderPendPreview('client');
   if(CHAT_REPLY){media=Object.assign({},media||{},{reply:CHAT_REPLY});CHAT_REPLY=null;chatRenderReplyBar(chatCtx());}
   try{if(CHAT_CLIENT_GROUP)await DB.sendGroupMessage(CHAT_CLIENT_GROUP,t,media);else await DB.sendMessage(SESSION.id,t,media);await renderChatThread();}catch(e){toast('Could not send',true);}}
 async function chatClientBadge(){try{const u=await DB.chatUnread();const n=(u&&u.total)||0;const b=$('chat-nav-badge');if(b){if(n>0&&!(CHAT_OPEN&&CHAT_THREAD_OPEN&&!CHAT_CLIENT_GROUP)){b.textContent=n;b.classList.remove('hidden');}else b.classList.add('hidden');}
@@ -21911,7 +21954,7 @@ async function renderChatAdmBody(){const body=$('chat-adm-body');if(!body)return
   try{await chatLoadMeta(msgs,chatCtx(),body);}catch(e){}
   chatRenderSmart('chat-adm-body',msgs,grp,mineFn);chatBindMenu('chat-adm-body');chatRenderReplyBar(chatCtx());chatStartLive();}
 async function chatAdmSend(){const inp=$('chat-adm-text');const t=(inp.value||'').trim();let media=PEND.adm||null;
-  if((!t&&!media)||(!CHAT_ADM_CLIENT&&!CHAT_ADM_GROUP))return;inp.value='';PEND.adm=null;renderPendPreview('adm');
+  if((!t&&!media)||(!CHAT_ADM_CLIENT&&!CHAT_ADM_GROUP))return;if(media&&media.uploading){toast('File still uploading — one sec…',true);return;}inp.value='';PEND.adm=null;renderPendPreview('adm');
   if(CHAT_REPLY){media=Object.assign({},media||{},{reply:CHAT_REPLY});CHAT_REPLY=null;chatRenderReplyBar(chatCtx());}
   try{if(CHAT_ADM_GROUP)await DB.sendGroupMessage(CHAT_ADM_GROUP,t,media);else{await DB.sendMessage(CHAT_ADM_CLIENT,t,media);try{pushNotifyCoachMsg(CHAT_ADM_CLIENT,t,media);}catch(_){}}await renderChatAdmBody();renderChatThreadsList();}catch(e){toast('Could not send',true);}}
 
@@ -21925,7 +21968,7 @@ function chatCtx(){
   return {admin:false,grp:!!CHAT_CLIENT_GROUP,cid:(CHAT_CLIENT_GROUP?null:(SESSION&&SESSION.id)),threadKey:(CHAT_CLIENT_GROUP||(SESSION&&SESSION.id)||''),body:'chat-body',textEl:'chat-text',replyBar:'chat-reply-bar',render:renderChatThread};
 }
 function chatSenderName(m){if(!m)return '';if(m.sender==='admin')return (m.media&&m.media._coach&&m.media._coach.name)||m.sender_name||'Coach';return m.sender_name||'Client';}
-function chatMediaLabel(md){if(!md)return '';if(md.type==='image')return 'Photo';if(md.type==='audio')return 'Voice note';if(md.type==='video')return 'Video';return md.data?'Attachment':'';}
+function chatMediaLabel(md){if(!md)return '';if(md.type==='image')return 'Photo';if(md.type==='audio')return 'Voice note';if(md.type==='video')return 'Video';if(md.type==='file')return md.name||'Document';return md.data?'Attachment':'';}
 function chatRxHTML(mid){const r=CHAT_RX[mid];if(!r)return '';const chips=Object.keys(r).filter(function(e){return r[e].count>0;}).map(function(e){return '<button class="chat-rx'+(r[e].mine?' mine':'')+'" onclick="chatReact(\''+mid+'\',\''+e+'\')">'+e+' '+r[e].count+'</button>';}).join('');return chips?('<div class="chat-rxs">'+chips+'</div>'):'';}
 function chatRxSig(){return Object.keys(CHAT_RX).map(function(k){return k+':'+Object.keys(CHAT_RX[k]).map(function(e){return e+CHAT_RX[k][e].count;}).join('');}).sort().join(',')+'|'+Object.keys(CHAT_TH).map(function(k){return k+CHAT_TH[k];}).sort().join(',')+'|'+(CHAT_PIN?CHAT_PIN.mid:'');}
 async function chatLoadMeta(msgs,ctx,bodyEl){
@@ -22061,7 +22104,7 @@ async function bcPickGroup(){const gid=$('bc-group').value;if(!gid){return;}let 
   const set=new Set(g.members||[]);document.querySelectorAll('.bc-r').forEach(c=>c.checked=set.has(c.value));bcCount();}
 async function sendBroadcast(){const t=($('bc-text').value||'').trim();const media=PEND.bc||null;
   const ids=[...document.querySelectorAll('.bc-r:checked')].map(x=>x.value);
-  if(!t&&!media){toast('Type a message',true);return;}if(!ids.length){toast('Pick at least one recipient',true);return;}
+  if(!t&&!media){toast('Type a message',true);return;}if(media&&media.uploading){toast('File still uploading — one sec…',true);return;}if(!ids.length){toast('Pick at least one recipient',true);return;}
   $('bc-note').textContent='Sending…';
   try{await DB.broadcast(ids,t,media);toast('📣 Broadcast sent to '+ids.length+' client'+(ids.length===1?'':'s'));closeBroadcast();renderChatThreadsList();}catch(e){$('bc-note').textContent='';toast('Broadcast failed — '+((e&&e.message)||'error'),true);}}
 function startChatPolling(){if(CHAT_POLL)clearInterval(CHAT_POLL);
