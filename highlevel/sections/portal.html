@@ -2134,6 +2134,14 @@ details.mcx-map .mapwrap{padding-bottom:12px}
 .rd-vwhy{font-size:12.5px;color:rgba(255,255,255,.82);line-height:1.5}
 .rd-vmeta{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
 .rd-vchip{font-size:11px;font-weight:800;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:4px 10px;color:#fff}
+.rd-vchip.over{background:rgba(255,107,94,.3);border-color:rgba(255,107,94,.5)}
+.rd-count{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;margin:9px 0 2px;padding:9px 11px;background:var(--card2);border:1px solid var(--border);border-radius:10px}
+.rd-count-t{font-weight:800;font-size:13px;color:var(--prot)}
+.rd-count-t.over{color:var(--crit)}
+.rd-push{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto}
+.rd-push-lab{font-size:11px;color:var(--muted);font-weight:600}
+.rd-pushbtn{border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:16px;padding:4px 10px;font-size:12px;font-weight:800;cursor:pointer}
+.rd-pushbtn:hover{border-color:var(--prot);color:var(--prot)}
 .rd-vchip b{color:#ffd59e}
 .rd-prog{height:7px;border-radius:6px;background:rgba(255,255,255,.16);margin-top:13px;overflow:hidden}
 .rd-prog>i{display:block;height:100%;background:linear-gradient(90deg,#ff5a3c,#E8170D)}
@@ -7657,7 +7665,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04uh';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04ui';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -12034,7 +12042,7 @@ const MC_DATA=[
   }}
 ];
 function mcById(id){return MC_DATA.find(m=>m.id===id)||MC_DATA[0];}
-function mcPhase(){return (typeof PLAN!=='undefined'&&PLAN&&PLAN.phase)||'Foundation';}
+function mcPhase(){try{return effectivePhase(typeof PLAN!=='undefined'?PLAN:null);}catch(e){return (typeof PLAN!=='undefined'&&PLAN&&PLAN.phase)||'Foundation';}}
 function mcPhaseData(m,ph){return (m&&m.ph&&(m.ph[ph]||m.ph['Foundation']))||{tr:'f',h:'',f:[],x:[],w:''};}
 function mcSpark(dir){const pts=dir==='u'?[22,20,17,15,11,8]:dir==='d'?[8,10,9,13,12,17]:[13,11,14,12,13,12];const col=MC_TREND[dir][1];
   return '<svg width="76" height="26" viewBox="0 0 70 26"><polyline points="'+pts.map((y,i)=>(i*13+2)+','+y).join(' ')+'" fill="none" stroke="'+col+'" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';}
@@ -12105,8 +12113,17 @@ function mcClientBannerHTML(){const cur=mcPhase();
     '<div class="mc-projrow">'+chips+'</div></div>';
 }
 /* admin: phase picker shown atop the client's Progress Tracking editor tab */
-function mcAdminPhaseHTML(){const cur=(typeof edPlan!=='undefined'&&edPlan&&edPlan.phase)||'Foundation';
-  return '<div style="margin-bottom:14px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--card2)"><div class="uline" style="margin:0 0 6px">📈 Current training phase</div><div class="small" style="color:var(--muted);margin-bottom:8px">Drives what this client sees as “expected” in their metrics course, and what the metric-watch flags against.</div><select onchange="if(typeof edPlan!==\'undefined\'&&edPlan)edPlan.phase=this.value" style="max-width:230px">'+MC_PHASES.map(p=>'<option'+(p===cur?' selected':'')+'>'+esc(p)+'</option>').join('')+'</select> <button class="btn-sm" style="margin-left:8px" onclick="mcOpen()">📈 Open the metrics course</button></div>';}
+function mcAdminPhaseHTML(){
+  const cur=(typeof effectivePhase==='function')?effectivePhase(typeof edPlan!=='undefined'?edPlan:null):((typeof edPlan!=='undefined'&&edPlan&&edPlan.phase)||'Foundation');
+  let syncNote='',count='',push='';
+  try{const r=(typeof edPlan!=='undefined'&&edPlan&&edPlan.milestones&&edPlan.milestones.roadmap);const blocks=(r&&Array.isArray(r.blocks))?r.blocks:[];const idx=rmActiveByDateIdx(blocks);
+    if(idx>=0){const b=blocks[idx];const cd=rmCountdownText(b);
+      syncNote='<div class="small" style="color:var(--good);margin:0 0 8px">🔁 Auto-synced from the roadmap — on <b>'+esc(b.name||('Block '+(idx+1)))+'</b>'+(rmBlockDatesText(b)?(' · '+esc(rmBlockDatesText(b))):'')+'. The phase follows the roadmap dates automatically.</div>';
+      if(cd)count=' <span class="pill'+(rmDaysLeft(b)<0?' crit':' good')+'" style="margin-left:6px;font-weight:700">⏳ '+esc(cd)+'</span>';
+      push='<div style="margin-top:10px">'+rmPushBtnsHTML('rmAdminPush','Push this phase &amp; cascade the rest')+'</div>';
+    }
+  }catch(e){}
+  return '<div style="margin-bottom:14px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--card2)"><div class="uline" style="margin:0 0 6px">📈 Current training phase'+count+'</div>'+syncNote+'<div class="small" style="color:var(--muted);margin-bottom:8px">Drives what this client sees as “expected” in their metrics course, and what the metric-watch flags against.</div><select onchange="if(typeof edPlan!==\'undefined\'&&edPlan)edPlan.phase=this.value" style="max-width:230px">'+MC_PHASES.map(p=>'<option'+(p===cur?' selected':'')+'>'+esc(p)+'</option>').join('')+'</select> <button class="btn-sm" style="margin-left:8px" onclick="mcOpen()">📈 Open the metrics course</button>'+push+'</div>';}
 /* ---- metric-watch engine: compare a client's recent metric trends to their phase's expected rules ----
    Covers weight + waist (%/week) and body-fat % + muscle % (points change). Strength/cardio live in
    workout/cardio logs (not the dashboard payload) — a future pass. */
@@ -12178,7 +12195,7 @@ function mcCardioLastDate(plan){const cm=(plan&&plan.milestones&&plan.milestones
 function mcCardioActive(plan){const cm=(plan&&plan.milestones&&plan.milestones.cardio)||{};
   return !!((cm.fatloss&&(cm.fatloss.enabled||((cm.fatloss.logs||[]).length)))||(cm.performance&&(cm.performance.enabled||((cm.performance.sessions||[]).length))));}
 function mcEvalClient(plan){
-  const phase=(plan&&plan.phase)||'Foundation';const flags=[];
+  const phase=(typeof effectivePhase==='function'?effectivePhase(plan):((plan&&plan.phase)||'Foundation'));const flags=[];
   // 1) scale weight — its own rule shape (lives on MC_DATA)
   const rule=(mcById('weight').ph[phase]||{}).rule;const wr=mcTrend(plan,'weight',28,5);
   if(rule&&wr){const r=wr.pctRate,rr=(r>=0?'+':'')+(Math.round(r*100)/100)+'%/wk';
@@ -12391,6 +12408,46 @@ function rmBlockAllMet(b){const tot=rmBlockUnits(b);return tot>0&&rmBlockDoneCou
 function rmBlockDone(b){if(!b)return false;if(b.complete)return true;return rmBlockAllMet(b);}
 function rmBlockPct(b){if(b&&b.complete)return 100;const tot=rmBlockUnits(b);if(!tot)return 0;return Math.round(rmBlockDoneCount(b)/tot*100);}
 function rmActiveIdx(blocks){for(let i=0;i<blocks.length;i++){if(!rmBlockDone(blocks[i]))return i;}return blocks.length-1;}
+/* ─── current phase auto-synced to the roadmap block covering today, countdown timers + pushable (cascading) deadlines ─── */
+function rmActiveByDateIdx(blocks,iso){iso=iso||todayISO();let idx=-1,bestStart='';
+  (blocks||[]).forEach(function(b,i){const s=(b&&b.start)?String(b.start).slice(0,10):'',e=(b&&b.end)?String(b.end).slice(0,10):'';
+    if(s&&e&&iso>=s&&iso<=e){if(idx<0||s>bestStart){idx=i;bestStart=s;}}});
+  return idx;}
+function rmCurrentIdx(blocks){const d=rmActiveByDateIdx(blocks);return d>=0?d:rmActiveIdx(blocks);}
+function rmPhaseForDate(plan,iso){const r=plan&&plan.milestones&&plan.milestones.roadmap;const blocks=(r&&Array.isArray(r.blocks))?r.blocks:[];const idx=rmActiveByDateIdx(blocks,iso);if(idx<0)return '';const ph=blocks[idx]&&blocks[idx].phase;if(!ph)return '';const m=(typeof MC_PHASES!=='undefined'?MC_PHASES:[]).find(function(p){return p.toLowerCase()===String(ph).trim().toLowerCase();});return m||'';}
+function effectivePhase(plan){const rp=rmPhaseForDate(plan);return rp||((plan&&plan.phase)||'Foundation');}
+function rmDaysLeft(b,iso){iso=iso||todayISO();if(!b||!b.end)return null;const e=String(b.end).slice(0,10);return Math.round((new Date(e+'T00:00:00')-new Date(iso+'T00:00:00'))/86400000);}
+function rmWkDay(days){days=Math.abs(+days||0);const w=Math.floor(days/7),d=days%7;if(w>0&&d>0)return w+'w '+d+'d';if(w>0)return w+' week'+(w===1?'':'s');return d+' day'+(d===1?'':'s');}
+function rmCountdownText(b,iso){const d=rmDaysLeft(b,iso);if(d==null)return '';if(d<0)return '⚠ Overdue by '+rmWkDay(d);if(d===0)return 'Ends today';return rmWkDay(d)+' left';}
+function rmShiftRoadmap(r,fromIdx,days){
+  if(!r||!Array.isArray(r.blocks)||!days)return;
+  r.blocks.forEach(function(b,i){if(i<fromIdx||!b)return;
+    if(i===fromIdx){if(b.end)b.end=addDaysISO(String(b.end).slice(0,10),days);}
+    else{if(b.start)b.start=addDaysISO(String(b.start).slice(0,10),days);if(b.end)b.end=addDaysISO(String(b.end).slice(0,10),days);}
+  });
+  if(r.vision&&r.vision.dateISO)r.vision.dateISO=addDaysISO(String(r.vision.dateISO).slice(0,10),days);
+}
+function rmPushBtnsHTML(fnName,label){return '<div class="rd-push"><span class="rd-push-lab">'+(label||'Push deadline')+'</span>'+
+  [1,2,4].map(function(w){return '<button class="rd-pushbtn" onclick="event.stopPropagation();'+fnName+'('+w+')">+'+w+'w</button>';}).join('')+'</div>';}
+async function rmClientPush(weeks){
+  weeks=+weeks||0;if(!weeks||(typeof ADMIN_OK!=='undefined'&&ADMIN_OK))return;
+  const r=rmData();if(!r||!Array.isArray(r.blocks)||!r.blocks.length)return;
+  const idx=rmCurrentIdx(r.blocks);if(idx<0)return;const b=r.blocks[idx];
+  if(!confirm('Push “'+((b&&b.name)||'this phase')+'” and every phase after it out by '+weeks+' week'+(weeks===1?'':'s')+'?\n\nYour deadlines and current phase update automatically.'))return;
+  rmShiftRoadmap(r,idx,weeks*7);
+  try{await DB.saveMilestones(SESSION.id,PLAN.milestones);}catch(e){toast('Could not save — try again',true);return;}
+  try{await DB.addAudit({client_id:SESSION.id,actor:(SESSION&&SESSION.email)||'client',action:'Pushed roadmap deadline',detail:'+'+weeks+'w from '+((b&&b.name)||'block')});}catch(e){}
+  toast('📅 Pushed '+weeks+' week'+(weeks===1?'':'s')+' — later phases shifted too');renderRoadmap();
+}
+async function rmAdminPush(weeks){
+  weeks=+weeks||0;if(!weeks||typeof edPlan==='undefined'||!edPlan)return;
+  const r0=(edPlan.milestones&&edPlan.milestones.roadmap);if(!r0||!Array.isArray(r0.blocks)||!r0.blocks.length)return;
+  const idx=rmCurrentIdx(r0.blocks);if(idx<0)return;
+  await edMergeMilestone(function(ms){const rr=ms.roadmap;if(rr&&Array.isArray(rr.blocks))rmShiftRoadmap(rr,idx,weeks*7);},true);
+  try{edPlan.phase=effectivePhase(edPlan);}catch(e){}
+  try{edRenderPhase();}catch(e){}
+  toast('📅 Pushed '+weeks+'w — later phases shifted');
+}
 function rmJourneyPct(blocks){if(!blocks.length)return 0;let s=0;blocks.forEach(b=>{s+=rmBlockDone(b)?100:rmBlockPct(b);});return Math.round(s/blocks.length);}
 function rmNeedLifts(blocks){return (blocks||[]).some(b=>((b&&b.targets)||[]).some(t=>rmTargetSrc(t)==='lift'));}
 /* award + celebrate the first time a block's goals are all genuinely met (data-driven, not the manual flag) */
@@ -12425,9 +12482,10 @@ function renderRoadmap(){
   if(!rmHas()){host.innerHTML='<div class="rd-empty"><div style="font-size:34px">🗺️</div><div class="ov-uline" style="margin-top:8px">Your roadmap is on its way</div><p class="small" style="color:var(--muted);max-width:360px;margin:6px auto 0">Your coach will map out your long-term goal and the blocks to get there. Check back soon.</p></div>';gmSyncHeight();return;}
   if(rmNeedLifts(blocks)&&RM_LIFTS===null){rmLiftsLoad();}   // lazy-load workout lifts, then re-render
   try{rmCheckAwards(blocks);}catch(e){}
-  const actIdx=rmActiveIdx(blocks);
+  const actIdx=rmCurrentIdx(blocks);
   if(RM_OPEN===null){RM_OPEN={};if(blocks[actIdx])RM_OPEN[blocks[actIdx].id]=1;}
   const jp=rmJourneyPct(blocks);
+  const curBlock=blocks[actIdx]||null;const curCountdown=curBlock?rmCountdownText(curBlock):'';
   // vision hero
   let h='<div class="rd-vision"><div class="rd-eyebrow">My long-term goal</div>'+
     '<div class="rd-vtitle">'+esc(v.title||'My transformation')+'</div>'+
@@ -12436,6 +12494,7 @@ function renderRoadmap(){
       (v.weight?'<span class="rd-vchip">🎯 Goal <b>'+esc(v.weight)+'</b></span>':'')+
       (rmVisionDateText(v)?'<span class="rd-vchip">📅 Target <b>'+esc(rmVisionDateText(v))+'</b></span>':'')+
       '<span class="rd-vchip">🧭 Block <b>'+(Math.min(actIdx+1,blocks.length)||0)+' of '+blocks.length+'</b></span>'+
+      (curCountdown?'<span class="rd-vchip'+(rmDaysLeft(curBlock)<0?' over':'')+'">⏳ <b>'+esc(curCountdown)+'</b></span>':'')+
     '</div>'+
     '<div class="rd-prog"><i style="width:'+jp+'%"></i></div>'+
     '<div class="rd-progl"><span>Journey progress</span><span>'+jp+'% complete</span></div></div>';
@@ -12449,6 +12508,7 @@ function renderRoadmap(){
        '<div class="rd-scard" onclick="rmToggleOpen(\''+b.id+'\')">'+
        '<div class="rd-shead"><div style="flex:1"><div class="rd-sname">'+esc(b.name||'Block '+(i+1))+'</div>'+(rmBlockDatesText(b)?'<div class="rd-sdate">'+esc(rmBlockDatesText(b))+'</div>':'')+'</div>'+
        (b.phase?'<span class="rd-phase '+rmPhaseCls(b.phase)+'">'+esc(b.phase)+'</span>':'')+badge+'</div>';
+    if(active&&(b.start||b.end)){h+='<div class="rd-count" onclick="event.stopPropagation()"><span class="rd-count-t'+(rmDaysLeft(b)<0?' over':'')+'">⏳ '+esc(rmCountdownText(b)||'In progress')+'</span>'+rmPushBtnsHTML('rmClientPush','Need more time?')+'</div>';}
     if(open){
       if(b.focus)h+='<div class="rd-focus"><b>Focus of this block</b>'+esc(b.focus)+'</div>';
       if(goals.length){h+='<div class="rd-mtitle">Metric goals — synced live with your data</div>'+goals.map(rmGoalRowHTML).join('');}
@@ -24941,7 +25001,7 @@ async function renderOverview(){
       susp:((plan&&plan.milestones&&plan.milestones.suspension)||null),
       leadProfile:((plan&&plan.milestones&&plan.milestones.leadProfile)||null),   // client's sign-up answers → Business Health Audience
       weekProg:progByClient[c.id]||null,
-      phase:(plan&&plan.phase)||'Foundation',mcFlags:(function(){try{return plan?mcEvalClient(plan):[];}catch(e){return [];}})()};
+      phase:(function(){try{return effectivePhase(plan);}catch(e){return (plan&&plan.phase)||'Foundation';}})(),mcFlags:(function(){try{return plan?mcEvalClient(plan):[];}catch(e){return [];}})()};
   }));
   renderOverviewSummary();renderOverviewTable();
   try{mcWatchBadge();}catch(e){}
@@ -28035,6 +28095,7 @@ async function editClient(id){
 }
 function fillEditor(plan){
   $('admin-list').classList.add('hidden');$('admin-editor').classList.remove('hidden');
+  try{if(edPlan){const ep=effectivePhase(edPlan);if(ep)edPlan.phase=ep;}}catch(e){}   // current phase auto-syncs to the roadmap block covering today
   $('ed-name').value=edClient.name||'';$('ed-email').value=edClient.email||'';$('ed-pass').value=edClient.pw||'';$('ed-title').value=plan.title||'';
   {const bn=$('ed-banner-name');if(bn)bn.textContent=edClient.name||edClient.email||'New client';}
   {const fn=$('ed-feedback-notes');if(fn){fn.value=edPlan.feedback_notes||plan.feedback_notes||'';setTimeout(()=>taGrow(fn),0);}
@@ -29662,6 +29723,7 @@ async function edMergeMilestone(mutator,silent){
     if(raw.milestones.measLatest!==undefined)edPlan.milestones.measLatest=raw.milestones.measLatest;
     if(raw.milestones.progressPhotos!==undefined)edPlan.milestones.progressPhotos=raw.milestones.progressPhotos;
     if(raw.milestones.formChecks!==undefined)edPlan.milestones.formChecks=raw.milestones.formChecks;
+    if(raw.milestones.roadmap!==undefined)edPlan.milestones.roadmap=raw.milestones.roadmap;
     if(!silent)toast('✓ Saved');
   }catch(e){if(!silent)toast('Could not save — '+((e&&e.message)||'error'),true);}
 }
