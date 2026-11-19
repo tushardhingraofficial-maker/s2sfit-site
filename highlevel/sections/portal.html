@@ -7566,7 +7566,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04tz';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04ua';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -8988,6 +8988,7 @@ const ONB_WIZ_GOALS=['Fat loss','Muscle gain','Recomposition','Strength','Genera
 const ONB_WIZ_DIETS=['No preference','Non-vegetarian','Vegetarian','Eggetarian','Vegan'];
 const ONB_WIZ_LEVELS=['Beginner','Intermediate','Advanced','Returning'];
 const ONB_WIZ_ACT=['Sedentary','Lightly active','Moderately active','Very active'];
+const ONB_WIZ_BODYTYPES=['Ectomorph','Mesomorph','Endomorph'];
 function pfNum(v){if(v==null)return '';const m=String(v).match(/[\d.]+/);return m?m[0]:'';}
 function onbWizStart(){
   const o=$('onb-wizard');if(!o||o.classList.contains('open'))return;
@@ -8995,7 +8996,7 @@ function onbWizStart(){
   let lw=null;try{lw=(typeof latestLoggedWeight==='function')?latestLoggedWeight():null;}catch(e){}
   ONB_WIZ={goal:pf.goal||lp.goal||'',goalWeight:pfNum(pf.goalWeight),weight:lw?String(lw.value):pfNum(pf.weight),
     height:pfNum(pf.height),sex:pf.sex||lp.gender||'',age:pf.age||lp.age||'',diet:pf.diet||'',
-    level:pf.trainingLevel||lp.experience||'',activity:pf.activity||'',waist:'',hips:'',note:''};
+    level:pf.trainingLevel||lp.experience||'',activity:pf.activity||'',bodyFat:pfNum(pf.bodyFat),bodyType:pf.bodyType||'',waist:'',hips:'',note:''};
   ONB_WIZ_STEP=0;
   const fn=((SESSION&&(SESSION.name||''))||'').trim().split(' ')[0]||'there';
   $('onb-wiz-title').textContent='Welcome, '+fn+'! 🎉';
@@ -9005,7 +9006,7 @@ function onbWizStart(){
 }
 function onbWizClose(){const o=$('onb-wizard');if(o)o.classList.remove('open');document.body.classList.remove('onb-wiz-open');}
 function onbWizCapture(){const g=id=>{const e=$('onbw-'+id);return e?e.value:undefined;};
-  ['goal','goalWeight','weight','height','sex','age','diet','level','activity','waist','hips','note'].forEach(k=>{const v=g(k);if(v!==undefined)ONB_WIZ[k]=v;});}
+  ['goal','goalWeight','weight','height','sex','age','diet','level','activity','bodyFat','bodyType','waist','hips','note'].forEach(k=>{const v=g(k);if(v!==undefined)ONB_WIZ[k]=v;});}
 function onbWizRender(){
   const n=4;if(ONB_WIZ_STEP<0)ONB_WIZ_STEP=0;if(ONB_WIZ_STEP>n-1)ONB_WIZ_STEP=n-1;
   $('onb-wiz-dots').innerHTML=Array.from({length:n}).map((_,i)=>'<span class="onb-dot'+(i===ONB_WIZ_STEP?' on':(i<ONB_WIZ_STEP?' done':''))+'"></span>').join('');
@@ -9020,12 +9021,14 @@ function onbWizRender(){
       '<div class="onb-wiz-row"><div class="field"><label class="lab">Current weight (kg)</label><input id="onbw-weight" type="number" inputmode="decimal" value="'+esc(ONB_WIZ.weight||'')+'" placeholder="e.g. 74"></div>'+
       '<div class="field"><label class="lab">Height (cm)</label><input id="onbw-height" type="number" inputmode="numeric" value="'+esc(ONB_WIZ.height||'')+'" placeholder="e.g. 172"></div></div>'+
       '<div class="onb-wiz-row"><div class="field"><label class="lab">Sex</label><select id="onbw-sex">'+opt(['Male','Female','Other'],ONB_WIZ.sex)+'</select></div>'+
-      '<div class="field"><label class="lab">Age</label><input id="onbw-age" type="number" inputmode="numeric" value="'+esc(ONB_WIZ.age||'')+'" placeholder="e.g. 29"></div></div>';
+      '<div class="field"><label class="lab">Age</label><input id="onbw-age" type="number" inputmode="numeric" value="'+esc(ONB_WIZ.age||'')+'" placeholder="e.g. 29"></div></div>'+
+      '<div class="field"><label class="lab">Body fat % <span class="onb-opt">· if you know it, optional</span></label><input id="onbw-bodyFat" type="number" inputmode="decimal" min="0" max="70" value="'+esc(ONB_WIZ.bodyFat||'')+'" placeholder="e.g. 22"></div>';
   } else if(ONB_WIZ_STEP===2){
     body='<div class="onb-wiz-h">🥗 Your preferences</div>'+
       '<div class="field"><label class="lab">Diet type</label><select id="onbw-diet">'+opt(ONB_WIZ_DIETS,ONB_WIZ.diet)+'</select></div>'+
       '<div class="field"><label class="lab">Training experience</label><select id="onbw-level">'+opt(ONB_WIZ_LEVELS,ONB_WIZ.level)+'</select></div>'+
-      '<div class="field"><label class="lab">Daily activity</label><select id="onbw-activity">'+opt(ONB_WIZ_ACT,ONB_WIZ.activity)+'</select></div>';
+      '<div class="field"><label class="lab">Daily activity</label><select id="onbw-activity">'+opt(ONB_WIZ_ACT,ONB_WIZ.activity)+'</select></div>'+
+      '<div class="field"><label class="lab">Body type <span class="onb-opt">· optional</span></label><select id="onbw-bodyType">'+opt(ONB_WIZ_BODYTYPES,ONB_WIZ.bodyType)+'</select></div>';
   } else {
     body='<div class="onb-wiz-h">📏 Your starting point <span class="onb-opt">· all optional</span></div>'+
       '<p class="small" style="color:var(--muted);margin:0 0 10px">Snapshot a couple of measurements so you can watch them change. Measure relaxed, in cm.</p>'+
@@ -9049,7 +9052,7 @@ async function onbWizFinish(){
   const mv={},waist=parseFloat(ONB_WIZ.waist),hips=parseFloat(ONB_WIZ.hips);
   if(!isNaN(waist)&&waist>0)mv.waist=waist;if(!isNaN(hips)&&hips>0)mv.hips=hips;
   if(Object.keys(mv).length){const m=PLAN.milestones.measurements=PLAN.milestones.measurements||{logs:[]};m.logs=Array.isArray(m.logs)?m.logs:[];m.logs.push({id:uid(),date:today,unit:'cm',values:mv,at:new Date().toISOString()});PLAN.milestones.measLatest=Object.assign({},PLAN.milestones.measLatest,mv,{date:today,unit:'cm'});}
-  PLAN.milestones.onboardProfile={goal:ONB_WIZ.goal,goalWeight:(isNaN(gw)?'':gw),height:(isNaN(ht)?'':ht),sex:ONB_WIZ.sex,age:ONB_WIZ.age,diet:ONB_WIZ.diet,level:ONB_WIZ.level,activity:ONB_WIZ.activity,note:ONB_WIZ.note,at:new Date().toISOString()};
+  PLAN.milestones.onboardProfile={goal:ONB_WIZ.goal,goalWeight:(isNaN(gw)?'':gw),height:(isNaN(ht)?'':ht),sex:ONB_WIZ.sex,age:ONB_WIZ.age,diet:ONB_WIZ.diet,level:ONB_WIZ.level,activity:ONB_WIZ.activity,bodyFat:ONB_WIZ.bodyFat||'',bodyType:ONB_WIZ.bodyType||'',note:ONB_WIZ.note,at:new Date().toISOString()};
   PLAN.milestones.leadProfile=Object.assign({},PLAN.milestones.leadProfile,{goal:ONB_WIZ.goal||((PLAN.milestones.leadProfile||{}).goal),gender:ONB_WIZ.sex||((PLAN.milestones.leadProfile||{}).gender),age:ONB_WIZ.age||((PLAN.milestones.leadProfile||{}).age),experience:ONB_WIZ.level||((PLAN.milestones.leadProfile||{}).experience)});
   PLAN.milestones.onboardDone=true;PLAN.milestones.onboardPending=false;
   PLAN.profile=PLAN.profile||{};
@@ -9061,6 +9064,9 @@ async function onbWizFinish(){
   PLAN.profile.age=ONB_WIZ.age||PLAN.profile.age;
   if(!isNaN(ht))PLAN.profile.height=ht+' cm';
   if(!isNaN(gw))PLAN.profile.goalWeight=gw+' kg';
+  {const bf=parseFloat(ONB_WIZ.bodyFat);if(!isNaN(bf)&&bf>0)PLAN.profile.bodyFat=String(bf);}
+  if(ONB_WIZ.bodyType)PLAN.profile.bodyType=ONB_WIZ.bodyType;
+  if(!isNaN(w)&&w>0&&!String(PLAN.profile.startWeight||'').trim())PLAN.profile.startWeight=w+' kg';   // day-0 baseline = the weight entered at onboarding
   PLAN.profile.startDate=PLAN.profile.startDate||today;
   try{if(typeof syncCurrentWeight==='function')syncCurrentWeight();}catch(e){}
   const nx=$('onb-wiz-next');if(nx){nx.disabled=true;nx.textContent='Saving…';}
