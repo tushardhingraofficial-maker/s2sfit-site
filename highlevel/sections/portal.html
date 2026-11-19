@@ -3382,6 +3382,18 @@ body.gm-has-switch #custom-host{top:var(--gm-h,48px)}
 .ia-acts .btn-sm{flex:1;font-weight:800}
 .meas-grid .field input{width:100%;min-width:0;box-sizing:border-box}
 /* body composition + assessment */
+/* body-comp test-location finder */
+.cbf-card{border:1px solid var(--border);border-radius:12px;background:var(--card2);padding:11px 13px;margin-bottom:9px}
+.cbf-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cbf-name{font-family:var(--disp);font-weight:800;font-size:15px;flex:1;min-width:0}
+.cbf-badge{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);background:var(--card);border:1px solid var(--border);border-radius:20px;padding:2px 8px;white-space:nowrap}
+.cbf-badge.rel{background:rgba(34,197,94,.14);color:var(--good);border-color:transparent}
+.cbf-dist{font-size:12px;color:var(--muted);font-weight:700;white-space:nowrap}
+.cbf-line{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.35}
+.cbf-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.cbf-act{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:var(--text);text-decoration:none;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:6px 10px}
+.cbf-act:hover{border-color:var(--red);color:var(--red)}
+.cbf-line .ic,.cbf-act .ic{width:14px;height:14px;flex:none}
 .comp-test{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;flex-wrap:wrap}
 .comp-test .cdate{font-weight:800;min-width:92px}
 .comp-split{display:flex;height:16px;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:var(--card)}
@@ -7506,7 +7518,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04tw';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04tx';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -9095,6 +9107,10 @@ const SVG_ICONS={
   check:'<path d="M20 6 9 17l-5-5"/>',
   file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>',
   download:'<path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/>',
+  pin:'<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>',
+  phone:'<path d="M22 16.9v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 3.1 4.2 2 2 0 0 1 5.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.9.7 2.8a2 2 0 0 1-.4 2.1L9.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.9.6 2.8.7a2 2 0 0 1 1.7 2z"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 2.6 15.2 0 18M12 3c-2.6 2.8-2.6 15.2 0 18"/>',
+  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
   breath:'<path d="M12 4V8"/><path d="M12 8 11.3 9.5"/><path d="M12 8 12.7 9.5"/><path d="M11.3 9.5C11.3 11 10.5 11.3 9.4 11.8 7.8 12.5 7.2 14.3 7.2 16.2 7.2 18.1 7.9 19.4 9.4 19.4 11 19.4 11.3 18 11.3 16.3Z"/><path d="M12.7 9.5C12.7 11 13.5 11.3 14.6 11.8 16.2 12.5 16.8 14.3 16.8 16.2 16.8 18.1 16.1 19.4 14.6 19.4 13 19.4 12.7 18 12.7 16.3Z"/>'
 };
 function svgIcon(name,cls){const p=SVG_ICONS[name];if(!p)return '';return '<svg class="ic '+(cls||'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';}
@@ -22982,7 +22998,96 @@ function renderComposition(){
   if(!ts.length)h+='<div class="empty">No tests yet — add your first above.</div>';
   else h+=ts.slice().reverse().map(t=>'<div class="comp-test"><span class="cdate">'+esc(fmtDate(t.date))+'</span>'+(t.muscle!=null?'<span class="pill good">Muscle '+round(t.muscle,1)+'%</span>':'')+(t.fat!=null?'<span class="pill">Fat '+round(t.fat,1)+'%</span>':'')+(t.weight!=null?'<span class="pill muted">'+round(t.weight,1)+' kg</span>':'')+(t.note?'<span class="small" style="color:var(--muted);flex:1;min-width:120px">'+esc(t.note)+'</span>':'<span style="flex:1"></span>')+(t.fileUrl?'<a class="btn-xxs" href="'+esc(t.fileUrl)+'" target="_blank" rel="noopener">'+svgIcon('clip')+' Report</a>':'')+'<button class="icon-x" style="font-size:16px" onclick="compDel(\''+t.id+'\')">×</button></div>').join('');
   h+='</div></div>';
+  // 5) FIND A TEST NEAR YOU
+  h+=compFinderHTML();
   host.innerHTML=h;
+}
+/* ===== Find an electrical-impedance (InBody / BIA) body-composition test near you =====
+   Geocode the typed location (OpenStreetMap Nominatim) → list nearby gyms / health & physio
+   clinics (Overpass API) that commonly run InBody/BIA scans, with phone / website / email /
+   directions. No API key, no account data sent — only the location the client types. */
+let CBF_LAST=null;
+function compFinderHTML(){
+  return '<div class="card"><div class="card-head"><span class="step-no">'+svgIcon('pin')+'</span><h2>Find a test near you</h2></div><div class="card-body">'+
+    '<p class="small" style="color:var(--muted);margin:0 0 11px">Electrical-impedance (InBody / BIA) scans are offered at many gyms and nutrition / physio clinics. Enter your suburb, city or postcode and we’ll list places near you — call ahead to confirm they run the scan.</p>'+
+    '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end">'+
+      '<div class="field" style="flex:1;min-width:170px;margin:0"><label class="lab">Your location</label><input id="cbf-loc" placeholder="e.g. Parramatta NSW · or a postcode" onkeydown="if(event.key===\'Enter\'){event.preventDefault();compFinderSearch()}"></div>'+
+      '<div class="field" style="max-width:120px;margin:0"><label class="lab">Within</label><select id="cbf-radius"><option value="5">5 km</option><option value="10" selected>10 km</option><option value="25">25 km</option><option value="50">50 km</option></select></div>'+
+      '<button class="btn btn-primary" style="flex:0 0 auto" onclick="compFinderSearch()">'+svgIcon('search')+' Find</button>'+
+    '</div>'+
+    '<div id="cbf-status" class="small" style="color:var(--muted);margin-top:9px"></div>'+
+    '<div id="cbf-results" style="margin-top:10px"></div>'+
+  '</div></div>';
+}
+function compFinderGLink(q){return '<a href="https://www.google.com/maps/search/'+encodeURIComponent('InBody body composition test near '+q)+'" target="_blank" rel="noopener" class="chat-link">search Google Maps</a>';}
+function compFinderDist(la1,lo1,la2,lo2){const R=6371,r=Math.PI/180,dLa=(la2-la1)*r,dLo=(lo2-lo1)*r,a=Math.sin(dLa/2)**2+Math.cos(la1*r)*Math.cos(la2*r)*Math.sin(dLo/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
+async function compFinderSearch(){
+  const q=(($('cbf-loc')||{}).value||'').trim();
+  const radiusKm=+(($('cbf-radius')||{}).value||10);
+  const st=$('cbf-status'),res=$('cbf-results');
+  if(!q){toast('Enter your location first',true);return;}
+  if(res)res.innerHTML='';if(st)st.textContent='Finding your location…';
+  let lat,lon,display;
+  try{
+    const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q),{headers:{'Accept':'application/json'}});
+    const j=await r.json();if(!j||!j.length)throw 0;
+    lat=+j[0].lat;lon=+j[0].lon;display=(j[0].display_name||q).split(',').slice(0,2).join(', ');
+  }catch(e){if(st)st.innerHTML='Couldn’t locate “'+esc(q)+'”. Try a nearby suburb or postcode — or '+compFinderGLink(q)+'.';return;}
+  if(st)st.textContent='Searching near '+display+'…';
+  const rad=Math.round(radiusKm*1000);
+  const ql='[out:json][timeout:25];('
+    +'nwr(around:'+rad+','+lat+','+lon+')[leisure=fitness_centre];'
+    +'nwr(around:'+rad+','+lat+','+lon+')[healthcare~"physiotherapist|clinic|nutrition",i];'
+    +'nwr(around:'+rad+','+lat+','+lon+')[amenity=clinic];'
+    +'nwr(around:'+rad+','+lat+','+lon+')[shop=nutrition_supplements];'
+    +'nwr(around:'+rad+','+lat+','+lon+')["name"~"inbody|body composition|dexa|bioimpedance|composition",i];'
+  +');out center tags 80;';
+  const eps=['https://overpass.kumi.systems/api/interpreter','https://overpass-api.de/api/interpreter','https://overpass.private.coffee/api/interpreter'];
+  let els=null;
+  for(const ep of eps){
+    try{
+      const ctrl=new AbortController();const to=setTimeout(()=>{try{ctrl.abort();}catch(_){}},22000);
+      const r=await fetch(ep,{method:'POST',headers:{'Content-Type':'text/plain'},body:ql,signal:ctrl.signal});
+      clearTimeout(to);
+      if(!r.ok)continue;
+      const txt=await r.text();let j=null;try{j=JSON.parse(txt);}catch(_){continue;}   // 502s come back as plain text, not JSON
+      if(j&&Array.isArray(j.elements)){els=j.elements;break;}
+    }catch(e){/* server down / timeout — try the next mirror */}
+  }
+  if(els==null){if(st)st.innerHTML='Couldn’t reach the places service just now. Please try again in a moment — or '+compFinderGLink(q)+'.';return;}
+  const seen={},items=[];
+  els.forEach(el=>{const t=el.tags||{};const nm=(t.name||'').trim();if(!nm)return;
+    const elat=el.lat!=null?el.lat:(el.center&&el.center.lat),elon=el.lon!=null?el.lon:(el.center&&el.center.lon);if(elat==null||elon==null)return;
+    const key=nm.toLowerCase()+'@'+(+elat).toFixed(4)+','+(+elon).toFixed(4);if(seen[key])return;seen[key]=1;
+    const phone=t['contact:phone']||t.phone||t['contact:mobile']||'';
+    const website=t['contact:website']||t.website||t.url||'';
+    const email=t['contact:email']||t.email||'';
+    const addr=[t['addr:housenumber']?((t['addr:housenumber']+' ')+(t['addr:street']||'')):t['addr:street'],t['addr:suburb']||t['addr:city'],t['addr:postcode']].filter(Boolean).join(', ');
+    const rel=/inbody|body composition|dexa|bioimpedance|composition/i.test(nm);
+    const kind=rel?'Body comp':(t.leisure==='fitness_centre'?'Gym':((t.healthcare||t.amenity==='clinic')?'Clinic':(t.shop==='nutrition_supplements'?'Nutrition':'Health')));
+    items.push({name:nm,phone,website,email,addr,kind,rel,dist:compFinderDist(lat,lon,+elat,+elon),lat:+elat,lon:+elon});
+  });
+  items.sort((a,b)=>(b.rel-a.rel)||((b.phone||b.website?1:0)-(a.phone||a.website?1:0))||(a.dist-b.dist));
+  const top=items.slice(0,14);CBF_LAST=top;
+  if(!top.length){if(st)st.innerHTML='No listings found within '+radiusKm+' km. Try a wider radius — or '+compFinderGLink(q)+'.';return;}
+  if(st)st.innerHTML='Showing '+top.length+' place'+(top.length===1?'':'s')+' near <b>'+esc(display)+'</b>. These are gyms &amp; clinics that commonly offer InBody / BIA scans — <b>call ahead to confirm</b>.';
+  res.innerHTML=top.map(compFinderCardHTML).join('')+'<div class="small" style="color:var(--muted);margin-top:10px">Not what you need? '+compFinderGLink(q)+'.</div>';
+}
+function compFinderCardHTML(it){
+  const tel=it.phone?String(it.phone).replace(/[^+0-9]/g,''):'';
+  const site=it.website?(/^https?:/i.test(it.website)?it.website:('https://'+it.website)):'';
+  const dir='https://www.google.com/maps/dir/?api=1&destination='+it.lat+','+it.lon;
+  return '<div class="cbf-card">'+
+    '<div class="cbf-top"><span class="cbf-name">'+esc(it.name)+'</span><span class="cbf-badge'+(it.rel?' rel':'')+'">'+esc(it.kind)+'</span><span class="cbf-dist">'+it.dist.toFixed(1)+' km</span></div>'+
+    (it.addr?'<div class="cbf-line">'+svgIcon('pin')+' '+esc(it.addr)+'</div>':'')+
+    '<div class="cbf-actions">'+
+      (tel?'<a class="cbf-act" href="tel:'+esc(tel)+'">'+svgIcon('phone')+' '+esc(it.phone)+'</a>':'')+
+      (site?'<a class="cbf-act" href="'+esc(site)+'" target="_blank" rel="noopener">'+svgIcon('globe')+' Website</a>':'')+
+      (it.email?'<a class="cbf-act" href="mailto:'+esc(it.email)+'">'+svgIcon('mail')+' Email</a>':'')+
+      '<a class="cbf-act" href="'+dir+'" target="_blank" rel="noopener">'+svgIcon('pin')+' Directions</a>'+
+    '</div>'+
+    (!it.phone&&!site&&!it.email?'<div class="small" style="color:var(--muted);margin-top:7px">No contact details listed — use Directions to find it.</div>':'')+
+  '</div>';
 }
 
 /* ===== Fitness assessment (client + coach; stored in milestones.assessment) ===== */
