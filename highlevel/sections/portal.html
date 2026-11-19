@@ -3240,6 +3240,27 @@ body.gm-has-switch #custom-host{top:var(--gm-h,48px)}
 .ia-rep-mac{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:5px}
 .ia-rep-why{margin-top:5px;font-size:12px;line-height:1.4;color:#c084fc}
 .ia-rep:hover{border-color:var(--prot)}
+.ia-rep-tag{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1px 7px;white-space:nowrap}
+.ia-rep-tag.online{color:var(--prot);background:rgba(47,127,209,.12);border-color:transparent}
+.ia-rep-cal{font-size:11.5px;color:var(--muted);font-weight:600;margin-left:2px}
+/* search + action chips */
+.ia-search{position:relative;display:flex;align-items:center;margin-bottom:9px}
+.ia-search-ic{position:absolute;left:11px;font-size:14px;pointer-events:none;opacity:.7}
+.ia-search input{width:100%;padding:10px 34px 10px 33px;border:1px solid var(--border);border-radius:11px;background:var(--card2);font-size:14px;box-sizing:border-box}
+.ia-search input:focus{border-color:var(--prot);outline:none}
+.ia-search-x{position:absolute;right:7px;width:24px;height:24px;border:0;background:var(--card);color:var(--muted);border-radius:7px;font-size:16px;line-height:1;cursor:pointer}
+.ia-chips{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+.ia-chip{border:1px solid var(--border);background:var(--card2);color:var(--text);border-radius:20px;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer}
+.ia-chip:hover{border-color:var(--prot)}
+.ia-chip.ai{border-color:rgba(168,85,247,.4);color:#9b59e8;background:rgba(168,85,247,.08)}
+.ia-reps-lab{font-size:11px;color:var(--muted);font-weight:600;margin-left:auto}
+.ia-empty{font-size:12.5px;color:var(--muted);padding:10px 2px;line-height:1.5}
+.ia-tell{margin-top:16px;border:1px solid var(--border);border-radius:12px;background:var(--card2);overflow:hidden}
+.ia-tell>summary{cursor:pointer;padding:11px 13px;font-family:var(--disp);font-weight:800;font-size:13.5px;list-style:none;color:var(--text)}
+.ia-tell>summary::-webkit-details-marker{display:none}
+.ia-tell>summary::after{content:'▾';float:right;color:var(--muted)}
+.ia-tell[open]>summary::after{content:'▴'}
+.ia-tell-body{padding:0 13px 13px}
 /* Request-a-food candidate picker (client) */
 .ireq-cands{display:flex;flex-direction:column;gap:7px;margin-top:12px}
 .ireq-cands:empty{display:none}
@@ -7610,7 +7631,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04uf';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04ug';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -9812,20 +9833,80 @@ function openIngAction(enc){let d;try{d=JSON.parse(decodeURIComponent(enc));}cat
   const t=$('ia-title');if(t)t.textContent=d.n||'Ingredient';renderIngAction();$('ing-action-modal').classList.add('open');
 }
 function closeIngAction(){$('ing-action-modal').classList.remove('open');IA_CUR=null;IA_REPS=null;IA_AI_DONE=false;}
+/* scale ANY library food to match the target's macros (same dominant-macro logic as ingReplacements) — used by the search box */
+function ingScaleCandidate(target,f){
+  if(!f||!f.name)return null;
+  const tcal=Math.max(1,target.cal||0),tp=target.p||0,tc=target.c||0,tf=target.f||0;
+  const pcal=tp*4,ccal=tc*4,fcal=tf*9;const dom=(pcal>=ccal&&pcal>=fcal)?'p':(ccal>=fcal?'c':'f');
+  const fp=+f.p||0,fc=+f.carb||0,ff=+f.f||0,fcl=+f.cal||0;
+  if(fp<=0&&fc<=0&&ff<=0&&fcl<=0)return null;
+  let qty=0;
+  if(dom==='p'&&fp>0)qty=tp/fp;else if(dom==='c'&&fc>0)qty=tc/fc;else if(dom==='f'&&ff>0)qty=tf/ff;else if(fcl>0)qty=tcal/fcl;
+  if(!(qty>0)||!isFinite(qty))qty=1;qty=Math.max(0.02,Math.min(99,qty));
+  const rp=fp*qty,rc=fc*qty,rf=ff*qty,rcal=(fcl*qty)||(rp*4+rc*4+rf*9);
+  return {name:f.name,units:f.units||'100 g',diet:ingFoodDiet(f),qty:qty,p:rp,c:rc,f:rf,cal:rcal};
+}
+function iaRepDiet(d){return ({veg:'veg',vegan:'vegan',nonveg:'non-veg'}[d]||d);}
+function iaRepsHTML(reps,emptyMsg){
+  if(!reps||!reps.length)return '<div class="ia-empty">'+(emptyMsg||'No matches yet — search above, or get more options online.')+'</div>';
+  return reps.map(function(r){return '<div class="ia-rep">'+
+    '<div class="ia-rep-top"><span class="ia-rep-name">'+esc(r.name)+'</span>'+
+      (r.online?'<span class="ia-rep-tag online">🌐 online</span>':'')+
+      (r.diet&&r.diet!=='any'?'<span class="ia-rep-tag">'+esc(iaRepDiet(r.diet))+'</span>':'')+
+      '<span class="ia-rep-qty">'+ingQtyLabel(r)+'</span></div>'+
+    '<div class="ia-rep-mac"><span class="mm-chip p">'+round(r.p)+'P</span><span class="mm-chip c">'+round(r.c)+'C</span><span class="mm-chip f">'+round(r.f)+'F</span><span class="ia-rep-cal">'+round(r.cal)+' kcal</span></div>'+
+    (r.reason?'<div class="ia-rep-why">✨ '+esc(r.reason)+'</div>':'')+
+  '</div>';}).join('');
+}
 function renderIngAction(){const host=$('ia-host');if(!host||!IA_CUR)return;const t=IA_CUR;const diet=clientDiet();
-  const macroLine='<div class="ia-macros"><span class="mm-chip p">'+round(t.p)+'P</span><span class="mm-chip c">'+round(t.c)+'C</span><span class="mm-chip f">'+round(t.f)+'F</span><span class="mm-chip" style="color:var(--text)">'+round(t.cal)+' kcal</span></div>';
-  if(!IA_REPS)IA_REPS=ingReplacements(t,diet,12);const reps=IA_REPS;
-  const repHTML=reps.length?reps.map(r=>'<div class="ia-rep"><div class="ia-rep-top"><span class="ia-rep-name">'+esc(r.name)+'</span>'+(r.diet&&r.diet!=='any'?'<span class="pill" style="font-size:9px;padding:1px 6px">'+({veg:'veg',vegan:'vegan',nonveg:'non-veg'}[r.diet]||r.diet)+'</span>':'')+'<span class="ia-rep-qty">'+ingQtyLabel(r)+'</span></div><div class="ia-rep-mac"><span class="mm-chip p">'+round(r.p)+'P</span><span class="mm-chip c">'+round(r.c)+'C</span><span class="mm-chip f">'+round(r.f)+'F</span><span class="funit">'+round(r.cal)+' kcal</span></div>'+(r.reason?'<div class="ia-rep-why">✨ '+esc(r.reason)+'</div>':'')+'</div>').join(''):'<div class="small" style="color:var(--muted)">No close matches in the library yet'+(diet?(' for a '+esc(diet)+' diet'):'')+'. Use “Can’t find a food? Request it” to add one.</div>';
-  const aiBtn=(swapWebhookGet()&&reps.length&&!IA_AI_DONE)?'<button id="ia-ai-btn" class="btn-xxs" style="margin-left:auto" onclick="ingAiRerank()">✨ S2S Fit picks</button>':(IA_AI_DONE?'<span class="pill" style="margin-left:auto;font-size:9px;background:rgba(168,85,247,.16);color:#c084fc;border-color:rgba(168,85,247,.4)">✨ S2S Fit</span>':'');
+  if(!IA_REPS)IA_REPS=ingReplacements(t,diet,12);
+  const online=!!swapWebhookGet();
   host.innerHTML=
-    '<div class="ia-head"><div class="ia-head-lab">Your portion'+(t.meal?(' · '+esc(t.meal)):'')+'</div>'+macroLine+'</div>'+
+    '<div class="ia-head"><div class="ia-head-lab">Your portion'+(t.meal?(' · '+esc(t.meal)):'')+'</div>'+
+      '<div class="ia-macros"><span class="mm-chip p">'+round(t.p)+'P</span><span class="mm-chip c">'+round(t.c)+'C</span><span class="mm-chip f">'+round(t.f)+'F</span><span class="mm-chip" style="color:var(--text)">'+round(t.cal)+' kcal</span></div></div>'+
     (t.note?'<div class="ia-note">📝 <b>Coach note:</b> '+esc(t.note)+'</div>':'')+
-    '<div class="ia-sec"><div class="ia-sec-h">🔁 Swap options <span class="ia-sec-sub">'+reps.length+' matched'+(diet?(' · '+esc(diet)):'')+'</span>'+aiBtn+'</div>'+
-      '<div class="ia-reps">'+repHTML+'</div></div>'+
-    '<div class="ia-sec"><div class="ia-sec-h">💬 Not right? Tell your coach</div>'+
+    '<div class="ia-sec"><div class="ia-sec-h">🔁 Find a swap <span class="ia-sec-sub">same macros, scaled for you</span></div>'+
+      '<div class="ia-search"><span class="ia-search-ic">🔍</span><input id="ia-search" placeholder="Search the food library…" oninput="ingActionSearch()" autocomplete="off"><button class="ia-search-x" id="ia-search-x" style="display:none" onclick="ingActionSearchClear()">×</button></div>'+
+      '<div class="ia-chips">'+
+        (online?'<button class="ia-chip ai" id="ia-ai-btn" onclick="ingAiRerank()">✨ Smart picks</button>':'')+
+        (online?'<button class="ia-chip" id="ia-more-btn" onclick="ingActionMoreOnline()">🌐 More online</button>':'')+
+        '<span class="ia-reps-lab" id="ia-reps-lab">'+IA_REPS.length+' smart matches'+(diet?(' · '+esc(diet)):'')+'</span>'+
+      '</div>'+
+      '<div class="ia-reps" id="ia-reps">'+iaRepsHTML(IA_REPS,'No close matches in the library yet'+(diet?(' for a '+esc(diet)+' diet'):'')+'. Search for one above'+(online?', or tap 🌐 More online':'')+'.')+'</div>'+
+    '</div>'+
+    '<details class="ia-tell"><summary>💬 Not right? Tell your coach</summary><div class="ia-tell-body">'+
       '<textarea id="ia-comment" rows="2" placeholder="Comment on this food or meal (optional)…"></textarea>'+
       '<div class="ia-acts"><button class="btn-sm btn-danger" onclick="ingActionFlag()">🚩 Flag &amp; request swap</button><button class="btn-sm solid" onclick="ingActionComment()">💬 Send comment</button></div>'+
-    '</div>';
+    '</div></details>';
+}
+function ingActionSearchClear(){const s=$('ia-search');if(s)s.value='';ingActionSearch();try{$('ia-search').focus();}catch(e){}}
+function ingActionSearch(){
+  if(!IA_CUR)return;const host=$('ia-reps'),lab=$('ia-reps-lab');if(!host)return;
+  const q=(($('ia-search')||{}).value||'').trim().toLowerCase();
+  const xb=$('ia-search-x');if(xb)xb.style.display=q?'':'none';
+  if(!q){host.innerHTML=iaRepsHTML(IA_REPS);if(lab)lab.textContent=IA_REPS.length+' smart matches'+(clientDiet()?(' · '+esc(clientDiet())):'');return;}
+  const cur=String(IA_CUR.name||'').trim().toLowerCase();const cd=ingNormDiet(clientDiet());
+  let matches=(INGREDIENTS||[]).filter(function(f){return f&&f.name&&String(f.name).toLowerCase().indexOf(q)>=0&&String(f.name).trim().toLowerCase()!==cur;});
+  matches.sort(function(a,b){const da=dietAllows(cd,a)?0:1,db=dietAllows(cd,b)?0:1;return da-db||String(a.name).localeCompare(String(b.name));});
+  const cands=matches.slice(0,24).map(function(f){return ingScaleCandidate(IA_CUR,f);}).filter(Boolean);
+  host.innerHTML=iaRepsHTML(cands,'No library food matches “'+esc(q)+'”.'+(swapWebhookGet()?' Try 🌐 More online.':' Try another name, or flag it for your coach below.'));
+  if(lab)lab.textContent=cands.length+' found for “'+esc(q.slice(0,20))+'”';
+}
+async function ingActionMoreOnline(){
+  const hook=swapWebhookGet();if(!hook||!IA_CUR){toast('Online options aren’t set up yet',true);return;}
+  const btn=$('ia-more-btn');if(btn){btn.disabled=true;btn.textContent='🌐 Searching…';}
+  const payload={mode:'expand',want:8,target:{name:IA_CUR.name,p:round(IA_CUR.p),c:round(IA_CUR.c),f:round(IA_CUR.f),cal:round(IA_CUR.cal)},diet:clientDiet(),meal:IA_CUR.meal||'',have:(IA_REPS||[]).map(function(r){return r.name;})};
+  try{const res=await fetch(hook,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    let j={};try{j=await res.json();}catch(e){}
+    const extra=(j&&(j.extra||j.more||(j.data&&(j.data.extra||j.data.more))))||[];
+    const have={};(IA_REPS||[]).forEach(function(r){have[(r.name||'').trim().toLowerCase()]=1;});
+    const add=[];extra.forEach(function(x){const nm=String(x.name||'').trim();if(!nm||have[nm.toLowerCase()])return;have[nm.toLowerCase()]=1;
+      const p=+x.p||0,c=+x.c||+x.carb||0,f=+x.f||0,cal=+x.cal||+x.kcal||(p*4+c*4+f*9);
+      add.push({name:nm,units:x.units||x.unit||'serving',diet:ingNormDiet(x.diet||'')||'any',qty:+x.qty||+x.quantity||1,p:p,c:c,f:f,cal:cal,reason:String(x.reason||'').trim(),online:true});});
+    if(add.length){IA_REPS=(IA_REPS||[]).concat(add);const sh=$('ia-search');if(sh)sh.value='';renderIngAction();toast('🌐 Added '+add.length+' more option'+(add.length===1?'':'s'));return;}
+    toast('No extra online options right now',true);
+  }catch(e){toast('Couldn’t fetch online options',true);}
+  if(btn){btn.disabled=false;btn.textContent='🌐 More online';}
 }
 async function ingAiRerank(){const hook=swapWebhookGet();if(!hook||!IA_CUR||!(IA_REPS&&IA_REPS.length))return;
   const btn=$('ia-ai-btn');if(btn){btn.disabled=true;btn.textContent='✨ Finding your best picks…';}
@@ -9841,7 +9922,7 @@ async function ingAiRerank(){const hook=swapWebhookGet();if(!hook||!IA_CUR||!(IA
       IA_REPS=out;IA_AI_DONE=true;renderIngAction();return;
     }
   }catch(e){}
-  if(btn){btn.disabled=false;btn.textContent='✨ S2S Fit picks';}toast('S2S Fit picks unavailable right now',true);
+  if(btn){btn.disabled=false;btn.textContent='✨ Smart picks';}toast('Smart picks unavailable right now',true);
 }
 async function ingActionFlag(){if(!IA_CUR||!SESSION)return;const t=IA_CUR;const c=(($('ia-comment')||{}).value||'').trim();
   const msg='🔁 Swap request: '+t.name+(t.meal?(' (in '+t.meal+')'):'')+(c?(' — '+c):'');
