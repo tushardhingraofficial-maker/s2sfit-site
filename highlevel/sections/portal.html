@@ -6577,7 +6577,7 @@ img,svg,canvas,video{max-width:100%}
     <div class="modal-body">
       <div class="row" style="align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:8px">
         <div class="field" style="max-width:150px;margin:0"><label class="lab">Show</label>
-          <select id="act-range" onchange="renderActivity()"><option value="1">Today</option><option value="2">Last 2 days</option><option value="7" selected>Last 7 days</option><option value="14">Last 14 days</option><option value="30">Last 30 days</option></select></div>
+          <select id="act-range" onchange="renderActivity()"><option value="1">Today</option><option value="2">Last 2 days</option><option value="7" selected>Last 7 days</option><option value="14">Last 14 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="180">Last 6 months</option><option value="365">Last year</option><option value="100000">All time</option></select></div>
         <div class="field" style="max-width:230px;margin:0"><label class="lab">Client</label>
           <select id="act-client" onchange="renderActivity()"><option value="">All clients</option></select></div>
         <div style="flex:1"></div>
@@ -7596,7 +7596,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04ub';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04uc';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
