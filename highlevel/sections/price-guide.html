@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-version="v2026-11-18e">
+<html lang="en" data-version="v2026-11-19a">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -1365,9 +1365,9 @@ async function sbPatch(table,id,body){return sec('table.update',{table,id,patch:
 async function sbDelete(table,id){await sec('table.delete',{table,id});}
 
 /* ═══════════ PRICING CONFIG ═══════════ */
-const DEFAULT_CFG={onboard:200,weekly:125,weeks:16,vsl:500,one2one:50,ptRate:80,ptPerWeek:3,ptDeliverCost:15,ptMonth:8,wasteMonthly:120,rewardPct:20,
-  momMonthly:150, bpPrice:500, bpMonths:6, reactCredit:500, reactFreeWeeks:4,
-  fb1Title:'Momentum Plan',fb1Desc:'Our full app + community on your own schedule, with a once-a-month check-in from your coach. More freedom, lower cost — less hands-on than full coaching.',fb1Bullets:'Full app + community access\nOnce-a-month 1:1 follow-up\nYour training & nutrition in the app\nLighter updates than full coaching\nCancel anytime',fb1Cta:'Start Momentum →',fb1Url:'',
+const DEFAULT_CFG={onboard:200,weekly:125,weeks:16,vsl:500,one2one:70,ptRate:80,ptPerWeek:3,ptDeliverCost:15,ptMonth:8,wasteMonthly:120,rewardPct:20,
+  momMonthly:250, bpPrice:600, bpMonths:6, reactCredit:500, reactFreeWeeks:4,
+  fb1Title:'Momentum Plan',fb1Desc:'Our full app + community on your own schedule, with a once-a-month check-in from your coach. More freedom, lower cost — less hands-on than full coaching.',fb1Bullets:'Full app + community access\nOnce-a-month 1:1 follow-up\nYour training & nutrition in the app\nLighter updates than full coaching\n16-week plan · paid in 2 instalments',fb1Cta:'Start Momentum →',fb1Url:'',
   fb2Title:'6-Month Blueprint',fb2Desc:'We design your complete 6-month training + nutrition plan up front and load it into the app with your allocation. Yours to run independently — no check-ins, no ongoing updates.',fb2Bullets:'Your full 6-month plan, built up front\nTraining + nutrition, done for you\nApp access with your allocation\nNo follow-ups or updates\nOne-time payment',fb2Cta:'Get the Blueprint →',fb2Url:''};
 const CFG_TXT=['fb1Title','fb1Desc','fb1Bullets','fb1Cta','fb1Url','fb2Title','fb2Desc','fb2Bullets','fb2Cta','fb2Url'];
 let CLIENT_MODE='new';   // 'new' | 'returning' — chosen on the start slide; returning gets the loyalty discount
@@ -1656,7 +1656,8 @@ function renderWait(){
         +(desc?'<p class="fb-desc">'+esc(desc)+'</p>':'')
         +(bl?'<ul class="fb-list">'+bl+'</ul>':'')+ctaHtml+'</div>';
     };
-    const momPrice=money(CFG.onboard)+' onboarding, then '+money(CFG.momMonthly)+' / month';
+    const momMonths=Math.max(1,Math.round((CFG.weeks||16)*12/52)), momTotal=CFG.onboard+(Number(CFG.momMonthly)||0)*momMonths;
+    const momPrice=money(CFG.onboard)+' onboarding + '+money(CFG.momMonthly)+'/mo × '+momMonths+' mo = '+money(momTotal)+' · 2 payments';
     const bpPrice=money(CFG.bpPrice)+' · '+CFG.bpMonths+'-month plan (one-time)';
     let fhtml='';
     if(String(CFG.fb1Title||'').trim())fhtml+=card(CFG.fb1Title,momPrice,CFG.fb1Desc,CFG.fb1Bullets,CFG.fb1Cta,CFG.fb1Url,'paid');
@@ -1687,7 +1688,7 @@ function renderPlanGrid(){
   const rows=[
     ['Investment',
       onlineInvest,
-      money(CFG.onboard)+' + '+money(CFG.momMonthly)+'/mo',
+      money(CFG.onboard+(Number(CFG.momMonthly)||0)*Math.max(1,Math.round((CFG.weeks||16)*12/52)))+' · 16 wks (2 pay)',
       money(CFG.bpPrice)+' / '+CFG.bpMonths+' months'],
     ['Onboarding fee','✓ '+money(CFG.onboard)+' <span class="pg-sub">(in total)</span>','✓ '+money(CFG.onboard),'✗ none'],
     ['Coach follow-ups','Every week','Once a month','None'],
