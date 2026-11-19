@@ -3394,6 +3394,24 @@ body.gm-has-switch #custom-host{top:var(--gm-h,48px)}
 .cbf-act{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:var(--text);text-decoration:none;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:6px 10px}
 .cbf-act:hover{border-color:var(--red);color:var(--red)}
 .cbf-line .ic,.cbf-act .ic{width:14px;height:14px;flex:none}
+/* membership tier tag + momentum plan */
+.mem-tag{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--gold,#B07A0C);background:rgba(245,200,66,.16);border:1px solid rgba(245,200,66,.4);border-radius:20px;padding:3px 10px;white-space:nowrap}
+.mom-due{border-radius:10px;padding:9px 12px;font-size:13px;font-weight:700}
+.mom-due.ok{background:rgba(34,197,94,.12);color:var(--good);border:1px solid rgba(34,197,94,.3)}
+.mom-due.soon{background:rgba(245,200,66,.14);color:var(--gold,#B07A0C);border:1px solid rgba(245,200,66,.4)}
+.mom-due.over{background:rgba(255,107,94,.14);color:var(--crit);border:1px solid rgba(255,107,94,.45)}
+.mom-chk{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;cursor:pointer}
+.mom-chk input{width:17px;height:17px}
+.mom-entry{border:1px solid var(--border);border-radius:11px;background:var(--card2);padding:10px 12px;margin-bottom:8px}
+.mom-entry-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.mom-pop-banner{display:flex;align-items:flex-start;gap:11px;background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.35);border-radius:12px;padding:12px 13px}
+.mom-pop-ic{font-size:26px;line-height:1;flex:none}
+.mom-pop-grid{display:flex;flex-direction:column;gap:0;border:1px solid var(--border);border-radius:11px;overflow:hidden}
+.mom-pop-row{display:flex;gap:10px;padding:9px 12px;border-top:1px solid var(--border);font-size:13px}
+.mom-pop-row:first-child{border-top:none}
+.mom-pop-row .k{flex:none;width:130px;color:var(--muted);font-weight:700}
+.mom-pop-row .v{flex:1;min-width:0;font-weight:600}
+.mom-pop-row .v.yes{color:var(--good)}.mom-pop-row .v.no{color:var(--crit)}
 .comp-test{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;flex-wrap:wrap}
 .comp-test .cdate{font-weight:800;min-width:92px}
 .comp-split{display:flex;height:16px;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:var(--card)}
@@ -5761,6 +5779,7 @@ img,svg,canvas,video{max-width:100%}
           <button class="btn-sm" onclick="tplExitEditor()">← Back</button>
           <button class="btn-sm solid" onclick="tplSaveFromEditor()">💾 Save template</button></div>
         <div id="ed-client-banner"><span id="ed-banner-name">Client</span>
+          <span id="ed-membership-tag" class="mem-tag hidden"></span>
           <span style="flex:1"></span>
           <button class="btn-sm" onclick="backToList()">← All clients</button>
           <button class="btn-sm" onclick="edLogCheckin()" title="Log a weekly check-in / call for this client">📝 Log check-in</button>
@@ -5808,7 +5827,18 @@ img,svg,canvas,video{max-width:100%}
                 <div style="display:flex;gap:6px"><input id="ed-pass" type="text" placeholder="firstname + last 4 phone digits" style="flex:1"><button class="btn-sm" style="flex:none;white-space:nowrap" onclick="genPassword()" title="Generate / reset password">↻ Generate</button></div></div>
               <div class="field"><label class="lab">Plan title</label><input id="ed-title" type="text" placeholder="e.g. Cut — Phase 1"></div>
             </div>
+            <div class="row">
+              <div class="field"><label class="lab">Membership tier <span class="small" style="text-transform:none;font-weight:400">— controls update cadence</span></label>
+                <select id="ed-membership" onchange="edSetMembership(this.value)">
+                  <option value="premium">⭐ Premium — full access, update anytime</option>
+                  <option value="momentum">🔁 Momentum — reviewed once every 4 weeks</option>
+                </select>
+                <div class="small" id="ed-membership-sub" style="color:var(--muted);margin-top:4px"></div></div>
+            </div>
           </div></div>
+
+        <div class="card" data-edtab="client" id="ed-momentum-card" style="display:none"><div class="card-head"><span class="step-no">🔁</span><h2>Momentum plan — 4-week reviews</h2></div>
+          <div class="card-body"><div id="ed-momentum-host"></div></div></div>
 
         <div class="card" data-edtab="client"><div class="card-head"><span class="step-no">A2</span><h2>Key personal details</h2></div>
           <div class="card-body">
@@ -6359,6 +6389,13 @@ img,svg,canvas,video{max-width:100%}
   <div class="modal">
     <div class="modal-head"><div class="brand-logo admin-logo" role="img" aria-label="S2S Fit"></div><h2><svg class="hd-ic"><use href="#ic-trending-down"/></svg>Churn &amp; retention</h2><span class="sync"><span class="small">cancellations · reasons · win-back</span></span><span class="sp"></span><button class="icon-x" onclick="closeChurn()">×</button></div>
     <div class="modal-body"><div id="churn-host"><div class="empty">Loading…</div></div></div>
+  </div>
+</div>
+<!-- Momentum plan reminder — pops up when a Momentum-tier client's profile is opened -->
+<div class="overlay" id="momentum-modal">
+  <div class="modal modal-sm">
+    <div class="modal-head"><div class="brand-logo admin-logo" role="img" aria-label="S2S Fit"></div><h2><svg class="hd-ic"><use href="#ic-refresh"/></svg>Momentum plan</h2><span class="sp"></span><button class="icon-x" onclick="closeMomentum()">×</button></div>
+    <div class="modal-body"><div id="momentum-host"></div></div>
   </div>
 </div>
 <!-- Archive-a-client → record the cancellation (churn), then archive -->
@@ -7518,7 +7555,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04tx';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04ty';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -7677,6 +7714,8 @@ function migratePlan(p){
   if(!Array.isArray(p.supplements))p.supplements=[];
   if(!p.weekly_meals||typeof p.weekly_meals!=='object')p.weekly_meals={enabled:false,status:'idle',days:[]};
   if(!p.meal_prep||typeof p.meal_prep!=='object')p.meal_prep={enabled:false,status:'idle',prepDays:3,plans:[]};
+  if(p.membership!=='momentum')p.membership='premium';   // client membership tier (premium = full; momentum = 4-week cadence)
+  if(!p.momentum||typeof p.momentum!=='object')p.momentum={log:[]};if(!Array.isArray(p.momentum.log))p.momentum.log=[];
   if(p.hydration==null)p.hydration='';
   if(!p.calendar||typeof p.calendar!=='object')p.calendar={events:[]};
   if(!Array.isArray(p.calendar.events))p.calendar.events=[];
@@ -24541,6 +24580,7 @@ async function renderOverview(){
       trainDays:((tr.days||[]).length),startDate:pf.startDate||'',traffic:(plan&&plan.staff_feedback&&plan.staff_feedback.traffic)||'',
       tl:((plan&&plan.milestones&&plan.milestones.timeline)||null),
       rm:(function(){try{const s=rmtSummary(plan);const f=rmtFlags(s)[0]||null;return {attn:rmtAttention(s),type:f?f.type:'',label:f?f.label:''};}catch(e){return {attn:false,type:'',label:''};}})(),   // roadmap-tracker attention summary → nav badge
+      membership:(plan&&plan.membership==='momentum')?'momentum':'premium',
       redeemReq:!!(plan&&plan.milestones&&plan.milestones.rewards&&plan.milestones.rewards.request&&plan.milestones.rewards.request.at),
       pointReq:((plan&&plan.milestones&&plan.milestones.rewards&&Array.isArray(plan.milestones.rewards.claims))?plan.milestones.rewards.claims.filter(c=>c&&c.status==='pending').length:0),
       claims:((plan&&plan.milestones&&plan.milestones.rewards&&Array.isArray(plan.milestones.rewards.claims))?plan.milestones.rewards.claims.filter(c=>c&&c.status==='pending'):[]),
@@ -27408,6 +27448,96 @@ async function doArchive(clientId,archived,opts){
   catch(e){console.error(e);toast('Could not update — '+((e&&e.message)||'error'),true);throw e;}
 }
 function edRenderArchiveBtn(){const b=$('ed-archive-btn');if(!b||!edPlan)return;const a=!!edPlan.archived;b.textContent=a?'♻ Restore client':'📦 Archive client';b.className='btn-sm'+(a?' solid':'');b.setAttribute('onclick','toggleArchive(edClient.id,'+(a?'false':'true')+')');}
+/* ═══════════════ MEMBERSHIP TIERS + MOMENTUM PLAN (4-week review cadence) ═══════════════ */
+function momData(plan){plan=plan||edPlan;if(!plan)return {log:[]};plan.momentum=(plan.momentum&&typeof plan.momentum==='object')?plan.momentum:{log:[]};if(!Array.isArray(plan.momentum.log))plan.momentum.log=[];return plan.momentum;}
+function momLatest(plan){const l=momData(plan).log.slice().sort((a,b)=>((a.date||'')<(b.date||'')?1:-1));return l[0]||null;}
+function momNextDueISO(plan){const last=momLatest(plan);if(!last||!last.date)return null;const d=new Date(String(last.date).slice(0,10)+'T00:00:00');if(isNaN(d))return null;d.setDate(d.getDate()+28);return d.toISOString().slice(0,10);}
+function momDaysBetween(a,b){return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);}
+function edSetMembership(v){if(!edPlan)return;edPlan.membership=(v==='momentum')?'momentum':'premium';edRenderMembership();momPersist();}
+function edRenderMembership(){
+  if(!edPlan)return;const mom=(edPlan.membership==='momentum');
+  const sel=$('ed-membership');if(sel)sel.value=mom?'momentum':'premium';
+  const sub=$('ed-membership-sub');if(sub)sub.innerHTML=mom?'Reviewed &amp; contacted <b>once every 4 weeks</b>. A reminder pops up each time you open this profile.':'Full access — update &amp; contact anytime (standard behaviour).';
+  const card=$('ed-momentum-card');if(card)card.style.display=mom?'':'none';
+  const tag=$('ed-membership-tag');if(tag){if(mom){tag.textContent='🔁 Momentum';tag.classList.remove('hidden');}else{tag.classList.add('hidden');tag.textContent='';}}
+  if(mom)edRenderMomentum();
+}
+/* persist just membership + momentum onto the saved plan row (merge-safe; the big Save also writes them) */
+async function momPersist(){
+  if(!edClient)return;
+  try{let raw=await DB.getPlan(edClient.id);if(!raw)raw={client_id:edClient.id,title:'Diet Plan'};
+    raw.membership=edPlan.membership||'premium';raw.momentum=momData(edPlan);raw.updated_at=new Date().toISOString();
+    await DB.savePlanRow(raw);
+    const row=(OV_ROWS||[]).find(r=>r.id===edClient.id);if(row)row.membership=raw.membership;
+  }catch(e){toast('Could not save membership — '+((e&&e.message)||'error'),true);}
+}
+function edRenderMomentum(){
+  const host=$('ed-momentum-host');if(!host||!edPlan)return;
+  const log=momData(edPlan).log.slice().sort((a,b)=>((a.date||'')<(b.date||'')?1:-1));
+  const today=todayISO(),next=momNextDueISO(edPlan);
+  const overdue=next&&next<today,soon=next&&!overdue&&momDaysBetween(today,next)<=7;
+  let h='';
+  if(next)h+='<div class="mom-due '+(overdue?'over':(soon?'soon':'ok'))+'">'+(overdue?'⚠ Review overdue — was due '+esc(fmtDate(next))+' ('+Math.abs(momDaysBetween(today,next))+' days ago)':('Next 4-week review due '+esc(fmtDate(next))+' · in '+Math.max(0,momDaysBetween(today,next))+' days'))+'</div>';
+  else h+='<div class="mom-due soon">No 4-week review logged yet — add the first one below.</div>';
+  h+='<div class="uline" style="margin:13px 0 8px">Log a 4-week review</div>'+
+    '<div class="pg-grid">'+
+      '<div class="field"><label class="lab">Date</label><input id="mom-date" type="date" value="'+today+'"></div>'+
+    '</div>'+
+    '<div class="field" style="margin-top:8px"><label class="lab">Program changes made</label><textarea id="mom-changes" rows="2" placeholder="What you updated in their training / nutrition this review"></textarea></div>'+
+    '<div class="row" style="gap:18px;margin:8px 0"><label class="mom-chk"><input type="checkbox" id="mom-checkin"> Check-in taken</label><label class="mom-chk"><input type="checkbox" id="mom-call"> Call taken</label></div>'+
+    '<div class="field"><label class="lab">Note (optional)</label><input id="mom-note" placeholder="e.g. feeling good, bumped calories +100"></div>'+
+    '<div style="text-align:right;margin-top:8px"><button class="btn-sm solid" onclick="momAddEntry()">＋ Log review</button></div>'+
+    '<div class="uline" style="margin:16px 0 8px">Review history ('+log.length+')</div>';
+  if(!log.length)h+='<div class="empty">No reviews logged yet.</div>';
+  else h+=log.map(r=>'<div class="mom-entry"><div class="mom-entry-top"><b>'+esc(fmtDate(r.date))+'</b>'+(r.checkin?'<span class="pill good">✓ Check-in</span>':'')+(r.call?'<span class="pill good">✓ Call</span>':'')+'<div style="flex:1"></div><button class="icon-x" style="font-size:16px" onclick="momDelEntry(\''+r.id+'\')">×</button></div>'+(r.changes?'<div class="small" style="margin-top:4px"><b style="color:var(--text)">Changes:</b> '+esc(r.changes)+'</div>':'')+(r.note?'<div class="small" style="color:var(--muted)">'+esc(r.note)+'</div>':'')+(r.by?'<div class="small" style="color:var(--muted);margin-top:2px">— '+esc(r.by)+'</div>':'')+'</div>').join('');
+  host.innerHTML=h;
+}
+function momAddEntry(){
+  if(!edPlan)return;
+  const date=($('mom-date')||{}).value||todayISO();
+  const changes=(($('mom-changes')||{}).value||'').trim();
+  const checkin=!!(($('mom-checkin')||{}).checked),call=!!(($('mom-call')||{}).checked);
+  const note=(($('mom-note')||{}).value||'').trim();
+  if(!changes&&!checkin&&!call&&!note){toast('Record what you did this review',true);return;}
+  momData(edPlan).log.push({id:uid(),date,changes,checkin,call,note,by:(typeof coachAuthorName==='function'?coachAuthorName():'Coach'),at:new Date().toISOString()});
+  edRenderMomentum();momPersist();
+  try{DB.addAudit({client_id:edClient.id,actor:'admin',action:'Momentum 4-week review',detail:date+(changes?(' — '+changes.slice(0,120)):'')});}catch(e){}
+  toast('✓ Review logged');
+}
+function momDelEntry(id){if(!edPlan)return;if(!confirm('Delete this review entry?'))return;const m=momData(edPlan);m.log=m.log.filter(x=>x.id!==id);edRenderMomentum();momPersist();}
+function closeMomentum(){const m=$('momentum-modal');if(m)m.classList.remove('open');}
+function momGotoCard(){const c=$('ed-momentum-card');if(c)try{c.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}}
+function momentumPopupOpen(){
+  const m=$('momentum-modal');if(!m||!edPlan||!edClient)return;
+  const latest=momLatest(edPlan),next=momNextDueISO(edPlan),today=todayISO();
+  const overdue=next&&next<today;
+  const nm=(edClient.name||edClient.email||'This client');
+  let h='<div class="mom-pop-banner"><span class="mom-pop-ic">🔁</span><div><b>'+esc(nm)+' is on the Momentum Plan</b><div class="small">Review, update &amp; contact <b>once every 4 weeks</b> — no need to touch this client in between.</div></div></div>';
+  if(next)h+='<div class="mom-due '+(overdue?'over':'ok')+'" style="margin:12px 0">'+(overdue?'⚠ Due for a 4-week review — was due '+esc(fmtDate(next))+' ('+Math.abs(momDaysBetween(today,next))+' days ago)':'On track — next review due '+esc(fmtDate(next))+' ('+Math.max(0,momDaysBetween(today,next))+' days)')+'</div>';
+  else h+='<div class="mom-due soon" style="margin:12px 0">No 4-week review logged yet — log the first one below.</div>';
+  if(latest){
+    h+='<div class="uline" style="margin:0 0 8px">Last 4-week review · '+esc(fmtDate(latest.date))+'</div>'+
+      '<div class="mom-pop-grid">'+
+        '<div class="mom-pop-row"><span class="k">Program changes</span><span class="v">'+(latest.changes?esc(latest.changes):'—')+'</span></div>'+
+        '<div class="mom-pop-row"><span class="k">Check-in taken</span><span class="v '+(latest.checkin?'yes':'no')+'">'+(latest.checkin?'✓ Yes':'✗ No')+'</span></div>'+
+        '<div class="mom-pop-row"><span class="k">Call taken</span><span class="v '+(latest.call?'yes':'no')+'">'+(latest.call?'✓ Yes':'✗ No')+'</span></div>'+
+        (latest.note?'<div class="mom-pop-row"><span class="k">Note</span><span class="v">'+esc(latest.note)+'</span></div>':'')+
+      '</div>';
+  } else h+='<div class="empty">No review logged yet — use the Momentum card to log the first one.</div>';
+  h+='<div class="uline" style="margin:14px 0 8px">Latest on record</div><div class="mom-pop-grid" id="mom-pop-live"><div class="small" style="color:var(--muted)">Loading…</div></div>';
+  h+='<div class="row" style="gap:8px;justify-content:flex-end;margin-top:16px"><button class="btn-sm" onclick="closeMomentum()">Got it</button><button class="btn-sm solid" onclick="closeMomentum();momGotoCard()">Log a review</button></div>';
+  $('momentum-host').innerHTML=h;
+  m.classList.add('open');
+  momPopLive(edClient.id);
+}
+async function momPopLive(cid){
+  const el=$('mom-pop-live');if(!el)return;let lastCk='—',lastCall='—';
+  try{const cks=await DB.listCheckins(cid);const s=(cks||[]).slice().sort((a,b)=>((String(a.date||a.created_at||''))<(String(b.date||b.created_at||''))?1:-1));if(s.length){const d=String(s[0].date||s[0].created_at||'').slice(0,10);if(d)lastCk=fmtDate(d);}}catch(e){}
+  try{const row=(OV_ROWS||[]).find(r=>r.id===cid);if(row&&row.lastCall&&row.lastCall.call_at)lastCall=fmtDate(String(row.lastCall.call_at).slice(0,10));}catch(e){}
+  if(!$('mom-pop-live'))return;
+  el.innerHTML='<div class="mom-pop-row"><span class="k">Last check-in on record</span><span class="v">'+lastCk+'</span></div>'+
+    '<div class="mom-pop-row"><span class="k">Last call on record</span><span class="v">'+lastCall+'</span></div>';
+}
 /* Client-switcher side rail: jump straight to another client's profile from inside the editor */
 async function edRenderSwitchRail(){
   const host=$('edsw-list');if(!host)return;
@@ -27581,9 +27711,10 @@ function fillEditor(plan){
   {const inl=$('ed-internal-notes');if(inl)inl.value=edPlan.internal_notes||'';}
   $('ed-disclaimer').value=(plan.disclaimer!=null?plan.disclaimer:DEFAULT_DISCLAIMER);
   edRenderDayTypes();edRenderSchedule();edRenderSupps();clearSuppForm();
-  edRenderGoals();edRenderGoalPlan();edRenderTraining();edRenderSop('nutrition');edRenderClientSections();edRenderNotes();edRenderHabits();edTasksInit();edRenderDocs();edRenderVersions('training','ed-tr-history',true);edRenderVersions('nutrition','ed-nutri-history',true);try{availRerender('admin');}catch(e){}loadOnboardTpl().then(()=>edRenderOnboardBadge());edRenderOnboardBadge();try{edRenderOnbStages();}catch(e){}edRenderPauseBtn();try{edRenderArchiveBtn();}catch(e){}try{edRenderSwitchRail();}catch(e){}ED_CLIMB_LOADED_ID=null;try{edWmRender();edWmLoadCfg();}catch(e){}try{edMpRender();edMpLoadCfg();}catch(e){}try{edCustLoad();}catch(e){}edTab('client');
+  edRenderGoals();edRenderGoalPlan();edRenderTraining();edRenderSop('nutrition');edRenderClientSections();edRenderNotes();edRenderHabits();edTasksInit();edRenderDocs();edRenderVersions('training','ed-tr-history',true);edRenderVersions('nutrition','ed-nutri-history',true);try{availRerender('admin');}catch(e){}loadOnboardTpl().then(()=>edRenderOnboardBadge());edRenderOnboardBadge();try{edRenderOnbStages();}catch(e){}edRenderPauseBtn();try{edRenderArchiveBtn();}catch(e){}try{edRenderMembership();}catch(e){}try{edRenderSwitchRail();}catch(e){}ED_CLIMB_LOADED_ID=null;try{edWmRender();edWmLoadCfg();}catch(e){}try{edMpRender();edMpLoadCfg();}catch(e){}try{edCustLoad();}catch(e){}edTab('client');
   renderAuditAdmin(edClient&&edClient.created_at?edClient.id:null);
   try{edScrollEditorTop();}catch(e){}   // open every client from the top — #admin (overlay) is the scroll container, not .modal-body
+  if(edPlan&&edPlan.membership==='momentum'){try{setTimeout(momentumPopupOpen,160);}catch(e){}}   // Momentum clients: show the 4-week reminder on open
   DB.listClients().then(cs=>{const others=cs.filter(c=>c.id!==edClient.id);$('ed-dupe').innerHTML='<option value="">— select a client —</option>'+others.map(c=>'<option value="'+c.id+'">'+esc(c.name||c.email)+'</option>').join('');});
 }
 
@@ -29603,6 +29734,7 @@ async function savePlan(){
     availability:edPlan.availability||{},onboarding:edPlan.onboarding||{done:{}},staff_feedback:edPlan.staff_feedback||{},paused:!!edPlan.paused,phase:edPlan.phase||'Foundation',nutrition:edPlan.nutrition||{},
     weekly_meals:edPlan.weekly_meals||{enabled:false,status:'idle',days:[]},
     meal_prep:edPlan.meal_prep||{enabled:false,status:'idle',prepDays:3,plans:[]},
+    membership:(edPlan.membership==='momentum')?'momentum':'premium',momentum:momData(edPlan),
     updated_at:new Date().toISOString()};
   // back-compat: also store a flat exercises[] on each training day (mirror of its sections),
   // so any older / cached client build still renders the workout even before it updates.
