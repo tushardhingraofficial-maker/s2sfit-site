@@ -834,6 +834,16 @@ body{overflow-x:hidden}
 .rw-card{overflow:hidden;border:1px solid var(--border);background:radial-gradient(1200px 240px at 12% -40%,rgba(232,23,13,.20),transparent 60%),linear-gradient(180deg,var(--card2),var(--card))}
 .rw-body{padding:18px}
 .rw-top{display:flex;align-items:center;gap:13px;margin-bottom:16px}
+/* Momentum member: rewards locked behind an upgrade prompt */
+.rw-lock{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--border);min-height:230px}
+.rw-lock-bg{filter:blur(6px);opacity:.5;padding:18px;pointer-events:none;user-select:none;background:radial-gradient(1200px 240px at 12% -40%,rgba(232,23,13,.2),transparent 60%),linear-gradient(180deg,var(--card2),var(--card))}
+.rw-lock-fg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:18px}
+.rw-lock-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px 20px;text-align:center;max-width:330px;box-shadow:0 14px 40px rgba(0,0,0,.18)}
+.rw-lock-ic{font-size:34px;line-height:1}
+.rw-lock-h{font-family:var(--disp);font-weight:900;font-size:19px;margin:8px 0 8px}
+.rw-lock-p{font-size:13.5px;line-height:1.55;color:var(--muted);margin:0 0 14px}
+.rw-lock-btn{border:0;border-radius:12px;background:var(--red);color:#fff;padding:11px 16px;font-family:var(--disp);font-weight:800;font-size:13.5px;cursor:pointer;width:100%}
+.rw-lock-btn:active{transform:scale(.99)}
 .rw-badge{flex:none;width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:27px;background:linear-gradient(145deg,var(--card2),var(--card));border:1px solid var(--border);box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
 .rw-badge.glow{border-color:var(--gold);box-shadow:0 0 0 4px rgba(245,200,66,.15);animation:rwPulse 1.8s ease-in-out infinite}
 @keyframes rwPulse{0%,100%{box-shadow:0 0 0 4px rgba(245,200,66,.12)}50%{box-shadow:0 0 0 8px rgba(245,200,66,.05)}}
@@ -7596,7 +7606,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04ud';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04ue';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -9417,7 +9427,7 @@ async function renderDashboard(){
         mfocus.innerHTML=fhtml;
       }
     }
-    if(sectionLive('rewards')){(async function(){try{
+    if(sectionLive('rewards')&&!isMomentumMember()){(async function(){try{
       const cfg=await rewardsCfg();
       // pull the live balance the same way the Rewards section does (coach may have awarded/redeemed since login)
       try{if(SESSION){const fresh=await DB.getPlan(SESSION.id);if(fresh&&fresh.milestones){PLAN.milestones=PLAN.milestones||{goals:[]};if(Array.isArray(fresh.milestones.rewardsEarned)&&!Array.isArray(PLAN.milestones.rewardsEarned))PLAN.milestones.rewardsEarned=fresh.milestones.rewardsEarned;PLAN.milestones.rewards=rwUnionEarned(fresh.milestones.rewards);}}}catch(_){}
@@ -9936,6 +9946,7 @@ function rwUnionEarned(serverR){serverR=(serverR&&typeof serverR==='object')?ser
   return {total:total,ledger:sLedger.concat(extra),voided:(Array.isArray(serverR.voided)?serverR.voided:[]),request:(serverR.request&&serverR.request.at)?serverR.request:((localR&&localR.request)||null),claims:(Array.isArray(serverR.claims)&&serverR.claims.length)?serverR.claims:((localR&&localR.claims)||[])};}
 async function rwAutoAward(kind,label,points,opts){
   opts=opts||{};points=Math.round(+points||0);
+  if(isMomentumMember())return 0;   // Momentum members don't earn S2S Points
   if(!(points>0)||!sectionLive('rewards'))return 0;
   PLAN.milestones=PLAN.milestones||{goals:[]};const r=PLAN.milestones.rewards=PLAN.milestones.rewards||{total:0,ledger:[]};
   r.ledger=Array.isArray(r.ledger)?r.ledger:[];
@@ -10022,7 +10033,7 @@ async function rwSyncFoodReward(triggerSource){
 }
 /* ── celebratory reward pop-up: fires whenever a client earns points ── */
 let _rwPopQ=[],_rwPopBusy=false;
-function rwRewardPop(points,label){points=Math.round(+points||0);if(points<=0)return;
+function rwRewardPop(points,label){if(isMomentumMember())return;points=Math.round(+points||0);if(points<=0)return;
   const total=((PLAN&&PLAN.milestones&&PLAN.milestones.rewards&&PLAN.milestones.rewards.total)||0);
   _rwPopQ.push({points:points,label:label||'',total:total});_rwPopDrain();}
 async function _rwPopDrain(){if(_rwPopBusy)return;const item=_rwPopQ.shift();if(!item)return;_rwPopBusy=true;try{await _rwPopShow(item.points,item.label,item.total);}catch(e){}_rwPopBusy=false;if(_rwPopQ.length)_rwPopDrain();}
@@ -10082,8 +10093,27 @@ async function rwRequestRedeem(){
 }
 function rwMoney(cfg,pts){const v=(+pts||0)*(+cfg.perPoint||0);return (cfg.currency||'')+(Math.round(v*100)/100);}
 /* ---- client view ---- */
+/* membership tier (client side) — Momentum members don't get the S2S Points / rewards system */
+function memberTier(){return (typeof PLAN!=='undefined'&&PLAN&&PLAN.membership==='momentum')?'momentum':'premium';}
+function isMomentumMember(){return memberTier()==='momentum';}
+function rwMomentumLockHTML(){
+  const chat=(typeof sectionLive==='function'&&sectionLive('chat'));
+  return '<div class="rw-lock">'+
+    '<div class="rw-lock-bg" aria-hidden="true">'+
+      '<div class="rw-top"><div class="rw-badge">🏆</div><div><div class="rw-h">Your rewards</div><div class="rw-sub">Earn points toward real rewards</div></div></div>'+
+      '<div class="rw-stats"><div class="rw-stat"><div class="rw-stat-v">1,250</div><div class="rw-stat-k">S2S Points</div></div><div class="rw-stat"><div class="rw-stat-v" style="color:var(--good)">$—</div><div class="rw-stat-k">plan value</div></div><div class="rw-stat"><div class="rw-stat-v" style="color:var(--gold)">750</div><div class="rw-stat-k">to unlock</div></div></div>'+
+      '<div class="rw-track"><div class="rw-progress"><i style="width:62%"></i></div></div>'+
+    '</div>'+
+    '<div class="rw-lock-fg"><div class="rw-lock-card">'+
+      '<div class="rw-lock-ic">🔒</div>'+
+      '<div class="rw-lock-h">Rewards are a Premium feature</div>'+
+      '<p class="rw-lock-p">You’re on the <b>Momentum</b> plan. Upgrade to <b>Premium</b> to earn <b>S2S Points</b> for your check-ins, photos, workouts and more — and redeem them for real rewards.</p>'+
+      (chat?'<button class="rw-lock-btn" onclick="navGo(\'chat\')">💬 Ask your coach about upgrading</button>':'')+
+    '</div></div></div>';
+}
 async function renderRewards(){
   const host=$('rewards-host');if(!host||!PLAN)return;
+  if(isMomentumMember()){host.innerHTML=rwMomentumLockHTML();return;}   // Momentum: blurred upgrade prompt instead of the points programme
   const cfg=await rewardsCfg(true);
   // pull the latest balance — the coach may have awarded/redeemed points since login
   try{if(SESSION){const fresh=await DB.getPlan(SESSION.id);if(fresh&&fresh.milestones){PLAN.milestones=PLAN.milestones||{goals:[]};if(Array.isArray(fresh.milestones.rewardsEarned)&&!Array.isArray(PLAN.milestones.rewardsEarned))PLAN.milestones.rewardsEarned=fresh.milestones.rewardsEarned;PLAN.milestones.rewards=rwUnionEarned(fresh.milestones.rewards);}}}catch(e){}
@@ -20285,7 +20315,7 @@ async function ciRenderRewardPromo(){
   const promo=$('ci-reward-promo'),btn=$('ci-submit-btn');
   let cfg;try{cfg=await rewardsCfg();}catch(e){cfg=null;}
   const pts=Math.max(0,Math.round(+((cfg&&cfg.checkinPoints)||0)));
-  if(!pts||!sectionLive('rewards')){if(promo)promo.innerHTML='';if(btn)btn.textContent='Submit check-in';return;}
+  if(!pts||!sectionLive('rewards')||isMomentumMember()){if(promo)promo.innerHTML='';if(btn)btn.textContent='Submit check-in';return;}
   const wk=weekMonday(todayISO());
   const r=(PLAN&&PLAN.milestones&&PLAN.milestones.rewards)||{};
   const earned=Array.isArray(r.ledger)&&r.ledger.some(x=>x&&x.kind==='checkin_auto'&&x.week===wk);
@@ -20330,7 +20360,7 @@ async function ciRenderBookReward(list,forms){
   /* eslint-disable no-unreachable */
   let cfg;try{cfg=await rewardsCfg();}catch(e){cfg=null;}
   const pts=Math.max(0,+((cfg&&cfg.checkinPoints)||0));
-  if(!cfg||pts<=0||!sectionLive('rewards')){host.innerHTML='';return;}   // nothing to claim / rewards not live for them
+  if(!cfg||pts<=0||!sectionLive('rewards')||isMomentumMember()){host.innerHTML='';return;}   // nothing to claim / rewards not live for them
   const wk=weekMonday(todayISO());
   const inWeek=x=>weekMonday(String(x.date||'').slice(0,10)||todayISO())===wk;
   const formThisWeek=(forms||[]).some(inWeek);
@@ -22583,8 +22613,8 @@ function renderOverviewProgress(){
   const daysSince=lastDate?Math.round((new Date(todayISO()+'T00:00:00')-new Date(lastDate+'T00:00:00'))/86400000):null;
   const tile=function(url,lbl){return url?'<a class="ov-ph" href="'+esc(url)+'" target="_blank" rel="noopener" style="background-image:url('+esc(url).replace(/\)/g,'%29')+')"></a>':'<div class="ov-ph">'+lbl+'</div>';};
   let pNudge;
-  if(!lastP)pNudge='Add your first 3-way set to track visual change — and earn reward points.';
-  else if(daysSince!=null&&daysSince>=28)pNudge='Your next 3-way set is <b style="color:var(--gold)">due now</b> — earn reward points.';
+  if(!lastP)pNudge='Add your first 3-way set to track visual change'+(isMomentumMember()?'.':' — and earn reward points.');
+  else if(daysSince!=null&&daysSince>=28)pNudge='Your next 3-way set is <b style="color:var(--gold)">due now</b>'+(isMomentumMember()?'.':' — earn reward points.');
   else pNudge='Next 3-way set in <b style="color:var(--text)">'+Math.max(0,28-(daysSince||0))+' days</b>.';
   h+='<div class="ov-card"><div style="display:flex;align-items:center;margin-bottom:10px"><span class="ov-uline" style="margin:0">Progress photos</span><span class="sub" style="margin-left:auto">'+(lastDate?'Latest · '+fmtDate(lastDate):'none yet')+'</span></div>'+
     '<div class="ov-photos">'+tile(lastP&&lastP.front,'Front')+tile(lastP&&lastP.side,'Side')+tile(lastP&&lastP.back,'Back')+'<button class="ov-ph" style="cursor:pointer" onclick="gmBranch(\'photos\')">＋ New<br>set</button></div>'+
@@ -22774,7 +22804,7 @@ async function wtRenderRewardHint(){
   const el=$('wt-reward-hint');if(!el)return;
   let cfg;try{cfg=await rewardsCfg();}catch(e){cfg=null;}
   const pts=rwWeightPts(cfg||{});
-  if(!pts||!sectionLive('rewards')){el.innerHTML='';return;}
+  if(!pts||!sectionLive('rewards')||isMomentumMember()){el.innerHTML='';return;}
   const r=(PLAN&&PLAN.milestones&&PLAN.milestones.rewards)||{};const today=todayISO();
   const doneToday=Array.isArray(r.ledger)&&r.ledger.some(x=>x&&x.kind==='weight_auto'&&x.period===today);
   el.innerHTML=doneToday
@@ -22840,8 +22870,8 @@ async function ppDel(id){if(!confirm('Delete this photo set?'))return;const p=pp
 function renderProgressPhotos(){
   const host=$('photos-host');if(!host)return;const sets=ppSorted();const cfg=RW_CFG||{};const pts=rwPhotoPts(cfg);
   const last=(PLAN&&PLAN.milestones&&PLAN.milestones.rewards&&Array.isArray(PLAN.milestones.rewards.ledger))?PLAN.milestones.rewards.ledger.filter(x=>x&&x.kind==='photo_auto').reduce((m,x)=>{const t=Date.parse(x.at||'')||0;return t>m?t:m;},0):0;
-  const avail=pts>0&&sectionLive('rewards')&&(!last||(Date.now()-last)>=28*86400000);
-  let h='<div class="card"><div class="card-head"><span class="step-no">📸</span><h2>Progress photos</h2>'+(pts>0?'<span class="sp"></span><span class="pill '+(avail?'good':'muted')+'">🎁 '+pts+' pts / 4 wks</span>':'')+'</div><div class="card-body">'+
+  const avail=pts>0&&sectionLive('rewards')&&!isMomentumMember()&&(!last||(Date.now()-last)>=28*86400000);
+  let h='<div class="card"><div class="card-head"><span class="step-no">📸</span><h2>Progress photos</h2>'+((pts>0&&!isMomentumMember())?'<span class="sp"></span><span class="pill '+(avail?'good':'muted')+'">🎁 '+pts+' pts / 4 wks</span>':'')+'</div><div class="card-body">'+
     '<p class="small" style="color:var(--muted);margin:0 0 10px">Take 3 photos — <b>front, side &amp; back</b> — every few weeks. Photos beat the scale for seeing real change.</p>'+
     '<div class="pp-tut"><div class="pp-tut-h">📷 How to take great progress photos</div><ul class="pp-tut-list">'+
       '<li>📍 <b>Same spot &amp; time</b> each time (morning, before food is best).</li>'+
@@ -22921,7 +22951,7 @@ function measSetMetric(v){MEAS_METRIC=v;renderMeasurements();}
 function renderMeasurements(){
   const host=$('meas-host');if(!host)return;const logs=measSorted();const latest=logs[logs.length-1];const prev=logs.length>1?logs[logs.length-2]:null;const cfg=RW_CFG||{};const pts=rwMeasPts(cfg);
   const last=(PLAN&&PLAN.milestones&&PLAN.milestones.rewards&&Array.isArray(PLAN.milestones.rewards.ledger))?PLAN.milestones.rewards.ledger.filter(x=>x&&x.kind==='meas_auto').reduce((m,x)=>{const t=Date.parse(x.at||'')||0;return t>m?t:m;},0):0;
-  const avail=pts>0&&sectionLive('rewards')&&(!last||(Date.now()-last)>=42*86400000);
+  const avail=pts>0&&sectionLive('rewards')&&!isMomentumMember()&&(!last||(Date.now()-last)>=42*86400000);
   const _mlo=!logs.length;
   const measForm='<div class="pg-logwrap"'+(_mlo?'':' hidden')+'><div class="card"><div class="card-body">'+
     '<p class="small" style="color:var(--muted);margin:0 0 10px">Measure with a soft tape, relaxed (not flexed), same spots each time — in <b>cm</b>. These feed your 7-Levels fitness assessment.</p>'+
@@ -23172,7 +23202,7 @@ function renderComposition(){
   }
   // 3) COLLAPSIBLE LOG FORM
   const _clo=!latest;
-  h+='<button class="pg-logbtn'+(_clo?' open':'')+'" type="button" onclick="pgLogToggle(this)"><span class="plus">＋</span><div style="flex:1"><b>'+(latest?'Add a test':'Add your first test')+'</b><div class="s">InBody / DEXA / calipers · earns reward points</div></div><span class="chev">▾</span></button>'+
+  h+='<button class="pg-logbtn'+(_clo?' open':'')+'" type="button" onclick="pgLogToggle(this)"><span class="plus">＋</span><div style="flex:1"><b>'+(latest?'Add a test':'Add your first test')+'</b><div class="s">InBody / DEXA / calipers'+(isMomentumMember()?'':' · earns reward points')+'</div></div><span class="chev">▾</span></button>'+
     '<div class="pg-logwrap"'+(_clo?'':' hidden')+'><div class="card"><div class="card-body">'+
       '<p class="small" style="color:var(--muted);margin:0 0 12px">Log an InBody / DEXA / caliper test — track muscle % and fat % over time. Attach the report if you have it.</p>'+
       '<div class="pg-grid">'+
@@ -24046,7 +24076,7 @@ function rcpEditRender(){const host=$('rcpe-host');if(!host||!RCP_EDIT)return;co
     '<div id="rcpe-online-status" class="small" style="color:var(--muted);margin:4px 0 2px"></div>'+
     ((e.source==='online')
       ? '<div class="rcpe-note ai">✨ <b>Pulled from online.</b> Please <b>confirm the diet type</b> below (veg / vegan / non-veg) and tidy up the steps before saving. Smart-pulled recipes don’t earn reward points.</div>'
-      : (sectionLive('rewards')?'<div class="rcpe-note mine">✍️ <b>Your own recipe.</b> Add a clear step-by-step method and you’ll earn <b>+'+rwRecipePts()+' S2S Points</b> when you save it (up to '+rwRecipeDailyCap()+'/day).</div>':''))+
+      : ((sectionLive('rewards')&&!isMomentumMember())?'<div class="rcpe-note mine">✍️ <b>Your own recipe.</b> Add a clear step-by-step method and you’ll earn <b>+'+rwRecipePts()+' S2S Points</b> when you save it (up to '+rwRecipeDailyCap()+'/day).</div>':''))+
     '<div class="field"><label class="lab">Recipe name</label><input id="rcpe-name" value="'+esc(e.name||'')+'" placeholder="e.g. High-protein paneer wrap" oninput="RCP_EDIT.name=this.value"></div>'+
     '<div class="row"><div class="field" style="max-width:120px"><label class="lab">Servings</label><input id="rcpe-serv" type="number" min="1" step="1" value="'+(sv)+'" oninput="RCP_EDIT.servings=Math.max(1,+this.value||1);rcpeTotalsRender()"></div>'+
     '<div class="field"><label class="lab">Diet type'+((e.diet||'any')==='any'?' <span class="small" style="text-transform:none;font-weight:700;color:var(--red)">· please set</span>':'')+'</label><select id="rcpe-diet" onchange="RCP_EDIT.diet=this.value;rcpEditRender()">'+['any','veg','vegan','nonveg'].map(d=>'<option value="'+d+'"'+((e.diet||'any')===d?' selected':'')+'>'+(d==='any'?'Choose…':d==='nonveg'?'Non-veg':d.charAt(0).toUpperCase()+d.slice(1))+'</option>').join('')+'</select></div></div>'+
