@@ -7665,7 +7665,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04ui';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04uj';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -9725,7 +9725,7 @@ function setView(v){
 function macroCard(k,cls,val,unit){return '<div class="macro '+cls+'"><div class="k">'+k+'</div><div class="v tnum">'+round(val)+(unit?'<small> '+unit+'</small>':'')+'</div></div>';}
 /* crisp ingredient list — food + quantity only (macros hidden until expanded) */
 function mealItemsListHTML(m){
-  const li=it=>'<li class="mi'+(ADMIN_OK?'':' mi-tap')+'"'+ingClickAttr(it,m)+'><span class="mi-dot" style="background:'+foodDotColor(it)+'"></span><span class="mi-food">'+esc(it.name)+(it.note?' <span class="mi-noteic" title="Coach note">📝</span>':'')+'</span><span class="mi-qty tnum">'+(+it.qty||0)+(it.units?' '+esc(it.units):'')+(ADMIN_OK?'':' <span class="mi-chev">›</span>')+'</span></li>';
+  const li=it=>'<li class="mi'+(ADMIN_OK?'':' mi-tap')+'"'+ingClickAttr(it,m)+'><span class="mi-dot" style="background:'+foodDotColor(it)+'"></span><span class="mi-food">'+esc(it.name)+'</span><span class="mi-qty tnum">'+(+it.qty||0)+(it.units?' '+esc(it.units):'')+(ADMIN_OK?'':' <span class="mi-chev">›</span>')+'</span></li>';
   const prep=mealPrep(m),food=mealFoods(m);
   const prepHTML=prep.length?('<div class="meal-prep"><div class="mp-h">🧂 Prep ingredients (counted)</div><ul class="meal-items" style="margin:0">'+prep.map(li).join('')+'</ul></div>'):'';
   const rows=food.map(li).join('')||'<li class="mi mi-empty">No items yet</li>';
@@ -9734,7 +9734,7 @@ function mealItemsListHTML(m){
 /* detailed per-item macros — revealed when a meal is expanded */
 function mealItemsTableHTML(m){
   const rows=(m.items||[]).map(it=>{const mm=itemMacros(it);
-    return '<tr><td class="fname" data-l="Food">'+esc(it.name)+(it.note?'<div class="small" style="color:var(--prot);font-weight:600;white-space:normal">📝 '+esc(it.note)+'</div>':'')+'</td>'+
+    return '<tr><td class="fname" data-l="Food">'+esc(it.name)+'</td>'+
       '<td class="tnum" data-l="Qty">'+(+it.qty||0)+'</td><td class="funit ucell" style="text-align:left" data-l="Serving">'+esc(it.units||'')+'</td>'+
       '<td class="mm p" data-l="Protein">'+round(mm.p)+'</td><td class="mm c" data-l="Carbs">'+round(mm.c)+'</td><td class="mm f" data-l="Fat">'+round(mm.f)+'</td><td class="tnum" data-l="Calories">'+round(mm.cal)+'</td></tr>';}).join('')
     ||'<tr><td colspan="7" class="empty" style="padding:12px">No items</td></tr>';
@@ -9879,7 +9879,7 @@ function ingReplacements(target,clientDietStr,n){
   return list.slice(0,n);
 }
 function ingQtyLabel(r){let q=r.qty;if(q>=10)q=Math.round(q);else if(q>=1)q=Math.round(q*10)/10;else q=Math.round(q*100)/100;return q+' × '+esc(r.units);}
-function ingClickAttr(it,m){if(ADMIN_OK)return '';const pay=encodeURIComponent(JSON.stringify({n:it.name,q:+it.qty||0,u:it.units||'',p:+it.p||0,c:+it.carb||0,f:+it.f||0,cal:+it.cal||0,meal:(m&&m.name)||'',note:it.note||''}));return ' data-iaenc="'+pay+'" onclick="openIngAction(this.getAttribute(\'data-iaenc\'))" style="cursor:pointer"';}
+function ingClickAttr(it,m){if(ADMIN_OK)return '';const pay=encodeURIComponent(JSON.stringify({n:it.name,q:+it.qty||0,u:it.units||'',p:+it.p||0,c:+it.carb||0,f:+it.f||0,cal:+it.cal||0,meal:(m&&m.name)||'',note:(m&&m.note)||''}));return ' data-iaenc="'+pay+'" onclick="openIngAction(this.getAttribute(\'data-iaenc\'))" style="cursor:pointer"';}
 let IA_CUR=null, IA_REPS=null, IA_AI_DONE=false;
 function openIngAction(enc){let d;try{d=JSON.parse(decodeURIComponent(enc));}catch(e){return;}const q=+d.q||0;
   IA_CUR={name:d.n,p:(+d.p||0)*q,c:(+d.c||0)*q,f:(+d.f||0)*q,cal:(+d.cal||0)*q,meal:d.meal,note:d.note};IA_REPS=null;IA_AI_DONE=false;
@@ -28205,8 +28205,7 @@ function edDtMealHTML(dt,i,m,mi){
       '<td class="qtycell" data-l="Qty"><input type="number" min="0" step="0.25" value="'+it.qty+'" class="qtyinp" style="width:62px;padding:5px 7px;text-align:right" onchange="edItemQty('+i+','+mi+','+ii+',this.value)"></td>'+
       '<td class="ucell" style="text-align:left" data-l="Unit">'+uUnitSelectHTML(it,'edItemUnit('+i+','+mi+','+ii+',this.value)','max-width:96px;min-width:66px')+'</td>'+
       '<td class="mm p" data-l="Protein">'+round(mm.p)+'</td><td class="mm c" data-l="Carbs">'+round(mm.c)+'</td><td class="mm f" data-l="Fat">'+round(mm.f)+'</td><td class="tnum" data-l="Calories">'+round(mm.cal)+'</td>'+
-      '<td class="rmcell"><button class="icon-x" style="font-size:18px;padding:0 4px" onclick="edItemRm('+i+','+mi+','+ii+')">×</button></td></tr>'+
-      '<tr class="itemnote-row"><td colspan="8" style="padding:0 6px 7px"><input value="'+esc(it.note||'')+'" placeholder="📝 Note for this food — optional, the client sees it" style="width:100%;padding:5px 9px;font-size:12px" onchange="edItemSet('+i+','+mi+','+ii+',\'note\',this.value)"></td></tr>';};
+      '<td class="rmcell"><button class="icon-x" style="font-size:18px;padding:0 4px" onclick="edItemRm('+i+','+mi+','+ii+')">×</button></td></tr>';};
   const foodRows=(m.items||[]).map((it,ii)=>it.prep?'':rowHTML(it,ii)).join('')||'<tr><td colspan="8" class="empty" style="padding:10px">No items</td></tr>';
   const prepRows=(m.items||[]).map((it,ii)=>it.prep?rowHTML(it,ii):'').join('');
   return '<div class="meal'+(m.flex?' flex-meal':'')+'" ondragover="edReorderOver(event)" ondrop="edReorderDrop(event,\'meal\','+i+','+mi+')"><div class="meal-head">'+
@@ -28223,8 +28222,8 @@ function edDtMealHTML(dt,i,m,mi){
         '<input value="'+esc(m.flexNote||'')+'" placeholder="Instruction, e.g. Eat out or cook freely — just stay within the macros left" style="width:100%;margin-top:8px;padding:6px 9px;font-size:12px" onchange="edMealSet('+i+','+mi+',\'flexNote\',this.value)"><p class="small" style="margin:6px 0 0">The client sees this pool and logs what they eat. Foods added below are optional suggestions and are <b>not</b> counted.</p></div>':'')+
       '<div class="tbl-scroll"><table class="itbl"><thead><tr><th>Food'+(m.flex?' (suggestions)':'')+'</th><th>Qty</th><th style="text-align:left">Unit</th><th>P</th><th>C</th><th>F</th><th>kcal</th><th></th></tr></thead><tbody>'+foodRows+'</tbody></table></div>'+
       '<div class="logadd"><div class="ac" style="flex:1;min-width:180px"><input id="edadd-'+i+'-'+mi+'" type="text" placeholder="🔍 Add ingredient…" oninput="edAc('+i+','+mi+')" onfocus="edAc('+i+','+mi+')" autocomplete="off"><div class="ac-menu" id="edac-'+i+'-'+mi+'"></div></div></div>'+
-      '<details class="meal-extra"'+((m.note||prepRows)?' open':'')+'><summary>🧂 Prep ingredients &amp; coach note</summary>'+
-        '<div class="field" style="margin:9px 0 0"><label class="lab">📝 Coach note for this meal <span class="small" style="text-transform:none;font-weight:400">(clients see it under the meal)</span></label><input value="'+esc(m.note||'')+'" placeholder="e.g. Have this within 2 hours of training" onchange="edMealSet('+i+','+mi+',\'note\',this.value)"></div>'+
+      '<div class="field" style="margin:10px 0 0"><label class="lab">📝 Coach note for this meal <span class="small" style="text-transform:none;font-weight:400">(one note for the whole meal — the client sees it under the meal)</span></label><input value="'+esc(m.note||'')+'" placeholder="e.g. Have this within 2 hours of training" onchange="edMealSet('+i+','+mi+',\'note\',this.value)"></div>'+
+      '<details class="meal-extra"'+(prepRows?' open':'')+'><summary>🧂 Prep ingredients</summary>'+
         '<div class="meal-prep" style="margin-top:9px"><div class="mp-h">🧂 Prep ingredients — oil, curry, condiments (counted in the totals)</div>'+
           '<div class="tbl-scroll"><table class="itbl"><thead><tr><th>Prep item</th><th>Qty</th><th style="text-align:left">Unit</th><th>P</th><th>C</th><th>F</th><th>kcal</th><th></th></tr></thead><tbody>'+(prepRows||'<tr><td colspan="8" class="empty" style="padding:8px">No prep ingredients</td></tr>')+'</tbody></table></div>'+
           '<div class="logadd"><div class="ac" style="flex:1;min-width:180px"><input id="edprepadd-'+i+'-'+mi+'" type="text" placeholder="🔍 Add prep ingredient…" oninput="edAc('+i+','+mi+',true)" onfocus="edAc('+i+','+mi+',true)" autocomplete="off"><div class="ac-menu" id="edprepac-'+i+'-'+mi+'"></div></div></div></div>'+
