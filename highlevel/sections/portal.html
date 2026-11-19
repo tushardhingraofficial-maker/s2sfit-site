@@ -2525,6 +2525,36 @@ details.meal-add-choose[open]>summary{background:none;color:var(--muted);box-sha
 .act-time{font-size:12px;color:var(--muted);font-family:var(--mono,monospace);white-space:nowrap}
 .act-body{margin:9px 0 1px 36px}
 .act-body::after{content:'';display:block;clear:both}
+/* admin activity: full workout detail (expand inline) */
+.awd-toggle{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:10px;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:8px;font-weight:700;font-size:12.5px;color:var(--text);cursor:pointer}
+.awd-toggle:hover{border-color:var(--red);color:var(--red)}
+.awd{margin-top:12px}
+.awd-stats{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+.awd-chip{display:inline-flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:5px 11px;font-size:12px;color:var(--muted);white-space:nowrap}
+.awd-chip b{font-family:var(--disp);font-weight:900;font-size:14px;color:var(--text)}
+.awd-ex{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px 12px;margin-bottom:9px}
+.awd-ex-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:9px}
+.awd-ex-nm{font-family:var(--disp);font-weight:900;font-size:15px;border-left:4px solid var(--prot);padding-left:9px;flex:1;min-width:0}
+.awd-ex-nm.skip{text-decoration:line-through;color:var(--muted);border-left-color:var(--muted)}
+.awd-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:2px 8px;white-space:nowrap}
+.awd-tag.ss{color:var(--red);background:rgba(232,23,13,.1);border-color:transparent}
+.awd-sethead,.awd-set{display:grid;grid-template-columns:34px 1fr 1fr 1fr 30px;gap:6px;align-items:center}
+.awd-sethead{padding:0 2px 4px}
+.awd-sethead span{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);text-align:center}
+.awd-set{background:var(--card2);border:1px solid var(--border);border-left:1px solid var(--border);border-radius:9px;padding:6px 4px;margin-bottom:5px}
+.awd-set.sub{margin-left:16px;border-left-width:3px}
+.awd-set .n{font-size:11px;font-weight:800;color:var(--muted);text-align:center}
+.awd-set .v{text-align:center;font-family:var(--disp);font-weight:800;font-size:14px;line-height:1.1}
+.awd-set .tgt{color:var(--muted);font-size:9.5px;font-weight:600;margin-top:1px}
+.awd-set .dn{text-align:center;color:var(--good);font-weight:900}
+.awd-tech{font-size:9.5px;font-weight:800;text-align:center;line-height:1.1}
+.awd-cmt{margin-top:8px;background:rgba(47,127,209,.08);border:1px dashed rgba(47,127,209,.4);border-radius:9px;padding:7px 10px;font-size:12.5px}
+.awd-cmt b{color:var(--prot)}
+.awd-cmp{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:9px;padding-top:9px;border-top:1px dashed var(--border)}
+.awd-cmp-it{font-size:11.5px;color:var(--muted)}
+.awd-cmp-it b{font-family:var(--disp);color:var(--text);font-size:13px}
+.awd-up{color:var(--good);font-weight:800}.awd-dn{color:var(--red);font-weight:800}.awd-fl{color:var(--muted);font-weight:700}
+.awd-pr{background:rgba(245,200,66,.18);color:var(--gold,#B07A0C);border:1px solid rgba(245,200,66,.5);border-radius:16px;padding:2px 9px;font-size:11px;font-weight:800}
 .act-photo{display:block;width:150px;height:150px;float:left;margin:0 13px 6px 0}
 .act-photo img{width:100%;height:100%;object-fit:cover;border-radius:10px;border:1px solid var(--border)}
 .act-desc{font-size:14px;line-height:1.5;overflow:hidden}
@@ -7566,7 +7596,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04ua';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04ub';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -18353,6 +18383,7 @@ async function wkoColPublish(){try{await DB.setKV('workout_log_cols',WKOCOL);WKO
 /* One cross-client feed of everything clients log (compliance) or post (food journal), newest first. */
 let ACT_TYPE='all';
 let ACT_PLANS={};   /* cid → migrated plan, cached across renders (for log macro targets) */
+let ACT_WKS=[];     /* every workout log from the last render — used to compare a session to the client's history */
 function openActivity(){ACT_PLANS={};ACT_SEEN=Date.now();try{localStorage.setItem('s2s_act_seen',String(ACT_SEEN));}catch(e){}const b=$('act-nav-badge');if(b)b.classList.add('hidden');$('activity-modal').classList.add('open');fillActClients();renderActivity();}
 function closeActivity(){$('activity-modal').classList.remove('open');}
 /* Notification badge: count of client activity newer than the coach last opened the feed. */
@@ -18395,6 +18426,7 @@ async function renderActivity(){
     ev.push({type:'log',pk:dt,cid:l.client_id,name:nm[l.client_id]||'Client',ms:actMs(l.updated_at,dt),date:dt,time:actTimeFrom('',l.updated_at),items,kcal:Math.round(tot.cal),count:items.length});});
   (cks||[]).forEach(c=>{if(c.kind==='booking')return;const dt=String(c.date||'').slice(0,10);if(dt<from)return;
     ev.push({type:'checkin',pk:c.id,cid:c.client_id,name:nm[c.client_id]||'Client',ms:actMs(c.created_at,dt),date:dt,time:actTimeFrom('',c.created_at),checkin:c});});
+  ACT_WKS=wks||[];   // keep every workout log around so the detail view can compare a session to the client's history
   (wks||[]).forEach(w=>{const dt=String(w.date||'').slice(0,10);if(dt<from)return;
     ev.push({type:'workout',pk:w.id,cid:w.client_id,name:nm[w.client_id]||'Client',ms:actMs(w.created_at,dt),date:dt,time:actTimeFrom('',w.created_at),workout:w});});
   const cf=(($('act-client')||{}).value)||'';
@@ -18436,12 +18468,14 @@ function actItemHTML(e){
       (c.achievements?'<div class="small"><b style="color:var(--text)">Wins:</b> '+esc(c.achievements)+'</div>':'')+
       (c.challenges?'<div class="small"><b style="color:var(--text)">Challenges:</b> '+esc(c.challenges)+'</div>':'')+cust+'</div>';
   }else if(e.type==='workout'){
-    const w=e.workout||{};const s=w.summary||{};
+    const w=e.workout||{};const s=w.summary||{};const hasDetail=!!((w.entries&&w.entries.length)||(s.exercises&&s.exercises.length));
     body='<div class="act-body"><div style="display:flex;flex-wrap:wrap">'+
       '<span class="pill" style="margin:0 6px 6px 0">Sets: <b>'+(s.totalSets||0)+'</b></span>'+
       '<span class="pill" style="margin:0 6px 6px 0">Volume: <b>'+(s.volume||0)+' kg</b></span>'+
       (w.duration_sec?'<span class="pill" style="margin:0 6px 6px 0">Time: <b>'+Math.round(w.duration_sec/60)+'m</b></span>':'')+
-      '<span class="pill" style="margin:0 6px 6px 0">Done: <b>'+(w.completion||0)+'%</b></span></div></div>';
+      '<span class="pill" style="margin:0 6px 6px 0">Done: <b>'+(w.completion||0)+'%</b></span></div>'+
+      (hasDetail?('<button class="awd-toggle" data-nm="'+esc((e.name||'Client').split(' ')[0])+'" onclick="actWkToggle(this,\''+esc(e.pk)+'\')">▾ View full workout</button><div class="awd-detail" id="awd-'+esc(e.pk)+'" style="display:none"></div>'):'')+
+      '</div>';
   }else{
     body='<div class="act-body">'+actMacroHTML(e)+
       '<div class="act-cap">By meal</div><div class="act-meals">'+actMealsHTML(e.items)+'</div></div>';
@@ -18473,6 +18507,87 @@ function actMealsHTML(items){
     return '<div class="act-meal"><div class="act-meal-h"><span class="act-meal-n">'+esc(m)+'</span>'+
       '<span class="act-meal-mac">'+Math.round(s.cal)+' kcal · P'+Math.round(s.p)+' · C'+Math.round(s.c)+' · F'+Math.round(s.f)+'</span></div>'+
       '<div class="act-meal-items">'+names+'</div></div>';}).join('');
+}
+/* ───── admin activity: full workout detail (every exercise, set, reps/weight/RIR, comment, history comparison, PR) ───── */
+function actWkToggle(btn,id){
+  const d=$('awd-'+id);if(!d)return;
+  if(d.style.display!=='none'){d.style.display='none';d.innerHTML='';btn.innerHTML='▾ View full workout';return;}
+  const w=(ACT_WKS||[]).find(x=>x.id===id);
+  d.innerHTML=w?actWorkoutDetailHTML(w,(btn.dataset.nm||'Client')):'<div class="small" style="color:var(--muted)">Workout not found.</div>';
+  d.style.display='';btn.innerHTML='▴ Hide full workout';
+}
+/* best est-1RM + top set (weight×reps) + volume/sets/reps from a saved entry's logged sets */
+function actWkEntryStat(en){
+  let best1=0,topW=0,topR=0,topScore=-1,sets=0,vol=0,reps=0;
+  (en&&en.sets||[]).forEach(function(s){
+    const w=+s.weight||0,r=+s.reps||0,done=s.done||w||r;if(!done)return;
+    sets++;reps+=r;if(w>0){vol+=w*r;const e=(typeof est1RM==='function')?est1RM(w,r):w;if(e>best1)best1=e;}
+    const sc=w*1000+r;if(sc>topScore){topScore=sc;topW=w;topR=r;}
+  });
+  return {best1:Math.round(best1),topW:topW,topR:topR,sets:sets,reps:reps,vol:Math.round(vol)};
+}
+/* compare an entry to the client's history: most-recent prior session with this exercise + all-time best est-1RM */
+function actWkCompare(cid,curId,curDate,en){
+  const nm=(en.name||'').toLowerCase();
+  const match=function(log){return (log.entries||[]).find(function(x){return (en.exId&&x.exId&&x.exId===en.exId)||(x.name&&nm&&String(x.name).toLowerCase()===nm);});};
+  let prevDate=null,prevStat=null,allBest=0;
+  (ACT_WKS||[]).forEach(function(log){
+    if(log.client_id!==cid||log.id===curId)return;
+    const m=match(log);if(!m)return;
+    const st=actWkEntryStat(m);if(st.best1>allBest)allBest=st.best1;
+    const d=String(log.date||'').slice(0,10);
+    if(d<=curDate&&(prevDate===null||d>prevDate)){prevDate=d;prevStat=st;}
+  });
+  return {prevDate:prevDate,prevStat:prevStat,allBest:allBest};
+}
+function actWorkoutDetailHTML(w,clientName){
+  const s=w.summary||{},entries=(w.entries||[]);
+  const vol=(s.volume!=null)?s.volume:entries.reduce(function(a,en){return a+actWkEntryStat(en).vol;},0);
+  const sets=(s.totalSets!=null)?s.totalSets:entries.reduce(function(a,en){return a+actWkEntryStat(en).sets;},0);
+  const reps=(s.totalReps!=null)?s.totalReps:entries.reduce(function(a,en){return a+actWkEntryStat(en).reps;},0);
+  const dur=w.duration_sec||0,durStr=dur?(Math.floor(dur/60)+'m'+((dur%60)?(' '+(dur%60)+'s'):'')):'—';
+  const comp=(w.completion!=null)?w.completion:0;
+  let h='<div class="awd"><div class="awd-stats">'+
+    '<span class="awd-chip"><b>'+Math.round(vol).toLocaleString()+'</b> kg volume</span>'+
+    '<span class="awd-chip"><b>'+sets+'</b> sets</span>'+
+    (reps?'<span class="awd-chip"><b>'+reps+'</b> reps</span>':'')+
+    '<span class="awd-chip"><b>'+durStr+'</b> time</span>'+
+    '<span class="awd-chip"><b>'+comp+'%</b> complete</span></div>';
+  if(!entries.length){
+    const exs=(s.exercises||[]);
+    h+=exs.length?exs.map(function(x){const bits=[];if(x.sets)bits.push(x.sets+' set'+(x.sets===1?'':'s'));if(x.vol)bits.push(Math.round(x.vol).toLocaleString()+' kg');if(x.est1rm)bits.push('1RM '+Math.round(x.est1rm));return '<div class="awd-ex"><div class="awd-ex-h"><span class="awd-ex-nm">'+esc(x.name||'Exercise')+'</span></div><div class="small" style="color:var(--muted)">'+esc(bits.join(' · '))+'</div></div>';}).join(''):'<div class="small" style="color:var(--muted)">No per-exercise detail was saved for this session.</div>';
+  }else entries.forEach(function(en){h+=actWkExCardHTML(w,en,clientName);});
+  return h+'</div>';
+}
+function actWkExCardHTML(w,en,clientName){
+  const eff=String(en.effort||'rir').toUpperCase(),isTime=(en.repType==='time');
+  const ssTag=en.group?('<span class="awd-tag ss">🔗 '+esc((/circuit/i.test(en.group)?'Circuit':'SS')+' '+String(en.group).replace(/SS-?|circuit/ig,'').trim())+'</span>'):'';
+  const eq=[en.equipment,en.brand].filter(Boolean).join(' · '),eqTag=eq?('<span class="awd-tag">'+esc(eq)+'</span>'):'';
+  if(en.skipped)return '<div class="awd-ex"><div class="awd-ex-h"><span class="awd-ex-nm skip">'+esc(en.name||'Exercise')+'</span><span class="awd-tag">skipped</span></div><div class="small" style="color:var(--muted)">Skipped this session.</div></div>';
+  let mainN=0;
+  const cell=function(val,tv){const empty=(val===''||val==null);return '<div class="v">'+(empty?'<span style="color:var(--muted)">–</span>':esc(val))+((tv!=null&&tv!==''&&String(tv)!==String(val))?'<div class="tgt">tgt '+esc(tv)+'</div>':'')+'</div>';};
+  const rows=(en.sets||[]).map(function(s){
+    const sub=!!s.tech;if(!sub)mainN++;
+    const tc=s.tech==='drop'?'var(--gold,#B07A0C)':(s.tech==='rp'?'#8b5cf6':'');
+    const label=s.tech==='drop'?'↓ Drop':(s.tech==='rp'?'↺ RP':mainN);
+    const tgt=s.target||{};
+    return '<div class="awd-set'+(sub?' sub':'')+'"'+(sub?' style="border-left-color:'+tc+'"':'')+'>'+
+      (sub?'<div class="awd-tech" style="color:'+tc+'">'+label+'</div>':'<div class="n">'+label+'</div>')+
+      cell(s.weight,tgt.weight)+cell(s.reps,tgt.reps)+cell(s.rir,tgt.rir)+
+      '<div class="dn">'+(s.done?'✓':'<span style="color:var(--muted)">·</span>')+'</div></div>';
+  }).join('');
+  const head='<div class="awd-sethead"><span>Set</span><span>Kg</span><span>'+(isTime?'Time':'Reps')+'</span><span>'+esc(eff)+'</span><span>✓</span></div>';
+  const cmt=(en.comment&&String(en.comment).trim())?('<div class="awd-cmt">💬 <b>'+esc(clientName||'Client')+':</b> '+esc(en.comment)+'</div>'):'';
+  const cur=actWkEntryStat(en),cmp=actWkCompare(w.client_id,w.id,String(w.date||'').slice(0,10),en);
+  let cmpHTML='';
+  if(cur.best1||cur.topW){
+    const parts=[];
+    if(cur.best1){let d='';if(cmp.prevStat&&cmp.prevStat.best1){const diff=cur.best1-cmp.prevStat.best1;d=diff>0?'<span class="awd-up">▲ +'+diff+' vs last</span>':(diff<0?'<span class="awd-dn">▼ '+diff+' vs last</span>':'<span class="awd-fl">= last</span>');}parts.push('<span class="awd-cmp-it">Est. 1RM <b>'+cur.best1+' kg</b> '+d+'</span>');}
+    if(cur.topW){const topStr=cur.topW+'×'+cur.topR;let d='';if(cmp.prevStat&&cmp.prevStat.topW){const a=cur.topW*1000+cur.topR,b=cmp.prevStat.topW*1000+cmp.prevStat.topR,pv=cmp.prevStat.topW+'×'+cmp.prevStat.topR;d=a>b?'<span class="awd-up">▲ from '+pv+'</span>':(a<b?'<span class="awd-dn">▼ from '+pv+'</span>':'<span class="awd-fl">= last</span>');}parts.push('<span class="awd-cmp-it">Top set <b>'+topStr+'</b> '+d+'</span>');}
+    const pr=(cur.best1>0&&cur.best1>(cmp.allBest||0))?'<span class="awd-pr">▲ PR</span>':'';
+    cmpHTML='<div class="awd-cmp">'+parts.join('')+pr+'</div>';
+  }
+  return '<div class="awd-ex"><div class="awd-ex-h"><span class="awd-ex-nm">'+esc(en.name||'Exercise')+'</span>'+ssTag+eqTag+'</div>'+head+'<div class="awd-sets">'+rows+'</div>'+cmt+cmpHTML+'</div>';
 }
 /* ---- comments (shared: admin activity feed + client journal / log) ---- */
 let ACT_COMMENTS={};   // "cid|type|pk" → [comments], populated by renderActivity
