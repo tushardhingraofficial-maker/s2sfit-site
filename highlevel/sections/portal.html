@@ -7700,7 +7700,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04um';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04un';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -26491,8 +26491,8 @@ async function openTeam(){
   teamStartTick();teamRenderClockbar();teamTab(TEAM_TAB||'calendar');
   try{if(typeof gcalSyncEvents==='function')gcalSyncEvents();}catch(e){}
 }
-function closeTeam(){$('team-modal').classList.remove('open');teamStopTick();}
-function teamTab(name){TEAM_TAB=name;TEAM_FORM=null;
+function closeTeam(){try{teamDbFlush();}catch(e){}$('team-modal').classList.remove('open');teamStopTick();}
+function teamTab(name){try{if(name!=='shift')teamDbFlush();}catch(e){}TEAM_TAB=name;TEAM_FORM=null;
   document.querySelectorAll('#team-modal [data-teamview]').forEach(el=>el.style.display=(el.getAttribute('data-teamview')===name)?'':'none');
   document.querySelectorAll('#team-tabs [data-teamtab]').forEach(b=>b.classList.toggle('active',b.dataset.teamtab===name));
   if(name==='calendar')teamRenderCalendar();else if(name==='projects')teamRenderProjects();else if(name==='tasks')teamRenderTasks();else if(name==='day')teamRenderDay();else if(name==='shift')teamRenderShift();else if(name==='perf')teamRenderPerf();
@@ -27295,7 +27295,7 @@ async function teamEnsureCalls(){try{if(TEAM_CALLS_LOADED&&Array.isArray(CALLS))
 function teamCallCat(ty){ty=(ty||'').toLowerCase();if(ty.indexOf('onboard')>=0)return 'onboarding';if(ty.indexOf('revision')>=0)return 'revision';if(ty.indexOf('check-in')>=0||ty.indexOf('checkin')>=0)return 'checkin';return 'normal';}
 /* calls a coach made in a date window — matched on handled_by === their name (scheduled rows excluded) */
 function teamCallsFor(staffName,fromISO,toISO){const o={onboarding:0,revision:0,checkin:0,normal:0,total:0};const nm=(staffName||'').trim().toLowerCase();
-  (CALLS||[]).forEach(r=>{if(!r||r.answered==='scheduled')return;const d=String(r.call_at||'').slice(0,10);if(!d)return;if(fromISO&&d<fromISO)return;if(toISO&&d>toISO)return;const hb=(r.handled_by||'').trim().toLowerCase();if(nm){if(!hb||hb!==nm)return;}o[teamCallCat(r.call_type)]++;o.total++;});return o;}
+  (CALLS||[]).forEach(r=>{if(!r||r.answered==='scheduled')return;const d=String(r.call_at||'').slice(0,10);if(!d)return;if(fromISO&&d<fromISO)return;if(toISO&&d>toISO)return;const hb=(r.handled_by||'').trim().toLowerCase();const lb=(r.logged_by||'').trim().toLowerCase();const owner=hb||lb;if(nm){if(!owner||owner!==nm)return;}o[teamCallCat(r.call_type)]++;o.total++;});return o;}
 function teamCallsForDay(staffName,dateISO){return teamCallsFor(staffName,dateISO,dateISO);}
 function teamBreakSeconds(sh){return (sh.breaks||[]).reduce((a,b)=>a+((b.end?Date.parse(b.end):Date.now())-Date.parse(b.start))/1000,0)+(sh.onBreakSince?Math.max(0,(Date.now()-Date.parse(sh.onBreakSince))/1000):0);}
 /* points for one day's debrief: self-reported output + auto call KPIs + issues + hours + tasks */
@@ -27324,25 +27324,35 @@ function teamDbAddIssue(){const cn=($('db-iss-client')&&$('db-iss-client').value
   const list=teamClientList();const m=list.find(x=>String(x.name).toLowerCase()===cn.toLowerCase());
   TEAM_DB_ISSUES.push({id:uid(),clientId:m?m.id:'',client:cn||'(general)',severity:sev,note:note});
   if($('db-iss-client'))$('db-iss-client').value='';if($('db-iss-note'))$('db-iss-note').value='';
-  teamDbRenderIssues();teamDbPtsPreview();}
-function teamDbRemoveIssue(id){TEAM_DB_ISSUES=TEAM_DB_ISSUES.filter(x=>x.id!==id);teamDbRenderIssues();teamDbPtsPreview();}
+  teamDbRenderIssues();teamDbPtsPreview();teamDbAutosave();}
+function teamDbRemoveIssue(id){TEAM_DB_ISSUES=TEAM_DB_ISSUES.filter(x=>x.id!==id);teamDbRenderIssues();teamDbPtsPreview();teamDbAutosave();}
 function teamDbSevMeta(s){return {critical:{l:'Critical',c:'var(--red)'},watch:{l:'Watch',c:'var(--gold)'},info:{l:'Info',c:'var(--prot)'}}[s||'watch']||{l:'Watch',c:'var(--gold)'};}
 function teamDbRenderIssues(){const host=$('db-iss-list');if(!host)return;
   if(!TEAM_DB_ISSUES.length){host.innerHTML='<div class="small" style="color:var(--muted)">No issues flagged yet.</div>';return;}
   host.innerHTML=TEAM_DB_ISSUES.map(x=>{const m=teamDbSevMeta(x.severity);return '<div class="db-iss-row"><span class="team-chip" style="color:'+m.c+';border-color:'+m.c+'">'+m.l+'</span><div style="flex:1;min-width:0"><b style="font-size:12.5px">'+esc(x.client)+'</b>'+(x.note?'<div class="small" style="color:var(--muted);white-space:normal">'+esc(x.note)+'</div>':'')+'</div><button class="btn-xxs" onclick="teamDbRemoveIssue(\''+x.id+'\')">✕</button></div>';}).join('');}
+/* ---- daily-report autosave (so notes/output/issues persist as the coach types, not only on Submit) ---- */
+let TEAM_DB_SHID=null, TEAM_DB_SAVE_T=null;
+function teamDbCollect(sh){const counts=teamDbReadCounts();const calls=teamCallsForDay(teamStaffNameById(sh.staffId),sh.dateISO);const worked=teamShiftSeconds(sh);const tasks=teamShiftTasksWorked(sh);const issues=TEAM_DB_ISSUES.slice();const pts=teamDebriefPoints({counts:counts,issues:issues},calls,worked,tasks.length).total;
+  return {done:(($('db-done')||{}).value||'').trim(),blockers:(($('db-blockers')||{}).value||'').trim(),notes:(($('db-notes')||{}).value||'').trim(),rating:($('db-rating')||{}).value||'',energy:($('db-energy')||{}).value||'',counts:counts,issues:issues,calls:calls,points:pts};}
+function teamDbSetSaveState(t){const el=$('db-savestate');if(el)el.textContent=t;}
+function teamDbAutosave(id){id=id||TEAM_DB_SHID;if(!id)return;teamDbSetSaveState('Saving…');if(TEAM_DB_SAVE_T)clearTimeout(TEAM_DB_SAVE_T);TEAM_DB_SAVE_T=setTimeout(function(){teamDbSaveNow(id);},800);}
+async function teamDbSaveNow(id){if(TEAM_DB_SAVE_T){clearTimeout(TEAM_DB_SAVE_T);TEAM_DB_SAVE_T=null;}const sh=(TEAM.shifts||[]).find(s=>s.id===id);if(!sh)return;const prev=sh.debrief||{};
+  sh.debrief=Object.assign({},prev,teamDbCollect(sh),{draft:prev.at?false:true,at:prev.at||null,savedAt:new Date().toISOString()});
+  try{await teamSave('shifts');teamDbSetSaveState('Saved ✓');}catch(e){teamDbSetSaveState('Couldn’t save — check connection');}}
+function teamDbFlush(){if(TEAM_DB_SAVE_T&&TEAM_DB_SHID)teamDbSaveNow(TEAM_DB_SHID);}
 function teamOpenDebrief(id){TEAM_DEBRIEF=id;teamTab('shift');}
 async function teamRenderDebriefForm(sh){const host=$('team-shift-host');if(!host)return;await teamEnsureCalls();const d=sh.debrief||{};const c=d.counts||{};const worked=teamShiftSeconds(sh);const tasks=teamShiftTasksWorked(sh);
   const calls=teamCallsForDay(teamStaffNameById(sh.staffId),sh.dateISO);const brk=teamBreakSeconds(sh);
   TEAM_DB_ISSUES=Array.isArray(d.issues)?d.issues.map(x=>Object.assign({id:x.id||uid()},x)):[];
-  TEAM_DB_CTX={calls:calls,worked:worked,tasks:tasks.length};
-  const numF=(id,lab,val)=>'<div class="db-cnt"><label>'+lab+'</label><input id="'+id+'" type="number" min="0" inputmode="numeric" value="'+(parseInt(val||0,10)||0)+'" oninput="teamDbPtsPreview()"></div>';
+  TEAM_DB_CTX={calls:calls,worked:worked,tasks:tasks.length};TEAM_DB_SHID=sh.id;
+  const numF=(id,lab,val)=>'<div class="db-cnt"><label>'+lab+'</label><input id="'+id+'" type="number" min="0" inputmode="numeric" value="'+(parseInt(val||0,10)||0)+'" oninput="teamDbPtsPreview();teamDbAutosave(\''+sh.id+'\')"></div>';
   const kTile=(v,k)=>'<div class="db-ktile"><div class="v">'+v+'</div><div class="k">'+k+'</div></div>';
   const initPts=teamDebriefPoints({counts:{woCreated:c.woCreated,woUpdated:c.woUpdated,dietCreated:c.dietCreated,dietUpdated:c.dietUpdated,issuesResolved:c.issuesResolved},issues:TEAM_DB_ISSUES},calls,worked,tasks.length).total;
   let h='<div class="team-cal-head"><b>📝 Daily report</b><span class="small" style="color:var(--muted)">'+esc(fmtDate(sh.dateISO))+' · '+teamClock(sh.clockIn)+'–'+(sh.clockOut?teamClock(sh.clockOut):'now')+'</span></div>';
   h+='<div class="db-sec"><div class="db-sec-h">⏱️ Auto — from your clock &amp; call logs</div><div class="db-ktiles">'+
      kTile(teamHM(worked),'Worked')+kTile(teamHM(brk),'Breaks')+kTile(calls.total,'Calls')+kTile(tasks.length,'Tasks')+'</div>'+
      '<div class="db-calrow">'+[['onboarding','Onboard'],['revision','Revision'],['checkin','Check-in'],['normal','Normal']].map(p=>'<span class="db-cchip">'+calls[p[0]]+' '+p[1]+'</span>').join('')+'</div>'+
-     (calls.total===0?'<div class="small" style="color:var(--muted);margin-top:5px">No calls matched your name in today’s logs — make sure calls are logged with you as “handled by”.</div>':'')+'</div>';
+     (calls.total===0?'<div class="small" style="color:var(--muted);margin-top:5px">No calls logged under your name today. New calls auto-attribute to you — set “Handled by” on older ones in Call logs to count them here.</div>':'')+'</div>';
   if(tasks.length)h+='<div class="small" style="color:var(--muted);margin:-4px 2px 8px">Timed tasks: '+esc(tasks.slice(0,6).map(t=>(t.title||'task')+' ('+teamHM(t.seconds)+')').join(', '))+'</div>';
   h+='<div class="db-sec"><div class="db-sec-h">📦 Today’s output</div><div class="db-cnts">'+
      numF('db-woC','Workouts created',c.woCreated)+numF('db-woU','Workouts updated',c.woUpdated)+
@@ -27356,20 +27366,20 @@ async function teamRenderDebriefForm(sh){const host=$('team-shift-host');if(!hos
      '<div class="db-issform"><input id="db-iss-note" placeholder="What’s the issue? (optional)" autocomplete="off"><button class="btn-sm solid" onclick="teamDbAddIssue()">＋ Add</button></div>'+
      '<div id="db-iss-list" style="margin-top:8px"></div></div>';
   h+='<div class="db-sec"><div class="db-sec-h">🗒️ Notes</div>'+
-     '<div class="field"><label class="lab">What did you get done this shift?</label><textarea id="db-done" rows="3" placeholder="Key things completed…">'+esc(d.done||'')+'</textarea></div>'+
-     '<div class="field"><label class="lab">Blockers / issues</label><textarea id="db-blockers" rows="2" placeholder="Anything that got in the way…">'+esc(d.blockers||'')+'</textarea></div>'+
-     '<div class="field"><label class="lab">Handover / notes for next shift</label><textarea id="db-notes" rows="2" placeholder="What the next person should know…">'+esc(d.notes||'')+'</textarea></div>'+
-     '<div class="row"><div class="field" style="max-width:150px"><label class="lab">How did it go?</label><select id="db-rating">'+[['','—'],['5','🙂 Great (5)'],['4','Good (4)'],['3','OK (3)'],['2','Tough (2)'],['1','😣 Rough (1)']].map(r=>'<option value="'+r[0]+'"'+(String(d.rating||'')===r[0]?' selected':'')+'>'+r[1]+'</option>').join('')+'</select></div>'+
-       '<div class="field" style="max-width:150px"><label class="lab">Energy left</label><select id="db-energy">'+[['','—'],['high','High'],['medium','Medium'],['low','Low']].map(r=>'<option value="'+r[0]+'"'+((d.energy||'')===r[0]?' selected':'')+'>'+r[1]+'</option>').join('')+'</select></div></div></div>';
+     '<div class="field"><label class="lab">What did you get done this shift?</label><textarea id="db-done" rows="3" placeholder="Key things completed…" oninput="teamDbAutosave(\''+sh.id+'\')">'+esc(d.done||'')+'</textarea></div>'+
+     '<div class="field"><label class="lab">Blockers / issues</label><textarea id="db-blockers" rows="2" placeholder="Anything that got in the way…" oninput="teamDbAutosave(\''+sh.id+'\')">'+esc(d.blockers||'')+'</textarea></div>'+
+     '<div class="field"><label class="lab">Handover / notes for next shift</label><textarea id="db-notes" rows="2" placeholder="What the next person should know…" oninput="teamDbAutosave(\''+sh.id+'\')">'+esc(d.notes||'')+'</textarea></div>'+
+     '<div class="row"><div class="field" style="max-width:150px"><label class="lab">How did it go?</label><select id="db-rating" onchange="teamDbAutosave(\''+sh.id+'\')">'+[['','—'],['5','🙂 Great (5)'],['4','Good (4)'],['3','OK (3)'],['2','Tough (2)'],['1','😣 Rough (1)']].map(r=>'<option value="'+r[0]+'"'+(String(d.rating||'')===r[0]?' selected':'')+'>'+r[1]+'</option>').join('')+'</select></div>'+
+       '<div class="field" style="max-width:150px"><label class="lab">Energy left</label><select id="db-energy" onchange="teamDbAutosave(\''+sh.id+'\')">'+[['','—'],['high','High'],['medium','Medium'],['low','Low']].map(r=>'<option value="'+r[0]+'"'+((d.energy||'')===r[0]?' selected':'')+'>'+r[1]+'</option>').join('')+'</select></div></div></div>';
   h+='<div class="db-ptsbar"><div>⭐ Today’s points</div><div class="db-ptsval" id="db-pts">'+initPts+'</div></div>';
-  h+='<div class="row" style="gap:8px;margin-top:10px;align-items:center"><button class="btn btn-primary" onclick="teamSubmitDebrief(\''+sh.id+'\')">Submit &amp; generate report</button><button class="btn-sm" onclick="teamSkipDebrief()">Skip</button></div>';
+  h+='<div class="row" style="gap:8px;margin-top:10px;align-items:center"><button class="btn btn-primary" onclick="teamSubmitDebrief(\''+sh.id+'\')">Submit &amp; generate report</button><button class="btn-sm" onclick="teamSkipDebrief()">Skip</button><span class="sp" style="flex:1"></span><span id="db-savestate" class="small" style="color:var(--muted)">'+(d.savedAt?'Saved ✓':'Autosaves as you type')+'</span></div>';
   host.innerHTML=h;teamDbRenderIssues();
 }
-async function teamSubmitDebrief(id){const sh=(TEAM.shifts||[]).find(s=>s.id===id);if(!sh)return;
+async function teamSubmitDebrief(id){if(TEAM_DB_SAVE_T){clearTimeout(TEAM_DB_SAVE_T);TEAM_DB_SAVE_T=null;}const sh=(TEAM.shifts||[]).find(s=>s.id===id);if(!sh)return;
   const counts=teamDbReadCounts();const calls=teamCallsForDay(teamStaffNameById(sh.staffId),sh.dateISO);const worked=teamShiftSeconds(sh);const tasks=teamShiftTasksWorked(sh);const issues=TEAM_DB_ISSUES.slice();
   const pts=teamDebriefPoints({counts:counts,issues:issues},calls,worked,tasks.length).total;
-  sh.debrief={done:(($('db-done')||{}).value||'').trim(),blockers:(($('db-blockers')||{}).value||'').trim(),notes:(($('db-notes')||{}).value||'').trim(),rating:($('db-rating')||{}).value||'',energy:($('db-energy')||{}).value||'',counts:counts,issues:issues,calls:calls,points:pts,at:new Date().toISOString()};
-  await teamSave('shifts');TEAM_DEBRIEF=null;TEAM_DB_ISSUES=[];toast('Daily report saved ✓ · '+pts+' pts');teamShowReport(id);}
+  sh.debrief={done:(($('db-done')||{}).value||'').trim(),blockers:(($('db-blockers')||{}).value||'').trim(),notes:(($('db-notes')||{}).value||'').trim(),rating:($('db-rating')||{}).value||'',energy:($('db-energy')||{}).value||'',counts:counts,issues:issues,calls:calls,points:pts,draft:false,at:new Date().toISOString(),savedAt:new Date().toISOString()};
+  await teamSave('shifts');TEAM_DEBRIEF=null;TEAM_DB_ISSUES=[];TEAM_DB_SHID=null;toast('Daily report saved ✓ · '+pts+' pts');teamShowReport(id);}
 function teamSkipDebrief(){TEAM_DEBRIEF=null;teamRenderShift();}
 let TEAM_REPORT=null;
 function teamShowReport(id){TEAM_REPORT=id;teamTab('shift');}
@@ -27617,7 +27627,7 @@ async function saveCallTemplate(){const v=($('call-tpl-text').value||'').trim()|
   try{await DB.setKV('call_miss_template',v);toast('Template saved ✓');}catch(e){toast('Could not save template',true);}
   closeCallTemplate();
   if(CALL_MSG_CTX&&$('call-msg-modal').classList.contains('open')&&$('call-msg-text'))$('call-msg-text').value=fillCallTemplate(CALL_TPL,CALL_MSG_CTX);}
-function callResetForm(){['cl-editid','cl-purpose','cl-outcome','cl-actions','cl-by','cl-dur'].forEach(id=>{if($(id))$(id).value='';});if($('cl-client'))$('cl-client').value='';if($('cl-medium'))$('cl-medium').value='phone';callFillTypes('phone','Coaching check-in');if($('cl-direction'))$('cl-direction').value='outbound';if($('cl-status'))$('cl-status').value='neutral';if($('cl-answered'))$('cl-answered').value='yes';if($('cl-answered-custom'))$('cl-answered-custom').value='';try{callAnsweredChange();}catch(e){}if($('cl-at'))$('cl-at').value=nowLocalDT();if($('cl-form-title'))$('cl-form-title').textContent='Log a call';if($('cl-save-btn'))$('cl-save-btn').textContent='Save call log';}
+function callResetForm(){['cl-editid','cl-purpose','cl-outcome','cl-actions','cl-by','cl-dur'].forEach(id=>{if($(id))$(id).value='';});if($('cl-client'))$('cl-client').value='';if($('cl-medium'))$('cl-medium').value='phone';callFillTypes('phone','Coaching check-in');if($('cl-direction'))$('cl-direction').value='outbound';if($('cl-status'))$('cl-status').value='neutral';if($('cl-answered'))$('cl-answered').value='yes';if($('cl-answered-custom'))$('cl-answered-custom').value='';try{callAnsweredChange();}catch(e){}if($('cl-at'))$('cl-at').value=nowLocalDT();if($('cl-form-title'))$('cl-form-title').textContent='Log a call';if($('cl-save-btn'))$('cl-save-btn').textContent='Save call log';if($('cl-by'))$('cl-by').value=(typeof coachAuthorName==='function'?(coachAuthorName()||''):'');}
 function callOpenForm(clientId,clientName,dateISO){const f=$('call-form');if(!f)return;callResetForm();
   if(clientId&&$('cl-client'))$('cl-client').value=clientId;
   if(dateISO&&$('cl-at')){const p2=n=>String(n).padStart(2,'0'),now=new Date();$('cl-at').value=dateISO+'T'+p2(now.getHours())+':'+p2(now.getMinutes());if($('cl-answered')&&dateISO>todayISO())$('cl-answered').value='scheduled';}
@@ -27647,7 +27657,9 @@ async function callSave(){
   const cid=$('cl-client').value||null;const cName=cid&&$('cl-client').selectedOptions[0]?$('cl-client').selectedOptions[0].textContent:'';
   const editId=$('cl-editid').value||'';
   const existing=editId?(CALLS||[]).find(x=>x.id===editId):null;
-  const rec={id:editId||uid(),client_id:cid,client_name:cName,call_at:at,duration:($('cl-dur').value||'').trim(),medium:($('cl-medium')?$('cl-medium').value:'phone'),direction:($('cl-direction')?$('cl-direction').value:'outbound'),call_type:$('cl-type').value||'',handled_by:($('cl-by').value||'').trim(),answered:($('cl-answered')?$('cl-answered').value:'yes'),answered_custom:(($('cl-answered-custom')&&$('cl-answered-custom').value)||'').trim(),status:$('cl-status').value||'neutral',purpose:($('cl-purpose').value||'').trim(),outcome:($('cl-outcome').value||'').trim(),actions:($('cl-actions').value||'').trim(),created_at:existing?existing.created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
+  const _coachNm=(typeof coachAuthorName==='function'?(coachAuthorName()||''):'');
+  const _by=($('cl-by').value||'').trim()||_coachNm;   // attribute to the logged-in coach if left blank → daily report can auto-import it
+  const rec={id:editId||uid(),client_id:cid,client_name:cName,call_at:at,duration:($('cl-dur').value||'').trim(),medium:($('cl-medium')?$('cl-medium').value:'phone'),direction:($('cl-direction')?$('cl-direction').value:'outbound'),call_type:$('cl-type').value||'',handled_by:_by,logged_by:(existing&&existing.logged_by)?existing.logged_by:_coachNm,answered:($('cl-answered')?$('cl-answered').value:'yes'),answered_custom:(($('cl-answered-custom')&&$('cl-answered-custom').value)||'').trim(),status:$('cl-status').value||'neutral',purpose:($('cl-purpose').value||'').trim(),outcome:($('cl-outcome').value||'').trim(),actions:($('cl-actions').value||'').trim(),created_at:existing?existing.created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
   try{await DB.saveCallLog(rec);const i=(CALLS||[]).findIndex(x=>x.id===rec.id);if(i>=0)CALLS[i]=rec;else CALLS.push(rec);toast(editId?'Call log updated':'Call logged');callCancelForm();renderCalls();
     if(rec.answered==='no'){setTimeout(()=>callMsg(rec.id),200);}   // missed → offer the copy-paste message
     else{setTimeout(()=>callShowSummary(rec.id),200);}              // logged → show the paste-ready summary
