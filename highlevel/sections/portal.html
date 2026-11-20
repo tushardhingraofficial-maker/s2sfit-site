@@ -7700,7 +7700,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04un';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04uo';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -26795,7 +26795,7 @@ function teamRenderShift(){const host=$('team-shift-host');if(!host)return;const
 function teamSetPerfWho(v){TEAM_PERF_WHO=v;teamRenderPerf();}
 function teamSetPerfRange(n){TEAM_PERF_RANGE=+n;teamRenderPerf();}
 async function teamRenderPerf(){const host=$('team-perf-host');if(!host)return;const owner=teamIsOwner();const staff=await teamStaffList();await teamEnsureCalls();
-  if(!owner)TEAM_PERF_WHO=teamStaffId();else if(TEAM_PERF_WHO==null)TEAM_PERF_WHO='all';
+  if(TEAM_PERF_WHO==null)TEAM_PERF_WHO='all';   // every coach can view all staff + any coach's reports (data is shared)
   const from=addDaysISO(todayISO(),-(TEAM_PERF_RANGE-1));
   const whoMatch=x=>(TEAM_PERF_WHO==='all')?true:(x===TEAM_PERF_WHO);
   const logs=TEAM.logs.filter(l=>l.dateISO>=from&&whoMatch(l.staffId));
@@ -26813,8 +26813,7 @@ async function teamRenderPerf(){const host=$('team-perf-host');if(!host)return;c
   if(TEAM_PERF_WHO==='all'){calls={onboarding:0,revision:0,checkin:0,normal:0,total:0};staff.forEach(s=>{const k=teamCallsFor(s.name,from,_to);['onboarding','revision','checkin','normal','total'].forEach(f=>calls[f]+=k[f]);});}
   else calls=teamCallsFor(teamStaffNameById(TEAM_PERF_WHO),from,_to);
   let h='<div class="team-cal-head">';
-  if(owner)h+='<div class="field" style="margin:0;max-width:170px"><label class="lab">Staff</label><select onchange="teamSetPerfWho(this.value)"><option value="all"'+(TEAM_PERF_WHO==='all'?' selected':'')+'>All staff</option>'+staff.map(s=>'<option value="'+esc(s.id)+'"'+(TEAM_PERF_WHO===s.id?' selected':'')+'>'+esc(s.name)+'</option>').join('')+'</select></div>';
-  else h+='<b>My performance</b>';
+  h+='<div class="field" style="margin:0;max-width:170px"><label class="lab">Staff</label><select onchange="teamSetPerfWho(this.value)"><option value="all"'+(TEAM_PERF_WHO==='all'?' selected':'')+'>All staff</option>'+staff.map(s=>'<option value="'+esc(s.id)+'"'+(TEAM_PERF_WHO===s.id?' selected':'')+'>'+esc(s.name)+'</option>').join('')+'</select></div>';
   h+='<div class="field" style="margin:0;max-width:130px"><label class="lab">Range</label><select onchange="teamSetPerfRange(this.value)">'+[[7,'7 days'],[14,'14 days'],[30,'30 days']].map(r=>'<option value="'+r[0]+'"'+(TEAM_PERF_RANGE===r[0]?' selected':'')+'>'+r[1]+'</option>').join('')+'</select></div></div>';
   h+='<div class="wko-sumgrid"><div class="wko-sumtile"><div class="v wk-1rm">'+teamHM(worked)+'</div><div class="k">Hours worked</div></div>'+
      '<div class="wko-sumtile"><div class="v">'+teamHM(tracked)+'</div><div class="k">Time on tasks</div></div>'+
@@ -26827,7 +26826,10 @@ async function teamRenderPerf(){const host=$('team-perf-host');if(!host)return;c
   h+='<div class="small" style="color:var(--muted);margin:8px 2px 0;line-height:1.6">📞 '+calls.onboarding+' onboarding · '+calls.revision+' revision · '+calls.checkin+' check-in · '+calls.normal+' normal &nbsp;|&nbsp; 📦 '+output.woCreated+' WO new / '+output.woUpdated+' upd · '+output.dietCreated+' diet new / '+output.dietUpdated+' upd &nbsp;|&nbsp; 🚩 '+issuesFlagged+' flagged / '+output.issuesResolved+' resolved</div>';
   h+='<div style="margin:14px 0 2px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" style="flex:1;min-width:160px" onclick="teamPerfOpen(\'mine\')">📊 My weekly report</button><button class="btn-sm" style="flex:1;min-width:140px" onclick="teamPerfOpen(\'library\')">📚 Saved reports</button></div><div class="small" style="color:var(--muted);text-align:center;margin-top:5px">Generate your week, edit it &amp; save · saved reports are shared for team comparison</div>';
   if(cats.length){const max=Math.max.apply(null,cats.map(c=>byCat[c]))||1;h+='<div class="uline" style="margin:14px 0 6px">Time by category</div>'+cats.map(c=>'<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>'+esc(c)+'</span><b>'+teamHM(byCat[c])+'</b></div><div style="height:8px;background:var(--card2);border-radius:5px;overflow:hidden;margin-top:3px"><i style="display:block;height:100%;width:'+Math.round(byCat[c]/max*100)+'%;background:var(--red)"></i></div></div>').join('');}
-  if(owner&&TEAM_PERF_WHO==='all'){const per={};staff.forEach(s=>per[s.id]={name:s.name,worked:0,tracked:0,points:0,calls:0});
+  if(TEAM_PERF_WHO!=='all'){const rep=TEAM.shifts.filter(s=>s.staffId===TEAM_PERF_WHO&&s.debrief&&s.debrief.at&&s.dateISO>=from).sort((a,b)=>a.dateISO<b.dateISO?1:-1);
+    if(rep.length)h+='<div class="uline" style="margin:16px 0 6px">Daily reports · '+esc(teamStaffNameById(TEAM_PERF_WHO))+'</div><div class="tbl-scroll"><table class="itbl"><thead><tr><th style="text-align:left">Date</th><th>Pts</th><th>Worked</th><th></th></tr></thead><tbody>'+rep.map(s=>'<tr><td style="text-align:left">'+esc(fmtDate(s.dateISO))+'</td><td style="color:var(--gold);font-weight:800">'+(+((s.debrief||{}).points)||0)+'</td><td class="wk-1rm">'+teamHM(teamShiftSeconds(s))+'</td><td style="text-align:right"><button class="btn-xxs" onclick="teamShowReport(\''+s.id+'\',\'perf\')">📋 Open</button></td></tr>').join('')+'</tbody></table></div>';
+    else h+='<div class="small" style="color:var(--muted);margin:14px 2px 0">'+esc(teamStaffNameById(TEAM_PERF_WHO))+' has no submitted daily reports in this range yet.</div>';}
+  if(TEAM_PERF_WHO==='all'){const per={};staff.forEach(s=>per[s.id]={name:s.name,worked:0,tracked:0,points:0,calls:0});
     TEAM.shifts.filter(s=>s.dateISO>=from).forEach(s=>{if(per[s.staffId]){per[s.staffId].worked+=teamShiftSeconds(s);if(s.debrief&&s.debrief.at)per[s.staffId].points+=(+s.debrief.points||0);}});
     logs.forEach(l=>{if(per[l.staffId])per[l.staffId].tracked+=(l.seconds||0);});
     staff.forEach(s=>{if(per[s.id])per[s.id].calls=teamCallsFor(s.name,from,_to).total;});
@@ -27382,7 +27384,8 @@ async function teamSubmitDebrief(id){if(TEAM_DB_SAVE_T){clearTimeout(TEAM_DB_SAV
   await teamSave('shifts');TEAM_DEBRIEF=null;TEAM_DB_ISSUES=[];TEAM_DB_SHID=null;toast('Daily report saved ✓ · '+pts+' pts');teamShowReport(id);}
 function teamSkipDebrief(){TEAM_DEBRIEF=null;teamRenderShift();}
 let TEAM_REPORT=null;
-function teamShowReport(id){TEAM_REPORT=id;teamTab('shift');}
+let TEAM_REPORT_FROM='shift';
+function teamShowReport(id,from){TEAM_REPORT=id;TEAM_REPORT_FROM=from||'shift';teamTab('shift');}
 function teamRenderReport(sh){const host=$('team-shift-host');if(!host)return;const worked=teamShiftSeconds(sh);const tasks=teamShiftTasksWorked(sh);const d=sh.debrief||{};const br=(sh.breaks||[]).reduce((a,b)=>a+((b.end?Date.parse(b.end):Date.now())-Date.parse(b.start))/1000,0);const tracked=tasks.reduce((a,t)=>a+t.seconds,0);
   const cc=d.counts||{};const calls=d.calls||{};const iss=Array.isArray(d.issues)?d.issues:[];const pts=d.points||0;
   const outLine=[[cc.woCreated,'workouts created'],[cc.woUpdated,'updated'],[cc.dietCreated,'diet plans created'],[cc.dietUpdated,'updated'],[cc.issuesResolved,'issues resolved']].filter(x=>+x[0]>0).map(x=>'<b>'+(+x[0])+'</b> '+x[1]).join(' · ');
@@ -27404,7 +27407,7 @@ function teamRenderReport(sh){const host=$('team-shift-host');if(!host)return;co
   '</div></div>';
   host.innerHTML=h;
 }
-function teamReportBack(){TEAM_REPORT=null;teamRenderShift();}
+function teamReportBack(){TEAM_REPORT=null;const f=TEAM_REPORT_FROM;TEAM_REPORT_FROM='shift';if(f==='perf')teamTab('perf');else teamRenderShift();}
 function teamCopyReport(id){const sh=(TEAM.shifts||[]).find(s=>s.id===id);if(!sh)return;const d=sh.debrief||{};const tasks=teamShiftTasksWorked(sh);const lines=['SHIFT REPORT — '+teamStaffNameById(sh.staffId)+' · '+fmtDate(sh.dateISO),teamClock(sh.clockIn)+' → '+(sh.clockOut?teamClock(sh.clockOut):'open')+' · worked '+teamHM(teamShiftSeconds(sh)),''];if(tasks.length){lines.push('Time on tasks:');tasks.forEach(t=>lines.push('  - '+(t.title||'Task')+': '+teamHM(t.seconds)));lines.push('');}if(d.done)lines.push('Got done: '+d.done);if(d.blockers)lines.push('Blockers: '+d.blockers);if(d.notes)lines.push('Handover: '+d.notes);if(d.rating)lines.push('Rating: '+d.rating+'/5');try{navigator.clipboard.writeText(lines.join(String.fromCharCode(10)));toast('Report copied ✓');}catch(e){toast('Copy failed',true);}}
 let CALL_KPIS_CUSTOM=[];
 async function openCallPerf(){
