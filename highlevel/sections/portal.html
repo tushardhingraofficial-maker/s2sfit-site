@@ -7748,7 +7748,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04us';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04ut';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -13599,7 +13599,9 @@ function wkoToggleSuperset(ei){const a=WKO.entries[ei],b=WKO.entries[ei+1];if(!a
 function wkoMarkAllDone(ei){const en=WKO&&WKO.entries[ei];if(!en||!en.sets.length)return;const allDone=en.sets.every(s=>s.done);en.sets.forEach(s=>{s.done=!allDone;});renderWorkout();}
 let WKO_HIST_EI=null;
 function wkoHistToggle(ei){wkoHistOpen(ei);}
-function wkoHistOpen(ei){WKO_HIST_EI=ei;const en=WKO&&WKO.entries[ei];const t=$('wko-hist-title');if(t)t.textContent='📈 '+((en&&en.name)||'Exercise')+' · history';const m=$('wko-hist-modal');if(m)m.classList.add('open');wkoHistory(ei);}
+function wkoHistOpen(ei){const en=WKO&&WKO.entries[ei];
+  if(en&&en.name&&typeof openExHistory==='function'){try{openExHistory(en.name);return;}catch(e){}}   // new per-exercise progress screen
+  WKO_HIST_EI=ei;const t=$('wko-hist-title');if(t)t.textContent='📈 '+((en&&en.name)||'Exercise')+' · history';const m=$('wko-hist-modal');if(m)m.classList.add('open');wkoHistory(ei);}
 function wkoHistClose(){const m=$('wko-hist-modal');if(m)m.classList.remove('open');WKO_HIST_EI=null;}
 function wkoReviewHTML(){
   const t=wkoTotals();
