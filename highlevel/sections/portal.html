@@ -7748,7 +7748,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04uu';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04uv';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -29556,8 +29556,34 @@ async function wdOpen(){ if(!edClient||!edClient.id){toast('Open a client first'
 /* One-time link-up: any exercise typed by name (no exId) that exactly matches a library exercise gets
    linked, so existing client workouts start inheriting library video/cues/name + future edits. Saves once. */
 function wdBackfillExIds(){try{if(!(EX_LIB&&EX_LIB.length))return;const byName={};EX_LIB.forEach(x=>{const n=(x.name||'').trim().toLowerCase();if(n&&!byName[n])byName[n]=x.id;});let changed=false;(t2().workouts||[]).forEach(w=>(w.sections||[]).forEach(s=>(s.exercises||[]).forEach(e=>{if(!e.exId&&(e.name||'').trim()){const id=byName[(e.name||'').trim().toLowerCase()];if(id){e.exId=id;changed=true;}}})));if(changed)wdSave(true);}catch(e){}}
-function wdClose(){const m=$('wd-modal');if(m)m.classList.remove('open');}
-async function wdSave(silent){ if(!edClient||!edClient.id){if(!silent)toast('Open a client first',true);return;} try{ const raw=(await DB.getPlan(edClient.id))||{client_id:edClient.id}; raw.training=raw.training||{}; raw.training.v2=t2(); await DB.savePlanRow(raw); if(!silent)toast('Saved ✓'); }catch(e){if(!silent)toast('Could not save — '+((e&&e.message)||'error'),true);} }
+function wdClose(){try{wdSaveFlush();}catch(e){}const m=$('wd-modal');if(m)m.classList.remove('open');}
+/* TP-003: the workout builder fired a full getPlan+savePlanRow on EVERY edit (wdSave(true) from 38 spots →
+   thousands of full-plan rewrites/day, and a coach save could clobber a client's concurrent log). Now a
+   silent save is debounced ~1.5s after the last change, only one save runs at a time (one follow-up queued
+   if edits land mid-save), it flushes on close / page-hide, and a failed silent save shows an error. */
+let WD_SAVE_T=null, WD_SAVE_INFLIGHT=false, WD_SAVE_QUEUED=null;
+async function wdSaveNow(toastOk){
+  if(!edClient||!edClient.id){if(toastOk)toast('Open a client first',true);return;}
+  if(WD_SAVE_INFLIGHT){WD_SAVE_QUEUED={toastOk:!!(toastOk||(WD_SAVE_QUEUED&&WD_SAVE_QUEUED.toastOk))};return;}
+  WD_SAVE_INFLIGHT=true;
+  try{
+    const raw=(await DB.getPlan(edClient.id))||{client_id:edClient.id};
+    raw.training=raw.training||{}; raw.training.v2=t2();
+    await DB.savePlanRow(raw);
+    if(toastOk)toast('Saved ✓');
+  }catch(e){ try{toast('Workout builder couldn’t save — '+((e&&e.message)||'error')+'. Keep the builder open and try again.',true);}catch(_){}}
+  finally{ WD_SAVE_INFLIGHT=false; const q=WD_SAVE_QUEUED; WD_SAVE_QUEUED=null; if(q)wdSaveNow(q.toastOk); }
+}
+function wdSave(silent){
+  if(!silent){ if(WD_SAVE_T){clearTimeout(WD_SAVE_T);WD_SAVE_T=null;} return wdSaveNow(true); }   // explicit save: flush + save now
+  if(WD_SAVE_T)clearTimeout(WD_SAVE_T);
+  WD_SAVE_T=setTimeout(function(){WD_SAVE_T=null;wdSaveNow(false);},1500);   // silent edits: debounce
+}
+function wdSaveFlush(){ if(WD_SAVE_T){clearTimeout(WD_SAVE_T);WD_SAVE_T=null;wdSaveNow(false);} }
+if(typeof window!=='undefined'&&!window._wdFlushHook){window._wdFlushHook=true;
+  window.addEventListener('pagehide',function(){try{wdSaveFlush();}catch(e){}});
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden'){try{wdSaveFlush();}catch(e){}}});
+}
 function wdRender(){ const host=$('wd-host'); if(!host)return; const sub=$('wd-sub'); if(WD_CUR){ wdRenderDesigner(host); return; } if(WD_VIEW==='calendar'){ wdRenderCalendar(host); if(sub)sub.textContent=((edClient&&edClient.name)||'')+' · calendar'; return; } if(WD_VIEW==='library'){ wdRenderLibrary(host); if(sub)sub.textContent=((edClient&&edClient.name)||'')+' · library'; return; } wdRenderList(host); if(sub)sub.textContent=((edClient&&edClient.name)||'')+' · '+t2().workouts.length+' workouts'; }
 function wdTopBar(){const live=!!t2().active;return '<div class="wd-topbar"><button class="wd-vtab'+(WD_VIEW==='workouts'?' on':'')+'" onclick="wdGo(\'workouts\')">📋 Workouts</button><button class="wd-vtab'+(WD_VIEW==='calendar'?' on':'')+'" onclick="wdGo(\'calendar\')">📅 Calendar</button><button class="wd-vtab'+(WD_VIEW==='library'?' on':'')+'" onclick="wdGo(\'library\')">📚 Library</button><button class="wd-vtab" style="flex:none;'+(live?'background:var(--good);border-color:var(--good);color:#06121f':'')+'" onclick="wdToggleLive()" title="When live, the client sees this new calendar instead of the legacy training view">'+(live?'🟢 Live':'⚪ Go live')+'</button></div>';}
 function wdGo(v){WD_VIEW=v;WD_CUR=null;wdRender();}
