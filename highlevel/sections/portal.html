@@ -7701,7 +7701,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04uq';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04ur';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -12709,6 +12709,26 @@ function repColShort(t){return {reps:'Reps',time:'Time',distance:'Dist',calories
 function ytId(url){if(!url)return '';const m=String(url).match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|v\/))([\w-]{11})/);return m?m[1]:'';}
 function ytEmbed(url){const id=ytId(url);return id?'https://www.youtube.com/embed/'+id:'';}
 function ytThumb(url){const id=ytId(url);return id?'https://img.youtube.com/vi/'+id+'/mqdefault.jpg':'';}
+/* Exercise demos should be SHORT tutorials (under ~1 min). Search links bias to Shorts + the
+   "under 4 minutes" filter (YouTube has no native <1-min filter; Shorts are ≤60s). */
+function exSearchUrl(name){return 'https://www.youtube.com/results?search_query='+encodeURIComponent(((name||'')+' proper form technique #shorts'))+'&sp=EgIYAQ%3D%3D';}
+/* Keyless duration check via the YouTube IFrame API — resolves seconds, or -1 if it can't tell
+   (unlisted / age-gated / blocked / timeout). We only ever ACT on a confident >60s reading. */
+let _ytApiP=null;
+function loadYTApi(){if(typeof YT!=='undefined'&&YT.Player)return Promise.resolve();if(_ytApiP)return _ytApiP;_ytApiP=new Promise(function(res){try{const prev=window.onYouTubeIframeAPIReady;window.onYouTubeIframeAPIReady=function(){try{if(typeof prev==='function')prev();}catch(e){}res();};const s=document.createElement('script');s.src='https://www.youtube.com/iframe_api';s.onerror=function(){res();};document.head.appendChild(s);setTimeout(res,6000);}catch(e){res();}});return _ytApiP;}
+function ytDuration(id,timeoutMs){timeoutMs=timeoutMs||8000;return new Promise(function(resolve){if(!id){resolve(-1);return;}let done=false;let holder=null,player=null,iv=null,to=null;
+  const cleanup=function(){try{if(iv)clearInterval(iv);}catch(e){}try{if(to)clearTimeout(to);}catch(e){}try{if(player&&player.destroy)player.destroy();}catch(e){}try{if(holder)holder.remove();}catch(e){}};
+  const fin=function(v){if(done)return;done=true;cleanup();resolve(v);};
+  loadYTApi().then(function(){try{if(!(typeof YT!=='undefined'&&YT.Player)){fin(-1);return;}
+    holder=document.createElement('div');holder.style.cssText='position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none';document.body.appendChild(holder);
+    to=setTimeout(function(){fin(-1);},timeoutMs);
+    player=new YT.Player(holder,{videoId:id,width:1,height:1,playerVars:{autoplay:0,mute:1,playsinline:1},events:{
+      onReady:function(ev){let tries=0;const grab=function(){let d=0;try{d=ev.target.getDuration();}catch(e){}if(d>0){fin(d);return;}if(++tries>8)fin(-1);};iv=setInterval(grab,300);grab();},
+      onError:function(){fin(-1);}
+    }});
+  }catch(e){fin(-1);}});});}
+/* Returns '' when a video is CONFIDENTLY longer than 60s (so it isn't auto-attached); keeps it otherwise. */
+async function ytGateVideo(url){try{if(!url)return '';const id=ytId(url);if(!id)return '';const d=await ytDuration(id);if(d>60)return '';return url;}catch(e){return url;}}
 function est1RM(weight,reps){weight=+weight||0;reps=+reps||0;if(weight<=0||reps<=0)return 0;if(reps===1)return Math.round(weight);return Math.round(weight*(1+reps/30));}   /* Epley */
 
 /* ---- ADMIN: exercise library CRUD ---- */
@@ -12736,6 +12756,7 @@ async function exGenerate(){
   if(!url){toast('Set the Smart webhook URL first — open ⚙ Smart generation webhook',true);try{const d=$('ex-gen-url');if(d){const dt=d.closest('details');if(dt)dt.open=true;d.focus();}}catch(e){}return;}
   const btn=$('ex-gen-btn'),st=$('ex-gen-status');
   const payload={name:name,bodyPart:((($('ex-body')||{}).value)||''),equipment:((($('ex-equip')||{}).value)||''),category:((($('ex-cat')||{}).value)||''),
+    videoPreference:'youtube_shorts',maxVideoSeconds:60,videoNote:'Return a YouTube demo UNDER 60 seconds (prefer Shorts) — short tutorials only.',
     allowed:{bodyParts:(typeof EX_BODYPARTS!=='undefined'?EX_BODYPARTS:[]),categories:(typeof EX_CATEGORIES!=='undefined'?EX_CATEGORIES:[]),equipment:(typeof EX_EQUIPMENT!=='undefined'?EX_EQUIPMENT:[])}};
   if(btn){btn.disabled=true;btn.textContent='⏳ Generating…';}if(st)st.textContent='Sending to your automation…';
   try{
@@ -12749,9 +12770,11 @@ async function exGenerate(){
     if(g.cues&&$('ex-cues'))$('ex-cues').value=g.cues;
     if(g.breathing&&$('ex-breathing'))$('ex-breathing').value=g.breathing;
     exGenSetSelect('ex-body',g.bodyPart);exGenSetSelect('ex-cat',g.category);exGenSetSelect('ex-equip',g.equipment);
+    let _vidNote='';
+    if(g.video){const _kept=await ytGateVideo(g.video);if(!_kept){g.video='';_vidNote=' The suggested video was over 1 minute, so it was skipped — use 🔍 Find on YouTube for a short demo.';}}
     if(g.video&&$('ex-video')&&!(($('ex-video').value||'').trim())){$('ex-video').value=g.video;try{renderExVideoPreview();}catch(e){}}
     if(g.images&&g.images.length&&$('ex-images')&&!(($('ex-images').value||'').trim()))$('ex-images').value=g.images.join('\n');
-    if(st)st.innerHTML='<span style="color:var(--good)">✓ Filled in — review, then Save exercise.</span>';
+    if(st)st.innerHTML='<span style="color:var(--good)">✓ Filled in — review, then Save exercise.</span>'+(_vidNote?'<span style="color:var(--gold)">'+esc(_vidNote)+'</span>':'');
     toast('✨ Generated — review & Save');
   }catch(e){
     if(st)st.innerHTML='<span style="color:var(--red)">Could not generate — '+esc((e&&e.message)||'error')+'. Check the webhook URL, and that your n8n “Respond to Webhook” returns JSON with an <b>Access-Control-Allow-Origin</b> header.</span>';
@@ -12763,12 +12786,14 @@ async function exGenFetch(name,meta){
   if(!url){try{url=((await DB.getKV('exercise_gen_webhook_url'))||'').trim();EXGEN_URL=url;}catch(e){}}
   if(!url)throw new Error('no-webhook');
   const payload={name:name,bodyPart:(meta&&meta.bodyPart)||'',equipment:(meta&&meta.equipment)||'',category:(meta&&meta.category)||'',
+    videoPreference:'youtube_shorts',maxVideoSeconds:60,videoNote:'Return a YouTube demo UNDER 60 seconds (prefer Shorts) — short tutorials only.',
     allowed:{bodyParts:(typeof EX_BODYPARTS!=='undefined'?EX_BODYPARTS:[]),categories:(typeof EX_CATEGORIES!=='undefined'?EX_CATEGORIES:[]),equipment:(typeof EX_EQUIPMENT!=='undefined'?EX_EQUIPMENT:[])}};
   const res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(payload)});
   if(!res.ok)throw new Error('HTTP '+res.status);
   const data=await res.json().catch(()=>{throw new Error('response was not JSON');});
   const g=exGenExtract(data);
   if(!(g.howto||g.mistakes||g.cues||g.breathing))throw new Error('no howto / mistakes / cues in the reply');
+  try{g.video=await ytGateVideo(g.video);}catch(e){}   // never auto-attach a video longer than 1 minute
   return g;
 }
 /* inline generate from a training-plan row: type a name → ✨ → generate, save to library, link here */
@@ -12885,7 +12910,7 @@ function exAuditSyncBtn(){
   const badge=$('ex-audit-badge');if(badge){const n=exAuditBroken().length;badge.textContent=n;badge.style.display=n?'':'none';}
 }
 function exAuditToggle(){EX_AUDIT=!EX_AUDIT;renderExList();}
-function exFindUrl(e){return 'https://www.youtube.com/results?search_query='+encodeURIComponent(((e&&e.name)||'')+' proper form technique');}
+function exFindUrl(e){return exSearchUrl((e&&e.name)||'');}
 function exAuditRowHTML(e){
   const st=exVideoState(e);
   const meta=[e.bodyPart,e.equipment,e.category].filter(Boolean).map(esc).join(' · ');
@@ -12922,6 +12947,8 @@ async function exAuditSave(id){
   const vid=ytId(url);
   if(!vid){toast('⚠ That isn’t a playable YouTube video link — paste a youtube.com/watch or youtu.be link',true);return;}
   const e=exById(id);if(!e)return;
+  const dur=await ytDuration(vid);
+  if(dur>60&&!confirm('That video is about '+Math.round(dur)+' seconds — over 1 minute. Short demos (under a minute) work best as quick tutorials.\n\nSave it anyway?'))return;
   e.video='https://youtu.be/'+vid;
   const row=$('exa-row-'+id);if(row)row.classList.add('fixed');
   try{await DB.saveExercises(EX_LIB);if(typeof refreshExNameList==='function')refreshExNameList();toast('✓ Video fixed for '+e.name);renderExList();}
@@ -12942,7 +12969,7 @@ function exPick(id){const e=exById(id);if(!e||!EX_PICK_TARGET)return;
 async function seedExStarter(){
   if(!confirm('Load / refresh the full starter library? This adds any missing exercises and updates the how-to, mistakes, cues & videos on the ones that match by name. Your own custom exercises are untouched.'))return;
   const V=id=>'https://youtu.be/'+id;                                   // verified inline-playable demos
-  const Q=q=>'https://www.youtube.com/results?search_query='+encodeURIComponent(q+' proper form technique');  // always-relevant search link
+  const Q=q=>exSearchUrl(q);  // always-relevant search link (short/Shorts tutorials)
   const E=(name,bodyPart,equipment,category,video,howto,mistakes,cues)=>({name,bodyPart,equipment,category,video,howto,mistakes,cues});
   const pack=[
     // ── Chest ──
@@ -14680,9 +14707,8 @@ function cvolVideoHTML(m){ if(!m)return '';
   if(m.video){ const emb=(typeof ytEmbed==='function')?ytEmbed(m.video):'';
     if(emb)return '<div class="cvol-video"><iframe src="'+emb+'" title="exercise demo" frameborder="0" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen loading="lazy"></iframe></div>';
     return '<div class="cvol-video"><video src="'+esc(m.video)+'" controls preload="metadata" playsinline></video></div>'; }
-  // no coach-set video → a tidy "how to" card so the video section is always present
-  const q=encodeURIComponent((m.name||'exercise')+' how to proper form');
-  return '<a class="cvol-video-ph" href="https://www.youtube.com/results?search_query='+q+'" target="_blank" rel="noopener"><span class="cvp-ic">🎥</span><span class="cvp-tx"><b>How to do '+esc(m.name||'this exercise')+'</b><span class="small" style="color:var(--muted);display:block">Tap to watch a quick how-to on YouTube</span></span><span class="cvp-go">›</span></a>'; }
+  // no coach-set video → a tidy "how to" card so the video section is always present (short/Shorts tutorials)
+  return '<a class="cvol-video-ph" href="'+exSearchUrl((m.name||'exercise')+' how to')+'" target="_blank" rel="noopener"><span class="cvp-ic">🎥</span><span class="cvp-tx"><b>How to do '+esc(m.name||'this exercise')+'</b><span class="small" style="color:var(--muted);display:block">Tap to watch a quick how-to on YouTube</span></span><span class="cvp-go">›</span></a>'; }
 function cvolBW(){ try{ if(typeof latestWeightEntry==='function'){const w=latestWeightEntry();if(w&&w.value)return +w.value;} }catch(e){} const p=parseKg((PLAN&&PLAN.profile&&PLAN.profile.weight)); return p||75; }
 /* fair scoring */
 function cvolSetVP(set,move,bw){ const r=Math.max(0,+set.reps||0); if(!r)return 0;
