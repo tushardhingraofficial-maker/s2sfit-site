@@ -3639,6 +3639,52 @@ body.gm-has-switch #custom-host{top:var(--gm-h,48px)}
 .t2-badge{font-size:10px;margin-top:3px;font-weight:800}
 .t2-card{border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;background:var(--card)}
 /* ===== Premium workout home (renderTrainingV2) ===== */
+/* Per-exercise history modal */
+.exh-overlay{position:fixed;inset:0;z-index:1500;background:rgba(10,12,16,.55);display:none;align-items:flex-end;justify-content:center}
+.exh-overlay.open{display:flex}
+.exh-sheet{position:relative;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--card2,#eef0f3);border-radius:20px 20px 0 0;padding:16px 14px calc(28px + env(safe-area-inset-bottom))}
+@media(min-width:560px){.exh-overlay{align-items:center}.exh-sheet{border-radius:20px;max-height:88vh}}
+.exh-x{position:absolute;top:10px;right:10px;z-index:3;width:32px;height:32px;border-radius:50%;border:none;background:var(--card);color:var(--text);font-size:19px;cursor:pointer;box-shadow:0 1px 3px rgba(16,24,40,.12)}
+.exh-hero{background:linear-gradient(145deg,#1b1f27 0%,#241018 55%,#3a0f0c 100%);border-radius:18px;padding:16px 16px 14px;color:#fff;margin:4px 0 12px}
+.exh-k{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#ffb3ad;font-weight:800}
+.exh-n{font-family:var(--disp);font-weight:900;font-size:21px;text-transform:uppercase;margin:3px 0 10px;line-height:1.02}
+.exh-tiles{display:flex;gap:8px}
+.exh-tile{flex:1;min-width:0;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:9px 10px}
+.exh-tile b{display:block;font-family:var(--disp);font-size:19px;font-weight:900;line-height:1}
+.exh-tile b small{font-size:11px;font-weight:800}
+.exh-tile span{font-size:10px;color:#c7ccd4;display:block;margin-top:3px}
+.exh-d{font-size:10px;font-weight:800;margin-top:4px}
+.exh-d.up,.exh-badge .up{color:#3ed47e}.exh-d.dn,.exh-badge .dn{color:#ff6b6b}
+.exh-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px;margin-bottom:12px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.exh-ch{display:flex;align-items:center;margin-bottom:10px}
+.exh-ch h3{font-family:var(--disp);font-size:14px;font-weight:800;margin:0;text-transform:uppercase;letter-spacing:.02em}
+.exh-seg{margin-left:auto;display:flex;gap:4px;background:var(--card2,#f4f6f9);border-radius:9px;padding:3px}
+.exh-seg button{border:none;background:transparent;font-size:11px;font-weight:800;color:var(--muted);padding:4px 9px;border-radius:7px;cursor:pointer}
+.exh-seg button.on{background:var(--red);color:#fff}
+.exh-prs{display:flex;gap:8px}
+.exh-pr{flex:1;min-width:0;background:var(--card2,#f4f6f9);border-radius:11px;padding:9px 8px;text-align:center}
+.exh-pr b{display:block;font-family:var(--disp);font-size:16px;font-weight:900}
+.exh-pr span{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.02em;display:block}
+.exh-pr .tag{font-size:9px;color:var(--red);font-weight:800;margin-top:2px}
+.exh-h4{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:4px 2px 8px}
+.exh-row{display:flex;align-items:center;gap:10px;padding:10px 2px;border-top:1px solid var(--border)}
+.exh-row:first-child{border-top:none}
+.exh-dt{width:46px;flex:none}
+.exh-dt b{display:block;font-family:var(--disp);font-size:14px;font-weight:900;line-height:1}
+.exh-dt span{font-size:10px;color:var(--muted)}
+.exh-sets{flex:1;min-width:0}
+.exh-sets .s{font-size:13px;font-weight:700;word-break:break-word}
+.exh-sets .m{font-size:11px;color:var(--muted);margin-top:1px}
+.exh-badge{flex:none;text-align:right}
+.exh-badge b{display:block;font-family:var(--disp);font-size:14px;font-weight:900}
+.exh-badge span{font-size:10px;font-weight:800}
+.exh-badge-u{color:var(--muted);font-weight:600}
+.exh-prdot{display:inline-block;background:rgba(232,23,13,.12);color:var(--red);font-size:9px;font-weight:800;border-radius:10px;padding:1px 6px;margin-left:4px;vertical-align:middle}
+.exh-open{cursor:pointer}
+.tw-exrow.exh-open:active{opacity:.7}
+.tw-exgo{color:var(--muted);font-size:15px;margin-left:7px;font-weight:700}
+.awd-ex-nm.exh-open{text-decoration:underline;text-decoration-color:var(--border);text-underline-offset:2px}
+.wkc-ex-nm.exh-open{cursor:pointer}
 .tw-hero{position:relative;border-radius:22px;padding:20px 18px;overflow:hidden;color:#fff;background:linear-gradient(145deg,#1b1f27 0%,#2a1113 60%,#3a0f0c 100%);box-shadow:0 18px 40px -20px rgba(16,24,40,.55);margin-bottom:6px}
 .tw-hero::after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(232,23,13,.4),transparent 70%)}
 .tw-kick{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:#ffb3ad;font-weight:800;position:relative;z-index:2}
@@ -4590,6 +4636,7 @@ tr.tr-gr td:first-child{border-left:3px solid var(--red)}
 .brth-title{font-weight:800;font-family:var(--disp);font-size:13px;text-transform:uppercase;letter-spacing:.03em}
 .brth-tempo{margin-left:auto;font-size:12px;color:var(--muted)}
 .brth-cue{font-size:12.5px;color:var(--muted);margin:0 0 9px;line-height:1.5}
+.brth-note{font-size:12px;color:var(--text);opacity:.82;margin:1px 0 9px;line-height:1.45;font-weight:600}
 .brth-rows{display:flex;flex-direction:column;gap:7px}
 .brth-row{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-left:3px solid var(--border);border-radius:10px;padding:8px 10px}
 .brth-ic{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex:none;font-size:14px;font-weight:800}
@@ -7701,7 +7748,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04ur';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04us';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -12736,6 +12783,7 @@ let EX_PICK_TARGET=null;   // when set {di}, list items add to a training day in
 async function openExLib(){EX_PICK_TARGET=null;$('exlib-modal').classList.add('open');const af=$('exlib-adminform');if(af)af.style.display='';await loadExLib(true);fillExSelects();resetExForm();renderExList();$('ex-pick-banner').style.display='none';exGenLoadCfg();}
 /* ---- AI exercise generation via configurable n8n webhook ---- */
 let EXGEN_URL=null;
+let EXGEN_BT='';   // last AI-returned breathType (movement breathing class), applied on save
 async function exGenLoadCfg(){try{const u=await DB.getKV('exercise_gen_webhook_url');EXGEN_URL=u||'';if($('ex-gen-url'))$('ex-gen-url').value=EXGEN_URL;}catch(e){}}
 async function exGenSaveCfg(){const u=((($('ex-gen-url')||{}).value)||'').trim();try{await DB.setKV('exercise_gen_webhook_url',u);EXGEN_URL=u;toast('Smart webhook URL saved ✓');}catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);}}
 /* accept various n8n response shapes: {howto,mistakes,cues} · {output:{…}} · [{…}] · {data:{…}} */
@@ -12746,7 +12794,7 @@ function exGenExtract(d){
   const pick=(k,alts)=>{const keys=[k].concat(alts||[]);for(let i=0;i<keys.length;i++){const kk=keys[i];if(o&&o[kk]!=null&&String(o[kk]).trim())return String(o[kk]).trim();}return '';};
   const pickArr=(k,alts)=>{const keys=[k].concat(alts||[]);for(let i=0;i<keys.length;i++){const v=o&&o[keys[i]];if(Array.isArray(v))return v.map(x=>String(x).trim()).filter(Boolean);if(v!=null&&String(v).trim())return String(v).split(/[\n,]+/).map(x=>x.trim()).filter(Boolean);}return [];};
   return {howto:pick('howto',['how_to','execution','steps','instructions']),mistakes:pick('mistakes',['avoid','common_mistakes','things_to_avoid','mistakes_to_avoid']),cues:pick('cues',['posture','posture_guidance','perfect','form_cues','perfect_form_cues']),breathing:pick('breathing',['breath','breathing_pattern','core_bracing','bracing']),
-    bodyPart:pick('bodyPart',['body_part','bodypart','muscle','muscle_group','target']),category:pick('category',['cat','type','movement_type']),equipment:pick('equipment',['equip','gear','machine']),video:(function(){const v=pick('video',['videoUrl','video_url','youtube','youtube_url','url']);return (v&&ytId(v))?v:'';})(),images:pickArr('images',['image','img','photos','image_urls'])};
+    bodyPart:pick('bodyPart',['body_part','bodypart','muscle','muscle_group','target']),category:pick('category',['cat','type','movement_type']),equipment:pick('equipment',['equip','gear','machine']),video:(function(){const v=pick('video',['videoUrl','video_url','youtube','youtube_url','url']);return (v&&ytId(v))?v:'';})(),images:pickArr('images',['image','img','photos','image_urls']),breathType:pick('breathType',['breath_type','breathing_type','breathing_pattern_type','breath_pattern'])};
 }
 function exGenSetSelect(id,val){val=(val||'').trim();if(!val)return;const el=$(id);if(!el||!el.options)return;const opts=[...el.options];const lv=val.toLowerCase();const m=opts.find(o=>o.value.toLowerCase()===lv)||opts.find(o=>o.value.toLowerCase().indexOf(lv)>=0||lv.indexOf(o.value.toLowerCase())>=0);if(m)el.value=m.value;}
 async function exGenerate(){
@@ -12757,7 +12805,9 @@ async function exGenerate(){
   const btn=$('ex-gen-btn'),st=$('ex-gen-status');
   const payload={name:name,bodyPart:((($('ex-body')||{}).value)||''),equipment:((($('ex-equip')||{}).value)||''),category:((($('ex-cat')||{}).value)||''),
     videoPreference:'youtube_shorts',maxVideoSeconds:60,videoNote:'Return a YouTube demo UNDER 60 seconds (prefer Shorts) — short tutorials only.',
+    breathingNote:'In "breathing", give the movement-specific pattern: which rep phase to inhale, brace/hold, and exhale. Also set "breathType" to one of: press, pull, squat, hinge, iso, cardio.',
     allowed:{bodyParts:(typeof EX_BODYPARTS!=='undefined'?EX_BODYPARTS:[]),categories:(typeof EX_CATEGORIES!=='undefined'?EX_CATEGORIES:[]),equipment:(typeof EX_EQUIPMENT!=='undefined'?EX_EQUIPMENT:[])}};
+  EXGEN_BT='';
   if(btn){btn.disabled=true;btn.textContent='⏳ Generating…';}if(st)st.textContent='Sending to your automation…';
   try{
     const res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(payload)});
@@ -12769,6 +12819,7 @@ async function exGenerate(){
     if(g.mistakes&&$('ex-mistakes'))$('ex-mistakes').value=g.mistakes;
     if(g.cues&&$('ex-cues'))$('ex-cues').value=g.cues;
     if(g.breathing&&$('ex-breathing'))$('ex-breathing').value=g.breathing;
+    if(g.breathType)EXGEN_BT=g.breathType;   // movement breathing class → applied on Save
     exGenSetSelect('ex-body',g.bodyPart);exGenSetSelect('ex-cat',g.category);exGenSetSelect('ex-equip',g.equipment);
     let _vidNote='';
     if(g.video){const _kept=await ytGateVideo(g.video);if(!_kept){g.video='';_vidNote=' The suggested video was over 1 minute, so it was skipped — use 🔍 Find on YouTube for a short demo.';}}
@@ -12787,6 +12838,7 @@ async function exGenFetch(name,meta){
   if(!url)throw new Error('no-webhook');
   const payload={name:name,bodyPart:(meta&&meta.bodyPart)||'',equipment:(meta&&meta.equipment)||'',category:(meta&&meta.category)||'',
     videoPreference:'youtube_shorts',maxVideoSeconds:60,videoNote:'Return a YouTube demo UNDER 60 seconds (prefer Shorts) — short tutorials only.',
+    breathingNote:'In "breathing", give the movement-specific pattern: which rep phase to inhale, brace/hold, and exhale. Also set "breathType" to one of: press, pull, squat, hinge, iso, cardio.',
     allowed:{bodyParts:(typeof EX_BODYPARTS!=='undefined'?EX_BODYPARTS:[]),categories:(typeof EX_CATEGORIES!=='undefined'?EX_CATEGORIES:[]),equipment:(typeof EX_EQUIPMENT!=='undefined'?EX_EQUIPMENT:[])}};
   const res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(payload)});
   if(!res.ok)throw new Error('HTTP '+res.status);
@@ -12814,7 +12866,7 @@ async function edTrExGen(di,si,xi){
     toast('Could not generate — '+((e&&e.message)||'error'),true);return;
   }
   const ex={id:uid(),name:name,bodyPart:pickV(g.bodyPart,EX_BODYPARTS),category:pickV(g.category,EX_CATEGORIES),equipment:pickV(g.equipment,EX_EQUIPMENT),
-    video:(g.video||'').trim(),videoFile:'',images:(Array.isArray(g.images)?g.images:[]),howto:(g.howto||'').trim(),mistakes:(g.mistakes||'').trim(),cues:(g.cues||'').trim(),breathing:(g.breathing||'').trim()};
+    video:(g.video||'').trim(),videoFile:'',images:(Array.isArray(g.images)?g.images:[]),howto:(g.howto||'').trim(),mistakes:(g.mistakes||'').trim(),cues:(g.cues||'').trim(),breathing:(g.breathing||'').trim(),breathType:(g.breathType||'').trim()};
   EX_LIB=EX_LIB||[];EX_LIB.push(ex);
   try{await DB.saveExercises(EX_LIB);if(typeof refreshExNameList==='function')refreshExNameList();}catch(e){toast('Generated, but could not save to library — '+((e&&e.message)||'error'),true);return;}
   row.exId=ex.id;row.name=ex.name;
@@ -12843,7 +12895,7 @@ function fillExSelects(){
   if($('ex-equip'))$('ex-equip').innerHTML=opt(EX_EQUIPMENT);
   if($('ex-filter-body'))$('ex-filter-body').innerHTML='<option value="">All body parts</option>'+opt(EX_BODYPARTS);
 }
-function resetExForm(){$('ex-id').value='';$('ex-name').value='';$('ex-video').value='';if($('ex-videofile'))$('ex-videofile').value='';if($('ex-videofile-stat'))$('ex-videofile-stat').textContent='';if($('ex-videofile-input'))$('ex-videofile-input').value='';if($('ex-images'))$('ex-images').value='';$('ex-howto').value='';$('ex-mistakes').value='';$('ex-cues').value='';if($('ex-breathing'))$('ex-breathing').value='';$('ex-form-title').textContent='New exercise';renderExVideoPreview();}
+function resetExForm(){EXGEN_BT='';$('ex-id').value='';$('ex-name').value='';$('ex-video').value='';if($('ex-videofile'))$('ex-videofile').value='';if($('ex-videofile-stat'))$('ex-videofile-stat').textContent='';if($('ex-videofile-input'))$('ex-videofile-input').value='';if($('ex-images'))$('ex-images').value='';$('ex-howto').value='';$('ex-mistakes').value='';$('ex-cues').value='';if($('ex-breathing'))$('ex-breathing').value='';$('ex-form-title').textContent='New exercise';renderExVideoPreview();}
 async function exUploadVideo(){
   const inp=$('ex-videofile-input'),f=inp&&inp.files&&inp.files[0];if(!f){toast('Choose a video file first',true);return;}
   if(f.size>50*1024*1024&&!confirm('This video is '+Math.round(f.size/1048576)+' MB. Supabase allows 50 MB/file by default — compress to 720p or raise the Storage limit. Try anyway?')){return;}
@@ -12860,14 +12912,16 @@ async function saveExForm(){
   const images=(($('ex-images')&&$('ex-images').value)||'').split(/[\n,]+/).map(s=>s.trim()).filter(Boolean);
   let vid=($('ex-video').value||'').trim();
   if(vid&&!ytId(vid)){toast('⚠ That video isn’t a real YouTube video link (looks like a search/other URL) — not saved. Paste a youtube.com/watch or youtu.be link.',true);vid='';try{if($('ex-video')){$('ex-video').value='';renderExVideoPreview();}}catch(e){}}
-  const ex={id,name,bodyPart:$('ex-body').value,category:$('ex-cat').value,equipment:$('ex-equip').value,video:vid,videoFile:(($('ex-videofile')&&$('ex-videofile').value)||'').trim(),images:images,howto:($('ex-howto').value||'').trim(),mistakes:($('ex-mistakes').value||'').trim(),cues:($('ex-cues').value||'').trim(),breathing:(($('ex-breathing')&&$('ex-breathing').value)||'').trim()};
+  const _prevBT=((EX_LIB.find(x=>x.id===id)||{}).breathType)||'';
+  const ex={id,name,bodyPart:$('ex-body').value,category:$('ex-cat').value,equipment:$('ex-equip').value,video:vid,videoFile:(($('ex-videofile')&&$('ex-videofile').value)||'').trim(),images:images,howto:($('ex-howto').value||'').trim(),mistakes:($('ex-mistakes').value||'').trim(),cues:($('ex-cues').value||'').trim(),breathing:(($('ex-breathing')&&$('ex-breathing').value)||'').trim(),breathType:(EXGEN_BT||_prevBT||'')};
+  EXGEN_BT='';
   const i=EX_LIB.findIndex(x=>x.id===id);if(i>=0)EX_LIB[i]=ex;else EX_LIB.push(ex);
   try{await DB.saveExercises(EX_LIB);refreshExNameList();
     if(EXLIB_LINK){const L=EXLIB_LINK;EXLIB_LINK=null;try{const row=edTrSecs(L.di)[L.si].exercises[L.xi];if(row){row.exId=id;row.name=name;}}catch(e){}toast('✓ Saved to library & linked to this movement');closeExLib();if(typeof edRenderTraining==='function')edRenderTraining();return;}
     toast('✓ Exercise saved');resetExForm();renderExList();
   }catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);}
 }
-function editEx(id){const e=exById(id);if(!e)return;$('ex-id').value=e.id;$('ex-name').value=e.name||'';$('ex-body').value=e.bodyPart||EX_BODYPARTS[0];$('ex-cat').value=e.category||EX_CATEGORIES[0];$('ex-equip').value=e.equipment||EX_EQUIPMENT[0];$('ex-video').value=e.video||'';if($('ex-videofile'))$('ex-videofile').value=e.videoFile||'';if($('ex-videofile-stat'))$('ex-videofile-stat').textContent=(e.videoFile?'✓ Uploaded video attached':'');if($('ex-videofile-input'))$('ex-videofile-input').value='';if($('ex-images'))$('ex-images').value=(Array.isArray(e.images)?e.images.join('\n'):'');$('ex-howto').value=e.howto||e.instructions||'';$('ex-mistakes').value=e.mistakes||'';$('ex-cues').value=e.cues||'';if($('ex-breathing'))$('ex-breathing').value=e.breathing||'';$('ex-form-title').textContent='Edit exercise';renderExVideoPreview();try{$('ex-name').scrollIntoView({block:'nearest'});}catch(e2){}}
+function editEx(id){const e=exById(id);if(!e)return;EXGEN_BT='';$('ex-id').value=e.id;$('ex-name').value=e.name||'';$('ex-body').value=e.bodyPart||EX_BODYPARTS[0];$('ex-cat').value=e.category||EX_CATEGORIES[0];$('ex-equip').value=e.equipment||EX_EQUIPMENT[0];$('ex-video').value=e.video||'';if($('ex-videofile'))$('ex-videofile').value=e.videoFile||'';if($('ex-videofile-stat'))$('ex-videofile-stat').textContent=(e.videoFile?'✓ Uploaded video attached':'');if($('ex-videofile-input'))$('ex-videofile-input').value='';if($('ex-images'))$('ex-images').value=(Array.isArray(e.images)?e.images.join('\n'):'');$('ex-howto').value=e.howto||e.instructions||'';$('ex-mistakes').value=e.mistakes||'';$('ex-cues').value=e.cues||'';if($('ex-breathing'))$('ex-breathing').value=e.breathing||'';$('ex-form-title').textContent='Edit exercise';renderExVideoPreview();try{$('ex-name').scrollIntoView({block:'nearest'});}catch(e2){}}
 async function deleteEx(id){if(!confirm('Delete this exercise from the library?'))return;EX_LIB=EX_LIB.filter(x=>x.id!==id);try{await DB.saveExercises(EX_LIB);renderExList();}catch(e){toast('Could not delete',true);}}
 function renderExList(){
   const host=$('ex-list');if(!host)return;
@@ -13175,22 +13229,71 @@ function parseTempo(str){
   const ecc=(n[0]!=null&&n[0]>0)?n[0]:3,pb=(n[1]!=null)?n[1]:1,con=(n[2]!=null&&n[2]>0)?n[2]:1,pt=(n[3]!=null)?n[3]:0;
   return [ecc,pb,con,pt];
 }
-function breathingCardHTML(tempo,cue){
-  const t=parseTempo(tempo),ecc=t[0],pb=t[1],con=t[2],pt=t[3];
-  const tdisp=[ecc,pb,con].concat(pt?[pt]:[]).join('·');
-  let rows='<div class="brth-row" style="border-left-color:var(--prot)"><div class="brth-ic" style="background:rgba(47,127,209,.12);color:var(--prot)">▼</div><div class="brth-tx"><b>Lower · '+ecc+'s</b><span>Breathe <b style="color:var(--prot)">IN</b> through the nose, fill the belly</span></div></div>';
-  if(pb)rows+='<div class="brth-row" style="border-left-color:var(--gold,#BA7517)"><div class="brth-ic" style="background:rgba(186,117,23,.12);color:var(--gold,#BA7517)">⏸</div><div class="brth-tx"><b>Bottom · '+pb+'s</b><span><b style="color:var(--gold,#BA7517)">BRACE</b> — 360° core tightness, hold the air</span></div></div>';
-  rows+='<div class="brth-row" style="border-left-color:var(--red)"><div class="brth-ic" style="background:rgba(232,23,13,.1);color:var(--red)">▲</div><div class="brth-tx"><b>Lift · '+con+'s</b><span>Breathe <b style="color:var(--red)">OUT</b> hard through the sticking point</span></div></div>';
+/* Movement-specific breathing: classify the exercise, then map inhale / brace-hold / exhale to the right
+   rep phase. `e.breathType` (from AI generation) overrides the name-based classifier when present. */
+function breathClass(e){
+  if(e&&e.breathType){const t=String(e.breathType).toLowerCase();
+    if(/valsalva|hinge|deadlift|rdl/.test(t))return 'hinge';
+    if(/pull/.test(t))return 'pull';
+    if(/iso|core|plank|carry|steady|continuous|hold/.test(t))return 'iso';
+    if(/cardio|conditioning|dynamic/.test(t))return 'cardio';
+    if(/squat/.test(t))return 'squat';
+    if(/press|push/.test(t))return 'press';}
+  const s=(((e&&e.name)||'')+' '+((e&&e.category)||'')+' '+((e&&e.bodyPart)||'')+' '+((e&&e.equipment)||'')).toLowerCase();
+  if(/plank|wall ?sit|hollow|dead ?bug|bird ?dog|farmer|\bcarry\b|isometric|\bhold\b|l-sit|hang(ing)? |stretch|mobility|cat ?cow/.test(s))return 'iso';
+  if(/jumping ?jack|skipping|jump ?rope|climber|burpee|treadmill|stair|\brun|high ?knee|step ?jack|skater|cardio/.test(s))return 'cardio';
+  if(/deadlift|romanian|\brdl\b|hip ?thrust|good ?morning|kettlebell ?swing|\bswing\b|\bhinge\b|hyperextension|back ?extension|glute ?bridge|power ?clean|snatch/.test(s))return 'hinge';
+  if(/\brow\b|pull[ -]?up|pull[ -]?down|pulldown|chin[ -]?up|\bcurl\b|face ?pull|\bshrug\b|lat ?pull|pull ?apart|upright ?row|reverse ?(pec|fly|delt)|rear ?delt/.test(s))return 'pull';
+  if(/squat|\blunge|leg ?press|step ?up|split ?squat|pendulum|\bhack\b/.test(s))return 'squat';
+  return 'press';
+}
+function breathingPattern(e,tempo){
+  const t=parseTempo(tempo),ecc=t[0],pb=t[1],con=t[2],cls=breathClass(e);
+  const BLUE='var(--prot)',GOLD='var(--gold,#BA7517)',RED='var(--red)';
+  const r=function(ic,bg,ic2,title,sec,html,bcol){return {ic:ic,bg:bg,icc:ic2,title:title+(sec?(' · '+sec+'s'):''),html:html,bcol:bcol};};
+  const IN=function(sec,txt){return r('▼','rgba(47,127,209,.12)',BLUE,txt||'Lower',sec,'Breathe <b style="color:'+BLUE+'">IN</b>, fill the belly',BLUE);};
+  const BRACE=function(sec,txt,html){return r('⏸','rgba(186,117,23,.12)',GOLD,txt||'Bottom',sec,html||'<b style="color:'+GOLD+'">BRACE</b> — tight core, hold the air',GOLD);};
+  const OUT=function(sec,txt){return r('▲','rgba(232,23,13,.1)',RED,txt||'Press',sec,'Breathe <b style="color:'+RED+'">OUT</b> through the sticking point',RED);};
+  if(cls==='iso')return {type:'iso',badge:'Steady breathing',note:'Isometric hold / carry — keep breathing, never hold your breath.',phases:[
+    r('≈','rgba(47,127,209,.12)',BLUE,'Throughout the hold',0,'Breathe <b style="color:'+BLUE+'">slow &amp; steady</b> — in through the nose, out through the mouth',BLUE),
+    r('○','rgba(21,163,74,.12)','var(--good)','Cadence',0,'About <b>4s in</b>, <b>4s out</b> — stay braced but keep air moving','var(--good)')]};
+  if(cls==='cardio')return {type:'cardio',badge:'Rhythmic',note:'Match your breath to the movement — don’t hold.',phases:[
+    r('≈','rgba(47,127,209,.12)',BLUE,'Rhythm',0,'Rhythmic breathing in time with the reps',BLUE),
+    r('▲','rgba(232,23,13,.1)',RED,'On effort',0,'A sharper <b style="color:'+RED+'">exhale</b> on the hardest part, stay relaxed',RED)]};
+  if(cls==='pull')return {type:'pull',badge:'Pull pattern',phases:[
+    r('▲','rgba(232,23,13,.1)',RED,'Pull / squeeze',con,'Breathe <b style="color:'+RED+'">OUT</b> as you pull and squeeze',RED)]
+    .concat(pb?[BRACE(pb,'Peak','Hold the squeeze, ribs down')]:[])
+    .concat([r('▼','rgba(47,127,209,.12)',BLUE,'Return',ecc,'Breathe <b style="color:'+BLUE+'">IN</b> as you control the weight back',BLUE)])};
+  if(cls==='hinge')return {type:'hinge',badge:'Valsalva · brace &amp; hold',note:'Heavy hinge — take a big breath and brace hard BEFORE you lift.',phases:[
+    r('▼','rgba(47,127,209,.12)',BLUE,'Set up',0,'Big breath <b style="color:'+BLUE+'">IN</b> at the top, brace 360°',BLUE),
+    r('⏸','rgba(186,117,23,.12)',GOLD,'Through the lift',con,'<b style="color:'+GOLD+'">HOLD</b> the braced air through the whole pull',GOLD),
+    r('▲','rgba(232,23,13,.1)',RED,'Lockout',0,'<b style="color:'+RED+'">Exhale</b> at the top, then re-breathe for the next rep',RED)]};
+  if(cls==='squat')return {type:'squat',badge:'Squat pattern',phases:[
+    IN(ecc,'Descend')].concat(pb?[BRACE(pb,'Bottom')]:[]).concat([OUT(con,'Drive up')])};
+  return {type:'press',badge:'Press pattern',phases:[IN(ecc,'Lower')].concat(pb?[BRACE(pb,'Bottom')]:[]).concat([OUT(con,'Press')])};
+}
+function breathingCardHTML(tempo,cue,e){
+  const t=parseTempo(tempo),tdisp=[t[0],t[1],t[2]].concat(t[3]?[t[3]]:[]).join('·');
+  const pat=breathingPattern(e||{},tempo);
+  const rows=pat.phases.map(function(p){return '<div class="brth-row" style="border-left-color:'+p.bcol+'"><div class="brth-ic" style="background:'+p.bg+';color:'+p.icc+'">'+p.ic+'</div><div class="brth-tx"><b>'+p.title+'</b><span>'+p.html+'</span></div></div>';}).join('');
   const safeTempo=String(tempo==null?'':tempo).replace(/[^0-9Xx\-\/ ,]/g,'');
-  return '<div class="brth-card"><div class="brth-head"><span class="brth-title">🫁 Tempo &amp; breathing</span><span class="brth-tempo">Tempo '+esc(tdisp)+'</span></div>'+
+  const showTempo=/press|pull|squat|hinge/.test(pat.type);
+  return '<div class="brth-card"><div class="brth-head"><span class="brth-title">🫁 Breathing</span><span class="brth-tempo">'+pat.badge+(showTempo?(' · tempo '+esc(tdisp)):'')+'</span></div>'+
+    (pat.note?'<div class="brth-note">'+pat.note+'</div>':'')+
     (cue&&String(cue).trim()?'<div class="brth-cue">'+esc(cue).replace(/\n/g,'<br>')+'</div>':'')+
     '<div class="brth-rows">'+rows+'</div>'+
-    '<button class="brth-start" onclick="event.stopPropagation();wkoOpenPacer(\''+safeTempo+'\')"><span>▶</span> Start breathing guide</button></div>';
+    '<button class="brth-start" onclick="event.stopPropagation();wkoOpenPacer(\''+safeTempo+'\',\''+pat.type+'\')"><span>▶</span> Start breathing guide</button></div>';
 }
 function wkoEntryTempo(en){if(!en)return '';const ss=en.sets||[];for(let i=0;i<ss.length;i++){const t=ss[i]&&ss[i].target&&ss[i].target.tempo;if(t)return t;}return (en.scheme&&en.scheme.tempo)||'';}
-let BP_RAF=null,BP_RUN=false,BP_BASE=0,BP_T=[3,1,1,0];
-function wkoOpenPacer(tempoStr){
-  BP_T=parseTempo(tempoStr);
+let BP_RAF=null,BP_RUN=false,BP_BASE=0,BP_T=[3,1,1,0],BP_TYPE='press';
+const BP_PACE_LABELS={
+  press:{in:'Breathe in…',hold:'Brace',out:'Press — out…',top:'Hold'},
+  squat:{in:'Breathe in…',hold:'Brace',out:'Drive — out…',top:'Reset'},
+  pull:{in:'Return — in…',hold:'Squeeze',out:'Pull — out…',top:'Hold'},
+  hinge:{in:'Big breath in',hold:'Hold &amp; brace',out:'Exhale at top',top:'Re-breathe'}
+};
+function wkoOpenPacer(tempoStr,type){
+  BP_T=parseTempo(tempoStr);BP_TYPE=type||'press';
   let ov=$('bp-overlay');
   if(!ov){ov=document.createElement('div');ov.id='bp-overlay';ov.className='bp-overlay';document.body.appendChild(ov);ov.addEventListener('click',function(e){if(e.target===ov)wkoClosePacer();});}
   const tdisp=[BP_T[0],BP_T[1],BP_T[2]].concat(BP_T[3]?[BP_T[3]]:[]).join('·');
@@ -13207,14 +13310,22 @@ function wkoOpenPacer(tempoStr){
 function wkoPacerFrame(now){
   if(!BP_RUN)return;const circle=$('bp-circle');if(!circle){BP_RUN=false;return;}
   const phase=$('bp-phase'),rep=$('bp-rep');
-  const INH=Math.max(600,BP_T[0]*1000),HOLD=Math.max(0,BP_T[1]*1000),EXH=Math.max(600,BP_T[2]*1000),TOP=Math.max(0,BP_T[3]*1000),CYC=INH+HOLD+EXH+TOP;
+  if(BP_TYPE==='iso'||BP_TYPE==='cardio'){
+    const IN=4000,OUT=4000,CYC=IN+OUT;const el=now-BP_BASE,t=el%CYC;let s,ph,c;
+    if(t<IN){s=.55+(t/IN)*.45;ph='Breathe in…';c='#2F7FD1';}else{s=1-((t-IN)/OUT)*.45;ph='Breathe out…';c='#E8170D';}
+    circle.style.transform='scale('+s.toFixed(3)+')';circle.style.background=c;if(phase)phase.textContent=ph;if(rep)rep.textContent=(BP_TYPE==='iso'?'Steady — never hold':'Rhythmic breathing');
+    BP_RAF=requestAnimationFrame(wkoPacerFrame);return;
+  }
+  let INH=Math.max(600,BP_T[0]*1000),HOLD=Math.max(0,BP_T[1]*1000),EXH=Math.max(600,BP_T[2]*1000),TOP=Math.max(0,BP_T[3]*1000);
+  if(BP_TYPE==='hinge'){HOLD=Math.max(HOLD,Math.max(1500,EXH));TOP=Math.max(TOP,800);}   // emphasise the braced hold through the lift
+  const CYC=INH+HOLD+EXH+TOP, L=BP_PACE_LABELS[BP_TYPE]||BP_PACE_LABELS.press;
   const el=now-BP_BASE,t=el%CYC,r=1+(Math.floor(el/CYC)%8);let s,ph,c;
   if(rep)rep.textContent='Rep '+r+' / 8';
-  if(t<INH){s=.55+(t/INH)*.45;ph='Breathe in…';c='#2F7FD1';}
-  else if(t<INH+HOLD){s=1;ph='Brace';c='#BA7517';}
-  else if(t<INH+HOLD+EXH){s=1-((t-INH-HOLD)/EXH)*.45;ph='Breathe out…';c='#E8170D';}
-  else{s=.55;ph='Hold';c='#2F7FD1';}
-  circle.style.transform='scale('+s.toFixed(3)+')';circle.style.background=c;if(phase)phase.textContent=ph;
+  if(t<INH){s=.55+(t/INH)*.45;ph=L.in;c='#2F7FD1';}
+  else if(t<INH+HOLD){s=1;ph=L.hold;c='#BA7517';}
+  else if(t<INH+HOLD+EXH){s=1-((t-INH-HOLD)/EXH)*.45;ph=L.out;c='#E8170D';}
+  else{s=.55;ph=L.top;c='#2F7FD1';}
+  circle.style.transform='scale('+s.toFixed(3)+')';circle.style.background=c;if(phase)phase.innerHTML=ph;
   BP_RAF=requestAnimationFrame(wkoPacerFrame);
 }
 function wkoPacerToggle(){BP_RUN=!BP_RUN;const b=$('bp-btn');if(b)b.textContent=BP_RUN?'Pause':'Resume';if(BP_RUN){BP_BASE=performance.now();BP_RAF=requestAnimationFrame(wkoPacerFrame);}}
@@ -13228,7 +13339,7 @@ function exDetailHTML(e,tempo){
     h+=exSecHTML('✅','How to perform',e.howto,'go')+exSecHTML('⚠️','Common mistakes',e.mistakes,'bad')+exSecHTML('⭐','Make it perfect',e.cues,'gold');
   }else if(e.instructions){h+='<div class="exsec-b">'+esc(e.instructions).replace(/\n/g,'<br>')+'</div>';}
   else h+='<span style="color:var(--muted)">No instructions added.</span>';
-  try{h+=breathingCardHTML(tempo,e.breathing);}catch(_){}
+  try{h+=breathingCardHTML(tempo,e.breathing,e);}catch(_){}
   try{if(typeof ADMIN_OK!=='undefined'&&!ADMIN_OK&&e.name&&typeof sectionLive==='function'&&sectionLive('formcheck')&&!isMomentumMember()){
     h+='<div style="margin-top:12px"><button class="btn-sm solid" style="width:100%" onclick="event.stopPropagation();fcStartForEnc(\''+encodeURIComponent(e.name)+'\')">📹 Get a form check on this exercise</button></div>';
   }}catch(_){}
@@ -13432,7 +13543,7 @@ function wkoFocusHTML(en,ei,noNav){
   const setHead=en.sets.length?'<div class="wko-sethead"><span class="wko-sethead-n">Set</span><div class="wko-sethead-flds">'+fldLabels.map(l=>'<span>'+esc(l)+'</span>').join('')+'</div><span class="wko-sethead-end">✓</span></div>':'';
   return '<div class="wko-focus">'+
     (media?('<div class="wko-vid">'+media+'</div>'):'')+
-    '<div class="wko-fx-top"><div class="wko-fx-name">'+esc(en.name)+'</div>'+grpBadge+'<button class="wko-skip" onclick="wkoSkip('+ei+')" title="Skip this exercise">⏭</button></div>'+
+    '<div class="wko-fx-top"><div class="wko-fx-name exh-open" onclick="openExHistoryEnc(\''+encodeURIComponent(en.name||'')+'\')" title="See your history & progress for this exercise">'+esc(en.name)+'</div>'+grpBadge+'<button class="wko-skip" onclick="wkoSkip('+ei+')" title="Skip this exercise">⏭</button></div>'+
     '<div class="wko-meta">'+
       (en.target?'<span class="wko-meta-target">🎯 '+esc(en.target)+(en.restTarget?' · rest '+en.restTarget+'s':'')+'</span>':'')+
       wkoLiveStatsHTML(en,ei)+
@@ -18757,7 +18868,7 @@ function actWkExCardHTML(w,en,clientName){
     const pr=(cur.best1>0&&cur.best1>(cmp.allBest||0))?'<span class="awd-pr">▲ PR</span>':'';
     cmpHTML='<div class="awd-cmp">'+parts.join('')+pr+'</div>';
   }
-  return '<div class="awd-ex"><div class="awd-ex-h"><span class="awd-ex-nm">'+esc(en.name||'Exercise')+'</span>'+ssTag+eqTag+'</div>'+head+'<div class="awd-sets">'+rows+'</div>'+cmt+cmpHTML+'</div>';
+  return '<div class="awd-ex"><div class="awd-ex-h"><span class="awd-ex-nm exh-open" onclick="openExHistoryEnc(\''+encodeURIComponent(en.name||'')+'\',\''+esc(w.client_id||'')+'\')" title="See this client’s history & progress for this exercise">'+esc(en.name||'Exercise')+'</span>'+ssTag+eqTag+'</div>'+head+'<div class="awd-sets">'+rows+'</div>'+cmt+cmpHTML+'</div>';
 }
 /* ---- comments (shared: admin activity feed + client journal / log) ---- */
 let ACT_COMMENTS={};   // "cid|type|pk" → [comments], populated by renderActivity
@@ -19055,7 +19166,7 @@ function renderTrainingV2(){
       let li='',idx=0;
       (w.sections||[]).forEach(s=>{const exs=s.exercises||[];exs.forEach((e,i)=>{idx++;const ss=e.linkNext||(i>0&&exs[i-1].linkNext);const lib=e.exId?exById(e.exId):null;const t=twExTarget(e);
         const sub=ss?'<span class="tw-ss-tag">⛓ Superset</span>':esc(((lib&&lib.bodyPart)||s.name||'')+(lib&&lib.equipment?(' · '+lib.equipment):''));
-        li+='<div class="tw-exrow'+(ss?' ss':'')+'"><span class="tw-exn">'+idx+'</span><div class="tw-exmeta"><b>'+esc(exDisp(e))+'</b><span>'+sub+'</span></div><div class="tw-extar">'+esc(t.main)+(t.sub?'<small>'+esc(t.sub)+'</small>':'')+'</div></div>';});});
+        li+='<div class="tw-exrow exh-open'+(ss?' ss':'')+'" onclick="openExHistoryEnc(\''+encodeURIComponent(exDisp(e))+'\')" title="See your history & progress for this exercise"><span class="tw-exn">'+idx+'</span><div class="tw-exmeta"><b>'+esc(exDisp(e))+'</b><span>'+sub+'</span></div><div class="tw-extar">'+esc(t.main)+(t.sub?'<small>'+esc(t.sub)+'</small>':'')+'<span class="tw-exgo">›</span></div></div>';});});
       let block=hero;
       if(li)block+='<div class="tw-sec-h">📋 '+(todayW.length>1?esc(w.name):'Today’s session')+'</div><div class="tw-exli">'+li+'</div>';
       return block;
@@ -19199,7 +19310,7 @@ function wkoShowLogSummary(logId){
   const dur=log.duration_sec||0;const durStr=dur?(Math.floor(dur/60)+'m'+((dur%60)?(' '+(dur%60)+'s'):'')):'—';
   const comp=(log.completion!=null)?log.completion:0;
   const exs=(s.exercises&&s.exercises.length)?s.exercises:((log.entries||[]).map(en=>{const st=(typeof wkoEntryStats==='function')?wkoEntryStats(en):{};return {name:en.name,vol:st.vol,sets:st.sets,est1rm:st.best1};}));
-  const exRows=exs.map(function(x){const bits=[];if(x.sets)bits.push(x.sets+' set'+(x.sets===1?'':'s'));if(x.vol)bits.push(Math.round(x.vol).toLocaleString()+' kg');if(x.est1rm)bits.push('1RM '+Math.round(x.est1rm));return '<div class="wkc-ex"><div class="wkc-ex-nm">'+esc(x.name||'Exercise')+'</div><div class="wkc-ex-t">'+esc(bits.join(' · '))+'</div></div>';}).join('');
+  const exRows=exs.map(function(x){const bits=[];if(x.sets)bits.push(x.sets+' set'+(x.sets===1?'':'s'));if(x.vol)bits.push(Math.round(x.vol).toLocaleString()+' kg');if(x.est1rm)bits.push('1RM '+Math.round(x.est1rm));return '<div class="wkc-ex"><div class="wkc-ex-nm exh-open" onclick="openExHistoryEnc(\''+encodeURIComponent(x.name||'')+'\')" title="See your history for this exercise">'+esc(x.name||'Exercise')+' <span style="color:var(--muted);font-weight:600;font-size:11px">›</span></div><div class="wkc-ex-t">'+esc(bits.join(' · '))+'</div></div>';}).join('');
   const dt=fmtDate(String(log.date||'').slice(0,10));
   const html='<div class="wkc-sheet"><button class="wkc-x" onclick="wkoCloseConfirm()" aria-label="Close">×</button>'+
     '<div class="wkc-eyebrow" style="color:var(--good)">✓ Logged · '+esc(dt)+'</div><div class="wkc-title">'+esc(log.day_name||'Workout')+'</div>'+
@@ -23219,6 +23330,78 @@ async function renderTrainingPerf(force){
     '<div class="small" style="color:var(--muted);margin-top:8px">'+(aerobic?'Pace = duration ÷ distance (min/km) — lower is faster.':'1RM = weight × (1 + (reps+RIR)/30) · 10RM = 1RM ÷ 1.33 · Volume = Σ weight×reps.')+'</div>'+
   '</div></div>';
   host.innerHTML=h;
+}
+/* ═══════════════ PER-EXERCISE HISTORY (tap any exercise → its progress) — client + coach ═══════════════ */
+let EXH=null, EXH_LOGS={};
+async function openExHistory(name,clientId){
+  name=(name||'').trim(); if(!name)return;
+  clientId=clientId||(typeof SESSION!=='undefined'&&SESSION&&SESSION.id); if(!clientId)return;
+  EXH={name:name,clientId:clientId,metric:'w'};
+  let ov=$('exhist-modal');
+  if(!ov){ov=document.createElement('div');ov.id='exhist-modal';ov.className='exh-overlay';document.body.appendChild(ov);ov.addEventListener('click',function(e){if(e.target===ov)closeExHistory();});}
+  ov.innerHTML='<div class="exh-sheet"><button class="exh-x" onclick="closeExHistory()" aria-label="Close">×</button><div id="exhist-body"><div class="empty" style="padding:48px 20px;text-align:center">Loading history… 🏋️</div></div></div>';
+  ov.classList.add('open');
+  if(!EXH_LOGS[clientId]){try{EXH_LOGS[clientId]=await DB.listWorkoutLogs(clientId);}catch(e){EXH_LOGS[clientId]=[];}}
+  if(EXH&&EXH.name===name&&EXH.clientId===clientId)renderExHistory();
+}
+function openExHistoryEnc(s,clientId){try{openExHistory(decodeURIComponent(s),clientId);}catch(e){openExHistory(s,clientId);}}
+function closeExHistory(){const ov=$('exhist-modal');if(ov)ov.classList.remove('open');EXH=null;}
+function exhSetMetric(m){if(EXH){EXH.metric=m;renderExHistory();}}
+function exhVolFmt(v){return v>=1000?(Math.round(v/100)/10+'t'):(Math.round(v)+'kg');}
+function renderExHistory(){
+  const body=$('exhist-body'); if(!body||!EXH)return;
+  const logs=EXH_LOGS[EXH.clientId]||[], nm=EXH.name, nml=nm.toLowerCase();
+  const sessions=[];
+  logs.forEach(function(l){const date=(l.date||'').slice(0,10);if(!date)return;
+    (l.entries||[]).forEach(function(en){
+      if(((en.name||en.origName||'').trim().toLowerCase())!==nml)return;
+      if(typeof wkoIsAerobic==='function'&&wkoIsAerobic(en))return;   // strength history
+      let topW=0,topReps=0,best=0,vol=0,rir=null;const setStrs=[];
+      (en.sets||[]).forEach(function(s){const w=+s.weight||0,r=+s.reps||0,rr=(s.rir===''||s.rir==null)?null:+s.rir;
+        if(r>0){if(w>topW||(w===topW&&r>topReps)){topW=w;topReps=r;}vol+=(w>0?w*r:r);const e1=wkoE1RM(w,r,rr);if(e1>best)best=e1;setStrs.push(w>0?(w+'×'+r):(r+' reps'));if(rr!=null&&rir==null)rir=rr;}});
+      if(!setStrs.length)return;
+      sessions.push({date:date,topW:Math.round(topW*10)/10,topReps:topReps,e1:Math.round(best),vol:Math.round(vol),sets:setStrs,rir:rir});
+    });
+  });
+  if(!sessions.length){body.innerHTML='<div class="exh-hero"><div class="exh-k">Exercise history</div><div class="exh-n">'+esc(nm)+'</div></div><div class="empty" style="padding:28px 16px">No logged sets for <b>'+esc(nm)+'</b> yet. Once it’s logged in a workout, every past entry and the strength trend show up here.</div>';return;}
+  sessions.sort(function(a,b){return a.date<b.date?-1:1;});
+  const metric=EXH.metric, mval=function(s){return metric==='v'?s.vol:metric==='e'?s.e1:s.topW;};
+  const mLabel=metric==='v'?'Volume':metric==='e'?'Est. 1RM':'Top-set weight';
+  const pts=sessions.filter(function(s){return mval(s)>0;}).map(function(s){return {date:s.date,value:mval(s)};});
+  const series=[{label:mLabel,color:'var(--red)',pts:pts}];
+  const last=sessions[sessions.length-1], prev=sessions.length>1?sessions[sessions.length-2]:null;
+  const best1=Math.max.apply(null,sessions.map(function(s){return s.e1;}));
+  const bestVol=Math.max.apply(null,sessions.map(function(s){return s.vol;}));
+  const bestW=Math.max.apply(null,sessions.map(function(s){return s.topW;}));
+  const dOf=function(c,p){return p==null?null:Math.round((c-p)*10)/10;};
+  const dW=prev?dOf(last.topW,prev.topW):null, dE=prev?dOf(last.e1,prev.e1):null;
+  const prDate=function(key){let bv=-1,bd='';sessions.forEach(function(s){if(s[key]>bv){bv=s[key];bd=s.date;}});return bd;};
+  const tile=function(val,u,label,d,du){return '<div class="exh-tile"><b>'+val+'<small>'+u+'</small></b><span>'+label+'</span>'+(d!=null?('<div class="exh-d '+(d>0?'up':d<0?'dn':'')+'">'+(d>0?'▲ +':d<0?'▼ ':'– ')+Math.abs(d)+du+'</div>'):'')+'</div>';};
+  let h='<div class="exh-hero"><div class="exh-k">Last session · '+esc(fmtDate(last.date))+'</div><div class="exh-n">'+esc(nm)+'</div><div class="exh-tiles">'+
+    tile(last.topW,'kg','Top set ×'+last.topReps,dW,'kg')+
+    tile(last.e1,'kg','Est. 1RM',dE,'')+
+    tile(last.vol>=1000?(Math.round(last.vol/100)/10):last.vol,last.vol>=1000?'t':'kg','Volume',null,'')+
+    '</div></div>';
+  h+='<div class="exh-card"><div class="exh-ch"><h3>Progression</h3><div class="exh-seg">'+
+    '<button class="'+(metric==='w'?'on':'')+'" onclick="exhSetMetric(\'w\')">Top wt</button>'+
+    '<button class="'+(metric==='e'?'on':'')+'" onclick="exhSetMetric(\'e\')">1RM</button>'+
+    '<button class="'+(metric==='v'?'on':'')+'" onclick="exhSetMetric(\'v\')">Volume</button></div></div>'+
+    (pts.length>=1?lineChartSVG(series,{min:0}):'<div class="empty">Not enough data for this metric yet.</div>')+
+    '<div class="small" style="color:var(--muted);margin-top:6px">'+esc(mLabel)+' · '+sessions.length+' session'+(sessions.length===1?'':'s')+'</div></div>';
+  h+='<div class="exh-card"><div class="exh-ch"><h3>Personal records</h3></div><div class="exh-prs">'+
+    '<div class="exh-pr"><b>'+best1+'kg</b><span>Best 1RM</span><span class="tag">'+esc(fmtDate(prDate('e1')))+'</span></div>'+
+    '<div class="exh-pr"><b>'+bestW+'kg</b><span>Heaviest set</span><span class="tag">'+esc(fmtDate(prDate('topW')))+'</span></div>'+
+    '<div class="exh-pr"><b>'+exhVolFmt(bestVol)+'</b><span>Best volume</span><span class="tag">'+esc(fmtDate(prDate('vol')))+'</span></div>'+
+    '</div></div>';
+  h+='<div class="exh-h4">Past sessions · same exercise</div><div class="exh-card" style="padding:2px 13px">';
+  const rev=sessions.slice().reverse();
+  rev.forEach(function(s,i){const prevS=rev[i+1];const de=prevS?dOf(s.e1,prevS.e1):null;const isPR=(s.e1===best1&&s.e1>0);const d=new Date(s.date+'T00:00:00');
+    h+='<div class="exh-row"><div class="exh-dt"><b>'+d.getDate()+'</b><span>'+d.toLocaleDateString(undefined,{month:'short'})+'</span></div>'+
+      '<div class="exh-sets"><div class="s">'+esc(s.sets.join(' · '))+(isPR?' <span class="exh-prdot">PR</span>':'')+'</div><div class="m">'+s.sets.length+' set'+(s.sets.length===1?'':'s')+(s.rir!=null?(' · RIR '+s.rir):'')+' · '+exhVolFmt(s.vol)+'</div></div>'+
+      '<div class="exh-badge"><b>'+s.e1+'</b>'+(de!=null?('<span class="'+(de>0?'up':de<0?'dn':'')+'">'+(de>0?'▲ +':de<0?'▼ ':'– ')+Math.abs(de)+'</span>'):'<span class="exh-badge-u">1RM</span>')+'</div></div>';
+  });
+  h+='</div>';
+  body.innerHTML=h;
 }
 /* ═══════════════ EXERCISE FORM CHECK / CORRECTIONS (client uploads video → coach reviews → 🟢 green flag) ═══════════════ */
 function fcData(plan){plan=plan||PLAN;plan.milestones=plan.milestones||{goals:[]};const f=plan.milestones.formChecks=plan.milestones.formChecks||{threads:[]};if(!Array.isArray(f.threads))f.threads=[];return f;}
@@ -29525,7 +29708,7 @@ async function wdExGen(sid,eid){
     if((err&&err.message)==='no-webhook'){toast('Set the Smart generation webhook first — in the exercise library (🏋 From library → ⚙ webhook)',true);return;}
     toast('Could not generate — '+((err&&err.message)||'error'),true);return;
   }
-  const ex={id:uid(),name:name,bodyPart:pickV(g.bodyPart,EX_BODYPARTS),category:pickV(g.category,EX_CATEGORIES),equipment:pickV(g.equipment,EX_EQUIPMENT),video:(g.video||'').trim(),videoFile:'',images:(Array.isArray(g.images)?g.images:[]),howto:(g.howto||'').trim(),mistakes:(g.mistakes||'').trim(),cues:(g.cues||'').trim(),breathing:(g.breathing||'').trim()};
+  const ex={id:uid(),name:name,bodyPart:pickV(g.bodyPart,EX_BODYPARTS),category:pickV(g.category,EX_CATEGORIES),equipment:pickV(g.equipment,EX_EQUIPMENT),video:(g.video||'').trim(),videoFile:'',images:(Array.isArray(g.images)?g.images:[]),howto:(g.howto||'').trim(),mistakes:(g.mistakes||'').trim(),cues:(g.cues||'').trim(),breathing:(g.breathing||'').trim(),breathType:(g.breathType||'').trim()};
   EX_LIB=EX_LIB||[];EX_LIB.push(ex);
   try{await DB.saveExercises(EX_LIB);if(typeof refreshExNameList==='function')refreshExNameList();}catch(_){toast('Generated, but could not save to library',true);return;}
   e.exId=ex.id;e.name=ex.name;
