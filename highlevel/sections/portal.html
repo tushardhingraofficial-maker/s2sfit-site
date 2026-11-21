@@ -7748,7 +7748,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04ut';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04uu';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -13449,6 +13449,10 @@ function wkoLiveStatsHTML(en,ei){
 function wkoUpdateLive(ei){const en=WKO&&WKO.entries[ei];if(!en)return;const el=document.getElementById('wko-live-'+ei);if(el){const html=wkoLiveStatsHTML(en,ei);if(html)el.outerHTML=html;}}
 function wkoEntryStatBits(en){const st=wkoEntryStats(en);if(st.aerobic){return [st.cardio.dur?('⏱ '+st.cardio.dur+'m'):'',st.cardio.dist?(st.cardio.dist+' km'):'',st.cardio.cal?(st.cardio.cal+' kcal'):'',st.cardio.hr?(st.cardio.hr+' bpm'):''].filter(Boolean);}return [st.vol?('📊 '+lcNum(st.vol)+' kg vol'):'',st.best1?('💪 '+st.best1+' kg 1RM'):''].filter(Boolean);}
 function wkoTotals(){let sets=0,reps=0,vol=0;(WKO.entries||[]).forEach(en=>en.sets.forEach(s=>{const r=+s.reps||0,w=+s.weight||0;if(r>0){sets++;reps+=r;vol+=r*w;}}));return{sets,reps,vol:Math.round(vol)};}
+/* A set counts as "done" if it's ticked OR the client entered any value in it. */
+function wkoSetLogged(s){if(!s)return false;if(s.done)return true;const ks=['reps','weight','rir','time','distance','calories','cal','hr','hold','duration'];return ks.some(function(k){return String(s[k]==null?'':s[k]).trim()!=='';});}
+/* Completion from sets logged vs planned (used when the client never moved the slider). */
+function wkoAutoCompletion(){let planned=0,logged=0;(WKO.entries||[]).forEach(function(en){if(en.skipped)return;(en.sets||[]).forEach(function(s){planned++;if(wkoSetLogged(s))logged++;});});return planned?Math.max(0,Math.min(100,Math.round(logged/planned*100))):0;}
 /* ── premium one-exercise-focus logger ── */
 let WKO_IDX=0, WKO_SWIPE_ANIM=false;
 function wkoClampIdx(){const n=WKO?WKO.entries.length:0;if(WKO_IDX<0)WKO_IDX=0;if(WKO_IDX>n)WKO_IDX=n;}
@@ -13616,8 +13620,8 @@ function wkoReviewHTML(){
     (list||'<div class="empty">No exercises logged.</div>')+
     '<button class="btn-sm" style="margin:10px 0" onclick="wkoAddExercise()">🏋 Add exercise from library</button>'+
     '<div class="card" style="border-color:var(--red);margin-top:6px"><div class="card-body">'+
-      '<div style="display:flex;justify-content:space-between;margin-bottom:2px;font-size:13px"><span>How much did you complete?</span><b id="wko-pct" class="wk-1rm">'+WKO.completion+'%</b></div>'+
-      '<input type="range" min="0" max="100" step="5" value="'+WKO.completion+'" class="wk-slider" oninput="wkoSlide(this.value)">'+
+      '<div style="display:flex;justify-content:space-between;margin-bottom:2px;font-size:13px"><span>How much did you complete?'+(WKO.completionManual?'':' <span class="funit">(auto from your sets — drag to adjust)</span>')+'</span><b id="wko-pct" class="wk-1rm">'+(WKO.completionManual?(+WKO.completion||0):wkoAutoCompletion())+'%</b></div>'+
+      '<input type="range" min="0" max="100" step="5" value="'+(WKO.completionManual?(+WKO.completion||0):wkoAutoCompletion())+'" class="wk-slider" oninput="wkoSlide(this.value)">'+
       '<div class="wko-sumgrid">'+
         '<div class="wko-sumtile"><div class="v wk-1rm">'+lcNum(t.vol)+'<small> kg</small></div><div class="k">Total volume</div></div>'+
         '<div class="wko-sumtile"><div class="v">'+durTxt+'</div><div class="k">Duration</div></div>'+
@@ -13769,7 +13773,7 @@ function wkoPerfHTML(en){
 function wkoAddSet(ei){const ss=WKO.entries[ei].sets;const last=ss[ss.length-1]||{reps:'',weight:''};ss.push({reps:'',weight:last.weight||'',done:false});renderWorkout();}
 function wkoDelSet(ei,si){WKO.entries[ei].sets.splice(si,1);if(!WKO.entries[ei].sets.length)WKO.entries[ei].sets.push({reps:'',weight:'',done:false});renderWorkout();}
 function wkoDelEx(ei){if(!confirm('Remove this exercise from today’s session?'))return;WKO.entries.splice(ei,1);renderWorkout();}
-function wkoSlide(v){WKO.completion=+v||0;const p=$('wko-pct');if(p)p.textContent=WKO.completion+'%';}
+function wkoSlide(v){WKO.completion=+v||0;WKO.completionManual=true;const p=$('wko-pct');if(p)p.textContent=WKO.completion+'%';}
 function exlibFormVis(){const af=$('exlib-adminform');if(af)af.style.display=(typeof ADMIN_OK!=='undefined'&&ADMIN_OK)?'':'none';}   // clients pick only — no library editing
 function wkoReplace(ei){EX_PICK_TARGET={wkoEi:ei};$('exlib-modal').classList.add('open');exlibFormVis();fillExSelects();resetExForm();renderExList();const b=$('ex-pick-banner');b.style.display='';b.textContent='Pick a replacement exercise from your library, then tap × to return to your workout.';}
 function wkoUseAlt(ei,ai){const en=WKO.entries[ei];if(!en)return;if(ai<0){en.name=en.origName||en.name;en.exId='';toast('Back to '+en.name);}else{const a=(en.alts||[])[ai];if(!a)return;en.name=a;en.exId='';toast('Swapped to '+a);}renderWorkout();}
@@ -13914,7 +13918,10 @@ async function wkoCommit(){
   const summary={totalSets:t.sets,totalReps:t.reps,volume:t.vol,exercises:WKO.entries.map(en=>{const es=wkoEntryStats(en);return {name:en.name,brand:en.brand||'',equipment:en.equipment||'',est1rm:Math.round(wkoEntryBest1RM(en)),vol:es.vol,sets:es.sets,reps:es.reps,aerobic:es.aerobic};}).filter(x=>x.est1rm>0||x.vol>0||x.aerobic)};
   const durationSec=WKO_START?Math.floor((Date.now()-WKO_START)/1000):0;
   const editing=!!WKO.editId;
-  const log={id:WKO.editId||uid(),client_id:SESSION.id,date:WKO.date,day_id:WKO.day_id,day_name:WKO.day_name,entries:WKO.entries,summary,completion:WKO.completion,duration_sec:durationSec,done:WKO.completion>=100};
+  // TP-004: if the client never moved the "how much did you complete?" slider, derive completion from
+  // the sets they actually logged vs the sets planned (the slider stays a manual override).
+  const comp=WKO.completionManual?(+WKO.completion||0):wkoAutoCompletion();
+  const log={id:WKO.editId||uid(),client_id:SESSION.id,date:WKO.date,day_id:WKO.day_id,day_name:WKO.day_name,entries:WKO.entries,summary,completion:comp,duration_sec:durationSec,done:comp>=100};
   try{await DB.saveWorkoutLog(log);wkoClearActive();wkoStopClock();toast((editing?'✓ Session updated — ':'✓ Workout saved — ')+t.sets+' sets · '+lcNum(t.vol)+' kg volume');$('workout-modal').classList.remove('open');WKO=null;WD2_DONE=null;WD2_LOGS=null;renderTraining();}catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);}
 }
 function renderHydration(){
@@ -19592,7 +19599,7 @@ async function wkoEditLog(logId){
   wkoLoadClientCols();
   WKO=JSON.parse(JSON.stringify(log));WKO.editId=log.id;
   WKO.entries=(WKO.entries||[]).map(en=>Object.assign({brand:'',alts:[],group:'',repType:'reps',comment:'',target:'',restTarget:0,sets:[]},en));
-  WKO.completion=log.completion||0;
+  WKO.completion=log.completion||0;WKO.completionManual=true;   // editing an existing log keeps its saved completion unless the client re-drags the slider
   WKO_IDX=0;WKO_START=Date.now()-((log.duration_sec||0)*1000);   // clock resumes from the saved duration
   $('workout-modal').classList.add('open');renderWorkout();wkoStartClock();
   toast('Editing your logged session — press Finish to update it');
