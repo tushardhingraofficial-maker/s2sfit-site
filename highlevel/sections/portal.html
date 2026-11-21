@@ -3558,6 +3558,7 @@ body.gm-has-switch #custom-host{top:var(--gm-h,48px)}
 .wd-ex-move{display:flex;flex-direction:column;gap:2px}
 .wd-ex-move button{padding:0 6px;line-height:1.2}
 .wd-ex-name{flex:1;min-width:0;font-weight:700}
+.wd-linked{flex:none;font-size:12px;opacity:.75;align-self:center}
 .wd-ex-scheme{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px}
 .wd-mini{font-size:11px;color:var(--muted);font-weight:700}
 .wd-track{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;align-items:center}
@@ -7700,7 +7701,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04up';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04uq';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -9541,9 +9542,26 @@ async function renderDashboard(){
   }
   {const q=$('dash-quick');const second=fitems[1];if(q)q.innerHTML=second?('<div class="focus-more"><button type="button" class="focus-row" onclick="'+(second.a||'')+'"><span class="fr-ic">'+second.ic+'</span><span class="fr-main"><span class="fr-t">'+esc(second.t)+'</span><span class="fr-s">'+esc(second.s)+'</span></span><span class="fr-go">›</span></button></div>'):'';}
 }
+/* ===== Instant-render shell cache =====
+   So a section opens looking already-loaded (its last state) while the real data syncs behind it.
+   On the FIRST visit to a section after an app launch its view host is empty → we paint the last
+   saved snapshot instantly; the normal async render then overwrites it when its data lands. On later
+   in-session visits the live DOM is already there, so we never flash an older snapshot over it. */
+const SHELL_SEEN=new Set();
+let SHELL_CUR=null;
+function shellKey(base){try{return 's2s_shell_'+((typeof SESSION!=='undefined'&&SESSION&&SESSION.id)||(typeof ADMIN_OK!=='undefined'&&ADMIN_OK?'admin':'anon'))+'_'+base;}catch(e){return 's2s_shell_'+base;}}
+function shellPaint(hostId,base){try{const el=document.getElementById(hostId);if(!el)return;const v=localStorage.getItem(shellKey(base));if(v)el.innerHTML=v;}catch(e){}}
+function shellSave(hostId,base){try{const el=document.getElementById(hostId);if(!el)return;const html=el.innerHTML||'';if(!html||html.length>260000)return;if(html.indexOf('data:image')>=0)return;localStorage.setItem(shellKey(base),html);}catch(e){}}
+function shellMark(hostId,base){SHELL_CUR={host:hostId,key:base};}
+function shellSaveCur(){try{if(SHELL_CUR&&SHELL_CUR.host)shellSave(SHELL_CUR.host,SHELL_CUR.key);}catch(e){}}
+function shellSaveSoon(hostId,base){setTimeout(function(){try{shellSave(hostId,base);}catch(e){}},1200);}
+/* Paint-on-first-visit + schedule a save of the settled render. Call right after showViewOnly(). */
+function shellEnter(hostId,base){try{if(!SHELL_SEEN.has(base))shellPaint(hostId,base);SHELL_SEEN.add(base);shellMark(hostId,base);shellSaveSoon(hostId,base);}catch(e){}}
+
 function setSection(sec){
   // A section that's turned off for this client is not shown at all — send them to the first live one.
   if(!sectionLive(sec)){sec=firstLiveSection();}
+  try{shellSaveCur();}catch(e){}   // snapshot the section we're leaving (fully rendered) for next launch
   CUR_SECTION=sec;curView=sec;
   try{const ph=$('p-header');if(ph)ph.style.display=(sec==='home')?'none':'';}catch(e){}   // Home's own hero greets by name — avoid the duplicate "Welcome back / NAME" header
   if(sec!=='chat'){try{document.body.classList.remove('chat-thread-open');CHAT_THREAD_OPEN=false;}catch(e){}}   // leaving chat restores the bottom nav
@@ -9552,11 +9570,12 @@ function setSection(sec){
   try{renderGroupNav(sec);}catch(e){}
   const live=sectionLive(sec);
   $('nutri-nav').classList.toggle('hidden',!(sec==='nutrition'&&live));
-  if(!live){showViewOnly('soon');const t=$('soon-title');if(t)t.textContent=(SECTION_TITLES[sec]||'This section')+' — coming soon';window.scrollTo(0,0);return;}
-  if(sec==='home'){$('nutri-nav').classList.add('hidden');showViewOnly('dashboard');try{renderDashboard();}catch(e){}window.scrollTo(0,0);return;}
-  if(sec==='nutrition'){setNutri(NUTRI_SUB||'plan');return;}
+  if(!live){SHELL_CUR=null;showViewOnly('soon');const t=$('soon-title');if(t)t.textContent=(SECTION_TITLES[sec]||'This section')+' — coming soon';window.scrollTo(0,0);return;}
+  if(sec==='home'){$('nutri-nav').classList.add('hidden');showViewOnly('dashboard');shellEnter('view-dashboard','home');try{renderDashboard();}catch(e){}window.scrollTo(0,0);return;}
+  if(sec==='nutrition'){SHELL_CUR=null;setNutri(NUTRI_SUB||'plan');return;}
   const view=sec==='training'?'training':sec==='formcheck'?'formcheck':sec==='cardio'?'cardio':sec==='time'?'calendar':sec==='availability'?'availability':sec==='checkins'?'checkins':sec==='habits'?'habits':sec==='mytasks'?'mytasks':sec==='reports'?'reports':sec==='rewards'?'rewards':sec==='chat'?'chat':sec==='livechal'?'challenge':sec==='buddy'?'buddy':sec==='knowledge'?'knowledge':sec==='suspension'?'suspension':sec==='sleep'?'sleep':sec==='settings'?'settings':'milestones';
   showViewOnly(view);
+  shellEnter('view-'+view,sec);   // instant-render: paint last snapshot on first visit, then the render below replaces it
   CHAT_OPEN=(view==='chat');   // controls the chat unread badge
   if(view==='calendar')loadPlanner();
   if(view==='availability'){try{availRerender('client');}catch(e){}try{ptClientRender();}catch(e){}}
@@ -12675,6 +12694,10 @@ const EX_EQUIPMENT=['Barbell','Dumbbell','Machine','Cable','Kettlebell','Bodywei
 let EX_LIB=[];
 async function loadExLib(force){if(EX_LIB.length&&!force)return EX_LIB;try{EX_LIB=await DB.getExercises();}catch(e){EX_LIB=[];}return EX_LIB;}
 function exById(id){return EX_LIB.find(e=>e.id===id)||null;}
+let EXLIB_FRESH_AT=0;   // throttles the client-side library refresh so coach edits propagate on open
+/* The display name for a workout exercise: when it's linked to a library exercise (exId), the library's
+   current name wins — so renaming/editing in the library flows through to every client's workout. */
+function exDisp(e){try{if(e&&e.exId){const lib=exById(e.exId);if(lib&&(lib.name||'').trim())return lib.name;}}catch(_){}return (e&&e.name)||'Exercise';}
 function refreshExNameList(){let dl=document.getElementById('ex-namelist');if(!dl){dl=document.createElement('datalist');dl.id='ex-namelist';document.body.appendChild(dl);}const names=[...new Set((EX_LIB||[]).map(e=>(e.name||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));dl.innerHTML=names.map(n=>'<option value="'+esc(n)+'"></option>').join('');}
 function exLibByName(name){name=(name||'').trim().toLowerCase();return (EX_LIB||[]).find(e=>(e.name||'').trim().toLowerCase()===name)||null;}
 /* per-exercise primary metric (replaces "reps" when needed) */
@@ -18953,9 +18976,20 @@ function twExTarget(e){
   if(uni){const reps=first.reps||'',wt=first.weight||'';if(reps||wt)return {main:sets.length+' × '+(reps||'—'),sub:wt?('@ '+wt+' kg'):''};}
   return {main:sets.length+(sets.length===1?' set':' sets'),sub:'per-set'};
 }
+/* New-style training welcome / empty state — shown to fresh clients (no programme yet) instead of the
+   old "coming soon" card, and to live clients whose plan is still empty. Does NOT reveal draft workouts. */
+function trainingWelcomeHTML(){
+  return wkoResumeBannerHTML()+
+    '<div class="tw-hero"><div class="tw-kick">Training</div>'+
+    '<div class="tw-name">Your programme is on its way</div>'+
+    '<div class="tw-focus">Your coach is building your workouts. They’ll appear right here the moment they’re ready — each session with demo videos, per-set targets and a full-screen guided runner.</div>'+
+    '<div class="tw-chips"><span class="tw-chip">🏋️ Guided sessions</span><span class="tw-chip">🎯 Per-set targets</span><span class="tw-chip">📈 Auto progress</span></div></div>';
+}
 function renderTrainingV2(){
   const host=$('training-host');if(!host)return;
-  try{loadExLib().then(()=>{try{if(($('training-host'))&&PLAN&&PLAN.training&&PLAN.training.v2&&PLAN.training.v2.active&&!TW_RELIB){TW_RELIB=true;renderTrainingV2();}}catch(e){}});}catch(e){}
+  { const _c=t2c(); const _hasPlan=(_c.workouts&&_c.workouts.length)||(_c.calendar&&Object.keys(_c.calendar).length);
+    if(!_hasPlan){host.innerHTML=trainingWelcomeHTML();return;} }   // live but empty → premium welcome, not a blank week
+  try{const _fresh=(Date.now()-EXLIB_FRESH_AT>45000);loadExLib(_fresh).then(()=>{EXLIB_FRESH_AT=Date.now();try{if(($('training-host'))&&PLAN&&PLAN.training&&PLAN.training.v2&&PLAN.training.v2.active&&(!TW_RELIB||_fresh)){TW_RELIB=true;renderTrainingV2();}}catch(e){}});}catch(e){}   // refresh the library on open (throttled) so coach edits to an exercise show up
   if(WD2_DONE===null){wd2LoadDone();}
   const done=WD2_DONE||new Set();
   const cfg=(PLAN&&PLAN.training&&PLAN.training.v2)||{};const showPast=cfg.showPast!==false,showNext=cfg.showNext!==false;
@@ -18995,7 +19029,7 @@ function renderTrainingV2(){
       let li='',idx=0;
       (w.sections||[]).forEach(s=>{const exs=s.exercises||[];exs.forEach((e,i)=>{idx++;const ss=e.linkNext||(i>0&&exs[i-1].linkNext);const lib=e.exId?exById(e.exId):null;const t=twExTarget(e);
         const sub=ss?'<span class="tw-ss-tag">⛓ Superset</span>':esc(((lib&&lib.bodyPart)||s.name||'')+(lib&&lib.equipment?(' · '+lib.equipment):''));
-        li+='<div class="tw-exrow'+(ss?' ss':'')+'"><span class="tw-exn">'+idx+'</span><div class="tw-exmeta"><b>'+esc(e.name||'Exercise')+'</b><span>'+sub+'</span></div><div class="tw-extar">'+esc(t.main)+(t.sub?'<small>'+esc(t.sub)+'</small>':'')+'</div></div>';});});
+        li+='<div class="tw-exrow'+(ss?' ss':'')+'"><span class="tw-exn">'+idx+'</span><div class="tw-exmeta"><b>'+esc(exDisp(e))+'</b><span>'+sub+'</span></div><div class="tw-extar">'+esc(t.main)+(t.sub?'<small>'+esc(t.sub)+'</small>':'')+'</div></div>';});});
       let block=hero;
       if(li)block+='<div class="tw-sec-h">📋 '+(todayW.length>1?esc(w.name):'Today’s session')+'</div><div class="tw-exli">'+li+'</div>';
       return block;
@@ -19115,7 +19149,7 @@ function wkoShowConfirm(iso,wId,w){
     const uni=ts.length&&ts.every(function(s){return String(s.reps||'')===String(first.reps||'')&&String(s.weight||'')===String(first.weight||'');});
     const tgt=uni?[ts.length+' ×',(first.reps||''),(first.weight?('@ '+first.weight+'kg'):'')].join(' ').replace(/\s+/g,' ').trim():(ts.length+' sets');
     const lib=e.exId&&(typeof exById==='function')?exById(e.exId):null;const vid=lib&&lib.video;
-    return '<div class="wkc-ex"><div class="wkc-ex-nm">'+esc(e.name||'Exercise')+(e.linkNext?' <span class="wkc-ss">superset</span>':'')+'</div><div class="wkc-ex-t">'+esc(tgt)+'</div>'+(vid?'<a class="wkc-ex-v" href="'+esc(vid)+'" target="_blank" rel="noopener" title="Watch demo">▶</a>':'')+'</div>';
+    return '<div class="wkc-ex"><div class="wkc-ex-nm">'+esc(exDisp(e))+(e.linkNext?' <span class="wkc-ss">superset</span>':'')+'</div><div class="wkc-ex-t">'+esc(tgt)+'</div>'+(vid?'<a class="wkc-ex-v" href="'+esc(vid)+'" target="_blank" rel="noopener" title="Watch demo">▶</a>':'')+'</div>';
   }).join('');
   const estMin=Math.max(10,Math.round(totalSets*2.5));
   const html='<div class="wkc-sheet"><button class="wkc-x" onclick="wkoCloseConfirm()" aria-label="Close">×</button>'+
@@ -19162,7 +19196,7 @@ async function wkoRunV2(iso,wId){
   const entries=flat.map((e,i)=>{const tSets=wdExSets(e);const track=(e.track&&e.track.length)?e.track:['reps','weight'];
     const uni=tSets.length&&tSets.every(s=>String(s.reps||'')===String(tSets[0].reps||'')&&String(s.weight||'')===String(tSets[0].weight||''));const first=tSets[0]||{};
     const target=uni?[tSets.length+' ×',(first.reps||''),(first.weight?('@ '+first.weight+'kg'):'')].join(' ').replace(/\s+/g,' ').trim():(tSets.length+' sets · per-set targets');
-    return {exId:e.exId||'',name:e.name||'Exercise',origName:e.name||'Exercise',brand:'',equipment:'',alts:Array.isArray(e.alts)?e.alts.filter(Boolean):[],group:groups[i]||'',repType:(track.includes('time')&&!track.includes('reps'))?'time':'reps',effort:'rir',target:target,restTarget:(+first.rest)||0,note:e.notes||'',comment:'',skipped:false,
+    return {exId:e.exId||'',name:exDisp(e),origName:exDisp(e),brand:'',equipment:'',alts:Array.isArray(e.alts)?e.alts.filter(Boolean):[],group:groups[i]||'',repType:(track.includes('time')&&!track.includes('reps'))?'time':'reps',effort:'rir',target:target,restTarget:(+first.rest)||0,note:e.notes||'',comment:'',skipped:false,
       sets:tSets.map(st=>({reps:'',weight:'',rir:'',rest:'',done:false,tech:st.tech||'',target:{reps:st.reps||'',weight:st.weight||'',rir:st.rir||'',rest:st.rest||'',tempo:st.tempo||'',time:st.time||'',distance:st.distance||'',height:st.height||''}}))};});
   if(!entries.length){toast('This workout has no exercises yet',true);return;}
   WKO={client_id:SESSION.id,date:iso||todayISO(),day_id:w.id,day_name:w.name||'Workout',completion:0,entries,v2:true};
@@ -19227,7 +19261,7 @@ function renderTraining(){
   const hasProg=!!((prog.weight||'').toString().trim()||(prog.goal||'').trim()||(prog.metrics||'').trim()||(prog.duration||'').trim()||(prog.progressive||'').trim());
   const hasSplit=WK_DAYS.some((_,i)=>(sdays[i]||'').trim());
   const hasAny=!!(hasProg||hasSplit||macX.cals||(t.startPoint||'').trim()||(t.nextMilestone||'').trim()||(t.split||'').trim()||(t.periodization||'').trim()||(t.cardio||'').trim()||(t.weeklyAdjust||'').trim()||(t.notes||'').trim()||(t.longTerm||'').trim()||(t.shortTerm||'').trim()||(t.expectations||'').trim()||(t.stage||'').trim()||phases.length||days.length||hasWs);
-  if(!hasAny){host.innerHTML='<div class="card"><div class="card-body" style="text-align:center;padding:48px 20px"><div style="font-size:44px;margin-bottom:12px">🏋️</div><h2 style="font-size:22px;text-transform:uppercase;letter-spacing:.02em;margin:0">Training plan coming soon</h2><p class="small" style="max-width:440px;margin:10px auto 0;line-height:1.55">Your coach hasn’t published your training programme yet — it’ll appear here once it’s ready.</p></div></div>';return;}
+  if(!hasAny){host.innerHTML=trainingWelcomeHTML();return;}   // fresh client, no programme yet → new-style welcome (same look as live clients)
   let h=wkoResumeBannerHTML();
   // programme sheet (new spreadsheet-style layout)
   if(hasProg){
@@ -24817,7 +24851,11 @@ function toggleDashCard(id){const c=document.getElementById(id);if(!c)return;con
 function restoreDashCards(){['notif-card','tasks-card'].forEach(function(id){const c=document.getElementById(id);if(!c)return;let v='0';try{v=localStorage.getItem('s2s_dashcol_'+id)||'0';}catch(e){}c.classList.toggle('collapsed',v==='1');ccSetLabel(c);});}
 async function renderOverview(){
   try{restoreDashCards();}catch(e){}
-  const host=$('adm-overview-host');if(host)host.innerHTML='<div class="empty">Loading compliance…</div>';
+  const host=$('adm-overview-host');
+  if(host){   // instant-render: on the first open after launch, paint the last dashboard snapshot instead of a blank "Loading…" while the bulk sync runs behind it
+    let cached=null;if(!SHELL_SEEN.has('adm-overview')){try{cached=localStorage.getItem(shellKey('adm-overview'));}catch(e){}}
+    host.innerHTML=cached||'<div class="empty">Loading compliance…</div>';SHELL_SEEN.add('adm-overview');
+  }
   const days=parseInt((($('ov-range')||{}).value))||14;OV_DAYS=days;
   const today=todayISO(),start=addDaysISO(today,-(days-1));
   let clients=[],issues=[],plansByC=null;
@@ -25121,6 +25159,7 @@ function renderOverviewTable(){
   }
   host.innerHTML=html;
   const _now=host.querySelector('.ov-scroll');if(_now){_now.scrollLeft=_sx;_now.scrollTop=_sy;}   // restore scroll so an in-place refresh doesn't jump
+  try{shellSave('adm-overview-host','adm-overview');}catch(e){}   // cache the rendered dashboard so the next launch opens looking loaded
 }
 // Manually cycle a section's dashboard status: auto (from SOP) → done → pending → auto
 /* ---- internal staff feedback (Tushar / Shubham) per client ---- */
@@ -29295,7 +29334,10 @@ let WD_VIEW='workouts', WD_CAL_DAYS=7, WD_CAL_START=null, WD_CAL_PICK=null, WD_C
 function t2(){edPlan.training=edPlan.training||{};const v=edPlan.training.v2=edPlan.training.v2||{active:false,workouts:[],calendar:{}};if(!Array.isArray(v.workouts))v.workouts=[];if(!v.calendar||typeof v.calendar!=='object')v.calendar={};return v;}
 function wdWorkout(id){return t2().workouts.find(w=>w.id===id)||null;}
 let WD_CLIENTLOGS=[];
-async function wdOpen(){ if(!edClient||!edClient.id){toast('Open a client first',true);return;} try{await loadExLib();}catch(e){} try{await setTplLoad();}catch(e){} try{await wlibLoad();}catch(e){} try{WD_CLIENTLOGS=await DB.listWorkoutLogs(edClient.id)||[];}catch(e){WD_CLIENTLOGS=[];} WD_CUR=null; const m=$('wd-modal'); if(m){document.body.appendChild(m);m.classList.add('open');} wdRender(); }
+async function wdOpen(){ if(!edClient||!edClient.id){toast('Open a client first',true);return;} try{await loadExLib();}catch(e){} try{refreshExNameList();}catch(e){} try{await setTplLoad();}catch(e){} try{await wlibLoad();}catch(e){} try{WD_CLIENTLOGS=await DB.listWorkoutLogs(edClient.id)||[];}catch(e){WD_CLIENTLOGS=[];} try{wdBackfillExIds();}catch(e){} WD_CUR=null; const m=$('wd-modal'); if(m){document.body.appendChild(m);m.classList.add('open');} wdRender(); }
+/* One-time link-up: any exercise typed by name (no exId) that exactly matches a library exercise gets
+   linked, so existing client workouts start inheriting library video/cues/name + future edits. Saves once. */
+function wdBackfillExIds(){try{if(!(EX_LIB&&EX_LIB.length))return;const byName={};EX_LIB.forEach(x=>{const n=(x.name||'').trim().toLowerCase();if(n&&!byName[n])byName[n]=x.id;});let changed=false;(t2().workouts||[]).forEach(w=>(w.sections||[]).forEach(s=>(s.exercises||[]).forEach(e=>{if(!e.exId&&(e.name||'').trim()){const id=byName[(e.name||'').trim().toLowerCase()];if(id){e.exId=id;changed=true;}}})));if(changed)wdSave(true);}catch(e){}}
 function wdClose(){const m=$('wd-modal');if(m)m.classList.remove('open');}
 async function wdSave(silent){ if(!edClient||!edClient.id){if(!silent)toast('Open a client first',true);return;} try{ const raw=(await DB.getPlan(edClient.id))||{client_id:edClient.id}; raw.training=raw.training||{}; raw.training.v2=t2(); await DB.savePlanRow(raw); if(!silent)toast('Saved ✓'); }catch(e){if(!silent)toast('Could not save — '+((e&&e.message)||'error'),true);} }
 function wdRender(){ const host=$('wd-host'); if(!host)return; const sub=$('wd-sub'); if(WD_CUR){ wdRenderDesigner(host); return; } if(WD_VIEW==='calendar'){ wdRenderCalendar(host); if(sub)sub.textContent=((edClient&&edClient.name)||'')+' · calendar'; return; } if(WD_VIEW==='library'){ wdRenderLibrary(host); if(sub)sub.textContent=((edClient&&edClient.name)||'')+' · library'; return; } wdRenderList(host); if(sub)sub.textContent=((edClient&&edClient.name)||'')+' · '+t2().workouts.length+' workouts'; }
@@ -29350,6 +29392,9 @@ function wdEx(sid,eid){const s=wdSecById(sid);return s?(s.exercises||[]).find(e=
 function wdAddFromLib(exId){wdFlush();const s=wdSecById(WD_SEC)||wdSecs()[wdSecs().length-1];if(!s){toast('Add a section first',true);return;}const e=exById(exId);s.exercises=s.exercises||[];s.exercises.push({id:uid(),exId:exId,name:(e&&e.name)||'Exercise',track:WD_DEFAULT_TRACK.slice(),scheme:{sets:'3'},alts:[],linkNext:false,notes:''});wdSave(true);wdRenderDesigner($('wd-host'));}
 function wdAddBlank(){wdFlush();const s=wdSecById(WD_SEC)||wdSecs()[wdSecs().length-1];if(!s){toast('Add a section first',true);return;}s.exercises=s.exercises||[];s.exercises.push({id:uid(),exId:'',name:'',track:WD_DEFAULT_TRACK.slice(),scheme:{sets:'3'},alts:[],linkNext:false,notes:''});wdSave(true);wdRenderDesigner($('wd-host'));}
 function wdExSet(sid,eid,f,v){const e=wdEx(sid,eid);if(!e)return;e[f]=v;wdSave(true);}
+/* As the coach types/picks an exercise name, link it to the matching library exercise (exId) so the
+   client inherits the library's video/cues/name — and any later library edit flows through automatically. */
+function wdExLink(sid,eid,val){const e=wdEx(sid,eid);if(!e)return;const n=(val||'').trim().toLowerCase();let lib=null;if(n){lib=(EX_LIB||[]).find(x=>(x.name||'').trim().toLowerCase()===n);}const newId=lib?lib.id:'';if((e.exId||'')!==newId){e.exId=newId;wdSave(true);}}
 function wdExScheme(sid,eid,k,v){const e=wdEx(sid,eid);if(!e)return;e.scheme=e.scheme||{};e.scheme[k]=v;wdSave(true);}
 /* per-set targets: each exercise has sets:[{<var>:value}] so reps/weight/etc can differ per set */
 function wdExSets(e){if(Array.isArray(e.sets)&&e.sets.length)return e.sets;const n=Math.max(1,Math.min(20,parseInt(e.scheme&&e.scheme.sets)||3));const base={};((e.track&&e.track.length)?e.track:WD_DEFAULT_TRACK).forEach(v=>{base[v]=(e.scheme&&e.scheme[v]!=null&&e.scheme[v]!=='')?e.scheme[v]:'';});e.sets=Array.from({length:n},()=>Object.assign({},base));return e.sets;}
@@ -29486,6 +29531,8 @@ function wdRenderDesigner(host){
   h+='<button class="btn-sm" style="width:100%;margin-top:6px" onclick="wdAddSection()">＋ Add section</button>';
   h+='</div><div class="wd-rail" id="wd-rail"></div></div>';
   host.innerHTML=h;wdRenderRail();
+  try{refreshExNameList();}catch(e){}   // populate the exercise-name dropdown (datalist) from the library
+  try{if(!(EX_LIB&&EX_LIB.length))loadExLib().then(refreshExNameList).catch(()=>{});}catch(e){}
 }
 function wdSectionHTML(s){
   const foc=(s.id===WD_SEC),exs=s.exercises||[];
@@ -29502,7 +29549,7 @@ function wdExHTML(s,e,i,n){
   const _nm=(e.name||'').trim();
   const _inLib=!!_nm&&(EX_LIB||[]).some(x=>(x.name||'').trim().toLowerCase()===_nm.toLowerCase());
   const _genLbl=(_inLib||e.exId)?'✨ regen':'✨ gen';
-  h+='<input class="wd-ex-name" list="ex-namelist" value="'+esc(e.name||'')+'" placeholder="Exercise name" oninput="wdExSet(\''+sid+'\',\''+eid+'\',\'name\',this.value);wdGenSync(\''+eid+'\',this.value)">';
+  h+='<input class="wd-ex-name" list="ex-namelist" value="'+esc(e.name||'')+'" placeholder="Exercise name — type to search the library" oninput="wdExSet(\''+sid+'\',\''+eid+'\',\'name\',this.value);wdExLink(\''+sid+'\',\''+eid+'\',this.value);wdGenSync(\''+eid+'\',this.value)"'+(e.exId?' title="Linked to library — the client gets this exercise’s video &amp; cues, and any library edit updates automatically"':'')+'>'+(e.exId?'<span class="wd-linked" title="Linked to your exercise library">🔗</span>':'');
   h+='<button id="wdgen-'+eid+'" class="btn-xxs" style="color:var(--brand);flex:none;white-space:nowrap;display:'+(_nm?'':'none')+'" title="✨ Generate or regenerate this exercise (execution, mistakes, cues, video) and save it to your library — use this to fix a wrong video on an existing exercise" onclick="wdExGen(\''+sid+'\',\''+eid+'\')">'+_genLbl+'</button>';
   h+='<button class="icon-x" onclick="wdDelEx(\''+sid+'\',\''+eid+'\')">×</button></div>';
   h+='<div class="wd-track"><span class="wd-mini">Track:</span>'+WD_VARS.map(vd=>'<button class="wd-chip'+(((e.track||[]).includes(vd[0]))?' on':'')+'" onclick="wdToggleVar(\''+sid+'\',\''+eid+'\',\''+vd[0]+'\')">'+esc(vd[1])+'</button>').join('')+'</div>';
