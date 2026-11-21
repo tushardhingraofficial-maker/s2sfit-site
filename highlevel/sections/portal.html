@@ -2647,6 +2647,8 @@ details.meal-add-choose[open]>summary{background:none;color:var(--muted);box-sha
 .cmt-pending-x{position:absolute;top:-7px;left:138px;background:var(--red);color:#fff;border:none;border-radius:50%;width:20px;height:20px;line-height:1;cursor:pointer;font-size:14px}
 .cmt-media{display:block;margin-top:5px}
 .cmt-media img{max-width:190px;max-height:170px;border-radius:9px;border:1px solid var(--border);display:block}
+.cmt-loadimg{display:inline-flex;align-items:center;gap:6px;margin-top:5px;font-size:12px;font-weight:700;color:var(--prot);background:var(--card2);border:1px dashed var(--border);border-radius:9px;padding:7px 11px;cursor:pointer}
+.cmt-loadimg:disabled{opacity:.6;cursor:default}
 /* like button + comment toggle row */
 .post-actions{display:flex;align-items:center;gap:14px;margin:2px 0}
 .like-wrap{display:inline-flex;align-items:center;gap:4px}
@@ -6012,8 +6014,9 @@ img,svg,canvas,video{max-width:100%}
               <div class="field"><label class="lab">Email (login)</label><input id="ed-email" type="email" placeholder="client@email.com" onchange="checkDuplicateClient($('ed-email').value,$('ed-name').value)"></div>
             </div>
             <div class="row">
-              <div class="field"><label class="lab">Password <span class="small" style="text-transform:none;font-weight:400">— visible so you can share it</span></label>
-                <div style="display:flex;gap:6px"><input id="ed-pass" type="text" placeholder="firstname + last 4 phone digits" style="flex:1"><button class="btn-sm" style="flex:none;white-space:nowrap" onclick="genPassword()" title="Generate / reset password">↻ Generate</button></div></div>
+              <div class="field"><label class="lab">Password <span class="small" style="text-transform:none;font-weight:400">— hidden; blank keeps the current one</span></label>
+                <div style="display:flex;gap:6px"><input id="ed-pass" type="text" placeholder="Leave blank to keep current — type to set a new one" style="flex:1"><button class="btn-sm" style="flex:none;white-space:nowrap" onclick="edRevealPw()" title="Reveal the client's current password (logged)">👁 Reveal</button><button class="btn-sm" style="flex:none;white-space:nowrap" onclick="genPassword()" title="Generate / reset password">↻ Generate</button></div>
+                <div id="ed-pw-reveal" class="small" style="display:none;margin-top:5px"></div></div>
               <div class="field"><label class="lab">Plan title</label><input id="ed-title" type="text" placeholder="e.g. Cut — Phase 1"></div>
             </div>
             <div class="row">
@@ -7748,7 +7751,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04uv';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04uw';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -8227,6 +8230,10 @@ const DB={
     if(this.mode==='api')return this._api('listComments',{clientId:cid||null,postType:opts.postType||null,postKey:(opts.postKey!=null?String(opts.postKey):null),limit:opts.limit||1000});
     if(this.mode==='cloud'){let q=this.sb.from('dp_comments').select('*');if(cid)q=q.eq('client_id',cid);if(opts.postType)q=q.eq('post_type',opts.postType);if(opts.postKey!=null)q=q.eq('post_key',String(opts.postKey));const{data,error}=await q.order('created_at').limit(opts.limit||1000);if(error)throw error;return data||[];}
     return this._get('comments').filter(c=>(!cid||c.client_id===cid)&&(!opts.postType||c.post_type===opts.postType)&&(opts.postKey==null||String(c.post_key)===String(opts.postKey))).sort((a,b)=>String(a.created_at).localeCompare(String(b.created_at)));},
+  async getCommentMedia(id){   // TP-002: fetch one comment's (possibly large) photo on demand
+    if(this.mode==='api')return this._api('getCommentMedia',{id});
+    if(this.mode==='cloud'){const{data}=await this.sb.from('dp_comments').select('media').eq('id',id).maybeSingle();return {id,media:data?data.media:null};}
+    const c=this._get('comments').find(x=>x.id===id);return {id,media:c?c.media:null};},
   async addComment(c){c=c||{};c.id=c.id||uid();c.created_at=c.created_at||new Date().toISOString();
     const isA=ADMIN_OK;c.author=isA?'admin':'client';c.post_key=String(c.post_key);c.media=c.media||null;
     if(!isA)c.client_id=SESSION&&SESSION.id;
@@ -18883,11 +18890,21 @@ function actWkExCardHTML(w,en,clientName){
 let ACT_COMMENTS={};   // "cid|type|pk" → [comments], populated by renderActivity
 function cmtWhen(iso){if(!iso)return '';try{const d=new Date(iso);if(!isNaN(d))return d.toLocaleDateString([],{month:'short',day:'numeric'})+' '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}catch(e){}return '';}
 function commentItemHTML(c){const coach=(c.author==='admin');
-  const media=c.media?('<a href="'+c.media+'" target="_blank" rel="noopener" class="cmt-media"><img src="'+c.media+'" alt="attachment" loading="lazy"></a>'):'';
+  // TP-002: big photos aren't sent in the list — show a tap-to-load placeholder that fetches it on demand.
+  const media=c.media
+    ?('<a href="'+c.media+'" target="_blank" rel="noopener" class="cmt-media"><img src="'+c.media+'" alt="attachment" loading="lazy"></a>')
+    :(c.has_big_media?('<button type="button" class="cmt-loadimg" onclick="cmtLoadPhoto(this,\''+esc(c.id)+'\')">📷 Tap to load photo</button>'):'');
   return '<div class="cmt '+(coach?'coach':'client')+'"><span class="cmt-who">'+esc(c.author_name||(coach?'Coach':'Client'))+'</span>'+
     (c.text?'<span class="cmt-txt">'+esc(c.text)+'</span>':'')+media+'<span class="cmt-when">'+cmtWhen(c.created_at)+'</span></div>';}
 function commentThreadHTML(list){if(!list||!list.length)return '<div class="cmt-empty">No comments yet.</div>';
   return list.slice().sort((a,b)=>String(a.created_at||'').localeCompare(String(b.created_at||''))).map(commentItemHTML).join('');}
+async function cmtLoadPhoto(btn,id){
+  if(!btn||!id)return;const old=btn.textContent;btn.disabled=true;btn.textContent='Loading photo…';
+  try{const r=await DB.getCommentMedia(id);const m=r&&r.media;
+    if(m){const a=document.createElement('a');a.href=m;a.target='_blank';a.rel='noopener';a.className='cmt-media';a.innerHTML='<img src="'+esc(m)+'" alt="attachment" loading="lazy">';btn.replaceWith(a);}
+    else{btn.textContent='No photo';}
+  }catch(e){btn.disabled=false;btn.textContent=old;toast('Could not load photo — '+((e&&e.message)||'error'),true);}
+}
 /* ---- likes / reactions (food journal + day log posts) ---- */
 let ACT_LIKES={};   // "cid|type|pk" → [likes], populated by renderActivity
 function likeWrapHTML(cid,type,pk,likes){
@@ -24763,6 +24780,19 @@ function acNameInput(){
   menu.classList.add('open');
 }
 function defaultPw(name,phone){const first=(name||'').trim().split(/\s+/)[0]||'';const last4=(String(phone||'').replace(/\D/g,'')).slice(-4);return first+last4;}
+/* TP-005: reveal the current password on demand (server call is admin-only + audited); falls back to a
+   still-cached value on older builds. Replaces the always-visible password field. */
+async function edRevealPw(){
+  if(!edClient||!edClient.id){toast('Open a client first',true);return;}
+  const out=$('ed-pw-reveal');if(out){out.style.display='';out.textContent='Revealing…';}
+  let pw='';
+  try{const r=await DB._api('revealClientPw',{id:edClient.id});pw=(r&&r.pw)||'';}
+  catch(e){pw=edClient.pw||'';}   // server action not deployed yet → use the value already in this session
+  if(!pw)pw=edClient.pw||'';
+  if(!pw){if(out){out.style.display='none';out.innerHTML='';}toast('No password on file for this client',true);return;}
+  if(out){out.style.display='';out.innerHTML='Current password: <b style="user-select:all;font-size:13px">'+esc(pw)+'</b> <button class="btn-xxs" onclick="(function(){var o=document.getElementById(\'ed-pw-reveal\');if(o){o.style.display=\'none\';o.innerHTML=\'\';}})()">hide</button>';
+    setTimeout(function(){try{const o=$('ed-pw-reveal');if(o){o.style.display='none';o.innerHTML='';}}catch(e){}},25000);}
+}
 function genPassword(){
   const name=$('ed-name').value, email=($('ed-email').value||'').trim().toLowerCase();
   const a=(ACTIVE_CLIENTS||[]).find(x=>(x.email||'').toLowerCase()===email||(x.name||'').toLowerCase()===name.trim().toLowerCase());
@@ -28258,7 +28288,8 @@ async function editClient(id){
 function fillEditor(plan){
   $('admin-list').classList.add('hidden');$('admin-editor').classList.remove('hidden');
   try{if(edPlan){const ep=effectivePhase(edPlan);if(ep)edPlan.phase=ep;}}catch(e){}   // current phase auto-syncs to the roadmap block covering today
-  $('ed-name').value=edClient.name||'';$('ed-email').value=edClient.email||'';$('ed-pass').value=edClient.pw||'';$('ed-title').value=plan.title||'';
+  $('ed-name').value=edClient.name||'';$('ed-email').value=edClient.email||'';$('ed-pass').value='';$('ed-title').value=plan.title||'';   // TP-005: password no longer auto-shown — use Reveal
+  {const _pr=$('ed-pw-reveal');if(_pr){_pr.style.display='none';_pr.innerHTML='';}}
   {const bn=$('ed-banner-name');if(bn)bn.textContent=edClient.name||edClient.email||'New client';}
   {const fn=$('ed-feedback-notes');if(fn){fn.value=edPlan.feedback_notes||plan.feedback_notes||'';setTimeout(()=>taGrow(fn),0);}
    const fs=$('ed-feedback-status');if(fs)fs.value=edPlan.feedback_status||'pending';
