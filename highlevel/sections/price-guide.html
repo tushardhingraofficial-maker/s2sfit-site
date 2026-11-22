@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-version="v2026-11-19b">
+<html lang="en" data-version="v2026-11-22a">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -631,7 +631,7 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
 <div id="slides">
 
 <!-- START — new vs returning branch -->
-<section class="slide active" id="s-start">
+<section class="slide" id="s-start">
   <div class="inner center">
     <div class="eyebrow">Welcome to S2S Fit</div>
     <h1>Let's Get<br>Started.</h1>
@@ -857,7 +857,7 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
 </section>
 
 <!-- FINAL COMPARISON -->
-<section class="slide" id="s-final">
+<section class="slide active" id="s-final">
   <div class="inner">
     <div class="center"><div class="eyebrow">Side By Side</div>
       <h2>The Real Cost — <span style="color:#ff6b5e">Their Way</span> vs <span style="color:var(--green)">Ours</span></h2>
@@ -1123,7 +1123,7 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
 
       <div class="po-card save" id="wo-cmp">
         <div class="po-h good">2 · It's the cheaper path — not the expensive one</div>
-        <div class="po-save-row"><span class="l">A personal trainer for your goal <small>(your numbers)</small></span><span class="v bad" id="wo-pt">$6,240</span></div>
+        <div class="po-save-row"><span class="l">A personal trainer for your goal <small>(typical rates)</small></span><span class="v bad" id="wo-pt">$6,240</span></div>
         <div class="po-save-row"><span class="l" id="wo-s2s-l">The S2S Hybrid — done &amp; yours to keep</span><span class="v good" id="wo-s2s">$2,200</span></div>
         <div class="po-save-big">You <b>save <span id="wo-save">$4,040</span></b> — <span id="wo-voucher"></span>and you own the result for life.</div>
       </div>
@@ -1165,7 +1165,6 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
       <div class="po-wait" id="plan-grid"></div>
 
       <div class="cmp-punch" style="margin-top:22px">The most expensive choice isn't the program.<br><b>It's another year of staying exactly where you are.</b></div>
-      <div style="text-align:center;margin-top:20px"><button class="go-inline" onclick="goTo('s-close')">Okay — I'm in. Let's start →</button></div>
     </div>
   </div>
 </section>
@@ -1391,7 +1390,7 @@ async function loadCloud(){
     const d=rows&&rows[0]&&rows[0].data;
     if(d){['onboard','weekly','weeks','vsl','one2one','ptRate','ptPerWeek','ptDeliverCost','ptMonth','wasteMonthly','rewardPct','momMonthly','bpPrice','bpMonths','reactCredit','reactFreeWeeks'].forEach(k=>{if(typeof d[k]==='number')CFG[k]=d[k];});CFG_TXT.forEach(k=>{if(typeof d[k]==='string')CFG[k]=d[k];});saveCFG();}
   }catch(e){}
-  renderPricing();
+  renderPricing();renderFinal();renderWait();   // refresh every page once cloud prices load
 }
 async function loadLibrary(){
   try{
@@ -1547,7 +1546,7 @@ function stepPT(which,d){
 }
 /* keep every page that shows the PT number in sync: PT screen, final comparison, money-saved/objection */
 function syncPT(){renderPTCost();renderFinal();renderWait();}
-function ptCalc(){const weeks=PT_MONTHS*52/12, sessions=Math.round(PT_DAYS*weeks);return {sessions:sessions,total:Math.round(PT_RATE*sessions)};}
+function ptCalc(){const weeks=PT_MONTHS*52/12, sessions=Math.round((Number(CFG.ptPerWeek)||3)*weeks);return {sessions:sessions,total:Math.round((Number(CFG.ptRate)||80)*sessions)};}
 function renderPTCost(){
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   const rateEl=document.getElementById('ptc-rate');
@@ -1753,11 +1752,11 @@ function renderTri(){
 
 /* ═══════════ SLIDE ENGINE ═══════════ */
 // two paths from the preference branch: online-only skips the PT-cost calc and the PT face-off
-const ORDER_HYBRID=['s-cover','s-problem','s-prefer','s-ptcost','s-system','s-commit','s-pricing','s-final','s-decision','s-wait','s-close'];
-const ORDER_ONLINE=['s-cover','s-problem','s-prefer','s-system','s-commit','s-pricing','s-decision','s-wait','s-close'];
-let COACH_PREF='oneonone';   // 'online' | 'oneonone' — chosen on the s-prefer branch
-function FLOW(){return COACH_PREF==='online'?ORDER_ONLINE:ORDER_HYBRID;}
-let current='s-start', history=[];
+// Lean guide: three pages only — comparison → price → objections & upsells
+const ORDER_LEAN=['s-final','s-pricing','s-wait'];
+let COACH_PREF='oneonone';   // kept for pricing logic: full one-on-one view (shows the add-on + PT comparison)
+function FLOW(){return ORDER_LEAN;}
+let current='s-final', history=[];
 function show(id){
   const prev=document.querySelector('.slide.active'), next=document.getElementById(id), desktop=window.innerWidth>=760;
   if(prev&&prev!==next){prev.classList.remove('active');
@@ -1779,14 +1778,14 @@ function goTo(id){history.push(current);show(id);}
 function goNext(){const f=FLOW(),i=f.indexOf(current),n=(i>=0)?f[i+1]:null;if(n)goTo(n);}
 function goBack(){if(history.length){show(history.pop());}}
 function updateChrome(){
-  const f=FLOW(), i=f.indexOf(current), atStart=current==='s-start';
+  const f=FLOW(), i=f.indexOf(current), last=(i===f.length-1);
   document.getElementById('btn-back').style.visibility=history.length?'visible':'hidden';
   const nx=document.getElementById('btn-next');
-  if(atStart||current==='s-close'||current==='s-decision'||current==='s-prefer'||current==='s-commit'){nx.style.display='none';}
-  else{nx.style.display='';nx.textContent=current==='s-cover'?'Start →':current==='s-system'?'One last question →':current==='s-pricing'?(COACH_PREF==='online'?'My decision →':'Compare the cost →'):current==='s-final'?'My decision →':current==='s-wait'?'I’m ready →':'Next →';}
+  if(i<0||last){nx.style.display='none';}
+  else{nx.style.display='';nx.textContent=current==='s-final'?'See the pricing →':current==='s-pricing'?'My options →':'Next →';}
   const fill=document.getElementById('progress-fill'), meta=document.getElementById('nav-meta');
-  if(atStart){fill.style.width='0%';meta.textContent='';}
-  else if(i>=0){fill.style.width=((i+1)/f.length*100)+'%';meta.textContent=(i+1)+' / '+f.length;}
+  if(i>=0){fill.style.width=((i+1)/f.length*100)+'%';meta.textContent=(i+1)+' / '+f.length;}
+  else{fill.style.width='0%';meta.textContent='';}
 }
 function applyModeChrome(){
   const ey=document.querySelector('#s-cover .eyebrow');
@@ -2158,7 +2157,7 @@ function reopenClient(id){
   const row=CLIENTS.find(c=>c.id===id);if(!row)return;const d=row.d;CURRENT_LEAD=d;
   if(d.vslTicks){['video','proof','assess','call'].forEach(k=>VSL_TICKS[k]=!!d.vslTicks[k]);}else setVslAll(!!d.vslOn);   // restore which voucher steps were banked
   renderLeadSummary(d);renderPricing();
-  closeAdmin();show('s-pricing');history=['s-cover'];
+  closeAdmin();show('s-pricing');history=['s-final'];
 }
 function renderLeadSummary(d){
   const el=document.getElementById('lead-summary');if(!el)return;
@@ -2213,7 +2212,7 @@ function openPortalLead(L){
   setVslAll(vActive);   // an active voucher means every step is banked → full amount applied
   renderLeadSummary(L);renderPricing();
   if(typeof closeAdmin==='function')closeAdmin();
-  show('s-pricing');history=['s-cover'];
+  show('s-pricing');history=['s-final'];
   return true;
 }
 function checkPortalHandoff(){
@@ -2238,6 +2237,7 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','
 
 /* ═══════════ BOOT ═══════════ */
 renderPricing();
+renderFinal();renderO2OBreak();renderWait();   // lean guide opens on the comparison page
 initAdmin();
 updateChrome();
 loadCloud();
