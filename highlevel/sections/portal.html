@@ -7806,7 +7806,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04va';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04vb';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -11138,11 +11138,13 @@ async function ptpMirror(wk,doc){
 }
 /* Planner's Google Calendar calls → s2s-ptcal (reuses the coach's s2s-gcal Google link). */
 async function ptpMcp(server,tool,input){
-  if(server==='Google Calendar'&&(tool==='list_events'||tool==='create_event')){
-    const action=tool==='list_events'?'listEvents':'createEvent';
+  if(server==='Google Calendar'&&(tool==='list_events'||tool==='create_event'||tool==='update_event')){
+    const action=tool==='list_events'?'listEvents':tool==='update_event'?'updateEvent':'createEvent';
     const payload=Object.assign({action,coach_id:gcalCoachId(),calendarId:input.calendarId},
       tool==='list_events'
         ? {startTime:input.startTime,endTime:input.endTime,pageSize:input.pageSize,pageToken:input.pageToken}
+        : tool==='update_event'
+        ? {eventId:input.eventId,summary:input.summary,startTime:input.startTime,endTime:input.endTime,location:input.location,colorId:input.colorId,notificationLevel:input.notificationLevel}
         : {summary:input.summary,startTime:input.startTime,endTime:input.endTime,location:input.location,colorId:input.colorId,notificationLevel:input.notificationLevel,attendees:input.attendees});
     const url=GCAL_URL.replace(/s2s-gcal$/,'s2s-ptcal');
     let res,j={};
@@ -31677,6 +31679,7 @@ setTimeout(function(){try{bootSplashHide();}catch(_){}},6000);   // hard fallbac
 
 
 
+
 <script type="text/plain" id="ptp-tpl">
 <!DOCTYPE html>
 <html lang="en">
@@ -32023,7 +32026,7 @@ function offClients(){
   return out;
 }
 function byId(id){for(var i=0;i<S.sessions.length;i++)if(S.sessions[i].id===id)return S.sessions[i];return null;}
-function edited(s){if(s.pushed){delete s.pushed;delete S.log[s.id];flash("That session was already in the calendar. The old event stays there until you remove it in Google Calendar.","warn");}}
+function edited(s){if(s.pushed){s.pushed.stale=true;delete S.log[s.id];}}   /* keep it published (client keeps seeing it); the push updates the SAME calendar event in place */
 
 /* ---------- rendering ---------- */
 function renderHdr(){
@@ -32355,13 +32358,25 @@ async function pushAll(){
   var keys;
   try{keys=await existingKeys();}
   catch(e){S.pushing=false;S.pushSummary="Nothing was pushed. "+mcpMessage(e,"Google Calendar");S.pushKind="bad";renderList();return;}
-  var todo=sorted().filter(function(s){return !s.pushed;}),made=0,found=0,failed=0,stopped="";
+  var todo=sorted().filter(function(s){return !s.pushed||s.pushed.stale;}),made=0,found=0,updated=0,failed=0,stopped="";
   for(var i=0;i<todo.length;i++){
-    var s=todo[i],w=who(s),date=dateOf(s),startT=date+"T"+hhmm(s.start)+":00",key=title(s)+"|"+startT.slice(0,16);
+    var s=todo[i],w=who(s),date=dateOf(s),startT=date+"T"+hhmm(s.start)+":00",endT=date+"T"+hhmm(s.start+s.dur)+":00";
+    var input={calendarId:CAL_ID,summary:title(s),startTime:startT,endTime:endT,location:locFull(s),colorId:s.lk==="WG"?"9":"10",notificationLevel:S.invites?"ALL":"NONE"};
+    if(w.email)input.attendees=[{email:w.email}];
+    // edited session already in the calendar → update the SAME event in place (no duplicate)
+    if(s.pushed&&s.pushed.id&&s.pushed.stale){
+      S.log[s.id]={state:"working"};S.pushSummary="Updating "+(i+1)+" of "+todo.length+"…";renderList();
+      try{
+        await S.mcp.callTool("Google Calendar","update_event",Object.assign({eventId:s.pushed.id},input),{cache:false});
+        delete s.pushed.stale;s.pushed.at=new Date().toISOString();S.log[s.id]={state:"ok"};updated++;saveWeek();continue;
+      }catch(e){
+        if(e&&e.code==="tool_error"&&/404|not.?found/i.test((e.message||"")+"")){delete s.pushed;}   // event gone → recreate below
+        else{var amb0=!e||["server_unavailable","upstream_error","cancelled"].indexOf(e.code)>=0||!e.code;S.log[s.id]={state:amb0?"unknown":"fail",msg:mcpMessage(e,"Google Calendar")};failed++;if(amb0){stopped="Stopped while updating "+w.first+". Push again to carry on.";break;}continue;}
+      }
+    }
+    var key=title(s)+"|"+startT.slice(0,16);
     if(keys[key]){s.pushed={at:new Date().toISOString(),id:keys[key]===true?"":keys[key]};S.log[s.id]={state:"found"};found++;continue;}
     S.log[s.id]={state:"working"};S.pushSummary="Creating "+(i+1)+" of "+todo.length+"…";renderList();
-    var input={calendarId:CAL_ID,summary:title(s),startTime:startT,endTime:date+"T"+hhmm(s.start+s.dur)+":00",location:locFull(s),colorId:s.lk==="WG"?"9":"10",notificationLevel:S.invites?"ALL":"NONE"};
-    if(w.email)input.attendees=[{email:w.email}];
     try{
       var p=payload(await S.mcp.callTool("Google Calendar","create_event",input,{cache:false}));
       s.pushed={at:new Date().toISOString(),id:p.id||(p.event&&p.event.id)||""};S.log[s.id]={state:"ok"};made++;keys[key]=true;saveWeek();
@@ -32374,8 +32389,8 @@ async function pushAll(){
     }
   }
   saveWeek();S.pushing=false;
-  var left=S.sessions.filter(function(s){return !s.pushed;}).length;
-  S.pushSummary=made+" created, "+found+" already in the calendar"+(failed?", "+failed+" failed":"")+(left?", "+left+" still to push. ":". ")+stopped;
+  var left=S.sessions.filter(function(s){return !s.pushed||s.pushed.stale;}).length;
+  S.pushSummary=made+" created, "+updated+" updated, "+found+" already in the calendar"+(failed?", "+failed+" failed":"")+(left?", "+left+" still to push. ":". ")+stopped;
   S.pushKind=(stopped||failed)?"warn":"ok";
   renderHdr();renderStats();renderList();
 }
