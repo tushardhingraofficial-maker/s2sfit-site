@@ -7769,7 +7769,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04uy';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04uz';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -11009,7 +11009,11 @@ function ptpMountPlanner(){
   if(!PTP_HOOKED){window.addEventListener('message',ptpBridge);PTP_HOOKED=true;}
   const tpl=document.getElementById('ptp-tpl');
   host.innerHTML='<iframe id="ptp-frame" title="PT week planner" style="width:100%;height:calc(100vh - 128px);min-height:560px;border:0;border-radius:0 0 var(--radius) var(--radius);background:var(--surface);display:block"></iframe>';
-  const f=$('ptp-frame');if(f&&tpl)f.srcdoc=tpl.textContent.replace(/<\\\/script>/gi,'<\/script>');
+  const f=$('ptp-frame');
+  if(f&&tpl){
+    const theme=(document.documentElement.getAttribute('data-theme')==='dark')?'dark':'light';   // match the portal (white by default)
+    f.srcdoc=tpl.textContent.replace(/<\\\/script>/gi,'<\/script>').replace('<html lang="en">','<html lang="en" data-theme="'+theme+'">');
+  }
 }
 function closeScheduling(){
   try{const f=$('ptp-frame');if(f&&f.contentWindow)f.contentWindow.postMessage({ptp:true,cmd:'flush'},'*');}catch(e){}
@@ -11039,19 +11043,31 @@ async function ptpDbGet(path){
   return null;
 }
 async function ptpDbSet(path,data){
-  if(path==='config/roster'){await DB.setKV('pt_planner_roster',data);return true;}
+  if(path==='config/roster'){
+    await DB.setKV('pt_planner_roster',data);
+    try{   // keep Phase-1 clientCfg perWeek in step with planner roster edits (feeds the admin table + quota)
+      const pd=(await DB.getKV('pt_scheduling'))||{}; pd.clientCfg=pd.clientCfg||{};
+      ((data&&data.clients)||[]).forEach(c=>{if(c&&c.id)pd.clientCfg[c.id]=Object.assign({perWeek:0,gym:'',len:30},pd.clientCfg[c.id]||{},{perWeek:+c.perWeek||0});});
+      await DB.setKV('pt_scheduling',pd);
+    }catch(e){console.warn('pt perWeek sync',e);}
+    return true;
+  }
   if(path==='config/settings'){await DB.setKV('pt_planner_settings',data);return true;}
   if(path.indexOf('weeks/')===0){const wk=path.slice(6);await DB.setKV('pt_week:'+wk,data);try{await ptpMirror(wk,data);}catch(e){console.warn('pt mirror',e);}return true;}
   return true;
 }
 async function ptpRosterDoc(){
-  // always rebuild from portal clients (authoritative, real ids) so the roster never goes stale;
-  // append any hand-added planner-only clients from the saved roster.
-  let cs=[];try{cs=await DB.listClients();}catch(e){cs=[];}
+  // rebuild from portal clients (authoritative, real ids); mark paused/archived as inactive so the
+  // rail shows active clients only; perWeek from Phase-1 clientCfg; append hand-added planner clients.
+  let ov=null;try{ov=await DB.overview();}catch(e){}
+  let cs=(ov&&ov.clients)||[];
+  if(!cs.length){try{cs=await DB.listClients();}catch(e){cs=[];}}
+  const plans={};((ov&&ov.plans)||[]).forEach(p=>{if(p&&p.client_id)plans[p.client_id]=p;});
   let cfg={};try{const pd=await DB.getKV('pt_scheduling');cfg=(pd&&pd.clientCfg)||{};}catch(e){}
   const base=(cs||[]).filter(c=>c&&c.id).map(c=>{
     const nm=(c.name||c.email||'Client').trim(),sp=nm.indexOf(' ');
-    return {id:c.id,first:sp<0?nm:nm.slice(0,sp),last:sp<0?'':nm.slice(sp+1),email:c.email||'',status:'Active',perWeek:+((cfg[c.id]||{}).perWeek||0)};
+    const pl=plans[c.id]||{}, active=!pl.archived&&!pl.paused;
+    return {id:c.id,first:sp<0?nm:nm.slice(0,sp),last:sp<0?'':nm.slice(sp+1),email:c.email||'',status:active?'Active':'Paused',perWeek:+((cfg[c.id]||{}).perWeek||0)};
   });
   const have={};base.forEach(c=>{have[c.id]=1;});
   let saved=null;try{saved=await DB.getKV('pt_planner_roster');}catch(e){}
@@ -31529,6 +31545,8 @@ function bootSplashHide(){const s=document.getElementById('boot-splash');if(!s||
 setTimeout(function(){try{bootSplashHide();}catch(_){}},6000);   // hard fallback so the splash never sticks
 </script>
 
+
+
 <script type="text/plain" id="ptp-tpl">
 <!DOCTYPE html>
 <html lang="en">
@@ -31616,6 +31634,8 @@ h1,h2,h3{font-family:var(--display);font-weight:600;letter-spacing:.01em;margin:
 .cl .tag{font-size:10px;color:var(--muted);margin-left:4px}
 .cl .n{font-variant-numeric:tabular-nums;font-size:12px;color:var(--muted);flex:none}
 .cl .n.full{color:var(--ok);font-weight:600} .cl .n.over{color:var(--bad);font-weight:600}
+.cl .n .pw{cursor:pointer;padding:1px 6px;border-radius:5px;border:1px solid var(--line);white-space:nowrap}
+.cl .n .pw:hover{border-color:var(--accent);color:var(--accent)}
 .addc summary{cursor:pointer;color:var(--muted);font-size:13px}
 .addc .field{margin-top:6px}
 .empty{color:var(--muted);padding:10px 4px;font-size:13px}
@@ -31754,8 +31774,8 @@ window.addEventListener("message",function(ev){
 try{parent.postMessage({ptp:true,evt:"ready"},"*");}catch(e){}
 var CAL_ID="c_ee2563915801bc8a05d9a9411b33748a5a7c45c45e833c79e59934ee8b9860d0@group.calendar.google.com";
 var CAL_NAME="S2S FIT - Appointments";
-var SHEET_ID="";
-var SHEET_RANGE="";
+var SHEET_ID="1OO0wHFbWNqjlAOlfTAofdY2EFH6QvxQVv8Njo_shN8E";
+var SHEET_RANGE="'Active Clients'!A2:F200";
 var COACH="Tushar Dhingra";
 var LOCS={
   WG:{short:"Windsor Gardens",cls:"wg",full:"Derrimut Gym - Windsor Garden, 468 N East Road, Adelaide South Australia 5087"},
@@ -31949,7 +31969,8 @@ function renderRoster(){
   if(!list.length){el.innerHTML='<p class="empty">No client matches that search.</p>';return;}
   el.innerHTML=list.map(function(o){
     var c=o.c,n=countFor(c.id),per=+c.perWeek||0,cls=(!o.off&&per)?(n===per?"full":(n>per?"over":"")):"";
-    return '<button class="cl'+(o.off?" off":"")+(S.armed===c.id?" armed":"")+'" data-act="arm" data-id="'+esc(c.id)+'" title="'+esc((o.off?"Not in the Active Clients list. ":"")+(c.email||"No email"))+'"><span class="nm">'+esc(c.first)+' '+esc(c.last||"")+(o.off?'<span class="tag">not in Active list</span>':'')+'</span><span class="n '+cls+'">'+n+(!o.off&&per?" / "+per:"")+'</span></button>';
+    var pw='<span class="pw" data-act="perweek" data-id="'+esc(c.id)+'" title="Click to set PT sessions per week">'+n+' / '+per+'</span>';
+    return '<button class="cl'+(o.off?" off":"")+(S.armed===c.id?" armed":"")+'" data-act="arm" data-id="'+esc(c.id)+'" title="'+esc((o.off?"Inactive. ":"")+(c.email||"No email"))+'"><span class="nm">'+esc(c.first)+' '+esc(c.last||"")+(o.off?'<span class="tag">inactive</span>':'')+'</span><span class="n '+cls+'">'+(o.off?n:pw)+'</span></button>';
   }).join("");
 }
 function layoutDay(list){
@@ -32086,8 +32107,44 @@ async function loadWeek(){
     S.prevCount=prev&&Array.isArray(prev.sessions)?prev.sessions.length:0;
   }catch(e){S.loadError="Your saved plan could not be reached. Nothing has been changed.";}
   S.loading=false;renderAll();
+  await pullCalendar();   // reflect sessions already in Google Calendar for this week (live view)
   if(!S.loadError&&!S.sessions.length&&S.prevCount)flash("This week is empty. Last week had "+S.prevCount+" sessions: use Copy last week's layout to start from it.","");
   else flash("");
+}
+function matchClientByFirst(first){
+  var f=String(first||"").toLowerCase().replace(/[^a-z]/g,"");
+  if(!f)return null;
+  for(var i=0;i<S.roster.length;i++){var c=S.roster[i];if(String(c.first||"").toLowerCase().replace(/[^a-z]/g,"")===f)return c;}
+  return null;
+}
+async function pullCalendar(){
+  if(!S.mcp)return;
+  try{
+    var startISO=S.week+"T00:00:00", endISO=addDays(S.week,7)+"T00:00:00";
+    var p=payload(await S.mcp.callTool("Google Calendar","list_events",{calendarId:CAL_ID,startTime:startISO,endTime:endISO,orderBy:"startTime",pageSize:250},{cache:false}));
+    var evs=p.events||[];
+    var have={}; S.sessions.forEach(function(s){if(s.pushed&&s.pushed.id)have[s.pushed.id]=1;});
+    var added=0;
+    evs.forEach(function(ev){
+      if(!ev||!ev.summary||!/PT Session/i.test(ev.summary))return;
+      if(ev.status==="cancelled")return;
+      if(have[ev.id])return;
+      var st=ev.start&&ev.start.dateTime; if(!st)return;
+      var date=String(st).slice(0,10), day=-1;
+      for(var d=0;d<7;d++){if(addDays(S.week,d)===date){day=d;break;}}
+      if(day<0)return;
+      var sm=(+String(st).slice(11,13))*60+(+String(st).slice(14,16));
+      var en=ev.end&&ev.end.dateTime, dur=30;
+      if(en){var em=(+String(en).slice(11,13))*60+(+String(en).slice(14,16)); dur=em-sm; if(dur<15)dur=30;}
+      var first=String(ev.summary).split(/\s+x\s+/i)[0].replace(/[,\s]+$/,"").trim();
+      var c=matchClientByFirst(first);
+      var loc=ev.location||"", lk="X", lo=loc;
+      if(/windsor/i.test(loc)){lk="WG";lo="";} else if(/gepps/i.test(loc)){lk="GC";lo="";}
+      S.sessions.push({id:"cal-"+ev.id,cid:c?c.id:"",first:c?c.first:first,email:c?(c.email||""):"",day:day,start:sm,dur:dur,lk:lk,loc:lo,pushed:{at:new Date().toISOString(),id:ev.id}});
+      have[ev.id]=1; added++;
+    });
+    if(added){renderAll();flash(added+" session"+(added===1?"":"s")+" already in your calendar are shown with a ✓.","");}
+  }catch(e){ /* calendar not connected / unavailable — silent; the planner still works */ }
 }
 async function copyPrev(){
   var prev;try{prev=await getDoc("weeks/"+addDays(S.week,-7));}catch(e){flash("Last week's plan could not be reached.","bad");return;}
@@ -32209,6 +32266,7 @@ document.addEventListener("click",function(ev){
   else if(act==="reload")init();
   else if(act==="brush-loc"){S.brush.lk=t.dataset.lk;renderDesign();if(S.brush.lk==="X"){var bc=$("brush-custom");if(bc)bc.focus();}}
   else if(act==="brush-dur"){S.brush.dur=+t.dataset.d;renderDesign();}
+  else if(act==="perweek"){var pc=findClient(t.dataset.id);if(pc){var pv=prompt("PT sessions per week for "+pc.first+":",String(+pc.perWeek||0));if(pv!==null){pc.perWeek=Math.max(0,Math.min(14,Math.round(+pv||0)));saveRoster();var sc3=$("gridwrap")?$("gridwrap").scrollTop:0;renderDesign();if($("gridwrap"))$("gridwrap").scrollTop=sc3;flash(pc.first+": "+pc.perWeek+" session"+(pc.perWeek===1?"":"s")+" per week.","ok");}}}
   else if(act==="arm"){S.armed=S.armed===t.dataset.id?null:t.dataset.id;var sc=$("gridwrap").scrollTop;renderDesign();$("gridwrap").scrollTop=sc;}
   else if(act==="disarm"){S.armed=null;var sc2=$("gridwrap").scrollTop;renderDesign();$("gridwrap").scrollTop=sc2;}
   else if(act==="mday"){S.mday=+t.dataset.d;renderGrid(false);}
