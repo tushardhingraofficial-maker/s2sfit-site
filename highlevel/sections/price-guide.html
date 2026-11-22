@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-version="v2026-11-22b">
+<html lang="en" data-version="v2026-11-22c">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -857,7 +857,7 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
 </section>
 
 <!-- FINAL COMPARISON -->
-<section class="slide active" id="s-final">
+<section class="slide" id="s-final">
   <div class="inner">
     <div class="center"><div class="eyebrow">Side By Side</div>
       <h2>The Real Cost — <span style="color:#ff6b5e">Their Way</span> vs <span style="color:var(--green)">Ours</span></h2>
@@ -1050,7 +1050,7 @@ p{font-size:15px;line-height:1.7;color:var(--muted);font-weight:400}
 </section>
 
 <!-- PREFERENCE BRANCH: online coaching vs one-on-one -->
-<section class="slide" id="s-prefer">
+<section class="slide active" id="s-prefer">
   <div class="inner center">
     <div class="eyebrow">One Quick Question</div>
     <h2>How Do You Want to Train?</h2>
@@ -1390,7 +1390,7 @@ async function loadCloud(){
     const d=rows&&rows[0]&&rows[0].data;
     if(d){['onboard','weekly','weeks','vsl','one2one','ptRate','ptPerWeek','ptDeliverCost','ptMonth','wasteMonthly','rewardPct','momMonthly','bpPrice','bpMonths','reactCredit','reactFreeWeeks'].forEach(k=>{if(typeof d[k]==='number')CFG[k]=d[k];});CFG_TXT.forEach(k=>{if(typeof d[k]==='string')CFG[k]=d[k];});saveCFG();}
   }catch(e){}
-  renderPricing();renderFinal();renderWait();   // refresh every page once cloud prices load
+  syncPTfromCFG();renderPricing();renderFinal();renderWait();   // refresh every page once cloud prices load
 }
 async function loadLibrary(){
   try{
@@ -1538,6 +1538,7 @@ function renderPricing(){
 }
 /* ---- PT cost reality (client enters their own perceived rate) ---- */
 let PT_RATE=80, PT_DAYS=3, PT_MONTHS=6;
+function syncPTfromCFG(){PT_RATE=Number(CFG.ptRate)||80;PT_DAYS=Number(CFG.ptPerWeek)||3;}   // start the PT-calc page from the admin's typical rate
 function onPTRate(){const v=parseFloat((document.getElementById('ptc-rate')||{}).value);PT_RATE=(isNaN(v)||v<0)?0:v;syncPT();}
 function stepPT(which,d){
   if(which==='days')PT_DAYS=Math.min(7,Math.max(1,PT_DAYS+d));
@@ -1546,7 +1547,7 @@ function stepPT(which,d){
 }
 /* keep every page that shows the PT number in sync: PT screen, final comparison, money-saved/objection */
 function syncPT(){renderPTCost();renderFinal();renderWait();}
-function ptCalc(){const weeks=PT_MONTHS*52/12, sessions=Math.round((Number(CFG.ptPerWeek)||3)*weeks);return {sessions:sessions,total:Math.round((Number(CFG.ptRate)||80)*sessions)};}
+function ptCalc(){const weeks=PT_MONTHS*52/12, sessions=Math.round(PT_DAYS*weeks);return {sessions:sessions,total:Math.round(PT_RATE*sessions)};}
 function renderPTCost(){
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   const rateEl=document.getElementById('ptc-rate');
@@ -1753,11 +1754,12 @@ function renderTri(){
 
 /* ═══════════ SLIDE ENGINE ═══════════ */
 // two paths from the preference branch: online-only skips the PT-cost calc and the PT face-off
-// Lean guide: three pages only — comparison → price → objections & upsells
-const ORDER_LEAN=['s-final','s-pricing','s-wait'];
-let COACH_PREF='oneonone';   // kept for pricing logic: full one-on-one view (shows the add-on + PT comparison)
-function FLOW(){return ORDER_LEAN;}
-let current='s-final', history=[];
+// selection branch → two paths
+const ORDER_ONEONONE=['s-prefer','s-ptcost','s-pricing','s-final','s-wait'];   // PT calc → pricing → comparison → objections
+const ORDER_ONLINE=['s-prefer','s-pricing','s-wait'];                          // straight to pricing → objections
+let COACH_PREF='oneonone';   // 'online' | 'oneonone' — chosen on the s-prefer selection
+function FLOW(){return COACH_PREF==='online'?ORDER_ONLINE:ORDER_ONEONONE;}
+let current='s-prefer', history=[];
 function show(id){
   const prev=document.querySelector('.slide.active'), next=document.getElementById(id), desktop=window.innerWidth>=760;
   if(prev&&prev!==next){prev.classList.remove('active');
@@ -1782,8 +1784,8 @@ function updateChrome(){
   const f=FLOW(), i=f.indexOf(current), last=(i===f.length-1);
   document.getElementById('btn-back').style.visibility=history.length?'visible':'hidden';
   const nx=document.getElementById('btn-next');
-  if(i<0||last){nx.style.display='none';}
-  else{nx.style.display='';nx.textContent=current==='s-final'?'See the pricing →':current==='s-pricing'?'My options →':'Next →';}
+  if(i<0||last||current==='s-prefer'){nx.style.display='none';}
+  else{nx.style.display='';nx.textContent=current==='s-ptcost'?'See the pricing →':current==='s-pricing'?(COACH_PREF==='online'?'My options →':'Compare the cost →'):current==='s-final'?'My options →':'Next →';}
   const fill=document.getElementById('progress-fill'), meta=document.getElementById('nav-meta');
   if(i>=0){fill.style.width=((i+1)/f.length*100)+'%';meta.textContent=(i+1)+' / '+f.length;}
   else{fill.style.width='0%';meta.textContent='';}
@@ -2158,7 +2160,7 @@ function reopenClient(id){
   const row=CLIENTS.find(c=>c.id===id);if(!row)return;const d=row.d;CURRENT_LEAD=d;
   if(d.vslTicks){['video','proof','assess','call'].forEach(k=>VSL_TICKS[k]=!!d.vslTicks[k]);}else setVslAll(!!d.vslOn);   // restore which voucher steps were banked
   renderLeadSummary(d);renderPricing();
-  closeAdmin();show('s-pricing');history=['s-final'];
+  closeAdmin();show('s-pricing');history=['s-prefer'];
 }
 function renderLeadSummary(d){
   const el=document.getElementById('lead-summary');if(!el)return;
@@ -2213,7 +2215,7 @@ function openPortalLead(L){
   setVslAll(vActive);   // an active voucher means every step is banked → full amount applied
   renderLeadSummary(L);renderPricing();
   if(typeof closeAdmin==='function')closeAdmin();
-  show('s-pricing');history=['s-final'];
+  show('s-pricing');history=['s-prefer'];
   return true;
 }
 function checkPortalHandoff(){
@@ -2237,8 +2239,9 @@ function initAdmin(){
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
 /* ═══════════ BOOT ═══════════ */
+syncPTfromCFG();
 renderPricing();
-renderFinal();renderO2OBreak();renderWait();   // lean guide opens on the comparison page
+renderFinal();renderO2OBreak();renderWait();
 initAdmin();
 updateChrome();
 loadCloud();
