@@ -7811,7 +7811,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04ve';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04vf';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -11530,7 +11530,7 @@ let PT_HAS_SESSIONS=false, PT_SESS_CLIENT=[], PT_CLIENT_LOADED=false, PT_CLIENT_
 async function ptClientBoot(){
   if(ADMIN_OK&&!PREVIEW)return;   // coaches schedule in the planner, not this view
   try{
-    const rows=await DB.ptList();
+    const rows=await DB.ptList({clientId:(SESSION&&SESSION.id)||undefined});   // scope to THIS client (admin preview would otherwise see all)
     PT_SESS_CLIENT=Array.isArray(rows)?rows:[];
     const had=PT_HAS_SESSIONS; PT_HAS_SESSIONS=PT_SESS_CLIENT.length>0; PT_CLIENT_LOADED=true;
     if(PT_HAS_SESSIONS!==had){try{applyNavVisibility();}catch(e){}try{renderGroupNav(CUR_SECTION);}catch(e){}}
@@ -11546,7 +11546,7 @@ async function renderPTClient(){
   const host=$('ptc-host');if(!host)return;
   if(!PT_SESS_CLIENT.length)host.innerHTML='<div class="empty" style="padding:30px">Loading your sessions…</div>';
   let rows=PT_SESS_CLIENT;
-  try{rows=await DB.ptList();PT_SESS_CLIENT=rows=Array.isArray(rows)?rows:[];PT_HAS_SESSIONS=rows.length>0;}catch(e){}
+  try{rows=await DB.ptList({clientId:(SESSION&&SESSION.id)||undefined});PT_SESS_CLIENT=rows=Array.isArray(rows)?rows:[];PT_HAS_SESSIONS=rows.length>0;}catch(e){}
   host.innerHTML=ptcBuildHTML(rows||[]);
 }
 function ptcBuildHTML(rows){
