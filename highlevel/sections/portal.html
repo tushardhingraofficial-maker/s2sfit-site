@@ -7751,7 +7751,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04uw';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04ux';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -10810,7 +10810,7 @@ function ptRange(s,e){return ptHM(s)+'–'+ptHM(e);}
 function ptNextMonday(){const t=todayISO(),m=weekMonday(t);return m===t?m:addDaysISO(m,7);}
 function ptWeekLabel(w){return fmtDate(w)+' – '+fmtDate(addDaysISO(w,6));}
 function ptDateOf(w,d){return addDaysISO(w,d);}
-function ptBlank(){return {locations:[],sessionMin:60,gapMin:0,week:ptNextMonday(),open:false,weeks:{}};}
+function ptBlank(){return {locations:[],sessionMin:30,gapMin:0,week:ptNextMonday(),open:false,weeks:{},v2:false,clientCfg:{}};}
 function ptLocName(id,data){const l=(((data||PT_DATA)||{}).locations||[]).find(x=>x&&x.id===id);return l?(l.name||'Location'):'';}
 function ptLocColor(id,data){const l=(((data||PT_DATA)||{}).locations||[]).find(x=>x&&x.id===id);return l?(l.color||'var(--prot)'):'var(--muted)';}
 
@@ -10829,7 +10829,8 @@ function ptWk(){return ptWeekObj(PT_DATA,PT_DATA.week);}
 function ptNormalise(d){
   const out=Object.assign(ptBlank(),d||{});
   out.locations=(Array.isArray(out.locations)?out.locations:[]).filter(l=>l&&l.id);
-  out.sessionMin=+out.sessionMin||60;out.gapMin=+out.gapMin||0;
+  out.sessionMin=+out.sessionMin||30;out.gapMin=+out.gapMin||0;
+  out.v2=!!out.v2;out.clientCfg=(out.clientCfg&&typeof out.clientCfg==='object')?out.clientCfg:{};   // PT Phase 1: admin switch + per-client PT settings
   out.week=/^\d{4}-\d{2}-\d{2}$/.test(out.week||'')?weekMonday(out.week):ptNextMonday();
   out.weeks=(out.weeks&&typeof out.weeks==='object')?out.weeks:{};
   Object.keys(out.weeks).forEach(k=>ptWeekObj(out,k));
@@ -10958,16 +10959,29 @@ function ptRender(){
   host.innerHTML=ptBarHTML(w,wk)+ptLocHTML()+ptCoachHTML(w,wk)+ptClientsTableHTML(w,wk)+ptResultHTML(w,wk);
 }
 function ptBarHTML(w,wk){
-  const slots=ptSlotsFor(PT_DATA,wk).length,len=+PT_DATA.sessionMin||60;
+  const slots=ptSlotsFor(PT_DATA,wk).length,len=+PT_DATA.sessionMin||30;
   const opt=(arr,cur,sfx)=>arr.map(n=>'<option value="'+n+'"'+(+cur===n?' selected':'')+'>'+(n?n+sfx:'none')+'</option>').join('');
   return '<div class="pt-bar">'+
     '<div class="field" style="margin:0"><label class="lab">Week starting (Monday)</label><input type="date" id="pt-week" value="'+esc(w)+'" onchange="ptSetWeek(this.value)"></div>'+
-    '<div class="field" style="margin:0"><label class="lab">Session length</label><select onchange="ptSetNum(\'sessionMin\',this.value)">'+opt([30,40,45,60,75,90,120],len,' min')+'</select></div>'+
+    '<div class="field" style="margin:0"><label class="lab">Session length</label><select onchange="ptSetNum(\'sessionMin\',this.value)">'+opt([15,20,30,40,45,60,75,90,120],len,' min')+'</select></div>'+
     '<div class="field" style="margin:0"><label class="lab">Gap between</label><select onchange="ptSetNum(\'gapMin\',this.value)">'+opt([0,5,10,15,30],+PT_DATA.gapMin||0,' min')+'</select></div>'+
     '<label class="pt-toggle" title="While this is on, clients see this week in their Availability section and can send you their times"><input type="checkbox" '+(PT_DATA.open?'checked':'')+' onchange="ptSetOpen(this.checked)"> <span>Open to clients</span></label>'+
+    '<label class="pt-toggle" title="Phase 1 of the new PT scheduling (admin only — clients see nothing new). Shows per-client PT settings in the table below."><input type="checkbox" '+(PT_DATA.v2?'checked':'')+' onchange="ptSetV2(this.checked)"> <span>🆕 New PT (Phase 1)</span></label>'+
     '<span class="sp"></span>'+
     '<span class="pt-stat"><b>'+slots+'</b> slot'+(slots===1?'':'s')+' · '+esc(ptWeekLabel(w))+'</span>'+
   '</div>';
+}
+function ptSetV2(v){PT_DATA.v2=!!v;ptRender();}
+/* PT Phase 1: per-client settings (sessions/week, preferred gym, usual length), stored in the admin-only
+   pt_scheduling config (not the client plan — avoids a dp_plans schema change and keeps it coach-only). */
+function ptCfg(cid){PT_DATA.clientCfg=PT_DATA.clientCfg||{};return PT_DATA.clientCfg[cid]||{perWeek:0,gym:'',len:+PT_DATA.sessionMin||30};}
+function ptCfgSet(cid,k,v){
+  PT_DATA.clientCfg=PT_DATA.clientCfg||{};
+  const c=PT_DATA.clientCfg[cid]=Object.assign({perWeek:0,gym:'',len:+PT_DATA.sessionMin||30},PT_DATA.clientCfg[cid]||{});
+  if(k==='perWeek')c.perWeek=Math.max(0,Math.min(14,Math.round(+v||0)));
+  else if(k==='len')c.len=Math.max(15,Math.min(120,Math.round(+v||0)));
+  else c[k]=v;
+  ptRender();
 }
 function ptSetWeek(v){
   if(!/^\d{4}-\d{2}-\d{2}$/.test(v||''))return;
@@ -11073,7 +11087,12 @@ function ptClientsTableHTML(w,wk){
         '<span class="pt-mini">'+(av.locs.length?av.locs.map(id=>esc(ptLocName(id))).filter(Boolean).join(' · '):'any location')+'</span>'+(av.note?'<span class="pt-mini">“'+esc(av.note)+'”</span>':'')
       : '<span class="pt-wait">— waiting for their times</span>';
     const got=mine.length?mine.map(s=>PT_DSHORT[s.day]+' '+ptHM(s.s)).join(' · '):(sch?'<span class="pt-wait">none</span>':'');
-    return '<tr><td class="pt-nm">'+esc(p.name)+'</td>'+
+    const cfg=ptCfg(p.id);
+    const gymOpts='<option value="">—</option>'+(PT_DATA.locations||[]).map(l=>'<option value="'+esc(l.id)+'"'+(cfg.gym===l.id?' selected':'')+'>'+esc(l.name||'Location')+'</option>').join('')+'<option value="either"'+(cfg.gym==='either'?' selected':'')+'>Either</option>';
+    const cfgCells=PT_DATA.v2?('<td><input class="num" type="number" min="0" max="14" step="1" value="'+(+cfg.perWeek||0)+'" onchange="ptCfgSet(\''+p.id+'\',\'perWeek\',this.value)" title="PT sessions per week — 0 means not an in-person client (won’t be scheduled)"></td>'+
+      '<td><select onchange="ptCfgSet(\''+p.id+'\',\'gym\',this.value)" style="max-width:140px">'+gymOpts+'</select></td>'+
+      '<td><input class="num" type="number" min="15" max="120" step="5" value="'+(+cfg.len||(+PT_DATA.sessionMin||30))+'" onchange="ptCfgSet(\''+p.id+'\',\'len\',this.value)" title="Usual session length (minutes)"></td>'):'';
+    return '<tr'+(PT_DATA.v2&&!(+cfg.perWeek>0)?' style="opacity:.5"':'')+'><td class="pt-nm">'+esc(p.name)+'</td>'+cfgCells+
       '<td><input class="num" type="number" min="0" max="7" step="1" value="'+need+'" onchange="ptSetNeed(\''+p.id+'\',this.value)" title="Sessions this client gets this week"></td>'+
       '<td>'+status+'</td>'+
       '<td><span class="pt-mini">'+got+'</span></td></tr>';
@@ -11081,7 +11100,8 @@ function ptClientsTableHTML(w,wk){
   const sent=people.filter(p=>ptAvailOf(p.plan,w)).length,need=people.reduce((n,p)=>n+(+((wk.perClient||{})[p.id])||0),0);
   return '<div class="pt-sec"><div class="pt-sec-h">👥 Clients &amp; sessions <span class="hint">you set how many sessions each client gets this week</span>'+
       '<span class="sp"></span><button class="btn-sm" style="flex:none" onclick="ptSetAllNeed()">Set all to…</button></div>'+
-    '<div class="pt-sec-b"><div style="overflow:auto"><table class="pt-tbl"><thead><tr><th>Client</th><th>Sessions</th><th>Their availability</th><th>Scheduled</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    (PT_DATA.v2?'<div class="pt-mini" style="margin:0 0 6px">🆕 Phase 1 · set each in-person client’s PT sessions per week, preferred gym and usual length. 0/week = not scheduled. Stored admin-side; clients see nothing yet.</div>':'')+
+    '<div class="pt-sec-b"><div style="overflow:auto"><table class="pt-tbl"><thead><tr><th>Client</th>'+(PT_DATA.v2?'<th>PT/wk</th><th>Preferred gym</th><th>Length</th>':'')+'<th>Sessions</th><th>Their availability</th><th>Scheduled</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
     '<div class="pt-sum"><span><b>'+sent+'</b>/'+people.length+' sent their times</span><span><b>'+need+'</b> session'+(need===1?'':'s')+' to place</span><span><b>'+ptSlotsFor(PT_DATA,wk).length+'</b> slots you can offer</span></div></div></div>';
 }
 function ptSetNeed(cid,v){ptWk().perClient[cid]=Math.max(0,Math.min(7,Math.round(+v||0)));ptRender();}
