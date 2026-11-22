@@ -7806,7 +7806,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04vb';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04vc';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -31680,6 +31680,7 @@ setTimeout(function(){try{bootSplashHide();}catch(_){}},6000);   // hard fallbac
 
 
 
+
 <script type="text/plain" id="ptp-tpl">
 <!DOCTYPE html>
 <html lang="en">
@@ -32250,6 +32251,13 @@ function matchClientByFirst(first){
   for(var i=0;i<S.roster.length;i++){var c=S.roster[i];if(String(c.first||"").toLowerCase().replace(/[^a-z]/g,"")===f)return c;}
   return null;
 }
+var PTP_EXCLUDE_EMAIL={"support@s2sfit.com":1,"tushardhingraofficial@gmail.com":1};   // organizer + coach's own
+function matchClientByEmail(emails){   // the attendee's email is the reliable key (first names collide)
+  if(!emails||!emails.length)return null;
+  for(var i=0;i<emails.length;i++){var m=String(emails[i]||"").toLowerCase();if(!m||PTP_EXCLUDE_EMAIL[m])continue;
+    for(var j=0;j<S.roster.length;j++){var c=S.roster[j];if(c.email&&String(c.email).toLowerCase()===m)return c;}}
+  return null;
+}
 async function pullCalendar(){
   if(!S.mcp)return;
   try{
@@ -32270,7 +32278,7 @@ async function pullCalendar(){
       var en=ev.end&&ev.end.dateTime, dur=30;
       if(en){var em=(+String(en).slice(11,13))*60+(+String(en).slice(14,16)); dur=em-sm; if(dur<15)dur=30;}
       var first=String(ev.summary).split(/\s+x\s+/i)[0].replace(/[,\s]+$/,"").trim();
-      var c=matchClientByFirst(first);
+      var c=matchClientByEmail(ev.attendees)||matchClientByFirst(first);   // email is primary; name only as a fallback
       var loc=ev.location||"", lk="X", lo=loc;
       if(/windsor/i.test(loc)){lk="WG";lo="";} else if(/gepps/i.test(loc)){lk="GC";lo="";}
       S.sessions.push({id:"cal-"+ev.id,cid:c?c.id:"",first:c?c.first:first,email:c?(c.email||""):"",day:day,start:sm,dur:dur,lk:lk,loc:lo,pushed:{at:new Date().toISOString(),id:ev.id}});
