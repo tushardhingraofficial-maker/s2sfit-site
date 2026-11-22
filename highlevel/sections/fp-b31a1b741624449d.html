@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en-AU" data-version="2026-11-23-0947">
+<html lang="en-AU" data-version="2026-11-23-1000">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -289,6 +289,7 @@ body.locked .top,body.locked .wrap,body.locked #modal{display:none}
 .lock-card h2{font-size:26px;font-weight:900}
 .lock-card p{color:var(--muted);font-size:13.5px;margin:4px 0 18px}
 .lock-card input{text-align:center;margin-bottom:12px}
+#rec-key{font-size:14.5px!important;letter-spacing:0;padding-left:8px;padding-right:8px}
 .lock-err{color:var(--crit);font-size:13px;min-height:20px;margin-top:10px}
 ::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:var(--faint);border-radius:9px}
 /* ============ phone layout ============ */
@@ -375,13 +376,25 @@ body.locked .top,body.locked .wrap,body.locked #modal{display:none}
 </style>
 </head>
 <body class="locked">
-<div id="lock"><form class="lock-card" onsubmit="event.preventDefault();unlock()">
+<div id="lock"><form class="lock-card" id="lock-form" onsubmit="event.preventDefault();unlock()">
   <div class="brand-tile">$</div>
   <h2>Financial Planner</h2>
   <p>Enter your password to continue.</p>
   <input type="password" id="lock-pw" autocomplete="current-password" placeholder="Password" autofocus>
   <button class="btn btn-primary" style="width:100%">Unlock</button>
   <div class="lock-err" id="lock-err"></div>
+  <a style="display:inline-block;margin-top:12px;font-size:13px;color:var(--muted);text-decoration:underline;cursor:pointer" onclick="recShow(true)">Forgot password?</a>
+</form>
+<form class="lock-card hidden" id="lock-rec" onsubmit="event.preventDefault();doRecover()">
+  <div class="brand-tile">$</div>
+  <h2>Reset password</h2>
+  <p>Use the recovery key from your email or the file you saved. Nothing is lost.</p>
+  <input id="rec-key" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Recovery key  XXXXX-XXXXX-…" style="font-family:var(--mono);text-align:center">
+  <input type="password" id="rec-new" autocomplete="new-password" placeholder="New password">
+  <input type="password" id="rec-new2" autocomplete="new-password" placeholder="Repeat new password">
+  <button class="btn btn-primary" style="width:100%">Reset password &amp; unlock</button>
+  <div class="lock-err" id="rec-err"></div>
+  <a style="display:inline-block;margin-top:12px;font-size:13px;color:var(--muted);text-decoration:underline;cursor:pointer" onclick="recShow(false)">Back to unlock</a>
 </form></div>
 <header class="top">
   <div class="top-in">
@@ -2235,7 +2248,7 @@ document.addEventListener('keydown',e=>{
 const CLOUD_URL='https://ioavhchcrkmokpngwvwb.supabase.co',CLOUD_KEY='sb_publishable_cl7_anr68QEV1GhGjgH9VQ_afrNQkCF';
 const CLOUD_FN='quick-api';   // the name the sync function was deployed under
 const CKEY='s2s_fp_cloud';
-let C=(()=>{try{const c=JSON.parse(localStorage.getItem(CKEY))||{};return{sk:c.sk,rev:c.rev,dirty:c.dirty,off:c.off,fn:c.fn}}catch(e){return{}}})(),cloudT=null,cloudState='',cloudSeen=0;
+let C=(()=>{try{const c=JSON.parse(localStorage.getItem(CKEY))||{};return{sk:c.sk,rev:c.rev,dirty:c.dirty,off:c.off,fn:c.fn,v:c.v,wrap:c.wrap}}catch(e){return{}}})(),cloudT=null,cloudState='',cloudSeen=0;
 const cSave=()=>{try{localStorage.setItem(CKEY,JSON.stringify(C))}catch(e){}};
 const cOn=()=>!!C.sk&&!C.off;
 function cStatus(s){cloudState=s;const e=$('#cloud');if(e)e.textContent='☁ '+s}
@@ -2334,8 +2347,8 @@ async function deriveV2(pw){
   const bits=new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:new TextEncoder().encode(V2_SALT),iterations:V2_IT},base,512));
   return{auth:[...bits.subarray(0,32)].map(b=>b.toString(16).padStart(2,'0')).join(''),raw:bits.slice(32)};
 }
-async function setVK(raw){VK=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['encrypt','decrypt']);try{sessionStorage.setItem(VKEY,b64(raw))}catch(e){}}
-function dropVK(){VK=null;try{sessionStorage.removeItem(VKEY)}catch(e){}}
+async function setVK(raw){DKRAW=raw;VK=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['encrypt','decrypt']);try{sessionStorage.setItem(VKEY,b64(raw))}catch(e){}}
+function dropVK(){VK=null;DKRAW=null;try{sessionStorage.removeItem(VKEY)}catch(e){}}
 async function encJSON(obj){const iv=crypto.getRandomValues(new Uint8Array(12)),ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},VK,new TextEncoder().encode(JSON.stringify(obj))));return{v:2,iv:b64(iv),ct:b64(ct)}}
 async function decJSON(e){return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(e.iv)},VK,ub64(e.ct))))}
 const merged=d=>{const b=blank();return Object.assign(b,d,{settings:Object.assign(b.settings,d.settings||{})})};
@@ -2347,8 +2360,16 @@ function storeLocal(){
 }
 /* after unlocking: decrypt the browser copy if it is encrypted */
 async function openVault(){if(LOCAL_ENC&&VK){S=merged(await decJSON(LOCAL_ENC));LOCAL_ENC=null;LINK=null}}
-const sealData=async()=>({enc:await encJSON(S),n:S.items.length});
-async function cOpen(j){if(j.data&&j.data.enc){if(!VK)throw new Error('Locked');j={data:await decJSON(j.data.enc),updated_at:j.updated_at}}cApply(j)}
+const sealData=async()=>Object.assign({enc:await encJSON(S),n:S.items.length},C.wrap||{});
+async function cOpen(j){
+  if(j.data&&j.data.enc){
+    if(!VK)throw new Error('Locked');
+    const w=wrapOf(j.data);let d;
+    try{d=await decJSON(j.data.enc)}catch(e){if(w){C.wrap=w;cSave()}lockNow();$('#lock-err').textContent='The planner was re-secured on another device — unlock again.';return}
+    if(w){C.wrap=w;cSave()}j={data:d,updated_at:j.updated_at};
+  }
+  cApply(j);
+}
 function cDenied(){C.sk=null;cSave();lockNow();$('#lock-err').textContent='Your password was changed on another device — unlock with the new password.'}
 /* password rules for the encrypted version: long, and not built from a name or a year */
 function pwCheck(p){
@@ -2367,6 +2388,9 @@ function encCard(){
       '<div class="field"><label class="lbl">New password</label><input type="password" id="ec-new" autocomplete="new-password" oninput="ecHint()"></div>'+
       '<div class="field"><label class="lbl">Repeat new password</label><input type="password" id="ec-new2" autocomplete="new-password"></div>'+
       '<div class="field"><button class="btn btn-primary" style="width:100%" '+(hasCrypto()?'':'disabled')+' onclick="encSetup()">'+(on?'Change password':'Encrypt &amp; change password')+'</button></div></div>'+
+    (on?'<div class="preview" style="margin:14px 0 0;border-left-color:'+(C.wrap&&C.wrap.wr?'var(--green)':'var(--crit)')+'"><b>Recovery key</b><br>'+(C.wrap&&C.wrap.wr?'Set'+(C.wrap.rdate?' on '+fd(D(C.wrap.rdate)):'')+'. If you forget your password, use the link emailed to '+RECOVERY_EMAIL+', or “Forgot password?” on the lock screen.':'<span class="neg">None yet — make one so a forgotten password does not lock you out for good.</span>')+
+      '<div class="row" style="margin:10px 0 0;align-items:end"><div class="field"><label class="lbl">Your password</label><input type="password" id="rk-pw" autocomplete="current-password"></div><div class="field"><button class="btn btn-ghost" style="width:100%" onclick="newRecovery()">'+(C.wrap&&C.wrap.wr?'Make a new recovery key':'Create recovery key')+'</button></div></div>'+
+      (C.wrap&&C.wrap.wr?'<div class="nm-sub" style="margin-top:6px"><span>A new key replaces the old one — the old email link stops working.</span></div>':'')+'</div>':'')+
     '<div class="simnote" id="ec-hint" style="font-style:normal;margin-top:8px">Use four or five random words, e.g. “copper lantern orbit maple”. Write it down somewhere safe — if it is lost, the encrypted data cannot be recovered by anyone.</div>')+'</div>';
 }
 function ecHint(){const p=$('#ec-new').value,r=pwCheck(p);$('#ec-hint').innerHTML=p?'<span class="'+(r.ok?'pos':'neg')+'">'+r.msg+'</span>':''}
@@ -2375,25 +2399,115 @@ async function encSetup(){
   if(!r.ok){toast(r.msg);return}if(nw!==nw2){toast('The new passwords do not match');return}if(nw===cur){toast('Choose a different password');return}
   if(!C.sk){toast('Turn cloud sync on first');return}
   if(btn)btn.disabled=true;toast('Working — this takes a few seconds…');
+  const oldVK=VK,oldRaw=DKRAW,oldWrap=C.wrap;
+  const undo=async()=>{C.wrap=oldWrap;if(oldRaw)await setVK(oldRaw);else{VK=oldVK;DKRAW=null}};
   try{
     // prove the current password before anything changes
     let okCur=false;
     if(C.v===2)okCur=(await deriveV2(cur)).auth===C.sk;
     else okCur=sha256('s2sfp-sync:'+cur)===C.sk||(!!PW_DEFAULT&&pwHash(cur)===pwStored());
     if(!okCur){toast('Current password is wrong');if(btn)btn.disabled=false;return}
-    const oldVK=VK,d=await deriveV2(nw);await setVK(d.raw);
-    const body={action:'rekey',newKey:d.auth,data:await sealData()};
-    let r2;try{r2=await cCall('POST',body)}catch(e){VK=oldVK;throw e}
-    if(r2.status!==200){VK=oldVK;throw new Error(r2.j.error||'Error '+r2.status)}
+    // only the password changes: same data key, so the recovery key keeps working
+    const d=await deriveV2(nw),keep=C.v===2&&C.wrap&&C.wrap.wp&&DKRAW;
+    const dk=keep?DKRAW:crypto.getRandomValues(new Uint8Array(32));
+    C.wrap=keep?Object.assign({},C.wrap,{wp:await lockRaw(dk,d.raw)}):{wp:await lockRaw(dk,d.raw),wr:null,rk:null,rdate:null};
+    await setVK(dk);
+    let r2;try{r2=await cCall('POST',{action:'rekey',newKey:d.auth,data:await sealData()})}catch(e){await undo();throw e}
+    if(r2.status!==200){await undo();throw new Error(r2.j.error||'Error '+r2.status)}
     C.sk=d.auth;C.v=2;C.rev=r2.j.updated_at;C.dirty=false;C.err='';cSave();
     try{localStorage.setItem(PWKEY,pwHash(nw))}catch(e){}
-    storeLocal();render();toast('Encryption is on and your password is changed');
+    storeLocal();
+    if(!C.wrap.wr)showKit(await makeRecovery(d.raw));
+    else{render();toast('Password changed. Your recovery key still works.')}
   }catch(e){toast('Not changed: '+e.message);if(btn)btn.disabled=false}
 }
 /* lock automatically after 15 minutes without any taps, clicks or keys */
 let lastAct=Date.now();
 ['click','keydown','touchstart','scroll'].forEach(ev=>document.addEventListener(ev,()=>{lastAct=Date.now()},{passive:true,capture:true}));
 setInterval(()=>{if(!document.body.classList.contains('locked')&&Date.now()-lastAct>15*60000){lockNow();$('#lock-err').textContent='Locked after 15 minutes of no activity.'}},30000);
+
+/* ============ recovery key (version 3) ============ */
+/* The planner is encrypted with a random data key (DK). The cloud keeps DK twice, each copy locked:
+   wp = locked with the password key, wr = locked with a recovery key. The recovery key is shown once
+   and can be emailed to RECOVERY_EMAIL as a reset link (#recover=…); it never goes to the server — only
+   a hash of a key derived from it (rk), so the server can tell the owner apart without being able to
+   open anything. A planner encrypted before recovery existed has no wp: its DK is the password key. */
+const RECOVERY_EMAIL='support@s2sfit.com',PUBLIC_URL='https://s2sfit-sections.netlify.app/sections/fp-b31a1b741624449d.html';
+const REC_ALPHA='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+var DKRAW=null;
+function newRecoveryKey(){const b=crypto.getRandomValues(new Uint8Array(25));let s='';b.forEach((x,i)=>{s+=REC_ALPHA[x%32]+((i%5===4&&i<24)?'-':'')});return s}
+const recNorm=r=>String(r||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+async function deriveRec(r){
+  const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(recNorm(r)),'PBKDF2',false,['deriveBits']);
+  const bits=new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:new TextEncoder().encode('s2s-fp-recovery-v3'),iterations:100000},base,512));
+  return{auth:[...bits.subarray(0,32)].map(b=>b.toString(16).padStart(2,'0')).join(''),raw:bits.slice(32)};
+}
+async function lockRaw(raw,withRaw){const k=await crypto.subtle.importKey('raw',withRaw,'AES-GCM',false,['encrypt']),iv=crypto.getRandomValues(new Uint8Array(12));return{iv:b64(iv),ct:b64(new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},k,raw)))}}
+async function unlockRaw(w,withRaw){const k=await crypto.subtle.importKey('raw',withRaw,'AES-GCM',false,['decrypt']);return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(w.iv)},k,ub64(w.ct)))}
+/* which data key a password opens: the locked copy if there is one, otherwise the password key itself */
+const dkFor=async(wrap,pkRaw)=>wrap&&wrap.wp?unlockRaw(wrap.wp,pkRaw):pkRaw;
+const wrapOf=d=>d&&d.enc?{wp:d.wp||null,wr:d.wr||null,rk:d.rk||null,rdate:d.rdate||null}:null;
+async function sha256hex(s){return[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))].map(b=>b.toString(16).padStart(2,'0')).join('')}
+/* new random data key + new recovery key; needs the password key to lock the data key for normal use */
+async function makeRecovery(pkRaw){
+  const dk=crypto.getRandomValues(new Uint8Array(32)),R=newRecoveryKey(),r=await deriveRec(R);
+  C.wrap={wp:await lockRaw(dk,pkRaw),wr:await lockRaw(dk,r.raw),rk:await sha256hex('fpr:'+r.auth),rdate:iso(T)};
+  await setVK(dk);cSave();
+  const res=await cCall('POST',{data:await sealData(),base:C.rev||null,force:true});
+  if(res.status!==200)throw new Error(res.j.error||'Error '+res.status);
+  C.rev=res.j.updated_at;C.dirty=false;cSave();storeLocal();
+  return R;
+}
+function showKit(R){
+  const link=PUBLIC_URL+'#recover='+R,body='Financial Planner — recovery key\n\nIf the planner password is ever forgotten, open this link and choose a new password:\n'+link+'\n\nOr open the planner, tap "Forgot password?" and type this recovery key:\n'+R+'\n\nAnyone with this key can open the planner, so keep this email private and the mailbox protected with 2-step verification.\nCreated '+fd(T);
+  UI.back=null;UI.dayOpen=null;$('#sheet').style.maxWidth='620px';
+  $('#sheet').innerHTML='<div class="sheet-h"><h2>Your recovery key</h2></div>'+
+    '<p style="font-size:13.5px;margin-bottom:12px">If you ever forget your password, this key — or the link in the email — lets you set a new one without losing anything. <b>It is shown only now.</b> Without it, a forgotten password means the data cannot be opened by anyone.</p>'+
+    '<div class="preview" style="text-align:center;border-left-color:var(--gold)"><div style="font-family:var(--mono);font-size:21px;font-weight:700;letter-spacing:.06em;word-break:break-all" id="kit-key">'+R+'</div></div>'+
+    '<div class="acts" style="margin-bottom:14px"><a class="btn btn-primary" style="text-decoration:none" href="mailto:'+RECOVERY_EMAIL+'?subject='+encodeURIComponent('Financial Planner — recovery key')+'&body='+encodeURIComponent(body)+'">Email it to '+RECOVERY_EMAIL+'</a>'+
+      '<button class="btn btn-ghost" onclick="navigator.clipboard&&navigator.clipboard.writeText($(\'#kit-key\').textContent).then(()=>toast(\'Copied\'))">Copy</button>'+
+      '<button class="btn btn-ghost" onclick="kitDownload()">Download</button></div>'+
+    '<p class="muted" style="font-size:12.5px;margin-bottom:14px">“Email it” opens your mail app with the message ready — press Send. Anyone who gets into that mailbox could reset the planner, so keep 2-step verification on for '+RECOVERY_EMAIL+'.</p>'+
+    '<label class="check" style="margin-bottom:12px"><input type="checkbox" id="kit-ok" onchange="$(\'#kit-done\').disabled=!this.checked">I have saved my recovery key</label>'+
+    '<div class="sheet-f"><div></div><div class="acts"><button class="btn btn-primary" id="kit-done" disabled onclick="closeModal();render()">Done</button></div></div>';
+  window.__kit=body;$('#modal').classList.add('open');
+}
+function kitDownload(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([window.__kit||''],{type:'text/plain'}));a.download='financial-planner-recovery-key.txt';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+async function newRecovery(){
+  const pw=$('#rk-pw').value;if(!pw){toast('Enter your password');return}
+  toast('Working…');
+  try{
+    const d=await deriveV2(pw);if(d.auth!==C.sk){toast('Password is wrong');return}
+    showKit(await makeRecovery(d.raw));
+  }catch(e){toast('Not created: '+e.message)}
+}
+/* lock screen: forgot password → recovery key + new password */
+function recShow(on,key){$('#lock-form').classList.toggle('hidden',!!on);$('#lock-rec').classList.toggle('hidden',!on);if(key!=null)$('#rec-key').value=key;$('#rec-err').textContent='';(on?$('#rec-key').value?$('#rec-new'):$('#rec-key'):$('#lock-pw')).focus()}
+async function doRecover(){
+  const R=$('#rec-key').value,nw=$('#rec-new').value,nw2=$('#rec-new2').value,err=t=>{$('#rec-err').textContent=t},chk=pwCheck(nw);
+  if(recNorm(R).length!==25){err('A recovery key has 25 letters and numbers.');return}
+  if(!chk.ok){err(chk.msg);return}if(nw!==nw2){err('The new passwords do not match.');return}
+  if(!hasCrypto()){err('Open the planner from its web link to reset the password.');return}
+  err('Checking…');
+  try{
+    const r=await deriveRec(R),call=async(m,b)=>{const res=await fetch(CLOUD_URL+'/functions/v1/'+(C.fn||CLOUD_FN),{method:m,headers:{apikey:CLOUD_KEY,'x-recovery-key':r.auth,'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined});return{status:res.status,j:await res.json().catch(()=>({}))}};
+    const g=await call('GET');
+    if(g.status===429){err('Too many wrong attempts — try again later.');return}
+    if(g.status!==200||!g.j.data||!g.j.data.wr){err('That recovery key does not match this planner.');return}
+    const dk=await unlockRaw(g.j.data.wr,r.raw);await setVK(dk);
+    S=merged(await decJSON(g.j.data.enc));LINK=null;LOCAL_ENC=null;
+    const d=await deriveV2(nw);C.wrap={wp:await lockRaw(dk,d.raw),wr:g.j.data.wr,rk:g.j.data.rk,rdate:g.j.data.rdate||null};
+    const p=await call('POST',{action:'recover',newKey:d.auth,data:await sealData()});
+    if(p.status!==200){err(p.j.error||'Could not reset ('+p.status+').');return}
+    C.sk=d.auth;C.v=2;C.rev=p.j.updated_at;C.dirty=false;C.off=false;C.err='';cSave();
+    try{localStorage.setItem(PWKEY,pwHash(nw));sessionStorage.setItem(UNKEY,'1')}catch(e){}
+    storeLocal();$('#rec-key').value=$('#rec-new').value=$('#rec-new2').value='';recShow(false);start();
+    toast('Password reset. Your recovery key still works — make a new one in Settings if anyone else may have seen it.');
+  }catch(e){err('That recovery key does not match this planner.')}
+}
+/* opened from the emailed link: fill in the key and drop it from the address bar */
+function recFromHash(){const m=/^#recover=([A-Za-z0-9-]+)$/.exec(location.hash);if(!m)return;history.replaceState(null,'',location.pathname+location.search);try{sessionStorage.removeItem('s2s_fp_unlocked')}catch(e){}setTimeout(()=>{document.body.classList.add('locked');recShow(true,m[1])},0)}
+recFromHash();window.addEventListener('hashchange',()=>{if(/^#recover=/.test(location.hash)){lockNow();recFromHash()}});
 
 /* ============ password lock ============ */
 /* Only a salted SHA-256 hash is kept in this file — never the password itself. Own implementation
@@ -2435,11 +2549,11 @@ async function unlock(){
   err('Checking…');
   try{
     let d=null;
-    if(hasCrypto()){d=await deriveV2(pw);if(C.sk&&C.v===2&&d.auth===C.sk){await setVK(d.raw);return ok()}}
+    if(hasCrypto()){d=await deriveV2(pw);if(C.sk&&C.v===2&&d.auth===C.sk){await setVK(await dkFor(C.wrap,d.raw));return ok()}}
     if(PW_DEFAULT&&!enc){if(!C.sk){C.sk=sha256('s2sfp-sync:'+pw);cSave()}return ok()}   // computer copy, not yet encrypted
     const ask=async key=>{const r=await fetch(CLOUD_URL+'/functions/v1/'+(C.fn||CLOUD_FN),{headers:{apikey:CLOUD_KEY,'x-planner-key':key}});return{status:r.status,j:await r.json().catch(()=>({}))}};
     let r=d?await ask(d.auth):{status:403};
-    if(r.status===200&&r.j.data){C.sk=d.auth;C.v=2;C.rev=null;C.dirty=false;C.off=false;cSave();await setVK(d.raw);return ok()}
+    if(r.status===200&&r.j.data){C.sk=d.auth;C.v=2;C.wrap=wrapOf(r.j.data);C.rev=null;C.dirty=false;C.off=false;cSave();await setVK(await dkFor(C.wrap,d.raw));return ok()}
     if(r.status===403){                        // not encrypted yet: try the original sign-in key
       const k1=sha256('s2sfp-sync:'+pw);r=await ask(k1);
       if(r.status===200&&r.j.data){C.sk=k1;C.v=1;C.rev=null;C.dirty=false;C.off=false;cSave();return ok()}
