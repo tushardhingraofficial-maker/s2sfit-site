@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-version="v2026-11-22a">
+<html lang="en" data-version="v2026-11-22b">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -1677,8 +1677,8 @@ function renderPlanGrid(){
   if(disc.length)onlineInvest+='<span class="pg-disc">'+disc.join(' + ')+' applied</span>';
   const cols=[
     {name:'Online Coaching',tag:'Best results',cls:'rec'},
-    {name:mom,tag:'Lighter touch',cls:''},
-    {name:bp,tag:'Do-it-yourself',cls:''}
+    {name:mom,tag:'Lighter touch',cls:''}
+    // Blueprint intentionally hidden from the comparison grid (still offered as a fallback card above)
   ];
   const rows=[
     ['Investment',
@@ -1694,13 +1694,14 @@ function renderPlanGrid(){
     ['Solves','No plan, no accountability, keep falling off','Price / commitment worry, but still want support','You can execute — you just need the right plan'],
     ['The trade-off','Highest commitment','Less 1:1 time than full coaching','You’re on your own — no feedback']
   ];
-  let h='<div class="pg">';
-  h+='<div class="pg-r pg-head"><div class="pg-lbl"></div>';
+  const gt='1.15fr'+' 1fr'.repeat(cols.length), minw=Math.max(360,(cols.length+1)*165);
+  let h='<div class="pg" style="min-width:'+minw+'px">';
+  h+='<div class="pg-r pg-head" style="grid-template-columns:'+gt+'"><div class="pg-lbl"></div>';
   cols.forEach(c=>{h+='<div class="pg-c '+c.cls+'"><div class="pg-pn">'+esc(c.name)+'</div><div class="pg-tag">'+esc(c.tag)+'</div></div>';});
   h+='</div>';
   rows.forEach(r=>{
-    h+='<div class="pg-r"><div class="pg-lbl">'+esc(r[0])+'</div>';
-    for(let i=1;i<=3;i++){h+='<div class="pg-c '+(cols[i-1].cls)+'">'+r[i]+'</div>';}
+    h+='<div class="pg-r" style="grid-template-columns:'+gt+'"><div class="pg-lbl">'+esc(r[0])+'</div>';
+    for(let i=1;i<=cols.length;i++){h+='<div class="pg-c '+(cols[i-1].cls)+'">'+r[i]+'</div>';}
     h+='</div>';
   });
   h+='</div>';
