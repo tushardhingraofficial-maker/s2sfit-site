@@ -1528,6 +1528,15 @@ body{overflow-x:hidden}
 .focus-row .fr-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
 .focus-row .fr-t{font-weight:800;font-size:13.5px;color:var(--text);overflow-wrap:anywhere}
 .focus-row .fr-s{font-size:11.5px;color:var(--muted);overflow-wrap:anywhere}
+.dash-resume-card{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin:0 2px 14px;padding:13px 15px;border:1px solid rgba(245,158,11,.5);border-radius:16px;background:linear-gradient(135deg,rgba(245,158,11,.16),rgba(245,158,11,.06));cursor:pointer;box-shadow:0 10px 26px -18px rgba(245,158,11,.75);position:relative;overflow:hidden}
+.dash-resume-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:#f59e0b}
+.dash-resume-card:hover{border-color:#f59e0b}
+.dash-resume-card .drc-ic{font-size:20px;flex:none;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:rgba(245,158,11,.18);border-radius:11px}
+.dash-resume-card .drc-main{flex:1;min-width:0}
+.dash-resume-card .drc-t{font-family:var(--disp);font-weight:800;font-size:14.5px;color:var(--text);text-transform:uppercase;letter-spacing:.02em;overflow-wrap:anywhere}
+.dash-resume-card .drc-s{font-size:12px;color:var(--muted);margin-top:1px;overflow-wrap:anywhere}
+.dash-resume-card .drc-go{flex:none;font-weight:800;font-size:12.5px;color:#b45309;white-space:nowrap}
+:root[data-theme="dark"] .dash-resume-card .drc-go{color:#fbbf24}
 .focus-row .fr-go{flex:none;font-size:22px;color:var(--muted);font-weight:700;line-height:1}
 .dash-card{position:relative;border:1px solid var(--border);border-radius:16px;background:linear-gradient(160deg,var(--accent-weak,rgba(255,255,255,.015)),transparent 70%),var(--card);padding:15px 15px 13px;display:flex;flex-direction:column;gap:9px;cursor:pointer;overflow:hidden;transition:border-color .15s,transform .1s,box-shadow .15s}
 .dash-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(to bottom,var(--accent,var(--red)),var(--accent-deep,var(--accent,var(--red))));opacity:.95}
@@ -7811,7 +7820,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04vf';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04vg';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -9639,6 +9648,11 @@ async function dashJournalQuick(){
     try{renderDashboard();}catch(e){}
   }catch(e){toast('Could not save',true);}
 }
+/* Resume an unfinished workout straight from the Home nudge: open Training, then re-open the runner for that day (wkoRunV2 restores the saved sets). */
+function dashResumeWorkout(date,dayId){
+  try{setSection('training');}catch(e){}
+  setTimeout(function(){try{ if(dayId&&typeof wkoRunV2==='function'){wkoRunV2(date,dayId);} }catch(e){} },140);
+}
 async function renderDashboard(){
   const host=$('dash-host');if(!host)return;
   const today=todayISO();const wkStart=wdMonday(today),wkEnd=addDaysISO(wkStart,6);
@@ -9647,6 +9661,7 @@ async function renderDashboard(){
   const hr=new Date().getHours();const greet=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
   const dstr=new Date(today+'T00:00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
   host.innerHTML='<div class="dash-hero2"><div style="flex:1;min-width:0"><div class="dh2-kick">'+greet+'</div><div class="dh2-name">'+esc(first)+'</div><div class="dh2-date">'+esc(dstr)+'</div></div><div id="dash-streak"></div></div>'+
+    '<div id="dash-resume"></div>'+
     '<div id="dm-focus" class="dash-mom-wrap"><div class="focus-card" style="cursor:default"><div class="focus-inner"><div class="focus-kick">Your focus today</div><div class="focus-title" style="font-size:16px">Loading your day…</div></div></div></div>'+
     '<div class="dash-glance-h" id="dash-glance-h" style="display:none">Today at a glance</div>'+
     '<div class="dash-glance" id="dash-glance"></div>'+
@@ -9673,6 +9688,24 @@ async function renderDashboard(){
   // workout status today / this week
   let wDoneToday=false,wSchedToday=false,doneWk=0,schedWk=0;
   if(sectionLive('training')){try{const tc=t2c();const doneDates=new Set((wlogs||[]).map(l=>String(l.date||'').slice(0,10)));wDoneToday=doneDates.has(today);wSchedToday=(((tc.calendar||{})[today])||[]).length>0;for(let i=0;i<7;i++){const iso=addDaysISO(wkStart,i);if(((tc.calendar||{})[iso]||[]).length)schedWk++;if(doneDates.has(iso)&&inWeek(iso))doneWk++;}}catch(_){}}
+  // ── Incomplete workouts: sets were logged but the session was never finished → nudge to resume & complete ──
+  let wkIncomplete=[];
+  if(sectionLive('training')){try{
+    const cut=addDaysISO(today,-10),byDate={};
+    (wlogs||[]).forEach(function(l){const d=String(l.date||'').slice(0,10);if(!d||d<cut||d>today)return;const p=byDate[d];if(!p||String(l.created_at||'')>String(p.created_at||''))byDate[d]=l;});
+    const hasData=function(l){if(l.summary&&(+l.summary.totalSets>0||+l.summary.volume>0))return true;return (l.entries||[]).some(function(en){return (en.sets||[]).some(function(s){return (s.weight!==''&&s.weight!=null)||(s.reps!==''&&s.reps!=null)||s.dur||s.dist||s.done;});});};
+    wkIncomplete=Object.keys(byDate).map(k=>byDate[k]).filter(function(l){return l.done===false&&(+l.completion||0)<100&&hasData(l);}).sort((a,b)=>b.date<a.date?-1:1);
+  }catch(_){}}
+  {const rh=$('dash-resume');if(rh){
+    if(wkIncomplete.length){const l=wkIncomplete[0];const pct=Math.max(0,Math.min(100,Math.round(+l.completion||0)));
+      const more=wkIncomplete.length>1?(' <span class="small" style="opacity:.85;font-weight:600">+'+(wkIncomplete.length-1)+' more</span>'):'';
+      const label=(l.date===today)?'today':(l.date===addDaysISO(today,-1)?'yesterday':fmtDate(l.date));
+      rh.innerHTML='<button type="button" class="dash-resume-card" onclick="dashResumeWorkout(\''+l.date+'\',\''+esc(l.day_id||'').replace(/\x27/g,"")+'\')">'
+        +'<div class="drc-ic">🏋️</div><div class="drc-main"><div class="drc-t">Finish your workout'+more+'</div>'
+        +'<div class="drc-s">'+esc(l.day_name||'Workout')+' · '+esc(label)+' — your logged sets are saved ('+pct+'% done)</div></div>'
+        +'<div class="drc-go">Resume&nbsp;›</div></button>';
+    } else rh.innerHTML='';
+  }}
   // macros today
   let mPct=null;
   if(sectionLive('nutrition')){try{const dt=dayTypeForDate(PLAN,today);const tgt=(dt&&dt.target)||{};const tcal=calOf(tgt);const tot=sumItems((dayLog&&dayLog.items)||[]);(journal||[]).forEach(e=>{if(e&&e.nutrition&&String(e.date||'').slice(0,10)===today)tot.cal+=+e.nutrition.cal||0;});if(tcal>0)mPct=Math.min(100,Math.round(tot.cal/tcal*100));}catch(_){}}
@@ -14486,7 +14519,7 @@ async function wkoCommit(){
   // TP-004: if the client never moved the "how much did you complete?" slider, derive completion from
   // the sets they actually logged vs the sets planned (the slider stays a manual override).
   const comp=WKO.completionManual?(+WKO.completion||0):wkoAutoCompletion();
-  const log={id:WKO.editId||uid(),client_id:SESSION.id,date:WKO.date,day_id:WKO.day_id,day_name:WKO.day_name,entries:WKO.entries,summary,completion:comp,duration_sec:durationSec,done:comp>=100};
+  const log={id:WKO.editId||WKO.resumeId||uid(),client_id:SESSION.id,date:WKO.date,day_id:WKO.day_id,day_name:WKO.day_name,entries:WKO.entries,summary,completion:comp,duration_sec:durationSec,done:comp>=100};
   try{await DB.saveWorkoutLog(log);wkoClearActive();wkoStopClock();toast((editing?'✓ Session updated — ':'✓ Workout saved — ')+t.sets+' sets · '+lcNum(t.vol)+' kg volume');$('workout-modal').classList.remove('open');WKO=null;WD2_DONE=null;WD2_LOGS=null;renderTraining();}catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);}
 }
 function renderHydration(){
@@ -19665,8 +19698,12 @@ function t2c(){const v=(PLAN&&PLAN.training&&PLAN.training.v2)||{};
   if(typeof ADMIN_OK==='undefined'||!ADMIN_OK){const ov=PLAN&&PLAN.milestones&&PLAN.milestones.trainingCal;if(ov&&typeof ov==='object'){cal=Object.assign({},cal);Object.keys(ov).forEach(function(d){cal[d]=ov[d];});}}
   return {active:!!v.active,workouts:Array.isArray(v.workouts)?v.workouts:[],calendar:cal};}
 function t2cWorkout(id){return t2c().workouts.find(w=>w.id===id)||null;}
-let WD2_DONE=null, WD2_LOGS=null, WD2=null, WD2_TIMER=null, WD2_WEEK=0, TW_RELIB=false;
-async function wd2LoadDone(){try{const logs=await DB.listWorkoutLogs(SESSION.id);WK_LOGS=logs||[];WD2_DONE=new Set((logs||[]).map(l=>String(l.date||'').slice(0,10)));WD2_LOGS={};(logs||[]).forEach(l=>{const d=String(l.date||'').slice(0,10);const prev=WD2_LOGS[d];if(!prev||String(l.created_at||'')>String(prev.created_at||''))WD2_LOGS[d]=l;});}catch(e){WD2_DONE=new Set();WD2_LOGS={};}try{renderTrainingV2();}catch(e){}}
+let WD2_DONE=null, WD2_PARTIAL=null, WD2_LOGS=null, WD2=null, WD2_TIMER=null, WD2_WEEK=0, TW_RELIB=false;
+async function wd2LoadDone(){try{const logs=await DB.listWorkoutLogs(SESSION.id);WK_LOGS=logs||[];
+  WD2_LOGS={};(logs||[]).forEach(l=>{const d=String(l.date||'').slice(0,10);if(!d)return;const prev=WD2_LOGS[d];if(!prev||String(l.created_at||'')>String(prev.created_at||''))WD2_LOGS[d]=l;});
+  WD2_DONE=new Set();WD2_PARTIAL=new Set();
+  Object.keys(WD2_LOGS).forEach(d=>{const l=WD2_LOGS[d];if(l.done||(+l.completion||0)>=100)WD2_DONE.add(d);else WD2_PARTIAL.add(d);});   // a logged-but-unfinished day is "partial", not done
+}catch(e){WD2_DONE=new Set();WD2_PARTIAL=new Set();WD2_LOGS={};}try{renderTrainingV2();}catch(e){}}
 /* the logged session for a date (latest, if logged twice) + its stats-and-edit panel for a finished day */
 function wd2LogForDate(iso){const m=WD2_LOGS||{};return m[iso]||null;}
 function wd2FinishedPanel(log,iso,id){
@@ -19746,7 +19783,10 @@ function renderTrainingV2(){
         '<svg class="tw-ring" width="64" height="64" viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="7"/><circle cx="32" cy="32" r="26" fill="none" stroke="#3ed47e" stroke-width="7" stroke-linecap="round" stroke-dasharray="'+dash.toFixed(1)+' '+circ+'" transform="rotate(-90 32 32)"/><text x="32" y="30" text-anchor="middle" font-size="15" font-weight="900" fill="#fff" font-family="Archivo">'+wkDoneN+'/'+wkPlan+'</text><text x="32" y="43" text-anchor="middle" font-size="8" fill="#aab2bf" font-family="Inter">week</text></svg>';
       hero+='</div>';
       if(dn){hero+=wd2FinishedPanel(wd2LogForDate(today),today,id)+'</div>';return hero;}
-      hero+='<button class="tw-cta" onclick="startWorkoutV2(\''+today+'\',\''+id+'\')">▶ Start workout</button></div>';
+      const _part=!!(WD2_PARTIAL&&WD2_PARTIAL.has&&WD2_PARTIAL.has(today));
+      const _ppct=_part?Math.round((wd2LogForDate(today)||{}).completion||0):0;
+      if(_part)hero=hero.replace('<div class="tw-chips">','<div class="tw-chips"><span class="tw-chip" style="background:rgba(245,158,11,.22);color:#fde68a">↻ In progress'+(_ppct?' · '+_ppct+'%':'')+'</span>');
+      hero+='<button class="tw-cta" onclick="startWorkoutV2(\''+today+'\',\''+id+'\')">'+(_part?('↻ Resume workout'+(_ppct?' · '+_ppct+'% done':'')):'▶ Start workout')+'</button></div>';
       let li='',idx=0;
       (w.sections||[]).forEach(s=>{const exs=s.exercises||[];exs.forEach((e,i)=>{idx++;const ss=e.linkNext||(i>0&&exs[i-1].linkNext);const lib=e.exId?exById(e.exId):null;const t=twExTarget(e);
         const sub=ss?'<span class="tw-ss-tag">⛓ Superset</span>':esc(((lib&&lib.bodyPart)||s.name||'')+(lib&&lib.equipment?(' · '+lib.equipment):''));
@@ -19921,14 +19961,49 @@ async function wkoRunV2(iso,wId){
       sets:tSets.map(st=>({reps:'',weight:'',rir:'',rest:'',done:false,tech:st.tech||'',target:{reps:st.reps||'',weight:st.weight||'',rir:st.rir||'',rest:st.rest||'',tempo:st.tempo||'',time:st.time||'',distance:st.distance||'',height:st.height||''}}))};});
   if(!entries.length){toast('This workout has no exercises yet',true);return;}
   WKO={client_id:SESSION.id,date:iso||todayISO(),day_id:w.id,day_name:w.name||'Workout',completion:0,entries,v2:true};
+  // resume an unfinished (saved but <100%) session for this day — bring back the sets already logged so nothing is lost
+  try{const prevs=(WKO_HISTORY||[]).filter(l=>l&&String(l.date||'').slice(0,10)===WKO.date&&l.done===false&&Array.isArray(l.entries)&&l.entries.length).sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+    if(prevs[0]){WKO.resumeId=prevs[0].id;wkoRestoreInto(WKO,prevs[0]);}}catch(e){}
   WKO_IDX=0;WKO_START=Date.now();
   $('workout-modal').classList.add('open');renderWorkout();wkoStartClock();
+}
+/* merge a saved (unfinished) log's logged values back onto a freshly-built WKO so re-opening resumes it */
+function wkoRestoreInto(wk,prev){
+  (prev.entries||[]).forEach(function(pe,i){
+    let fe=wk.entries[i];
+    if(!fe||(fe.exId&&pe.exId&&fe.exId!==pe.exId)){fe=wk.entries.find(function(x){return x.exId&&pe.exId&&x.exId===pe.exId;})||wk.entries.find(function(x){return x.name===pe.name||x.origName===pe.origName;})||null;}
+    if(!fe)return;
+    if(pe.name)fe.name=pe.name; if(pe.comment)fe.comment=pe.comment; if(pe.note&&!fe.note)fe.note=pe.note; if(pe.brand)fe.brand=pe.brand; if(pe.equipment)fe.equipment=pe.equipment; if(pe.skipped)fe.skipped=pe.skipped;
+    (pe.sets||[]).forEach(function(ps,si){
+      if(!fe.sets[si])fe.sets[si]={reps:'',weight:'',rir:'',rest:'',done:false,tech:'',target:{}};
+      ['reps','weight','rir','rest','dur','dist','cal','hr','tempo','height','time'].forEach(function(v){if(ps[v]!=null&&String(ps[v])!=='')fe.sets[si][v]=ps[v];});
+      if(ps.done)fe.sets[si].done=true;
+    });
+  });
 }
 function wd2Start(iso,wId){ const w=t2cWorkout(wId); if(!w){toast('Workout not found',true);return;}
   const go=()=>{ WD2={client_id:SESSION.id,date:iso||todayISO(),workoutId:wId,name:w.name||'Workout',started:Date.now(),entries:[]};
     (w.sections||[]).forEach(sec=>{(sec.exercises||[]).forEach(e=>{const n=Math.max(1,Math.min(12,parseInt((e.scheme&&e.scheme.sets))||3));const track=(e.track&&e.track.length)?e.track.slice():['reps','weight'];WD2.entries.push({secName:sec.name||'Workout',exId:e.exId||'',name:e.name||'Exercise',origName:e.name||'Exercise',track:track,scheme:e.scheme||{},alts:Array.isArray(e.alts)?e.alts:[],altIdx:0,linkNext:!!e.linkNext,note:e.notes||'',sets:Array.from({length:n},()=>{const s={done:false};track.forEach(v=>s[v]='');return s;})});});});
+    // resume an unfinished session for this day: bring back the weights/reps already logged
+    try{const prev=(typeof wd2LogForDate==='function')?wd2LogForDate(WD2.date):null;
+      if(prev&&prev.done===false&&Array.isArray(prev.entries)&&prev.entries.length){WD2.logId=prev.id;wd2RestoreInto(WD2,prev);}}catch(e){}
     const t=$('wd2-title');if(t)t.textContent=WD2.name; const m=$('wd2-run-modal');if(m){document.body.appendChild(m);m.classList.add('open');} wd2Render(); };
   loadExLib().then(go).catch(go);
+}
+/* merge a saved (unfinished) log's logged values back onto the freshly-built workout so nothing is lost */
+function wd2RestoreInto(wd,prev){
+  (prev.entries||[]).forEach(function(pe,i){
+    let fe=wd.entries[i];
+    if(!fe||(fe.exId&&pe.exId&&fe.exId!==pe.exId)){fe=wd.entries.find(function(x){return x.exId&&pe.exId&&x.exId===pe.exId;})||wd.entries.find(function(x){return x.name===pe.name;})||null;}
+    if(!fe)return;
+    if(pe.name)fe.name=pe.name; if(pe.note!=null)fe.note=pe.note; if(pe.altIdx!=null)fe.altIdx=pe.altIdx;
+    const track=(fe.track&&fe.track.length)?fe.track:['reps','weight'];
+    (pe.sets||[]).forEach(function(ps,si){
+      if(!fe.sets[si]){const ns={done:false};track.forEach(function(v){ns[v]='';});fe.sets[si]=ns;}
+      track.forEach(function(v){if(ps[v]!=null&&String(ps[v])!=='')fe.sets[si][v]=ps[v];});
+      if(ps.done)fe.sets[si].done=true;
+    });
+  });
 }
 function wd2Close(){wd2StopRest();const m=$('wd2-run-modal');if(m)m.classList.remove('open');WD2=null;}
 function wd2Set(ei,si,v,val){if(!WD2)return;const en=WD2.entries[ei];if(!en||!en.sets[si])return;en.sets[si][v]=val;}
@@ -19953,7 +20028,7 @@ function wd2ExHTML(en,ei){
   const cols=en.track&&en.track.length?en.track:['reps','weight'];
   const gt='28px repeat('+cols.length+',1fr) 38px';
   let h='<div class="wd2-ex'+(en.linkNext?' link':'')+'">';
-  h+='<div class="wd2-ex-h"><span class="wd2-ex-nm">'+esc(en.name)+'</span>'+(vid?'<a class="btn-xxs" href="'+esc(vid)+'" target="_blank" rel="noopener">▶ demo</a>':'')+(en.alts&&en.alts.length?'<button class="btn-xxs" onclick="wd2SwapAlt('+ei+')" title="Swap for an alternative">⇄ alt</button>':'')+'</div>';
+  h+='<div class="wd2-ex-h"><span class="wd2-ex-nm">'+esc(en.name)+'</span>'+(vid?'<a class="btn-xxs" href="'+esc(vid)+'" target="_blank" rel="noopener">▶ demo</a>':'')+'<button class="btn-xxs" onclick="openExHistory('+JSON.stringify(en.name).replace(/"/g,'&quot;')+')" title="Your past sessions for this exercise">📈 history</button>'+(en.alts&&en.alts.length?'<button class="btn-xxs" onclick="wd2SwapAlt('+ei+')" title="Swap for an alternative">⇄ alt</button>':'')+'</div>';
   const tl=wd2TargetLine(en);if(tl)h+='<div class="wd2-target">🎯 '+esc(tl)+'</div>';
   if(en.note)h+='<div class="wd2-target" style="color:var(--text)">📝 '+esc(en.note)+'</div>';
   // header row
@@ -19967,7 +20042,8 @@ function wd2Finish(){ if(!WD2)return; wd2StopRest();
   let totalSets=0,totalReps=0,volume=0;const exs=[];
   WD2.entries.forEach(en=>{let best=0;en.sets.forEach(s=>{const any=en.track.some(v=>String(s[v]||'').trim()!=='');if(s.done||any){totalSets++;const reps=+s.reps||0,w=+s.weight||0;totalReps+=reps;volume+=reps*w;if(w&&reps)best=Math.max(best,est1RM(w,reps));}});exs.push({name:en.name,est1rm:best||0});});
   const totalAll=WD2.entries.reduce((a,e)=>a+e.sets.length,0),totalDone=WD2.entries.reduce((a,e)=>a+e.sets.filter(s=>s.done).length,0),completion=totalAll?Math.round(totalDone/totalAll*100):0;
-  const log={id:uid(),client_id:SESSION.id,date:WD2.date,day_id:WD2.workoutId,day_name:WD2.name,entries:WD2.entries,summary:{totalSets,totalReps,volume:Math.round(volume),exercises:exs},completion,duration_sec:Math.round((Date.now()-WD2.started)/1000),done:completion>=100};
+  const log={id:WD2.logId||uid(),client_id:SESSION.id,date:WD2.date,day_id:WD2.workoutId,day_name:WD2.name,entries:WD2.entries,summary:{totalSets,totalReps,volume:Math.round(volume),exercises:exs},completion,duration_sec:Math.round((Date.now()-WD2.started)/1000),done:completion>=100};
+  WD2.logId=log.id;
   DB.saveWorkoutLog(log).then(()=>{try{DB.addAudit({client_id:SESSION.id,actor:'client',action:'Completed workout',detail:WD2.name});}catch(e){}toast('Workout saved ✓');wd2Close();WD2_DONE=null;try{renderTraining();}catch(e){}}).catch(e=>toast('Could not save — '+((e&&e.message)||'error'),true));
 }
 
