@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light" data-version="2026-11-19a">
+<html lang="en" data-theme="light" data-version="2026-11-24a">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -265,7 +265,8 @@ function clientStatus(c){
   try{var st=p.status||{};if(st.nutrition==='overdue'||st.training==='overdue')badges.push(['due','⚠ plan due']);}catch(e){}
   return badges;
 }
-function renderClients(){
+/* Build only the list rows (search filters this, NOT the shell, so the search box is never rebuilt) */
+function cmClientListHTML(){
   var q=SEARCH.toLowerCase();
   var list=CLIENTS.filter(function(c){
     if(q&&(String(c.name||'')+' '+String(c.email||'')).toLowerCase().indexOf(q)<0)return false;
@@ -275,22 +276,31 @@ function renderClients(){
     if(FILTER==='due'){var st=p.status||{};return st.nutrition==='overdue'||st.training==='overdue';}
     return true;
   }).sort(function(a,b){return String(a.name||'').toLowerCase()<String(b.name||'').toLowerCase()?-1:1;});
+  return list.length?list.map(function(c){
+    var badges=clientStatus(c).map(function(b){return '<span class="cm-b '+b[0]+'">'+b[1]+'</span>';}).join('');
+    var p=PLANS[c.id]||{};var sub=(p.title||'Diet Plan')+((p.profile&&p.profile.goal)?(' · '+esc(p.profile.goal)):'');
+    return '<button class="cm-cl" onclick="openClient(\''+c.id+'\')"><div class="cm-av">'+esc(initial(c.name||c.email))+'</div>'+
+      '<div style="flex:1;min-width:0"><div class="cm-cl-nm">'+esc(c.name||c.email||'Client')+'</div><div class="cm-cl-sub">'+sub+'</div>'+(badges?'<div class="cm-badges">'+badges+'</div>':'')+'</div><span class="cm-go">›</span></button>';
+  }).join(''):'<div class="empty">No clients match.</div>';
+}
+/* refresh just the list region — keeps the live search input (and the keyboard) intact while typing */
+function cmFillList(){var h=$('cm-cl-list');if(h)h.innerHTML=cmClientListHTML();}
+function cmSearchInput(v){SEARCH=v;clearTimeout(window._cs);window._cs=setTimeout(cmFillList,120);}
+function renderClients(){
   var html='<div class="cm-top"><div class="cm-logo">S2S</div><div><div class="cm-title">Coach panel</div><div class="cm-sub">'+CLIENTS.length+' clients</div></div><span class="sp"></span><button class="cm-back" onclick="logout()">Sign out</button></div>'+
-    '<div class="cm-body"><input id="cm-search" placeholder="🔍 Search clients…" value="'+esc(SEARCH)+'">'+
-    '<div class="cm-chips">'+
+    '<div class="cm-body"><input id="cm-search" placeholder="🔍 Search clients…" value="'+esc(SEARCH)+'" autocomplete="off" oninput="cmSearchInput(this.value)">'+
+    '<div class="cm-chips" id="cm-chips">'+
       [['all','All'],['active','Active'],['due','⚠ Plan due'],['archived','Archived']].map(function(f){return '<button class="cm-chip'+(FILTER===f[0]?' on':'')+'" onclick="setFilter(\''+f[0]+'\')">'+f[1]+'</button>';}).join('')+
     '</div>'+
-    (list.length?list.map(function(c){
-      var badges=clientStatus(c).map(function(b){return '<span class="cm-b '+b[0]+'">'+b[1]+'</span>';}).join('');
-      var p=PLANS[c.id]||{};var sub=(p.title||'Diet Plan')+((p.profile&&p.profile.goal)?(' · '+esc(p.profile.goal)):'');
-      return '<button class="cm-cl" onclick="openClient(\''+c.id+'\')"><div class="cm-av">'+esc(initial(c.name||c.email))+'</div>'+
-        '<div style="flex:1;min-width:0"><div class="cm-cl-nm">'+esc(c.name||c.email||'Client')+'</div><div class="cm-cl-sub">'+sub+'</div>'+(badges?'<div class="cm-badges">'+badges+'</div>':'')+'</div><span class="cm-go">›</span></button>';
-    }).join(''):'<div class="empty">No clients match.</div>')+
+    '<div id="cm-cl-list">'+cmClientListHTML()+'</div>'+
     '</div>';
   app(html);
-  var s=$('cm-search');if(s)s.addEventListener('input',function(){SEARCH=this.value;clearTimeout(window._cs);window._cs=setTimeout(renderClients,180);var cur=this;setTimeout(function(){var n=$('cm-search');if(n&&document.activeElement!==n){n.focus();try{n.setSelectionRange(n.value.length,n.value.length);}catch(e){}}},200);});
 }
-function setFilter(f){FILTER=f;renderClients();}
+/* filter is a tap, not typing — update the chips + list in place (don't rebuild the search box) */
+function setFilter(f){FILTER=f;
+  try{var cs=$('cm-chips');if(cs){var order=['all','active','due','archived'];var btns=cs.querySelectorAll('.cm-chip');for(var i=0;i<btns.length;i++){btns[i].className='cm-chip'+(order[i]===f?' on':'');}}}catch(e){}
+  cmFillList();
+}
 
 /* ========================= CLIENT DETAIL ========================= */
 function openClient(id){
