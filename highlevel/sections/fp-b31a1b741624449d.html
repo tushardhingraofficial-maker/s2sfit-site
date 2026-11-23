@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en-AU" data-version="2026-11-23-1000">
+<html lang="en-AU" data-version="2026-11-24-0658">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -2432,7 +2432,8 @@ setInterval(()=>{if(!document.body.classList.contains('locked')&&Date.now()-last
    and can be emailed to RECOVERY_EMAIL as a reset link (#recover=…); it never goes to the server — only
    a hash of a key derived from it (rk), so the server can tell the owner apart without being able to
    open anything. A planner encrypted before recovery existed has no wp: its DK is the password key. */
-const RECOVERY_EMAIL='support@s2sfit.com',PUBLIC_URL='https://s2sfit-sections.netlify.app/sections/fp-b31a1b741624449d.html';
+/* reset links point back to wherever the planner is opened from (the s2sfit.com page or the direct link) */
+const RECOVERY_EMAIL='support@s2sfit.com',PUBLIC_URL=/^https:/.test(location.protocol)?location.origin+location.pathname:'https://s2sfit.com/financial-planning';
 const REC_ALPHA='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 var DKRAW=null;
 function newRecoveryKey(){const b=crypto.getRandomValues(new Uint8Array(25));let s='';b.forEach((x,i)=>{s+=REC_ALPHA[x%32]+((i%5===4&&i<24)?'-':'')});return s}
