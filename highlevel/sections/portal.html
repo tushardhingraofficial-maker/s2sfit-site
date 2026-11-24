@@ -7880,7 +7880,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04vs';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04vt';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -14150,16 +14150,39 @@ function wkoOptList(cur,known,common){var seen={},opts=[];function add(x){x=(x||
 /* ── Custom equipment / brands: a shared coach-wide list (KV wk_gear) merged into every picker.
    Coach additions save to the shared list (anyone sees them); a client's own additions persist on
    their device so they stay in their picker; the coach curates/deletes from the admin panel. ── */
-var WK_GEAR={brands:[],equipment:[],_loaded:false};
+var WK_GEAR={brands:[],equipment:[],hidden:[],_loaded:false};
 async function wkGearLoad(force){
   if(WK_GEAR._loaded&&!force)return WK_GEAR;
-  try{const d=await kvLoad('wk_gear',null);if(d&&typeof d==='object'){WK_GEAR.brands=Array.isArray(d.brands)?d.brands.slice():[];WK_GEAR.equipment=Array.isArray(d.equipment)?d.equipment.slice():[];}}catch(e){}
+  try{const d=await kvLoad('wk_gear',null);if(d&&typeof d==='object'){WK_GEAR.brands=Array.isArray(d.brands)?d.brands.slice():[];WK_GEAR.equipment=Array.isArray(d.equipment)?d.equipment.slice():[];WK_GEAR.hidden=Array.isArray(d.hidden)?d.hidden.slice():[];}}catch(e){}
   WK_GEAR._loaded=true;return WK_GEAR;
+}
+function wkGearSaveObj(){return {brands:WK_GEAR.brands,equipment:WK_GEAR.equipment,hidden:WK_GEAR.hidden||[]};}
+/* auto-promote: pull the custom gear clients/coaches actually logged into the shared list (admin only; skips built-ins & anything the coach deleted) */
+async function wkGearHarvest(logs){
+  if(typeof ADMIN_OK==='undefined'||!ADMIN_OK)return 0;
+  if(!Array.isArray(logs)||!logs.length)return 0;
+  await wkGearLoad();
+  var have={},hid={};
+  EQUIP_COMMON.concat(WK_GEAR.equipment||[]).forEach(function(x){have['e:'+String(x).toLowerCase()]=1;});
+  BRAND_COMMON.concat(WK_GEAR.brands||[]).forEach(function(x){have['b:'+String(x).toLowerCase()]=1;});
+  (WK_GEAR.hidden||[]).forEach(function(x){hid[String(x).toLowerCase()]=1;});
+  var addE=[],addB=[],seen={};
+  logs.forEach(function(l){((l&&l.entries)||[]).forEach(function(en){
+    [['e',en&&en.equipment],['b',en&&en.brand]].forEach(function(p){
+      var k=p[0],val=(p[1]||'').trim();if(!val)return;var lv=val.toLowerCase();
+      if(hid[lv]||have[k+':'+lv]||seen[k+':'+lv])return;seen[k+':'+lv]=1;
+      if(k==='e')addE.push(val);else addB.push(val);
+    });
+  })});
+  if(!addE.length&&!addB.length)return 0;
+  WK_GEAR.equipment=(WK_GEAR.equipment||[]).concat(addE);WK_GEAR.brands=(WK_GEAR.brands||[]).concat(addB);
+  if(typeof kvGuard==='function'&&!kvGuard('wk_gear'))return 0;
+  try{await DB.setKV('wk_gear',wkGearSaveObj());return addE.length+addB.length;}catch(e){return 0;}
 }
 function wkGearMine(){try{const d=JSON.parse(localStorage.getItem('s2s_gear_mine')||'{}');return {brands:Array.isArray(d.brands)?d.brands:[],equipment:Array.isArray(d.equipment)?d.equipment:[]};}catch(e){return {brands:[],equipment:[]};}}
 function wkGearMineAdd(kind,v){v=(v||'').trim();if(!v)return;try{const d=wkGearMine();const arr=(kind==='brand')?d.brands:d.equipment;if(!arr.some(function(x){return x.toLowerCase()===v.toLowerCase();}))arr.push(v);localStorage.setItem('s2s_gear_mine',JSON.stringify(d));}catch(e){}}
-async function wkGearAddShared(kind,v){v=(v||'').trim();if(!v)return false;await wkGearLoad();const arr=(kind==='brand')?WK_GEAR.brands:WK_GEAR.equipment;if(arr.some(function(x){return x.toLowerCase()===v.toLowerCase();}))return true;arr.push(v);if(typeof kvGuard==='function'&&!kvGuard('wk_gear'))return false;try{await DB.setKV('wk_gear',{brands:WK_GEAR.brands,equipment:WK_GEAR.equipment});return true;}catch(e){try{toast('Could not save to the shared list',true);}catch(_){}return false;}}
-async function wkGearDelShared(kind,v){await wkGearLoad();if(kind==='brand')WK_GEAR.brands=WK_GEAR.brands.filter(function(x){return x!==v;});else WK_GEAR.equipment=WK_GEAR.equipment.filter(function(x){return x!==v;});if(typeof kvGuard==='function'&&!kvGuard('wk_gear'))return;try{await DB.setKV('wk_gear',{brands:WK_GEAR.brands,equipment:WK_GEAR.equipment});}catch(e){try{toast('Could not save',true);}catch(_){}}}
+async function wkGearAddShared(kind,v){v=(v||'').trim();if(!v)return false;await wkGearLoad();var lv=v.toLowerCase();WK_GEAR.hidden=(WK_GEAR.hidden||[]).filter(function(x){return x!==lv;});const arr=(kind==='brand')?WK_GEAR.brands:WK_GEAR.equipment;if(!arr.some(function(x){return x.toLowerCase()===lv;}))arr.push(v);if(typeof kvGuard==='function'&&!kvGuard('wk_gear'))return false;try{await DB.setKV('wk_gear',wkGearSaveObj());return true;}catch(e){try{toast('Could not save to the shared list',true);}catch(_){}return false;}}
+async function wkGearDelShared(kind,v){await wkGearLoad();var lv=(v||'').toLowerCase();if(kind==='brand')WK_GEAR.brands=WK_GEAR.brands.filter(function(x){return x!==v;});else WK_GEAR.equipment=WK_GEAR.equipment.filter(function(x){return x!==v;});WK_GEAR.hidden=WK_GEAR.hidden||[];if(lv&&WK_GEAR.hidden.indexOf(lv)<0)WK_GEAR.hidden.push(lv);if(typeof kvGuard==='function'&&!kvGuard('wk_gear'))return;try{await DB.setKV('wk_gear',wkGearSaveObj());}catch(e){try{toast('Could not save',true);}catch(_){}}}
 function wkGearRemember(kind,v){v=(v||'').trim();if(!v)return;if(typeof ADMIN_OK!=='undefined'&&ADMIN_OK){wkGearAddShared(kind,v);}else{wkGearMineAdd(kind,v);}}
 /* Admin panel: manage the shared equipment & brand list (add / delete) */
 async function gearMgrOpen(){
@@ -14169,6 +14192,8 @@ async function gearMgrOpen(){
   var ov=document.getElementById('gearmgr-modal');
   if(!ov){ov=document.createElement('div');ov.id='gearmgr-modal';ov.className='exh-overlay';document.body.appendChild(ov);ov.addEventListener('click',function(e){if(e.target===ov)gearMgrClose();});}
   ov.classList.add('open');renderGearMgr();
+  // auto-promote: pull in any custom gear clients/coaches have logged (one bulk read, no fan-out)
+  try{var _logs=await DB.listWorkoutLogs(null);var _n=await wkGearHarvest(_logs);if(_n>0){renderGearMgr();try{toast('Added '+_n+' item'+(_n>1?'s':'')+' from logged workouts');}catch(e){}}}catch(e){}
 }
 function gearMgrClose(){var ov=document.getElementById('gearmgr-modal');if(ov)ov.classList.remove('open');}
 function renderGearMgr(){
@@ -19745,6 +19770,7 @@ async function renderActivity(){
   (cks||[]).forEach(c=>{if(c.kind==='booking')return;const dt=String(c.date||'').slice(0,10);if(dt<from)return;
     ev.push({type:'checkin',pk:c.id,cid:c.client_id,name:nm[c.client_id]||'Client',ms:actMs(c.created_at,dt),date:dt,time:actTimeFrom('',c.created_at),checkin:c});});
   ACT_WKS=wks||[];   // keep every workout log around so the detail view can compare a session to the client's history
+  try{wkGearHarvest(ACT_WKS);}catch(e){}   // ambient auto-promote: client/coach-logged custom gear → shared picker list
   (wks||[]).forEach(w=>{const dt=String(w.date||'').slice(0,10);if(dt<from)return;
     ev.push({type:'workout',pk:w.id,cid:w.client_id,name:nm[w.client_id]||'Client',ms:actMs(w.created_at,dt),date:dt,time:actTimeFrom('',w.created_at),workout:w});});
   const cf=(($('act-client')||{}).value)||'';

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light" data-version="2026-11-24i">
+<html lang="en" data-theme="light" data-version="2026-11-24j">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -1392,13 +1392,13 @@ var EQUIP_COMMON=['Barbell','Dumbbell','Machine','Cable','Smith machine','Kettle
 var BRAND_COMMON=['Hammer Strength','Cybex','Life Fitness','Technogym','Nautilus','Precor','Matrix','Atlantis','Watson','Prime'];
 function wkOptList(cur,known,common){var seen={},opts=[];function add(x){x=(x||'').trim();if(x&&!seen[x.toLowerCase()]){seen[x.toLowerCase()]=1;opts.push(x);}}(known||[]).forEach(add);(common||[]).forEach(add);if(cur){var c=cur.trim();if(c&&!seen[c.toLowerCase()])opts.unshift(c);}return opts;}
 /* ── Shared custom equipment / brands (KV wk_gear): coach additions save for everyone; managed/deleted from the portal admin panel ── */
-var WK_GEAR={brands:[],equipment:[],_loaded:false};
+var WK_GEAR={brands:[],equipment:[],hidden:[],_loaded:false};
 function wkGearNorm(v){var d=v;if(d&&typeof d==='object'&&!Array.isArray(d)){if(!('brands' in d)&&!('equipment' in d)&&('value' in d))d=d.value;}return (d&&typeof d==='object')?d:{};}
 function wkGearLoad(force){
   if(WK_GEAR._loaded&&!force)return Promise.resolve(WK_GEAR);
-  return api('getKV',{key:'wk_gear'}).then(function(v){var d=wkGearNorm(v);WK_GEAR.brands=Array.isArray(d.brands)?d.brands.slice():[];WK_GEAR.equipment=Array.isArray(d.equipment)?d.equipment.slice():[];WK_GEAR._loaded=true;return WK_GEAR;}).catch(function(){WK_GEAR._loaded=true;return WK_GEAR;});
+  return api('getKV',{key:'wk_gear'}).then(function(v){var d=wkGearNorm(v);WK_GEAR.brands=Array.isArray(d.brands)?d.brands.slice():[];WK_GEAR.equipment=Array.isArray(d.equipment)?d.equipment.slice():[];WK_GEAR.hidden=Array.isArray(d.hidden)?d.hidden.slice():[];WK_GEAR._loaded=true;return WK_GEAR;}).catch(function(){WK_GEAR._loaded=true;return WK_GEAR;});
 }
-function wkGearAdd(kind,v){v=(v||'').trim();if(!v)return Promise.resolve();return wkGearLoad().then(function(){var arr=(kind==='brand')?WK_GEAR.brands:WK_GEAR.equipment;if(arr.some(function(x){return x.toLowerCase()===v.toLowerCase();}))return;arr.push(v);return api('setKV',{key:'wk_gear',value:{brands:WK_GEAR.brands,equipment:WK_GEAR.equipment}}).catch(function(){});});}
+function wkGearAdd(kind,v){v=(v||'').trim();if(!v)return Promise.resolve();return wkGearLoad().then(function(){var lv=v.toLowerCase();WK_GEAR.hidden=(WK_GEAR.hidden||[]).filter(function(x){return x!==lv;});var arr=(kind==='brand')?WK_GEAR.brands:WK_GEAR.equipment;if(!arr.some(function(x){return x.toLowerCase()===lv;}))arr.push(v);return api('setKV',{key:'wk_gear',value:{brands:WK_GEAR.brands,equipment:WK_GEAR.equipment,hidden:WK_GEAR.hidden}}).catch(function(){});});}
 function wkPickRow(label,en,ei,kind){
   var isEq=kind==='equip';var cur=isEq?(en.equipment||''):(en.brand||'');
   var opts=wkOptList(cur,isEq?wkEquipFor(en):wkBrandsFor(en),(isEq?EQUIP_COMMON.concat(WK_GEAR.equipment||[]):BRAND_COMMON.concat(WK_GEAR.brands||[])));
