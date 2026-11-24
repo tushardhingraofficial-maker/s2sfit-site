@@ -7880,7 +7880,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04vp';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04vq';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -8181,6 +8181,20 @@ const DB={
     }
     if(this.mode==='cloud'){const{data:cs}=await this.sb.from('dp_clients').select('*').order('name');const{data:ps}=await this.sb.from('dp_plans').select('*');return {clients:cs||[],plans:ps||[]};}
     return {clients:this._get('clients'),plans:this._get('plans')};
+  },
+  /* Regenerate the daily auto-tasks on demand (same job the pg_cron runs) — dedicated edge fn s2s-gen-tasks. */
+  async genTasks(){
+    if(this.mode==='api'){
+      const url=API_URL.replace(/\/[^\/]+$/,'/s2s-gen-tasks');
+      const headers={'Content-Type':'application/json'};
+      if(SUPABASE_ANON_KEY){headers['apikey']=SUPABASE_ANON_KEY;headers['Authorization']='Bearer '+SUPABASE_ANON_KEY;}
+      const res=await fetch(url,{method:'POST',headers,body:JSON.stringify({token:this.token})});
+      let j={};try{j=await res.json();}catch(e){}
+      if(!res.ok||j.error)throw new Error(j.error||('gen-tasks failed ('+res.status+')'));
+      return j.data;
+    }
+    if(this.mode==='cloud'){const{data,error}=await this.sb.rpc('dp_generate_daily_tasks');if(error)throw error;return data;}
+    return {inserted:0,closed:0};
   },
   /* PT sessions (Phase 2) — dedicated edge fn s2s-pt, self-contained like s2s-overview (does NOT touch super-api).
      Clients read only their own non-draft rows; all writes are admin-only (enforced server-side). Demo/cloud-dev
@@ -26028,6 +26042,14 @@ function tkAutoSectionHTML(list,rowFn){
       return '<div class="tk-autogrp"><div class="tk-autohd" onclick="editClient(\''+g.cid+'\')" title="Open this client"><span class="pri-dot '+g.pri+'"></span><b>'+esc(g.name)+'</b><span class="funit">'+g.items.length+' to do</span></div>'+g.items.map(rowFn).join('')+'</div>';
     }).join('')+'</div>';
 }
+async function tkRefreshAuto(btn){
+  try{if(btn){btn.disabled=true;btn.textContent='↻ Refreshing…';}
+    const r=await DB.genTasks();
+    await renderTasks();
+    const ins=(r&&r.inserted)||0,cl=(r&&r.closed)||0;
+    toast('Auto-tasks refreshed'+((ins||cl)?(' — '+ins+' added, '+cl+' cleared'):' — no changes'));
+  }catch(e){toast('Could not refresh auto-tasks: '+((e&&e.message)||'error'),true);if(btn){btn.disabled=false;btn.textContent='↻ Refresh auto-tasks';}}
+}
 async function renderTasks(){
   const host=$('tasks-host');if(!host)return;
   try{TASKS=await DB.listTasks();}catch(e){host.innerHTML='<div class="empty">Could not load tasks.</div>';return;}
@@ -26066,7 +26088,7 @@ async function renderTasks(){
   const openManual=open.filter(t=>t.source!=='auto');
   const genRows=tkAutoSectionHTML(openAuto,row)+(openManual.length?openManual.map(row).join(''):'')+(tOpen.length?tOpen.map(e=>tkTeamRow(e,false)).join(''):'');
   host.innerHTML='<div class="tk-cols">'+
-    '<div class="tk-col"><div class="uline" style="margin:2px 0 8px">👥 Team / general tasks</div>'+
+    '<div class="tk-col"><div style="display:flex;align-items:center;gap:8px;margin:2px 0 8px"><div class="uline" style="margin:0;flex:1">👥 Team / general tasks</div><button class="btn-xxs" onclick="tkRefreshAuto(this)" title="Rebuild the daily auto-tasks from each client’s current status right now (don’t wait for the morning run)">↻ Refresh auto-tasks</button></div>'+
       (genRows||'<div class="empty">🎉 All caught up — no open team or general tasks.</div>')+'</div>'+
     '<div class="tk-col"><div class="uline" style="margin:2px 0 8px">🙋 Allocated to '+(owner?'a coach':'me')+'</div>'+
       tkAllocSectionHTML(tOpen,false)+'</div>'+
