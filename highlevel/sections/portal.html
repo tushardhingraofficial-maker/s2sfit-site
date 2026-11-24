@@ -2917,6 +2917,11 @@ details.meal-add-choose[open]>summary{background:none;color:var(--muted);box-sha
 @media(max-width:640px){#issue-fab::after{display:none}#issue-fab{padding:0;width:52px;justify-content:center}}
 #chat-fab .chat-badge{position:absolute;top:-3px;right:-3px}
 .chat-badge{background:#fff;color:var(--red);min-width:18px;height:18px;border-radius:9px;font-size:11px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;padding:0 5px}
+#coach-chat-fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:1250;width:56px;height:56px;border-radius:50%;background:var(--red);color:#fff;border:none;box-shadow:0 12px 28px -8px rgba(232,23,13,.55);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+#coach-chat-fab .nav-ic{width:26px;height:26px;fill:currentColor}
+#coach-chat-fab.has-unread{animation:ccfPulse 1.5s infinite}
+@keyframes ccfPulse{0%{box-shadow:0 12px 28px -8px rgba(232,23,13,.55),0 0 0 0 rgba(232,23,13,.5)}70%{box-shadow:0 12px 28px -8px rgba(232,23,13,.55),0 0 0 15px rgba(232,23,13,0)}100%{box-shadow:0 12px 28px -8px rgba(232,23,13,.55),0 0 0 0 rgba(232,23,13,0)}}
+#coach-chat-fab .ccf-badge{position:absolute;top:-3px;right:-3px;min-width:22px;height:22px;border-radius:11px;background:#fff;color:var(--red);font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 6px;border:2px solid var(--red)}
 #chat-panel{position:fixed;right:18px;bottom:84px;width:min(360px,calc(100vw - 28px));height:min(520px,calc(100dvh - 120px));background:var(--card);border:1px solid var(--border);border-radius:14px;display:flex;flex-direction:column;overflow:hidden;z-index:1200;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 /* ---------- admin side docks (tasks left, chat right) ---------- */
 #tasks-dock,#chat-dock{position:fixed;top:calc(64px + env(safe-area-inset-top));bottom:0;background:var(--card);z-index:1150;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 24px rgba(0,0,0,.4)}
@@ -7561,6 +7566,8 @@ img,svg,canvas,video{max-width:100%}
 <!-- reopen tabs shown when a dock is closed -->
 <button id="tasks-reopen" class="dock-reopen left hidden" onclick="openDock('tasks')" title="Show tasks panel">✓ Tasks</button>
 <button id="chat-reopen" class="dock-reopen right hidden" onclick="openDock('chat')" title="Show chat panel">💬 Chat</button>
+<!-- Coach-only floating chat widget: pulses when clients have unread messages -->
+<button id="coach-chat-fab" class="hidden" onclick="openChatAdmin()" title="Client messages — open chat" aria-label="Client messages"><svg class="nav-ic" aria-hidden="true"><use href="#ic-chat"/></svg><span class="ccf-badge hidden" id="coach-chat-fab-badge">0</span></button>
 
 <!-- ============ REPORTS / DOCUMENTS — upload, view, compare ============ -->
 <div class="overlay" id="doc-modal">
@@ -7880,7 +7887,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04vu';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04vv';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -9126,11 +9133,11 @@ function showPaused(archived){$('portal').classList.add('hidden');showAuthScreen
   const em=$('paused-emoji'),ti=$('paused-title'),ms=$('paused-msg');
   if(archived){if(em)em.textContent='📦';if(ti)ti.textContent='Account inactive';if(ms)ms.textContent='Your account is currently inactive. Reach out to your coach to reactivate it and pick up right where you left off — your plan and progress are safe.';}
   else{if(em)em.textContent='⏸️';if(ti)ti.textContent='Account paused';if(ms)ms.textContent='Your account is currently paused. Reach out to your coach to reactivate it and pick up right where you left off — your plan and progress are safe.';}
-  if(CHAT_POLL){clearInterval(CHAT_POLL);CHAT_POLL=null;}['chat-fab','chat-panel','issue-fab','tasks-dock','chat-dock','tasks-reopen','chat-reopen'].forEach(id=>{const e=$(id);if(e)e.classList.add('hidden');});}
+  if(CHAT_POLL){clearInterval(CHAT_POLL);CHAT_POLL=null;}['chat-fab','chat-panel','issue-fab','tasks-dock','chat-dock','tasks-reopen','chat-reopen','coach-chat-fab'].forEach(id=>{const e=$(id);if(e)e.classList.add('hidden');});}
 function showLogin(){SESSION=null;DB.token=null;try{localStorage.removeItem('s2s_session');}catch(e){}
   if(location.hash){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}}   // client login lives at the plain URL — no #tag
   showAuthScreen('login');const p=$('login-pass');if(p)p.value='';
-  if(CHAT_POLL){clearInterval(CHAT_POLL);CHAT_POLL=null;}['tasks-dock','chat-dock','tasks-reopen','chat-reopen','issue-fab'].forEach(id=>{const e=$(id);if(e)e.classList.add('hidden');});}
+  if(CHAT_POLL){clearInterval(CHAT_POLL);CHAT_POLL=null;}['tasks-dock','chat-dock','tasks-reopen','chat-reopen','issue-fab','coach-chat-fab'].forEach(id=>{const e=$(id);if(e)e.classList.add('hidden');});}
 function showRegister(){showAuthScreen('register');['reg-name','reg-email','reg-pass','reg-pass2','reg-demo-gender','reg-demo-age','reg-demo-loc','reg-demo-occ','reg-demo-goal','reg-demo-exp','reg-demo-train','reg-demo-motivation','reg-demo-interests','reg-demo-channel','reg-demo-pain','reg-demo-notes'].forEach(id=>{const e=$(id);if(e)e.value='';});const er=$('reg-err');if(er)er.textContent='';try{if(location.hash!=='#register')history.replaceState(null,'','#register');}catch(e){}}
 /* collect the optional lead-profile answers from the sign-up form → same shape bhDemoSave uses (budget left blank; that stays coach-only) */
 function regCollectDemo(){
@@ -23393,7 +23400,8 @@ function openDock(w){
   try{$('chat-adm-text').focus();}catch(e){}
 }
 function chatShowFab(){const ib=$('issue-fab');   // client chat is now a section (bottom-nav); no floating chat FAB
-  if(ADMIN_OK&&!PREVIEW){CHAT_OPEN=false;if(ib)ib.classList.add('hidden');applyDockState();applyDockWidths();renderChatThreadsList();renderDrawerTasks();fillAdtClients();}
+  var _ccf=$('coach-chat-fab');if(_ccf)_ccf.classList.add('hidden');
+  if(ADMIN_OK&&!PREVIEW){CHAT_OPEN=false;if(ib)ib.classList.add('hidden');applyDockState();applyDockWidths();renderChatThreadsList();renderDrawerTasks();fillAdtClients();try{chatAdmBadge();}catch(e){}}
   else if(SESSION){if(ib)ib.classList.remove('hidden');['tasks-dock','chat-dock','tasks-reopen','chat-reopen'].forEach(id=>{const e=$(id);if(e)e.classList.add('hidden');});try{chatClientBadge();}catch(e){}}
   else{CHAT_OPEN=false;if(ib)ib.classList.add('hidden');applyDockState();}}
 function chatFabClick(){if(!ADMIN_OK)setSection('chat');}
@@ -23537,7 +23545,7 @@ function chatShowThreadView(){const l=$('chat-list-view'),t=$('chat-thread-view'
 function chatWhen(at){try{const d=new Date(at),now=new Date();const s=Math.round((now-d)/1000);if(s<60)return'now';if(s<3600)return Math.floor(s/60)+'m';if(s<86400&&d.getDate()===now.getDate())return String(at).slice(11,16);if(s<172800)return'Yesterday';return fmtDate(String(at).slice(0,10));}catch(e){return'';}}
 function chatListRow(gid,icon,name,sub,lastMsg,unread){
   const preview=lastMsg?(lastMsg.media?(svgIcon('clip')+' Attachment'):esc(String(lastMsg.text||'').slice(0,64))):'<span class="chat-list-empty">No messages yet — tap to start</span>';
-  const who=lastMsg&&lastMsg.sender==='admin'?'Coach: ':'';
+  const who=lastMsg&&lastMsg.sender==='admin'?(((lastMsg.media&&lastMsg.media._coach&&lastMsg.media._coach.name)||'Coach')+': '):'';
   const when=lastMsg&&lastMsg.created_at?chatWhen(lastMsg.created_at):'';
   const badge=unread>0?'<span class="chat-list-unread">'+(unread>9?'9+':unread)+'</span>':'';
   return '<button class="chat-list-item'+(unread>0?' unread':'')+'" onclick="clientOpenThread('+(gid?('\''+gid+'\''):'null')+')">'+
@@ -23548,6 +23556,8 @@ function chatListRow(gid,icon,name,sub,lastMsg,unread){
 let CHAT_TAB='chats';
 const CHAT_EMOJIS=['😀','😄','😁','😅','😂','🙂','😉','😍','😘','😎','🤩','🥳','🤗','🤔','😴','😇','😭','😤','😡','🥵','😮‍💨','🙏','👍','👏','🙌','💪','🔥','✨','🎉','❤️','💯','✅','👀','🤝','🫡','😋','🏋️','🏃','🥗','💧','🍗','🥚'];
 function chatSetTab(t){CHAT_TAB=t;renderChatList();}   /* legacy no-op: Inbox is now one unified list (direct + groups) */
+/* the client should see the individual coach who messaged them (Shubham / Gayatree …), not a generic "team" */
+function clientCoachLabel(msgs){var nm='';for(var i=((msgs||[]).length-1);i>=0;i--){var m=msgs[i];if(m&&m.sender==='admin'){var c=(m.media&&m.media._coach&&m.media._coach.name)||'';if(!c&&m.sender_name&&m.sender_name!=='Coach')c=m.sender_name;if(c){nm=c;break;}}}return nm;}
 async function renderChatList(){
   const host=$('chat-list');if(!host||!SESSION)return;
   try{CLIENT_GROUPS=await DB.listMyGroups(SESSION.id);}catch(e){CLIENT_GROUPS=[];}
@@ -23559,7 +23569,8 @@ async function renderChatList(){
   let coachMsgs=[];try{coachMsgs=await DB.listMessages(SESSION.id);}catch(e){}
   const lastCoach=coachMsgs.length?coachMsgs[coachMsgs.length-1]:null;
   const coachUnread=(u&&(u.coach!=null?u.coach:u.total))||0;
-  entries.push({gid:null,icon:'person',title:'Coach',sub:'Your coach',last:lastCoach,unread:coachUnread,at:(lastCoach&&lastCoach.created_at)||''});
+  const coachNm=clientCoachLabel(coachMsgs);
+  entries.push({gid:null,icon:'person',title:coachNm||'Coach',sub:'Your coach',last:lastCoach,unread:coachUnread,at:(lastCoach&&lastCoach.created_at)||''});
   for(const g of (CLIENT_GROUPS||[])){let gm=[];try{gm=await DB.listGroupMessages(g.id);}catch(e){}const last=gm.length?gm[gm.length-1]:null;
     entries.push({gid:g.id,icon:'people',title:g.name||'Group',sub:((g.members&&g.members.length)?g.members.length+' members':'Group chat'),last:last,unread:0,at:(last&&last.created_at)||''});}
   let list=entries.filter(e=>!q||String(e.title||'').toLowerCase().indexOf(q)>=0||(e.gid===null&&'coach your coach'.indexOf(q)>=0));
@@ -23617,6 +23628,7 @@ async function renderChatThread(){const body=$('chat-body');if(!body||!SESSION)r
   let msgs=[];
   try{msgs=CHAT_CLIENT_GROUP?await DB.listGroupMessages(CHAT_CLIENT_GROUP):await DB.listMessages(SESSION.id);}catch(e){body.innerHTML='<div class="chat-empty"><span class="ce-ic">'+svgIcon('help')+'</span>Could not load messages.</div>';body.dataset.sig='';return;}
   const grp=!!CHAT_CLIENT_GROUP;const mineFn=function(m){return grp?(m.sender==='client'&&m.sender_id===SESSION.id):(m.sender==='client');};
+  if(!grp){var _cn=clientCoachLabel(msgs);var _nm=$('chat-thread-name');if(_nm&&_cn)_nm.textContent=_cn;}
   try{await chatLoadMeta(msgs,chatCtx(),body);}catch(e){}
   chatRenderSmart('chat-body',msgs,grp,mineFn);chatBindScroll();chatBindMenu('chat-body');chatRenderReplyBar(chatCtx());chatStartLive();}
 async function chatSend(){const inp=$('chat-text');const t=(inp.value||'').trim();let media=PEND.client||null;if(!t&&!media)return;if(media&&media.uploading){toast('File still uploading — one sec…',true);return;}inp.value='';chatGrow(inp);const ep=$('chat-emoji-pop');if(ep)ep.classList.add('hidden');PEND.client=null;renderPendPreview('client');
@@ -23774,10 +23786,20 @@ function chatStartLive(){if(CHAT_LIVE)return;CHAT_LIVE=setInterval(chatLiveTick,
 function chatStopLive(){if(CHAT_LIVE){clearInterval(CHAT_LIVE);CHAT_LIVE=null;}}
 try{document.addEventListener('visibilitychange',function(){if(!document.hidden)chatLiveTick();});}catch(e){}
 async function clearChatThread(cid){if(!confirm('Delete the whole chat history with this client? This cannot be undone.'))return;try{await DB.clearThread(cid);await renderChatAdmBody();renderChatThreadsList();toast('History cleared');}catch(e){toast('Could not clear',true);}}
+/* coach-only floating chat widget: show/pulse based on unread, hide when the chat panel is already open or for clients */
+function coachChatFabUpdate(n,chatOpen){
+  var f=document.getElementById('coach-chat-fab');if(!f)return;
+  if((typeof ADMIN_OK==='undefined'||!ADMIN_OK)||(typeof PREVIEW!=='undefined'&&PREVIEW)||chatOpen){f.classList.add('hidden');f.classList.remove('has-unread');return;}
+  f.classList.remove('hidden');
+  var b=document.getElementById('coach-chat-fab-badge');
+  if(n>0){if(b){b.textContent=n>99?'99+':n;b.classList.remove('hidden');}f.classList.add('has-unread');}
+  else{if(b)b.classList.add('hidden');f.classList.remove('has-unread');}
+}
 async function chatAdmBadge(){try{const u=await DB.chatUnread();const n=(u&&u.total)||0;
   ['chat-adm-btn-badge','adr-chat-badge'].forEach(id=>{const b=$(id);if(b){if(n>0){b.textContent=n;b.classList.remove('hidden');}else b.classList.add('hidden');}});
   const cd=$('chat-dock');const chatVisible=cd&&!cd.classList.contains('hidden')&&getComputedStyle(cd).display!=='none';
-  if(n>CHAT_ADM_LASTUNREAD&&CHAT_ADM_LASTUNREAD>=0&&!chatVisible&&document.visibilityState==='visible')bigNotify('💬 New client message');CHAT_ADM_LASTUNREAD=n;}catch(e){}}
+  if(n>CHAT_ADM_LASTUNREAD&&CHAT_ADM_LASTUNREAD>=0&&!chatVisible&&document.visibilityState==='visible')bigNotify('💬 New client message');CHAT_ADM_LASTUNREAD=n;
+  try{coachChatFabUpdate(n,chatVisible);}catch(e){}}catch(e){}}
 async function chatAdmPoll(){await chatAdmBadge();const cd=$('chat-dock'),td=$('tasks-dock');
   if(cd&&getComputedStyle(cd).display!=='none'&&!cd.classList.contains('hidden')){renderChatThreadsList();if(CHAT_ADM_CLIENT||CHAT_ADM_GROUP)renderChatAdmBody();}
   if(td&&getComputedStyle(td).display!=='none'&&!td.classList.contains('hidden'))renderDrawerTasks();}
