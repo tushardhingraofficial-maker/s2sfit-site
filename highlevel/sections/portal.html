@@ -7880,7 +7880,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04vt';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04vu';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -22364,9 +22364,23 @@ function lineChartSVG(series,opts){
   const legend=series.filter(s=>s.pts.length).map(s=>'<span style="display:inline-flex;align-items:center;gap:5px;margin-right:12px;font-size:11.5px;color:var(--muted);font-weight:600"><i style="width:14px;height:3px;background:'+s.color+';display:inline-block;border-radius:2px"></i>'+esc(s.label||'')+'</span>').join('');
   return '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" style="display:block"><defs>'+defs+'</defs>'+grid+tgt+body+xlabels+'</svg></div>'+(legend?'<div style="margin-top:6px;display:flex;flex-wrap:wrap">'+legend+'</div>':'');
 }
+/* ── Admin-only: treat check-in CALL LOGS as check-ins so both show in the check-in section ── */
+function ciIsCheckinCall(r){var t=(r&&r.call_type||'').toLowerCase();return t.indexOf('check-in')>=0||t.indexOf('checkin')>=0;}
+function ciCallToCheckin(r){var d=String(r.call_at||r.created_at||'').slice(0,10);return {id:'call:'+r.id,client_id:r.client_id,kind:'checkin',source:'call',date:d,call_type:r.call_type||'Check-in',medium:r.medium||'',handled_by:r.handled_by||r.logged_by||'',outcome:r.outcome||'',purpose:r.purpose||'',actions:r.actions||'',challenges:r.purpose||'',other:r.outcome||''};}
+function ciCallCardHTML(f){
+  var body=[['Outcome',f.outcome],['Purpose',f.purpose],['Next actions',f.actions]].filter(function(x){return x[1]&&String(x[1]).trim();}).map(function(x){return '<div class="small"><b style="color:var(--text)">'+esc(x[0])+':</b> '+esc(x[1])+'</div>';}).join('');
+  return '<div class="issue" style="border-left-color:var(--gold,#B07A0C)"><div class="top"><span class="who">'+esc(fmtDate(String(f.date||'').slice(0,10)))+'</span>'+
+    '<span class="pill" style="background:rgba(245,200,66,.16);color:var(--gold,#B07A0C);border-color:rgba(245,200,66,.4)">📞 '+esc(f.call_type||'Call check-in')+'</span>'+
+    (f.handled_by?'<span class="funit" style="align-self:center">'+esc(f.handled_by)+'</span>':'')+
+    '<div style="flex:1"></div><span class="funit" style="align-self:center">from call log</span></div>'+
+    (body||'<div class="small funit">No notes recorded on the call.</div>')+
+    ((typeof ADMIN_OK!=='undefined'&&ADMIN_OK&&f.client_id)?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;border-top:1px dashed var(--border);padding-top:8px"><span class="small" style="align-self:center;color:var(--muted)">Turn into →</span><button class="btn-xxs" onclick="ciActProgress(\''+f.id+'\')" title="Post to the client as a progress note">🏆 Progress note</button><button class="btn-xxs" onclick="ciActTask(\''+f.id+'\')" title="Create a task for this client">✓ Task</button></div>':'')+
+    '</div>';
+}
 function ciHistoryHTML(forms,allowDelete){
   if(!forms.length)return '<div class="empty">No check-ins yet.</div>';
   return forms.map(f=>{
+    if(f&&f.source==='call')return ciCallCardHTML(f);
     const photos=(f.photos||[]).map((p,pi)=>'<img src="'+p+'" onclick="ciOpenCompare(\''+f.id+'\')" style="width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer">').join('');
     const kv=(k,v)=>v?('<div style="min-width:120px"><div class="funit">'+esc(k)+'</div><div style="font-weight:700">'+esc(v)+'</div></div>'):'';
     return '<div class="issue" style="border-left-color:var(--prot)"><div class="top"><span class="who">'+esc(fmtDate(String(f.date||'').slice(0,10)))+'</span>'+
@@ -22485,30 +22499,36 @@ let CI_ADMIN_ROWS=[];
 async function renderCiAdmin(){
   const host=$('ci-adm-host');if(!host)return;host.innerHTML='<div class="empty">Loading…</div>';
   const from=$('ci-adm-from').value||null,to=$('ci-adm-to').value||null;
-  let clients=[],all=[];
-  try{[clients,all]=await Promise.all([DB.listClients(),DB.listCheckins(null,from,to)]);}catch(e){host.innerHTML='<div class="empty">Could not load check-ins.</div>';return;}
-  CI_ADMIN_ROWS=all;
-  const byClient={};(all||[]).forEach(x=>{(byClient[x.client_id]=byClient[x.client_id]||[]).push(x);});
-  const rows=(clients||[]).map(c=>{const list=byClient[c.id]||[];const forms=list.filter(x=>x.kind!=='booking');const booked=list.filter(x=>x.kind==='booking').length;
+  let clients=[],all=[],calls=[];
+  try{[clients,all,calls]=await Promise.all([DB.listClients(),DB.listCheckins(null,from,to),DB.listCallLogs().catch(()=>[])]);}catch(e){host.innerHTML='<div class="empty">Could not load check-ins.</div>';return;}
+  const callChk=(calls||[]).filter(ciIsCheckinCall).map(ciCallToCheckin).filter(function(r){return r.client_id&&(!from||r.date>=from)&&(!to||r.date<=to);});
+  const merged=(all||[]).concat(callChk);
+  CI_ADMIN_ROWS=merged;
+  const byClient={};merged.forEach(x=>{(byClient[x.client_id]=byClient[x.client_id]||[]).push(x);});
+  const rows=(clients||[]).map(c=>{const list=byClient[c.id]||[];const forms=list.filter(x=>x.kind!=='booking');const callForms=forms.filter(x=>x.source==='call').length;const booked=list.filter(x=>x.kind==='booking').length;
     const last=forms.length?forms.slice().sort((a,b)=>a.date<b.date?1:-1)[0].date:null;
-    return {id:c.id,name:c.name||c.email,email:c.email,forms:forms.length,booked,last};});
+    return {id:c.id,name:c.name||c.email,email:c.email,forms:forms.length,callForms:callForms,booked,last};});
   const totF=rows.reduce((a,r)=>a+r.forms,0),totB=rows.reduce((a,r)=>a+r.booked,0);
-  host.innerHTML='<div class="macro-grid" style="margin-bottom:12px">'+macroCard('Clients','k',rows.length,'')+macroCard('Forms filled','p',totF,'')+macroCard('Calls booked','c',totB,'')+macroCard('In range','f',(all||[]).length,'records')+'</div>'+
+  host.innerHTML='<div class="macro-grid" style="margin-bottom:12px">'+macroCard('Clients','k',rows.length,'')+macroCard('Forms filled','p',totF,'')+macroCard('Calls booked','c',totB,'')+macroCard('In range','f',merged.length,'records')+'</div>'+
     '<div class="tbl-scroll"><table class="itbl"><thead><tr><th style="text-align:left">Client</th><th>Forms filled</th><th>Calls booked</th><th style="text-align:left">Last check-in</th><th style="text-align:left"></th></tr></thead><tbody>'+
     rows.sort((a,b)=>b.forms-a.forms).map(r=>'<tr><td class="fname" style="text-align:left">'+esc(r.name)+'<div class="funit">'+esc(r.email)+'</div></td>'+
-      '<td class="tnum">'+r.forms+'</td><td class="tnum">'+r.booked+'</td>'+
+      '<td class="tnum">'+r.forms+(r.callForms?'<div class="funit">incl. '+r.callForms+' from calls</div>':'')+'</td><td class="tnum">'+r.booked+'</td>'+
       '<td style="text-align:left">'+(r.last?'<span class="pill">'+esc(fmtDate(r.last))+'</span>':'<span class="funit">never</span>')+'</td>'+
       '<td style="text-align:left;white-space:nowrap"><button class="btn-sm solid" onclick="ciOpenManual(\''+r.id+'\',\''+esc(r.name).replace(/'/g,"\\'")+'\')" title="Log a check-in / call for this client">📝 Log</button> <button class="btn-sm" onclick="ciAdminLogs(\''+r.id+'\',\''+esc(r.name).replace(/'/g,"\\'")+'\')"'+(r.forms?'':' disabled style="opacity:.5"')+'>View logs</button></td></tr>').join('')+
     '</tbody></table></div>';
 }
 async function ciAdminLogs(clientId,name){
   const host=$('ci-adm-host');host.innerHTML='<div class="empty">Loading…</div>';
-  let list=[];try{list=await DB.listCheckins(clientId,$('ci-adm-from').value||null,$('ci-adm-to').value||null);}catch(e){}
+  const from=$('ci-adm-from').value||null,to=$('ci-adm-to').value||null;
+  let list=[],calls=[];try{[list,calls]=await Promise.all([DB.listCheckins(clientId,from,to),DB.listCallLogs().catch(()=>[])]);}catch(e){}
   try{await ciLoadQuestions();}catch(e){}
-  const forms=list.filter(x=>x.kind!=='booking');
+  const nativeForms=(list||[]).filter(x=>x.kind!=='booking');
+  const callChk=(calls||[]).filter(function(r){return r.client_id===clientId&&ciIsCheckinCall(r);}).map(ciCallToCheckin).filter(function(r){return (!from||r.date>=from)&&(!to||r.date<=to);});
+  const forms=nativeForms.concat(callChk).sort(function(a,b){return (String(a.date||'')<String(b.date||'')?1:-1);});
   CMP_SRC=forms;
-  host.innerHTML='<div class="row" style="align-items:center;margin-bottom:10px"><button class="btn-sm" onclick="renderCiAdmin()">← All clients</button><h2 style="margin:0 0 0 10px;font-size:18px">'+esc(name)+'</h2><div style="flex:1"></div><button class="btn-sm solid" onclick="ciOpenManual(\''+clientId+'\',\''+esc(name).replace(/'/g,"\\'")+'\')">📝 Log check-in / call</button> <button class="btn-sm" onclick="ciOpenCompare(null)">🖼 Compare photos</button></div>'+
-    ciGraphsHTML(forms)+'<div class="divider"></div>'+ciHistoryHTML(forms,true);
+  const callNote=callChk.length?'<span class="pill" style="background:rgba(245,200,66,.16);color:var(--gold,#B07A0C);border-color:rgba(245,200,66,.4);margin-left:8px">📞 '+callChk.length+' from call logs</span>':'';
+  host.innerHTML='<div class="row" style="align-items:center;margin-bottom:10px"><button class="btn-sm" onclick="renderCiAdmin()">← All clients</button><h2 style="margin:0 0 0 10px;font-size:18px">'+esc(name)+'</h2>'+callNote+'<div style="flex:1"></div><button class="btn-sm solid" onclick="ciOpenManual(\''+clientId+'\',\''+esc(name).replace(/'/g,"\\'")+'\')">📝 Log check-in / call</button> <button class="btn-sm" onclick="ciOpenCompare(null)">🖼 Compare photos</button></div>'+
+    ciGraphsHTML(nativeForms)+'<div class="divider"></div>'+ciHistoryHTML(forms,true);
 }
 /* ---- manually log a check-in / call on the client's behalf (coach) ---- */
 let CIM_EDIT=null;
