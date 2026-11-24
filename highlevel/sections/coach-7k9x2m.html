@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light" data-version="2026-11-24b">
+<html lang="en" data-theme="light" data-version="2026-11-24c">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -142,6 +142,39 @@ input:focus,select,textarea:focus{outline:none;border-color:var(--red)}
 .wk-x{flex:none;border:1px solid var(--border);background:var(--card);color:var(--muted);border-radius:8px;width:30px;height:30px;font-size:17px;line-height:1;cursor:pointer}
 .wk-mini{flex:none;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:8px;min-width:30px;height:30px;padding:0 7px;font-size:14px;line-height:1;cursor:pointer}
 .wk-mini.on{background:var(--brand);border-color:var(--brand);color:#fff}
+/* ── Rep Coach ── */
+.rc-ov{position:fixed;inset:0;z-index:600;background:rgba(10,12,18,.62);display:none;align-items:flex-end;justify-content:center}
+.rc-ov.open{display:flex}
+.rc-sheet{width:100%;max-width:520px;background:var(--surface);border-radius:20px 20px 0 0;padding:14px 16px calc(18px + env(safe-area-inset-bottom));max-height:94vh;overflow-y:auto;box-shadow:0 -14px 40px -20px rgba(0,0,0,.5)}
+.rc-top{display:flex;align-items:center;gap:10px;margin:0 0 12px}
+.rc-top .rc-ttl{flex:1;min-width:0;font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rc-x{flex:none;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:9px;width:34px;height:34px;font-size:18px;line-height:1;cursor:pointer}
+.rc-tabs{display:flex;background:var(--card2);border-radius:12px;padding:3px;margin:0 0 14px}
+.rc-tab{flex:1;text-align:center;padding:9px;border:0;background:transparent;color:var(--muted);font-size:13px;font-weight:700;border-radius:10px;cursor:pointer}
+.rc-tab.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.rc-sub{font-size:12.5px;color:var(--muted);margin:0 0 10px;text-align:center}
+.rc-ringwrap{display:flex;align-items:center;justify-content:center;margin:6px 0 10px}
+.rc-ring{width:210px;height:210px;border-radius:50%;border:8px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;transition:transform .12s linear,border-color .12s linear}
+.rc-ring .rc-k{font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.rc-ring .rc-count{font-size:64px;font-weight:800;line-height:1}
+.rc-ring .rc-of{font-size:13px;color:var(--muted)}
+.rc-phase{text-align:center;font-size:20px;font-weight:800;min-height:26px;margin:0 0 4px}
+.rc-cue{text-align:center;font-size:12px;color:var(--muted);margin:0 0 14px}
+.rc-controls{display:flex;gap:9px;align-items:center;margin:0 0 12px}
+.rc-step{flex:none;width:44px;height:46px;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:12px;font-size:20px;cursor:pointer}
+.rc-go{flex:1;height:50px;border:0;border-radius:12px;background:var(--brand);color:#fff;font-size:16px;font-weight:800;cursor:pointer}
+.rc-end{width:100%;height:46px;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:12px;font-size:14px;font-weight:700;cursor:pointer}
+.rc-set{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin:0 0 14px}
+.rc-set label{font-size:12px;color:var(--muted)}
+.rc-set input{width:62px}
+.rc-cam{width:100%;max-width:360px;margin:0 auto 10px;border-radius:14px;overflow:hidden;background:#000;position:relative;aspect-ratio:3/4}
+.rc-cam video{width:100%;height:100%;object-fit:cover;display:block;transform:scaleX(-1)}
+.rc-cam .rc-camnum{position:absolute;right:10px;bottom:8px;font-size:40px;font-weight:800;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+.rc-cam .rc-cambadge{position:absolute;left:10px;top:10px;font-size:11px;background:rgba(0,0,0,.5);color:#fff;border-radius:8px;padding:3px 8px}
+.rc-note{background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.45);border-radius:12px;padding:10px 12px;font-size:12px;line-height:1.5;margin:0 0 12px}
+.rc-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:0 0 12px}
+.rc-stat{background:var(--card2);border-radius:10px;padding:8px;text-align:center}
+.rc-stat .n{font-size:17px;font-weight:800}.rc-stat .l{font-size:10.5px;color:var(--muted)}
 .wk-chips{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:0 0 7px}
 .wk-chlab{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin-right:2px}
 .wk-chip{border:1px solid var(--border);background:var(--card2);color:var(--muted);border-radius:16px;padding:4px 10px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap}
@@ -930,7 +963,8 @@ function wkExHTML(en,ei){
   var gt='24px repeat('+cols.length+',1fr) 34px';
   var vid=en.lib&&en.lib.video;
   var hasInfo=en.lib&&(en.lib.howto||en.lib.mistakes||en.lib.cues||en.lib.breathing);
-  var hdr='<button class="wk-mini" onclick="wkSwapOpen('+ei+')" title="Swap this exercise — pick another from your library">⇄</button>'+
+  var hdr='<button class="wk-mini" onclick="rcOpen('+ei+')" title="Rep coach — auto-count reps &amp; pace the tempo">⏱</button>'+
+    '<button class="wk-mini" onclick="wkSwapOpen('+ei+')" title="Swap this exercise — pick another from your library">⇄</button>'+
     (vid?'<button class="wk-mini" onclick="wkDemo('+ei+')" title="Watch demo video">▶</button>':'')+
     (hasInfo?'<button class="wk-mini'+(en.showInfo?' on':'')+'" onclick="wkInfo('+ei+')" title="How-to &amp; cues">ℹ</button>':'')+
     '<button class="wk-mini" onclick="wkGen('+ei+')" title="Auto-generate execution, cues, equipment &amp; demo (Smart)">✨</button>'+
@@ -1000,6 +1034,256 @@ function wkQuickSave(){
     WK=null;CTAB='activity';renderClient();
     toast('Marked done ✓');
   }).catch(function(e){toast((e&&e.message)||'Could not save',true);});
+}
+/* ═══════════════ REP COACH — auto rep counter + tempo pacer ═══════════════
+   Two modes on one screen (default = Pace/audio-led; Auto = propped camera, beta).
+   Counts reps so the coach watches form; writes the count back into the set on End. */
+var RC=null, RC_RAF=null, RC_AC=null, RC_POSE=null, RC_STREAM=null, RC_CAM_RAF=null;
+function rcParseTempo(str){
+  str=String(str||'').trim();
+  var m=str.match(/(\d+)\s*[-:\/ ]\s*(\d+)\s*[-:\/ ]\s*(\d+)(?:\s*[-:\/ ]\s*(\d+))?/);
+  if(m)return [+m[1],+m[2],+m[3],+(m[4]||0)];
+  var d=str.match(/^([\dxX])([\dxX])([\dxX])([\dxX])?$/);
+  if(d){var f=function(c){return (c==='x'||c==='X')?1:+c;};return [f(d[1]),f(d[2]),f(d[3]),d[4]?f(d[4]):0];}
+  return null;
+}
+function rcDefaultTempo(en,st){
+  var t=(st&&st.t&&st.t.tempo)||en.tempo||'';
+  var p=rcParseTempo(t);
+  if(!p&&en.target)p=rcParseTempo(en.target);
+  return p||[2,0,1,0];   /* controlled down · no pause · up · no pause */
+}
+function rcTargetReps(en,st){
+  var r=st&&(st.reps||(st.t&&st.t.reps));
+  r=parseInt(r,10); if(r>0&&r<100)return r; return 10;
+}
+function rcOpen(ei){
+  if(!WK)return;var en=WK.entries[ei];if(!en){toast('No exercise',true);return;}
+  var si=en.sets.findIndex(function(s){return !s.done;}); if(si<0)si=en.sets.length-1; if(si<0)si=0;
+  var st=en.sets[si]||{};
+  RC={ei:ei,si:si,name:en.name||'Exercise',mode:'pace',target:rcTargetReps(en,st),tempo:rcDefaultTempo(en,st),
+    count:0,phase:'',pi:0,phaseStart:0,running:false,paused:false,done:false,voice:true,lead:0,leadTimers:[],
+    cam:{min:1,max:0,n:0,wasHigh:false,lastRep:0,rom:0,lastRom:0}};
+  var ov=document.getElementById('rc-ov');
+  if(!ov){ov=document.createElement('div');ov.id='rc-ov';ov.className='rc-ov';document.body.appendChild(ov);
+    ov.addEventListener('click',function(e){if(e.target===ov)rcClose();});}
+  ov.classList.add('open');
+  rcRender();
+}
+function rcClose(){
+  rcStopEngines();
+  var ov=document.getElementById('rc-ov');if(ov)ov.classList.remove('open');
+  RC=null;
+}
+function rcStopEngines(){
+  if(RC_RAF){cancelAnimationFrame(RC_RAF);RC_RAF=null;}
+  if(RC&&RC.leadTimers){RC.leadTimers.forEach(clearTimeout);RC.leadTimers=[];}
+  try{if(window.speechSynthesis)speechSynthesis.cancel();}catch(e){}
+  rcCamStop();
+}
+function rcSetMode(m){
+  if(!RC||RC.mode===m)return;
+  rcStopEngines();RC.running=false;RC.paused=false;RC.done=false;RC.count=0;RC.pi=0;RC.phase='';
+  RC.cam={min:1,max:0,n:0,wasHigh:false,lastRep:0,rom:0,lastRom:0};
+  RC.mode=m;rcRender();
+}
+function rcRender(){
+  if(!RC)return;var ov=document.getElementById('rc-ov');if(!ov)return;
+  var paceOn=RC.mode==='pace';
+  var body='<div class="rc-sheet"><div class="rc-top"><div class="rc-ttl">⏱ '+esc(RC.name)+'</div>'+
+      '<label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px"><input type="checkbox" '+(RC.voice?'checked':'')+' onchange="RC.voice=this.checked"> voice</label>'+
+      '<button class="rc-x" onclick="rcClose()" aria-label="Close">×</button></div>'+
+    '<div class="rc-tabs"><button class="rc-tab'+(paceOn?' on':'')+'" onclick="rcSetMode(\'pace\')">Pace · audio</button>'+
+      '<button class="rc-tab'+(paceOn?'':' on')+'" onclick="rcSetMode(\'cam\')">Auto · camera</button></div>';
+  if(paceOn)body+=rcPaceHTML(); else body+=rcCamHTML();
+  ov.innerHTML=body;
+  if(!paceOn)rcDrawCamNum();
+}
+function rcPaceHTML(){
+  var t=RC.tempo;
+  var ringC=RC.done?'#3ed47e':'var(--border)';
+  var phaseTxt=RC.done?'✓ Set complete':(RC.running?(RC.lead>0?('Get ready… '+RC.lead):rcPhaseLabel(RC.phase)):'Ready when you are');
+  var h='<div class="rc-sub">Phone in hand or pocket — it paces the tempo and calls the count out loud. Watch their form.</div>';
+  if(!RC.running&&!RC.done){
+    h+='<div class="rc-set"><label>Target reps <input type="number" inputmode="numeric" value="'+RC.target+'" onchange="RC.target=Math.max(1,parseInt(this.value,10)||1)"></label>'+
+      '<label>Tempo (s) <input type="number" inputmode="numeric" value="'+t[0]+'" style="width:46px" title="down" onchange="RC.tempo[0]=Math.max(0,parseInt(this.value,10)||0)"> down · '+
+      '<input type="number" inputmode="numeric" value="'+t[1]+'" style="width:46px" title="hold" onchange="RC.tempo[1]=Math.max(0,parseInt(this.value,10)||0)"> hold · '+
+      '<input type="number" inputmode="numeric" value="'+t[2]+'" style="width:46px" title="up" onchange="RC.tempo[2]=Math.max(0,parseInt(this.value,10)||0)"> up</label></div>';
+  }
+  h+='<div class="rc-ringwrap"><div class="rc-ring" id="rc-ring" style="border-color:'+ringC+'"><div class="rc-k">rep</div><div class="rc-count" id="rc-count">'+RC.count+'</div><div class="rc-of">of '+RC.target+'</div></div></div>'+
+    '<div class="rc-phase" id="rc-phase">'+esc(phaseTxt)+'</div>'+
+    '<div class="rc-cue">'+(RC.voice?'🔊 speaking the count':'muted')+' · 🟦 down · 🟩 up · buzz each rep</div>';
+  if(RC.done){
+    h+='<button class="rc-go" onclick="rcEndSet()">✓ Log '+RC.count+' reps &amp; close</button>'+
+       '<button class="rc-end" style="margin-top:8px" onclick="rcRestart()">↻ Count again</button>';
+  }else{
+    h+='<div class="rc-controls"><button class="rc-step" onclick="rcStep(-1)" aria-label="minus one">−</button>'+
+      '<button class="rc-go" id="rc-go" onclick="rcToggle()">'+(RC.running?(RC.paused?'Resume':'Pause'):'▶ Start')+'</button>'+
+      '<button class="rc-step" onclick="rcStep(1)" aria-label="plus one">+</button></div>'+
+      '<button class="rc-end" onclick="rcEndSet()">End set · log '+RC.count+' reps</button>';
+  }
+  return h;
+}
+function rcPhaseLabel(k){return k==='down'?'Lower':k==='up'?'Drive up':k==='hold'?'Hold':k==='rest'?'Reset':'';}
+function rcPhases(){
+  var t=RC.tempo,ph=[];
+  if(t[0]>0)ph.push({k:'down',d:t[0]*1000});
+  if(t[1]>0)ph.push({k:'hold',d:t[1]*1000});
+  if(t[2]>0)ph.push({k:'up',d:t[2]*1000}); else ph.push({k:'up',d:800});
+  if(t[3]>0)ph.push({k:'rest',d:t[3]*1000});
+  return ph;
+}
+function rcToggle(){
+  if(!RC)return;
+  if(!RC.running){ rcAudioInit(); RC.running=true;RC.paused=false;RC.count=0;RC.done=false;RC.pi=0;RC.lead=3;rcRender();
+    var steps=[3,2,1];RC.leadTimers=[];
+    steps.forEach(function(n,i){RC.leadTimers.push(setTimeout(function(){RC.lead=n;rcSpeak(String(n));rcBeep(520,90);var p=document.getElementById('rc-phase');if(p)p.textContent='Get ready… '+n;},i*800));});
+    RC.leadTimers.push(setTimeout(function(){RC.lead=0;rcSpeak('go');RC._phases=rcPhases();RC.pi=0;RC.phase=RC._phases[0].k;RC.phaseStart=performance.now();rcPhaseEnter(RC.phase);RC_RAF=requestAnimationFrame(rcTick);},steps.length*800));
+    return;
+  }
+  RC.paused=!RC.paused;
+  if(RC.paused){ if(RC_RAF){cancelAnimationFrame(RC_RAF);RC_RAF=null;} }
+  else { RC.phaseStart=performance.now(); RC_RAF=requestAnimationFrame(rcTick); }
+  var g=document.getElementById('rc-go');if(g)g.textContent=RC.paused?'Resume':'Pause';
+}
+function rcTick(){
+  if(!RC||!RC.running||RC.paused){return;}
+  var ph=RC._phases[RC.pi];var now=performance.now();var el=now-RC.phaseStart;var prog=Math.min(1,el/ph.d);
+  rcDrawRing(ph.k,prog);
+  if(el>=ph.d){
+    if(ph.k==='up'){ rcRepDone(); if(RC.done){return;} }
+    RC.pi=(RC.pi+1)%RC._phases.length; RC.phaseStart=now; RC.phase=RC._phases[RC.pi].k; rcPhaseEnter(RC.phase);
+  }
+  RC_RAF=requestAnimationFrame(rcTick);
+}
+function rcPhaseEnter(k){
+  var p=document.getElementById('rc-phase');if(p)p.textContent=rcPhaseLabel(k);
+  if(k==='down')rcBeep(300,70); else if(k==='up')rcBeep(600,70);
+}
+function rcDrawRing(k,prog){
+  var r=document.getElementById('rc-ring');if(!r)return;
+  var s=(k==='down')?(0.80+0.20*prog):(k==='up')?(1.0-0.20*prog):(k==='hold')?1.0:0.80;
+  r.style.transform='scale('+s.toFixed(3)+')';
+  r.style.borderColor=(k==='up')?'#3ed47e':(k==='down')?'#378ADD':'var(--border)';
+}
+function rcRepDone(rom){
+  RC.count++;
+  var c=document.getElementById('rc-count');if(c)c.textContent=RC.count;
+  rcVibrate(60);
+  var last=RC.count>=RC.target;
+  if(RC.voice)rcSpeak(last?(RC.count+', last'):String(RC.count));
+  if(last){ RC.done=true;RC.running=false; if(RC_RAF){cancelAnimationFrame(RC_RAF);RC_RAF=null;}
+    setTimeout(function(){rcSpeak('set complete');},350); rcRender(); }
+}
+function rcStep(d){ if(!RC)return; RC.count=Math.max(0,RC.count+d); var c=document.getElementById('rc-count');if(c)c.textContent=RC.count; var e=document.querySelector('.rc-end');if(e&&!RC.done)e.textContent='End set · log '+RC.count+' reps'; }
+function rcRestart(){ if(!RC)return; RC.done=false;RC.count=0;RC.running=false;RC.paused=false;RC.pi=0;RC.phase=''; rcRender(); }
+function rcEndSet(){
+  if(!RC||!WK)return;var en=WK.entries[RC.ei];if(!en){rcClose();return;}
+  var st=en.sets[RC.si]; if(!st){rcClose();return;}
+  var repVar=(en.track&&en.track.indexOf('reps')>=0)?'reps':((en.track&&en.track[0])||'reps');
+  var n=RC.count;
+  st[repVar]=String(n); st.done=true;
+  if(RC.mode==='cam'&&RC.cam&&RC.cam.lastRom){ st.rc_rom=Math.round(RC.cam.lastRom*100); }
+  st.rc_mode=RC.mode;
+  rcClose(); try{wkRender();}catch(e){} toast('Logged '+n+' reps ✓');
+}
+/* ---- audio / voice / haptics ---- */
+function rcAudioInit(){ try{ if(!RC_AC){RC_AC=new (window.AudioContext||window.webkitAudioContext)();} if(RC_AC.state==='suspended')RC_AC.resume(); }catch(e){} }
+function rcBeep(freq,ms){ try{ if(!RC_AC)return; var o=RC_AC.createOscillator(),g=RC_AC.createGain(); o.frequency.value=freq;o.type='sine';g.gain.value=0.0001;o.connect(g);g.connect(RC_AC.destination); var t=RC_AC.currentTime;g.gain.exponentialRampToValueAtTime(0.18,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+(ms/1000)); o.start(t);o.stop(t+(ms/1000)+0.02); }catch(e){} }
+function rcVibrate(ms){ try{ if(navigator.vibrate)navigator.vibrate(ms); }catch(e){} }
+function rcSpeak(txt){ try{ if(!RC||!RC.voice||!window.speechSynthesis)return; speechSynthesis.cancel(); var u=new SpeechSynthesisUtterance(String(txt)); u.rate=1.08;u.pitch=1; speechSynthesis.speak(u); }catch(e){} }
+/* ---- Camera (Auto) mode — beta: on-device pose, counts actual reps ---- */
+function rcCamHTML(){
+  var h='<div class="rc-sub">Prop the phone facing the client, full body in frame, good light. It counts the reps on-device — nothing leaves the phone.</div>'+
+    '<div class="rc-note"><b>Beta:</b> works best for clear up-and-down lifts (squats, presses, curls). If a rep is miscounted, use − / + to correct, then End set.</div>'+
+    '<div class="rc-cam" id="rc-cam"><video id="rc-video" playsinline muted></video><div class="rc-cambadge" id="rc-cambadge">tap start</div><div class="rc-camnum" id="rc-camnum">'+RC.count+'</div></div>'+
+    '<div class="rc-stats"><div class="rc-stat"><div class="n" id="rc-s-reps">'+RC.count+'</div><div class="l">reps</div></div>'+
+      '<div class="rc-stat"><div class="n" id="rc-s-rom">—</div><div class="l">range</div></div>'+
+      '<div class="rc-stat"><div class="n">'+RC.target+'</div><div class="l">target</div></div></div>';
+  if(!RC.running){
+    h+='<div class="rc-controls"><button class="rc-step" onclick="rcStep(-1)" aria-label="minus one">−</button>'+
+      '<button class="rc-go" onclick="rcCamStart()">▶ Start camera</button>'+
+      '<button class="rc-step" onclick="rcStep(1)" aria-label="plus one">+</button></div>';
+  }else{
+    h+='<div class="rc-controls"><button class="rc-step" onclick="rcStep(-1)" aria-label="minus one">−</button>'+
+      '<button class="rc-go" onclick="rcCamStop()">⏹ Stop</button>'+
+      '<button class="rc-step" onclick="rcStep(1)" aria-label="plus one">+</button></div>';
+  }
+  h+='<button class="rc-end" onclick="rcEndSet()">End set · log '+RC.count+' reps</button>';
+  return h;
+}
+function rcDrawCamNum(){ var n=document.getElementById('rc-camnum');if(n)n.textContent=RC.count; var r=document.getElementById('rc-s-reps');if(r)r.textContent=RC.count; }
+async function rcPoseLoad(){
+  if(RC_POSE)return RC_POSE;
+  var V='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.20';
+  var vision=await import(V+'/vision_bundle.mjs');
+  var fileset=await vision.FilesetResolver.forVisionTasks(V+'/wasm');
+  RC_POSE=await vision.PoseLandmarker.createFromOptions(fileset,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task'},runningMode:'VIDEO',numPoses:1});
+  return RC_POSE;
+}
+function rcSignalForEx(name){
+  var n=String(name||'').toLowerCase();
+  var upper=/press|bench|push|ohp|shoulder|dip|curl|row|pulldown|pull|lat|fly|raise|extension|pushdown/.test(n);
+  var idx=upper?[15,16]:[23,24];   /* wrists for upper-body, hips for lower-body */
+  return function(lm){ if(!lm||!lm[idx[0]]||!lm[idx[1]])return null; return (lm[idx[0]].y+lm[idx[1]].y)/2; };
+}
+async function rcCamStart(){
+  if(!RC)return;
+  var badge=document.getElementById('rc-cambadge');
+  try{
+    if(badge)badge.textContent='starting camera…';
+    RC_STREAM=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:640},height:{ideal:480}},audio:false});
+    var v=document.getElementById('rc-video');v.srcObject=RC_STREAM;await v.play();
+    if(badge)badge.textContent='loading model…';
+    await rcPoseLoad();
+    RC.running=true;RC.sig=rcSignalForEx(RC.name);RC.cam={min:1,max:0,n:0,wasHigh:false,lastRep:0,rom:0,lastRom:0};
+    if(badge)badge.textContent='counting…';
+    rcAudioInit();rcRender();
+    RC_CAM_RAF=requestAnimationFrame(rcCamFrame);
+  }catch(e){
+    if(badge)badge.textContent='';
+    var msg=(e&&e.name==='NotAllowedError')?'Camera blocked — allow camera access, or use Pace mode.':(e&&e.message)||'Camera unavailable';
+    toast(msg,true);
+  }
+}
+function rcCamStop(){
+  if(RC_CAM_RAF){cancelAnimationFrame(RC_CAM_RAF);RC_CAM_RAF=null;}
+  try{if(RC_STREAM){RC_STREAM.getTracks().forEach(function(t){t.stop();});RC_STREAM=null;}}catch(e){}
+  if(RC){RC.running=false;try{rcRender();}catch(e){}}
+}
+function rcCamFrame(ts){
+  if(!RC||!RC.running||RC.mode!=='cam'){return;}
+  var v=document.getElementById('rc-video');
+  try{
+    if(v&&v.readyState>=2&&RC_POSE){
+      var res=RC_POSE.detectForVideo(v,ts||performance.now());
+      var lm=res&&res.landmarks&&res.landmarks[0];
+      var val=lm?RC.sig(lm):null;
+      if(val!=null)rcCamStep(val,ts||performance.now());
+    }
+  }catch(e){}
+  RC_CAM_RAF=requestAnimationFrame(rcCamFrame);
+}
+/* pure rep state machine — testable: counts one rep per high→return-low oscillation */
+function rcCamStep(v,now){
+  var c=RC.cam;
+  if(c.n===0){c.min=v;c.max=v;}
+  /* expand instantly to new extremes; otherwise creep the band slowly toward the signal so it tracks the current movement */
+  if(v<c.min)c.min=v; else c.min+=0.0006;
+  if(v>c.max)c.max=v; else c.max-=0.0006;
+  c.n++;
+  var range=c.max-c.min;
+  if(c.n<10||range<0.045)return RC.count;
+  var hi=c.min+0.65*range, lo=c.min+0.35*range;
+  if(v>hi){ c.wasHigh=true; c.peak=Math.max(c.peak||0,v); }
+  if(v<lo && c.wasHigh && (now-c.lastRep>500)){
+    c.wasHigh=false; c.lastRep=now; c.lastRom=range;
+    RC.count++; rcVibrate(55);
+    var last=RC.count>=RC.target;
+    if(RC.voice)rcSpeak(last?(RC.count+', last'):String(RC.count));
+    rcDrawCamNum(); var rr=document.getElementById('rc-s-rom'); if(rr)rr.textContent=(range>0.09?'full':'part');
+  }
+  return RC.count;
 }
 /* input handlers — commit into the model WITHOUT re-rendering (so typing never loses focus); only ✓/add/del re-render */
 function wkSet(ei,si,v,val){if(!WK)return;var en=WK.entries[ei];if(en&&en.sets[si])en.sets[si][v]=val;}
