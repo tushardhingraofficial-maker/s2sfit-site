@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light" data-version="2026-11-24g">
+<html lang="en" data-theme="light" data-version="2026-11-24h">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -466,8 +466,13 @@ function evHTML(e,cmap){
   }
   if(e.type==='workout'){
     var w=e.w,s=w.summary||{};
+    var exc=(w.entries||[]).filter(function(x){return x&&x.comment&&String(x.comment).trim();});
+    var notes=exc.map(function(x){return '<div class="small" style="margin-top:4px">💬 <b>'+esc(x.name||'Exercise')+':</b> '+esc(x.comment)+'</div>';}).join('');
+    var snote=(s.note&&String(s.note).trim())||(s.description&&String(s.description).trim())||'';
     return '<div class="cm-ev"><div class="cm-ev-h"><b>🏋 Workout</b><span>'+esc(w.day_name||'Session')+'</span><span class="cm-ev-t">'+esc(fmtDate(e.date))+'</span></div>'+
-      '<div class="small muted">'+(s.totalSets!=null?('Sets '+s.totalSets+' · '):'')+(s.volume!=null?('Volume '+round(s.volume)+' kg · '):'')+(w.completion!=null?('Done '+w.completion+'%'):'')+'</div></div>';
+      '<div class="small muted">'+(s.totalSets!=null?('Sets '+s.totalSets+' · '):'')+(s.volume!=null?('Volume '+round(s.volume)+' kg · '):'')+(w.completion!=null?('Done '+w.completion+'%'):'')+'</div>'+
+      (snote?'<div class="small" style="margin-top:4px">📝 <b>Note:</b> '+esc(snote)+'</div>':'')+
+      notes+'</div>';
   }
   if(e.type==='checkin'){
     var ck=e.ck;var wt=(ck.low_weight!=null||ck.high_weight!=null)?((ck.low_weight!=null?ck.low_weight:'?')+'–'+(ck.high_weight!=null?ck.high_weight:'?')+' kg'):'';
@@ -861,7 +866,7 @@ function wkEntryFromEx(e,secName){
   var tsets=wkExSets(e,track);
   var lib=(e.exId&&WK_EXBYID[e.exId])||(e.name&&WK_EXBYNAME[String(e.name).toLowerCase()])||null;
   return {name:e.name||e.exercise||'Exercise',origName:e.name||e.exercise||'Exercise',exId:e.exId||(lib&&lib.id)||'',
-    alts:Array.isArray(e.alts)?e.alts.filter(Boolean):[],track:track,note:e.notes||'',target:wkTargetLine(e),sec:secName||'',
+    alts:Array.isArray(e.alts)?e.alts.filter(Boolean):[],track:track,note:e.notes||'',comment:'',target:wkTargetLine(e),sec:secName||'',
     brand:'',equipment:(lib&&lib.equipment)||'',showInfo:false,
     lib:lib?{video:lib.video||'',howto:lib.howto||'',mistakes:lib.mistakes||'',cues:lib.cues||'',breathing:lib.breathing||''}:{video:'',howto:'',mistakes:'',cues:'',breathing:''},
     sets:tsets.map(function(st){var s={done:false,t:st||{}};track.forEach(function(v){s[v]='';});return s;})};
@@ -978,6 +983,7 @@ function wkExHTML(en,ei){
   var hdr='<button class="wk-mini" onclick="rcOpen('+ei+')" title="Rep coach — auto-count reps &amp; pace the tempo">🔢</button>'+
     '<button class="wk-mini" onclick="wkSwapOpen('+ei+')" title="Swap this exercise — pick another from your library">⇄</button>'+
     '<button class="wk-mini" onclick="wkHistoryOpen('+ei+')" title="See this client\'s past sessions of this exercise">📈</button>'+
+    '<button class="wk-mini'+(en.comment?' on':'')+'" onclick="wkComment('+ei+')" title="Leave a note / comment on this exercise — the client sees it in their activity feed">💬</button>'+
     (vid?'<button class="wk-mini" onclick="wkDemo('+ei+')" title="Watch demo video">▶</button>':'')+
     (hasInfo?'<button class="wk-mini'+(en.showInfo?' on':'')+'" onclick="wkInfo('+ei+')" title="How-to &amp; cues">ℹ</button>':'')+
     '<button class="wk-mini" onclick="wkGen('+ei+')" title="Auto-generate execution, cues, equipment &amp; demo (Smart)">✨</button>'+
@@ -985,6 +991,7 @@ function wkExHTML(en,ei){
   var h='<div class="wk-ex"><div class="wk-ex-h"><input class="wk-ex-nm" value="'+esc(en.name||'')+'" placeholder="Exercise name" oninput="wkName('+ei+',this.value)">'+hdr+'</div>';
   if(en.target)h+='<div class="wk-target">🎯 '+esc(en.target)+'</div>';
   if(en.note)h+='<div class="wk-target" style="color:var(--text)">📝 '+esc(en.note)+'</div>';
+  if(en.comment)h+='<div class="wk-target" style="color:var(--text);background:rgba(232,23,13,.07);border:1px solid rgba(232,23,13,.18);border-radius:8px;padding:6px 9px">💬 '+esc(en.comment)+'</div>';
   if(en.showInfo&&hasInfo)h+='<div class="wk-info">'+
     (en.lib.howto?'<div><b>✅ How to</b> '+esc(en.lib.howto)+'</div>':'')+
     (en.lib.mistakes?'<div><b>⚠️ Avoid</b> '+esc(en.lib.mistakes)+'</div>':'')+
@@ -1067,6 +1074,7 @@ function wkRender(){
   var lastSec=null;
   WK.entries.forEach(function(en,ei){var sc=en.sec||'';if(sc!==lastSec){lastSec=sc;if(sc)body+='<div class="wk-sec">'+esc(sc)+'</div>';}body+=wkExHTML(en,ei);});
   body+='<button class="btn ghost" style="margin:4px 0 14px" onclick="wkAddFreeEx()">＋ Add exercise</button>';
+  body+='<div onclick="wkSessionNote()" style="border:1px dashed var(--border);border-radius:12px;padding:11px 13px;margin:0 0 10px;cursor:pointer;font-size:13px;line-height:1.45">'+(WK.note?('<b>📝 Session note</b><div style="margin-top:3px">'+esc(WK.note)+'</div>'):'<span class="muted">📝 Add a note for this whole session…</span>')+'</div>';
   body+='<div class="cm-st" style="margin-bottom:10px"><div class="k">Session so far</div><div class="v">'+t.sets+' set'+(t.sets===1?'':'s')+' · '+round(t.vol).toLocaleString()+' kg</div><div class="d">'+t.done+'/'+t.all+' ticked done · '+t.pct+'%</div></div>';
   body+='<button class="btn" onclick="wkFinish()">✓ Save session</button>';
   body+='<button class="btn ghost" style="margin-top:8px" onclick="wkQuickOpen()">✓ Mark done with a note (no set logging)</button>';
@@ -1459,7 +1467,19 @@ function wkSwapToName(name){
 function wkSwapCustom(){var q=((document.getElementById('wk-swap-q')||{}).value||'').trim();if(!q)return;wkSwapToName(encodeURIComponent(q));}
 function wkDemo(ei){var en=WK&&WK.entries[ei];var v=en&&en.lib&&en.lib.video;if(!v){toast('No demo video for this exercise',true);return;}try{window.open(v,'_blank','noopener');}catch(e){location.href=v;}}
 function wkInfo(ei){var en=WK&&WK.entries[ei];if(!en)return;en.showInfo=!en.showInfo;wkRender();}
-function wkAddFreeEx(quiet){if(!WK)return;var tr=WK_DEFAULT_TRACK.slice();var s={done:false,t:{}};tr.forEach(function(v){s[v]='';});WK.entries.push({name:'',origName:'',exId:'',alts:[],track:tr,note:'',target:'',sec:'',brand:'',equipment:'',showInfo:false,lib:{video:'',howto:'',mistakes:'',cues:'',breathing:''},sets:[s]});if(!quiet)wkRender();}
+/* Per-exercise note/comment — saved into the log entry (byte-compatible with the client runner's `comment`),
+   so it shows in this client's activity feed + the admin editor, just like a comment the client leaves. */
+function wkComment(ei){
+  var en=WK&&WK.entries[ei];if(!en)return;
+  var first=(CUR&&CUR.name?CUR.name.split(' ')[0]:'the client');
+  uiPrompt({title:'Note / comment',label:'Your note on “'+(en.name||'this exercise')+'” — saved with the session and shown in '+first+'’s activity feed',multiline:true,ok:'Save',placeholder:'e.g. Form broke down on the last 2 reps — drop 2.5 kg next week.',value:en.comment||''}).then(function(v){if(v==null)return;en.comment=(v||'').trim();wkRender();});
+}
+/* Session-wide note for the whole workout (coach record + shown on the saved session). */
+function wkSessionNote(){
+  if(!WK)return;
+  uiPrompt({title:'Session note',label:'An overall note for this whole session',multiline:true,ok:'Save',placeholder:'e.g. Great energy today — pushed hard on the compounds, bumped squat 5 kg.',value:WK.note||''}).then(function(v){if(v==null)return;WK.note=(v||'').trim();wkRender();});
+}
+function wkAddFreeEx(quiet){if(!WK)return;var tr=WK_DEFAULT_TRACK.slice();var s={done:false,t:{}};tr.forEach(function(v){s[v]='';});WK.entries.push({name:'',origName:'',exId:'',alts:[],track:tr,note:'',comment:'',target:'',sec:'',brand:'',equipment:'',showInfo:false,lib:{video:'',howto:'',mistakes:'',cues:'',breathing:''},sets:[s]});if(!quiet)wkRender();}
 function wkCancel(){if(WK&&wkTotals().sets>0&&!confirm('Discard this unsaved session?'))return;WK=null;renderClient();}
 function wkFinish(){
   if(!WK)return;
@@ -1480,9 +1500,9 @@ function wkFinish(){
   var all=0,dn=0;entries.forEach(function(en){(en.sets||[]).forEach(function(s){all++;if(s.done)dn++;});});
   var completion=all?Math.round(dn/all*100):0;
   var log={id:uid(),client_id:CUR.id,date:WK.date,day_id:WK.day_id||'',day_name:WK.day_name||'Workout',
-    entries:entries.map(function(en){return {name:en.name||'Exercise',exId:en.exId||'',origName:en.origName||en.name||'',brand:en.brand||'',equipment:en.equipment||'',track:en.track,note:en.note||'',sec:en.sec||'',
+    entries:entries.map(function(en){return {name:en.name||'Exercise',exId:en.exId||'',origName:en.origName||en.name||'',brand:en.brand||'',equipment:en.equipment||'',track:en.track,note:en.note||'',comment:en.comment||'',sec:en.sec||'',
       sets:en.sets.map(function(s){var o={done:!!s.done};(en.track||[]).forEach(function(v){o[v]=s[v]||'';});return o;})};}),
-    summary:{totalSets:totalSets,totalReps:totalReps,volume:Math.round(volume),exercises:exs,loggedBy:(ME.name||'Coach'),by:'coach'},
+    summary:{totalSets:totalSets,totalReps:totalReps,volume:Math.round(volume),exercises:exs,note:(WK.note||''),loggedBy:(ME.name||'Coach'),by:'coach'},
     completion:completion,duration_sec:Math.max(0,Math.round((Date.now()-WK_START)/1000)),done:completion>=100};
   toast('Saving…');
   api('saveWorkoutLog',{log:log}).then(function(){
