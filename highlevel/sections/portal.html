@@ -7232,7 +7232,7 @@ img,svg,canvas,video{max-width:100%}
         <div class="field" style="max-width:240px;margin:0"><label class="lab">Search</label><input id="ex-search" placeholder="🔍 name…" oninput="renderExList()"></div>
         <div class="field" style="max-width:200px;margin:0"><label class="lab">Body part</label><select id="ex-filter-body" onchange="renderExList()"><option value="">All body parts</option></select></div>
         <span class="small" id="ex-count" style="align-self:center"></span>
-        <span id="ex-audit-wrap" style="align-self:center;margin-left:auto;display:none"><button class="btn-sm" id="ex-audit-btn" onclick="exAuditToggle()" title="Find and fix exercises whose demo video is a broken / search link, or that have no demo yet">🔎 Video audit <span id="ex-audit-badge" class="exa-badge" style="display:none"></span></button></span>
+        <span id="ex-audit-wrap" style="align-self:center;margin-left:auto;display:none"><button class="btn-sm" id="gear-mgr-btn" onclick="gearMgrOpen()" title="Add or delete the equipment &amp; machine brands clients can pick when logging a workout" style="margin-right:6px">🏷 Equipment &amp; brands</button><button class="btn-sm" id="ex-audit-btn" onclick="exAuditToggle()" title="Find and fix exercises whose demo video is a broken / search link, or that have no demo yet">🔎 Video audit <span id="ex-audit-badge" class="exa-badge" style="display:none"></span></button></span>
       </div>
       <div id="ex-list"></div>
     </div>
@@ -7880,7 +7880,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04vr';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04vs';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -14055,6 +14055,7 @@ async function startWorkout(dayId){
     wkoClearActive();
   }
   await loadExLib();try{WKO_HISTORY=await DB.listWorkoutLogs(SESSION.id);}catch(e){WKO_HISTORY=[];}
+  try{await wkGearLoad();}catch(e){}
   try{WKO_COLS=(await DB.getKV('workout_log_cols'))||[];}catch(e){WKO_COLS=[];}if(!Array.isArray(WKO_COLS))WKO_COLS=[];
   wkoLoadClientCols();
   WKO={client_id:SESSION.id,date:todayISO(),day_id:day.id,day_name:day.name||'Workout',completion:0,
@@ -14080,6 +14081,7 @@ function wkoResumeBannerHTML(){const o=wkoLoadActive();if(!o)return '';const w=o
     '<button class="wko-resume-x" title="Discard this unfinished session" onclick="wkoDiscardActive()">×</button></div>';}
 async function wkoResume(){const o=wkoLoadActive();if(!o||!o.w){toast('No saved workout to resume',true);wkoRefreshTraining();return;}
   await loadExLib();try{WKO_HISTORY=await DB.listWorkoutLogs(SESSION.id);}catch(e){WKO_HISTORY=[];}
+  try{await wkGearLoad();}catch(e){}
   try{WKO_COLS=(await DB.getKV('workout_log_cols'))||[];}catch(e){WKO_COLS=[];}if(!Array.isArray(WKO_COLS))WKO_COLS=[];
   wkoLoadClientCols();
   WKO=o.w;WKO_IDX=o.i||0;WKO_START=o.t||Date.now();
@@ -14136,18 +14138,57 @@ function wkoNav(d){wkoClampIdx();const n=WKO?WKO.entries.length:0;
 function wkoGoto(i){WKO_IDX=(i<(WKO?WKO.entries.length:0))?wkoGroupRange(i)[0]:i;wkoClampIdx();renderWorkout();try{$('wko-body').scrollTop=0;}catch(e){}}
 function wkoBrandsFor(en){const set={};(WKO_HISTORY||[]).forEach(w=>{(w.entries||[]).forEach(e=>{if(((en.exId&&e.exId===en.exId)||(e.name===en.name))&&e.brand)set[e.brand]=1;});});const arr=Object.keys(set);if(en.brand&&arr.indexOf(en.brand)<0)arr.push(en.brand);return arr;}
 function wkoSetBrand(ei,b){b=decodeURIComponent(b);const en=WKO.entries[ei];if(!en)return;en.brand=(en.brand===b?'':b);renderWorkout();}
-function wkoAddBrand(ei){const en=WKO.entries[ei];if(!en)return;uiPrompt({title:'Add brand / variation',label:'Machine brand or variation for “'+en.name+'” — each keeps its own history & PRs',placeholder:'e.g. Hammer Strength, Cybex, Life Fitness',ok:'Add',value:en.brand||''}).then(function(b){if(b==null){renderWorkout();return;}en.brand=(b||'').trim();renderWorkout();});}
+function wkoAddBrand(ei){const en=WKO.entries[ei];if(!en)return;uiPrompt({title:'Add brand / variation',label:'Machine brand or variation for “'+en.name+'” — each keeps its own history & PRs',placeholder:'e.g. Hammer Strength, Cybex, Life Fitness',ok:'Add',value:en.brand||''}).then(function(b){if(b==null){renderWorkout();return;}en.brand=(b||'').trim();wkGearRemember('brand',en.brand);renderWorkout();});}
 /* equipment used — a second history axis alongside brand */
 function wkoEquipFor(en){const set={};(WKO_HISTORY||[]).forEach(w=>{(w.entries||[]).forEach(e=>{if(((en.exId&&e.exId===en.exId)||(e.name===en.name))&&e.equipment)set[e.equipment]=1;});});const lib=en.exId&&exById(en.exId);if(lib&&lib.equipment)set[lib.equipment]=1;const arr=Object.keys(set);if(en.equipment&&arr.indexOf(en.equipment)<0)arr.push(en.equipment);return arr;}
 function wkoSetEquip(ei,v){v=decodeURIComponent(v);const en=WKO.entries[ei];if(!en)return;en.equipment=(en.equipment===v?'':v);renderWorkout();}
-function wkoAddEquip(ei){const en=WKO.entries[ei];if(!en)return;uiPrompt({title:'Add equipment',label:'Equipment used for “'+en.name+'” — each keeps its own history & PRs',placeholder:'e.g. Hack squat machine, Trap bar',ok:'Add',value:en.equipment||''}).then(function(v){if(v==null){renderWorkout();return;}en.equipment=(v||'').trim();renderWorkout();});}
+function wkoAddEquip(ei){const en=WKO.entries[ei];if(!en)return;uiPrompt({title:'Add equipment',label:'Equipment used for “'+en.name+'” — each keeps its own history & PRs',placeholder:'e.g. Hack squat machine, Trap bar',ok:'Add',value:en.equipment||''}).then(function(v){if(v==null){renderWorkout();return;}en.equipment=(v||'').trim();wkGearRemember('equip',en.equipment);renderWorkout();});}
 /* ── Equipment / brand pick-lists (dropdown + custom) + branded input dialog (shared) ── */
 var EQUIP_COMMON=['Barbell','Dumbbell','Machine','Cable','Smith machine','Kettlebell','Bodyweight','Resistance band','EZ bar','Plate-loaded','Landmine'];
 var BRAND_COMMON=['Hammer Strength','Cybex','Life Fitness','Technogym','Nautilus','Precor','Matrix','Atlantis','Watson','Prime'];
 function wkoOptList(cur,known,common){var seen={},opts=[];function add(x){x=(x||'').trim();if(x&&!seen[x.toLowerCase()]){seen[x.toLowerCase()]=1;opts.push(x);}}(known||[]).forEach(add);(common||[]).forEach(add);if(cur){var c=cur.trim();if(c&&!seen[c.toLowerCase()])opts.unshift(c);}return opts;}
+/* ── Custom equipment / brands: a shared coach-wide list (KV wk_gear) merged into every picker.
+   Coach additions save to the shared list (anyone sees them); a client's own additions persist on
+   their device so they stay in their picker; the coach curates/deletes from the admin panel. ── */
+var WK_GEAR={brands:[],equipment:[],_loaded:false};
+async function wkGearLoad(force){
+  if(WK_GEAR._loaded&&!force)return WK_GEAR;
+  try{const d=await kvLoad('wk_gear',null);if(d&&typeof d==='object'){WK_GEAR.brands=Array.isArray(d.brands)?d.brands.slice():[];WK_GEAR.equipment=Array.isArray(d.equipment)?d.equipment.slice():[];}}catch(e){}
+  WK_GEAR._loaded=true;return WK_GEAR;
+}
+function wkGearMine(){try{const d=JSON.parse(localStorage.getItem('s2s_gear_mine')||'{}');return {brands:Array.isArray(d.brands)?d.brands:[],equipment:Array.isArray(d.equipment)?d.equipment:[]};}catch(e){return {brands:[],equipment:[]};}}
+function wkGearMineAdd(kind,v){v=(v||'').trim();if(!v)return;try{const d=wkGearMine();const arr=(kind==='brand')?d.brands:d.equipment;if(!arr.some(function(x){return x.toLowerCase()===v.toLowerCase();}))arr.push(v);localStorage.setItem('s2s_gear_mine',JSON.stringify(d));}catch(e){}}
+async function wkGearAddShared(kind,v){v=(v||'').trim();if(!v)return false;await wkGearLoad();const arr=(kind==='brand')?WK_GEAR.brands:WK_GEAR.equipment;if(arr.some(function(x){return x.toLowerCase()===v.toLowerCase();}))return true;arr.push(v);if(typeof kvGuard==='function'&&!kvGuard('wk_gear'))return false;try{await DB.setKV('wk_gear',{brands:WK_GEAR.brands,equipment:WK_GEAR.equipment});return true;}catch(e){try{toast('Could not save to the shared list',true);}catch(_){}return false;}}
+async function wkGearDelShared(kind,v){await wkGearLoad();if(kind==='brand')WK_GEAR.brands=WK_GEAR.brands.filter(function(x){return x!==v;});else WK_GEAR.equipment=WK_GEAR.equipment.filter(function(x){return x!==v;});if(typeof kvGuard==='function'&&!kvGuard('wk_gear'))return;try{await DB.setKV('wk_gear',{brands:WK_GEAR.brands,equipment:WK_GEAR.equipment});}catch(e){try{toast('Could not save',true);}catch(_){}}}
+function wkGearRemember(kind,v){v=(v||'').trim();if(!v)return;if(typeof ADMIN_OK!=='undefined'&&ADMIN_OK){wkGearAddShared(kind,v);}else{wkGearMineAdd(kind,v);}}
+/* Admin panel: manage the shared equipment & brand list (add / delete) */
+async function gearMgrOpen(){
+  if(typeof ADMIN_OK==='undefined'||!ADMIN_OK){try{toast('Admins only',true);}catch(e){}return;}
+  if(!document.getElementById('gm-css')){var st=document.createElement('style');st.id='gm-css';st.textContent='.gm-sec{margin:14px 0}.gm-chips{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0}.gm-chip{display:inline-flex;align-items:center;gap:6px;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:5px 6px 5px 12px;font-size:13px;font-weight:600}.gm-chip button{border:0;background:var(--border);color:var(--text);width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center}.gm-chip button:hover{background:var(--red);color:#fff}.gm-add{display:flex;gap:6px;margin-top:4px}.gm-add input{flex:1;min-width:0;padding:8px 10px;border:1px solid var(--border);border-radius:9px;background:var(--card);color:var(--text);font-size:13px}';document.head.appendChild(st);}
+  await wkGearLoad(true);
+  var ov=document.getElementById('gearmgr-modal');
+  if(!ov){ov=document.createElement('div');ov.id='gearmgr-modal';ov.className='exh-overlay';document.body.appendChild(ov);ov.addEventListener('click',function(e){if(e.target===ov)gearMgrClose();});}
+  ov.classList.add('open');renderGearMgr();
+}
+function gearMgrClose(){var ov=document.getElementById('gearmgr-modal');if(ov)ov.classList.remove('open');}
+function renderGearMgr(){
+  var ov=document.getElementById('gearmgr-modal');if(!ov)return;
+  function sec(title,kind,arr){
+    var chips=(arr&&arr.length)?arr.map(function(v){return '<span class="gm-chip">'+esc(v)+'<button type="button" onclick="gearMgrDel(\''+kind+'\',\''+encodeURIComponent(v)+'\')" aria-label="Delete">×</button></span>';}).join(''):'<span class="small" style="color:var(--muted)">None yet — add common gym gear below; it also fills in as coaches &amp; clients log workouts.</span>';
+    return '<div class="gm-sec"><div class="uline">'+title+'</div><div class="gm-chips">'+chips+'</div>'+
+      '<div class="gm-add"><input id="gm-in-'+kind+'" placeholder="Add '+(kind==='brand'?'a brand / machine variation':'equipment')+'…" onkeydown="if(event.key===\'Enter\'){event.preventDefault();gearMgrAdd(\''+kind+'\');}"><button class="btn-sm solid" onclick="gearMgrAdd(\''+kind+'\')">Add</button></div></div>';
+  }
+  ov.innerHTML='<div class="exh-sheet" style="max-width:520px"><button class="exh-x" onclick="gearMgrClose()" aria-label="Close">×</button>'+
+    '<div class="exh-hero"><div class="exh-k">Workout logger</div><div class="exh-n">🏷 Equipment &amp; brands</div></div>'+
+    '<div class="small" style="color:var(--muted);margin:0 0 12px">These show in the equipment &amp; brand pickers whenever anyone logs a workout. Delete anything you don’t want clients to pick.</div>'+
+    sec('Equipment','equip',WK_GEAR.equipment)+
+    sec('Brands / machine variations','brand',WK_GEAR.brands)+'</div>';
+}
+async function gearMgrAdd(kind){var inp=document.getElementById('gm-in-'+kind);if(!inp)return;var v=(inp.value||'').trim();if(!v)return;var ok=await wkGearAddShared(kind,v);if(ok){inp.value='';renderGearMgr();var i2=document.getElementById('gm-in-'+kind);if(i2){try{i2.focus();}catch(e){}}}}
+async function gearMgrDel(kind,enc){var v=enc;try{v=decodeURIComponent(enc);}catch(e){}await wkGearDelShared(kind,v);renderGearMgr();}
 function wkoPickRow(label,en,ei,kind){
   var isEq=kind==='equip';var cur=isEq?(en.equipment||''):(en.brand||'');
-  var opts=wkoOptList(cur,isEq?wkoEquipFor(en):wkoBrandsFor(en),isEq?EQUIP_COMMON:BRAND_COMMON);
+  var _mine=wkGearMine();var opts=wkoOptList(cur,isEq?wkoEquipFor(en):wkoBrandsFor(en),(isEq?EQUIP_COMMON.concat(WK_GEAR.equipment||[],_mine.equipment):BRAND_COMMON.concat(WK_GEAR.brands||[],_mine.brands)));
   var h='<div class="wko-sel"><span class="wko-brand-lbl">'+label+'</span><select onchange="wkoPick('+ei+',\''+kind+'\',this.value)">';
   h+='<option value=""'+(!cur?' selected':'')+'>'+(isEq?'Any':'Default')+'</option>';
   opts.forEach(function(x){h+='<option'+(cur===x?' selected':'')+'>'+esc(x)+'</option>';});
@@ -20383,6 +20424,7 @@ function wkoSummaryEdit(){const p=WKC_PENDING;wkoCloseConfirm();if(p&&p.editLog)
 async function wkoRunV2(iso,wId){
   const w=t2cWorkout(wId);if(!w){toast('Workout not found',true);return;}
   await loadExLib();try{WKO_HISTORY=await DB.listWorkoutLogs(SESSION.id);}catch(e){WKO_HISTORY=[];}
+  try{await wkGearLoad();}catch(e){}
   try{WKO_COLS=(await DB.getKV('workout_log_cols'))||[];}catch(e){WKO_COLS=[];}if(!Array.isArray(WKO_COLS))WKO_COLS=[];
   wkoLoadClientCols();
   const flat=[];(w.sections||[]).forEach(sec=>{(sec.exercises||[]).forEach(e=>flat.push(e));});
@@ -20680,6 +20722,7 @@ async function wkoEditLog(logId){
   const log=(WK_LOGS||[]).find(w=>w.id===logId);if(!log){toast('Logged session not found',true);return;}
   wkoCloseDetail();
   await loadExLib();try{WKO_HISTORY=await DB.listWorkoutLogs(SESSION.id);}catch(e){WKO_HISTORY=[];}
+  try{await wkGearLoad();}catch(e){}
   try{WKO_COLS=(await DB.getKV('workout_log_cols'))||[];}catch(e){WKO_COLS=[];}if(!Array.isArray(WKO_COLS))WKO_COLS=[];
   wkoLoadClientCols();
   WKO=JSON.parse(JSON.stringify(log));WKO.editId=log.id;

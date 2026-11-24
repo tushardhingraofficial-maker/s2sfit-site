@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light" data-version="2026-11-24h">
+<html lang="en" data-theme="light" data-version="2026-11-24i">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -947,7 +947,7 @@ function wkRenderPick(){
   host.innerHTML=html;
 }
 /* ---- step 2: build WK from the chosen workout and run the entry screen ---- */
-function wkStart(kind,id){ wkEnsureLib().then(function(){wkStartBuild(kind,id);}); }
+function wkStart(kind,id){ Promise.all([wkEnsureLib(),wkGearLoad()]).then(function(){wkStartBuild(kind,id);}); }
 function wkStartBuild(kind,id){
   var p=CURPLAN||{};var entries=[],dayName='Workout',dayId='';
   if(kind==='v2'){
@@ -1384,16 +1384,24 @@ function wkAddSet(ei){if(!WK)return;var en=WK.entries[ei];if(!en)return;var trac
 function wkDelSet(ei){if(!WK)return;var en=WK.entries[ei];if(!en||en.sets.length<=1)return;en.sets.pop();wkRender();}
 function wkDelEx(ei){if(!WK)return;WK.entries.splice(ei,1);wkRender();}
 function wkSetEquip(ei,v){v=decodeURIComponent(v);var en=WK&&WK.entries[ei];if(!en)return;en.equipment=(en.equipment===v?'':v);wkRender();}
-function wkAddEquip(ei){var en=WK&&WK.entries[ei];if(!en)return;uiPrompt({title:'Add equipment',label:'Equipment used for “'+(en.name||'exercise')+'”',placeholder:'e.g. Hack squat machine, Trap bar',ok:'Add',value:en.equipment||''}).then(function(v){if(v==null){wkRender();return;}en.equipment=(v||'').trim();wkRender();});}
+function wkAddEquip(ei){var en=WK&&WK.entries[ei];if(!en)return;uiPrompt({title:'Add equipment',label:'Equipment used for “'+(en.name||'exercise')+'”',placeholder:'e.g. Hack squat machine, Trap bar',ok:'Add',value:en.equipment||''}).then(function(v){if(v==null){wkRender();return;}en.equipment=(v||'').trim();wkGearAdd('equip',en.equipment);wkRender();});}
 function wkSetBrand(ei,b){b=decodeURIComponent(b);var en=WK&&WK.entries[ei];if(!en)return;en.brand=(en.brand===b?'':b);wkRender();}
-function wkAddBrand(ei){var en=WK&&WK.entries[ei];if(!en)return;uiPrompt({title:'Add brand / variation',label:'Machine brand or variation for “'+(en.name||'exercise')+'”',placeholder:'e.g. Hammer Strength, Cybex, Life Fitness',ok:'Add',value:en.brand||''}).then(function(b){if(b==null){wkRender();return;}en.brand=(b||'').trim();wkRender();});}
+function wkAddBrand(ei){var en=WK&&WK.entries[ei];if(!en)return;uiPrompt({title:'Add brand / variation',label:'Machine brand or variation for “'+(en.name||'exercise')+'”',placeholder:'e.g. Hammer Strength, Cybex, Life Fitness',ok:'Add',value:en.brand||''}).then(function(b){if(b==null){wkRender();return;}en.brand=(b||'').trim();wkGearAdd('brand',en.brand);wkRender();});}
 /* ── Equipment / brand pick-lists (dropdown + custom) + branded input dialog ── */
 var EQUIP_COMMON=['Barbell','Dumbbell','Machine','Cable','Smith machine','Kettlebell','Bodyweight','Resistance band','EZ bar','Plate-loaded','Landmine'];
 var BRAND_COMMON=['Hammer Strength','Cybex','Life Fitness','Technogym','Nautilus','Precor','Matrix','Atlantis','Watson','Prime'];
 function wkOptList(cur,known,common){var seen={},opts=[];function add(x){x=(x||'').trim();if(x&&!seen[x.toLowerCase()]){seen[x.toLowerCase()]=1;opts.push(x);}}(known||[]).forEach(add);(common||[]).forEach(add);if(cur){var c=cur.trim();if(c&&!seen[c.toLowerCase()])opts.unshift(c);}return opts;}
+/* ── Shared custom equipment / brands (KV wk_gear): coach additions save for everyone; managed/deleted from the portal admin panel ── */
+var WK_GEAR={brands:[],equipment:[],_loaded:false};
+function wkGearNorm(v){var d=v;if(d&&typeof d==='object'&&!Array.isArray(d)){if(!('brands' in d)&&!('equipment' in d)&&('value' in d))d=d.value;}return (d&&typeof d==='object')?d:{};}
+function wkGearLoad(force){
+  if(WK_GEAR._loaded&&!force)return Promise.resolve(WK_GEAR);
+  return api('getKV',{key:'wk_gear'}).then(function(v){var d=wkGearNorm(v);WK_GEAR.brands=Array.isArray(d.brands)?d.brands.slice():[];WK_GEAR.equipment=Array.isArray(d.equipment)?d.equipment.slice():[];WK_GEAR._loaded=true;return WK_GEAR;}).catch(function(){WK_GEAR._loaded=true;return WK_GEAR;});
+}
+function wkGearAdd(kind,v){v=(v||'').trim();if(!v)return Promise.resolve();return wkGearLoad().then(function(){var arr=(kind==='brand')?WK_GEAR.brands:WK_GEAR.equipment;if(arr.some(function(x){return x.toLowerCase()===v.toLowerCase();}))return;arr.push(v);return api('setKV',{key:'wk_gear',value:{brands:WK_GEAR.brands,equipment:WK_GEAR.equipment}}).catch(function(){});});}
 function wkPickRow(label,en,ei,kind){
   var isEq=kind==='equip';var cur=isEq?(en.equipment||''):(en.brand||'');
-  var opts=wkOptList(cur,isEq?wkEquipFor(en):wkBrandsFor(en),isEq?EQUIP_COMMON:BRAND_COMMON);
+  var opts=wkOptList(cur,isEq?wkEquipFor(en):wkBrandsFor(en),(isEq?EQUIP_COMMON.concat(WK_GEAR.equipment||[]):BRAND_COMMON.concat(WK_GEAR.brands||[])));
   var h='<div class="wk-sel"><span class="wk-chlab">'+label+'</span><select onchange="wkPick('+ei+',\''+kind+'\',this.value)">';
   h+='<option value=""'+(!cur?' selected':'')+'>'+(isEq?'Any':'Default')+'</option>';
   opts.forEach(function(x){h+='<option'+(cur===x?' selected':'')+'>'+esc(x)+'</option>';});
