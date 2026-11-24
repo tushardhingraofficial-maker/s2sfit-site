@@ -7880,7 +7880,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04vo';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04vp';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -26384,6 +26384,23 @@ function ovPriPill(p){const m={High:['#ef4444','rgba(239,68,68,.16)'],Medium:['v
 function ovDateCell(d,never){if(!d)return '<span class="funit">'+(never||'—')+'</span>';return esc(fmtDate(String(d).slice(0,10)));}
 function ovMarkBadge(label,mk){const on=mk==='done',pend=mk==='pending';const col=on?['rgba(34,197,94,.16)','var(--green)','rgba(34,197,94,.4)']:pend?['rgba(245,200,66,.18)','var(--gold)','rgba(245,200,66,.5)']:['var(--card2)','var(--muted)','var(--border)'];return '<span title="'+label+': '+(mk||'not set')+'" style="display:inline-block;min-width:20px;text-align:center;border-radius:6px;font-size:11px;font-weight:800;font-family:var(--disp);padding:2px 5px;background:'+col[0]+';color:'+col[1]+';border:1px solid '+col[2]+'">'+label.charAt(0)+'</span>';}
 function ovPriRank(r){return {High:0,Medium:1,Low:2,None:3}[(r.st&&r.st.priority)||'None']??3;}
+function ovShowCodeKey(){
+  const old=document.getElementById('ov-codekey');if(old){old.remove();return;}
+  const groups=[
+    ['Workout','var(--prot)',[['W1','Build workout program'],['W2','Extend workout schedule'],['W3','Activate program'],['W4','Mark training done']]],
+    ['Nutrition','var(--green)',[['N1','Build nutrition plan'],['N2','Finish pending nutrition'],['N3','Sign off nutrition'],['N4','Review (+ sign off) nutrition']]],
+    ['Roadmap','var(--gold)',[['R1','Build roadmap'],['R2','Fix roadmap dates']]],
+    ['Onboarding','#e0863d',[['O1','Record onboarding'],['O2','Finish onboarding']]],
+    ['Phase','var(--muted)',[['P1','Set phase']]]
+  ];
+  const rows=groups.map(g=>'<div style="margin-bottom:12px"><div style="font-weight:800;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:'+g[1]+';margin-bottom:6px">'+g[0]+'</div>'+
+    g[2].map(c=>'<div style="display:flex;align-items:center;gap:9px;padding:3px 0"><span style="font-family:var(--disp);font-weight:800;font-size:12px;min-width:30px;text-align:center;padding:2px 6px;border-radius:5px;background:var(--card2);border:1px solid var(--border);color:'+g[1]+'">'+c[0]+'</span><span style="font-size:13px;color:var(--text)">'+c[1]+'</span></div>').join('')+'</div>').join('');
+  const ov=document.createElement('div');ov.id='ov-codekey';ov.className='uip-ov';
+  ov.innerHTML='<div class="uip-box" style="max-width:380px"><div class="uip-ttl">Next-action codes</div><div class="small" style="color:var(--muted);margin:-2px 0 8px">What each client needs next — also the daily auto-tasks.</div><div style="max-height:58vh;overflow:auto;margin-bottom:4px">'+rows+'</div><div class="uip-btns"><button class="uip-ok" type="button">Close</button></div></div>';
+  document.body.appendChild(ov);
+  ov.querySelector('.uip-ok').onclick=()=>ov.remove();
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
+}
 function renderOverviewTable(){
   const host=$('adm-overview-host');if(!host)return;
   const _prev=host.querySelector('.ov-scroll');const _sx=_prev?_prev.scrollLeft:0,_sy=_prev?_prev.scrollTop:0;   // keep scroll position across an in-place refresh
@@ -26410,7 +26427,7 @@ function renderOverviewTable(){
   const live=all.filter(r=>!r.archived);   // archived clients sit in their own panel, off the active roster
   const active=sortRows(live.filter(r=>!r.paused));
   const paused=live.filter(r=>r.paused).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
-  const HEAD='<th style="text-align:left">Client</th><th>Priority</th><th style="text-align:left">Next actions</th><th style="text-align:left">Workout</th><th style="text-align:left">Nutrition</th><th style="text-align:left">Roadmap</th><th style="text-align:left">Onboarding</th><th style="text-align:left">Progress status</th><th style="text-align:left">Last call made</th><th style="text-align:left">Phase</th><th style="text-align:left">Joined</th><th>Workouts built</th><th style="text-align:left">Schedule ends</th><th>Meals built</th><th style="text-align:left">Nutrition last updated</th><th>Roadmap blocks</th><th style="text-align:left">Current block</th><th style="text-align:left">Allocation marks (T/N/G)</th><th style="text-align:left">Last workout log</th><th style="text-align:left">Last food log</th>';
+  const HEAD='<th style="text-align:left">Client</th><th>Priority</th><th style="text-align:left;cursor:pointer" onclick="ovShowCodeKey()" title="What do these codes mean? Click for the key">Next actions <span style="opacity:.6;font-weight:700">ⓘ</span></th><th style="text-align:left">Workout</th><th style="text-align:left">Nutrition</th><th style="text-align:left">Roadmap</th><th style="text-align:left">Onboarding</th><th style="text-align:left">Progress status</th><th style="text-align:left">Last call made</th><th style="text-align:left">Phase</th><th style="text-align:left">Joined</th><th>Workouts built</th><th style="text-align:left">Schedule ends</th><th>Meals built</th><th style="text-align:left">Nutrition last updated</th><th>Roadmap blocks</th><th style="text-align:left">Current block</th><th style="text-align:left">Allocation marks (T/N/G)</th><th style="text-align:left">Last workout log</th><th style="text-align:left">Last food log</th>';
   const trFor=r=>{
       const st=r.st||{};
       const adhCls=r.daysLogged===0?'muted':(r.adherence>=90?'good':r.adherence>=75?'warn':'crit');
