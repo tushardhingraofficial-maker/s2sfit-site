@@ -7871,7 +7871,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04vk';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04vl';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -19320,7 +19320,7 @@ function tplRender(){
 async function tplSaveCurrent(){
   if(!(edClient&&edClient.id!==undefined)){toast('Open a client first',true);return;}
   const def=(edPlan.training&&edPlan.training.program&&edPlan.training.program.goal)||'New program';
-  const name=prompt('Save this client’s training as a program template.\n\nTemplate name:',def);if(!name)return;
+  const name=await uiPrompt({title:'Save as program template',label:'Template name',value:def,ok:'Save',placeholder:'e.g. PPL, Beginner 3-day'});if(!name||!name.trim())return;
   let list=[];try{list=await DB.getTemplates();}catch(e){}if(!Array.isArray(list))list=[];
   const tr=JSON.parse(JSON.stringify(edPlan.training||{}));(tr.days||[]).forEach(d=>delete d.exercises);
   list.unshift({id:uid(),name:name.trim(),kind:'program',training:tr,created_at:new Date().toISOString()});
@@ -19335,16 +19335,16 @@ async function tplSavePickedClient(){
   const hasContent=days.some(d=>(Array.isArray(d.sections)?d.sections:[]).some(s=>(s.exercises||[]).length)||(d.exercises||[]).length);
   if(!days.length||!hasContent){toast(cname+' has no training program to save yet',true);return;}
   const def=((plan.training.program&&plan.training.program.goal)||(cname+'’s program'));
-  const name=prompt('Save '+cname+'’s allocated training program to the template library.\n\nTemplate name:',def);if(!name)return;
+  const name=await uiPrompt({title:'Save allocated program',label:'Template name for '+cname+'’s program',value:def,ok:'Save'});if(!name||!name.trim())return;
   let list=[];try{list=await DB.getTemplates();}catch(e){}if(!Array.isArray(list))list=[];
   const tr=JSON.parse(JSON.stringify(plan.training||{}));(tr.days||[]).forEach(d=>delete d.exercises);   // drop the flat back-compat mirror; sections hold the exercises
   list.unshift({id:uid(),name:name.trim(),kind:'program',training:tr,created_at:new Date().toISOString()});
   try{await DB.saveTemplates(list);TEMPLATES=list;tplRender();toast('Saved “'+name.trim()+'” to the template library ✓');}
   catch(e){toast('Could not save template',true);}
 }
-function tplSaveDay(di){
+async function tplSaveDay(di){
   if(!(edClient&&edClient.id!==undefined))return;const d=edTr().days[di];if(!d)return;
-  const name=prompt('Save this day as a reusable workout template.\n\nName:',d.name||'Workout');if(!name)return;
+  const name=await uiPrompt({title:'Save workout template',label:'Name',value:d.name||'Workout',ok:'Save'});if(!name||!name.trim())return;
   DB.getTemplates().then(list=>{list=Array.isArray(list)?list:[];const day=JSON.parse(JSON.stringify(d));delete day.exercises;list.unshift({id:uid(),name:name.trim(),kind:'workout',training:{days:[day]},created_at:new Date().toISOString()});return DB.saveTemplates(list).then(()=>{TEMPLATES=list;});}).then(()=>toast('Workout saved to templates ✓')).catch(()=>toast('Could not save',true));
 }
 function tplApplyToOpen(i){const t=TEMPLATES[i];if(!t||!(edClient&&edClient.id!==undefined))return;if(!confirm('Load program “'+(t.name||'')+'” into the open client’s editor? This replaces their current training — review, then Save.'))return;edPlan.training=JSON.parse(JSON.stringify(t.training||{}));if(typeof edRenderTraining==='function')edRenderTraining();closeTemplates();toast('Template loaded — review and Save to apply');}
@@ -19368,7 +19368,7 @@ async function tplAllocate(i){
     if(edClient&&edClient.id===cid){const rp=await DB.getPlan(cid);if(rp){edPlan.training=migratePlan(rp).training;if(typeof edRenderTraining==='function')edRenderTraining();}}
   }catch(e){console.error(e);toast('Could not allocate — '+((e&&e.message)||'error'),true);}
 }
-async function tplRename(i){const t=TEMPLATES[i];if(!t)return;const n=prompt('Rename template:',t.name||'');if(n==null)return;t.name=n.trim()||t.name;try{await DB.saveTemplates(TEMPLATES);}catch(e){}tplRender();}
+async function tplRename(i){const t=TEMPLATES[i];if(!t)return;const n=await uiPrompt({title:'Rename template',value:t.name||'',ok:'Rename'});if(n==null)return;t.name=n.trim()||t.name;try{await DB.saveTemplates(TEMPLATES);}catch(e){}tplRender();}
 async function tplDelete(i){if(!confirm('Delete this template from the library?'))return;TEMPLATES.splice(i,1);try{await DB.saveTemplates(TEMPLATES);}catch(e){}tplRender();}
 /* build a brand-new program template from scratch using the full training panel */
 let TPL_EDITING=null, TPL_EDIT_AREA='program';
@@ -30031,7 +30031,7 @@ function edTrFlush(){try{document.querySelectorAll('.tr-exrow input,.tr-exrow te
   const m=h.match(/edTrExSet\((\d+),(\d+),(\d+),['"]([^'"]+)['"]/);
   if(m){try{edTrExSet(+m[1],+m[2],+m[3],m[4],(el.value!=null?el.value:''));}catch(e){}}
 });}catch(e){}}
-function edTrExAltAdd(di,si,xi){edTrFlush();const x=(edTrSecs(di)[si]||{}).exercises&&edTrSecs(di)[si].exercises[xi];if(!x)return;const v=prompt('Add an alternate / variation for “'+(x.name||'this exercise')+'”.\n\nThe client can swap to this while logging (e.g. a machine version, a dumbbell variation, or an easier progression):');if(!v||!v.trim())return;x.alts=Array.isArray(x.alts)?x.alts:[];x.alts.push(v.trim());edRenderTraining();}
+async function edTrExAltAdd(di,si,xi){edTrFlush();const x=(edTrSecs(di)[si]||{}).exercises&&edTrSecs(di)[si].exercises[xi];if(!x)return;const v=await uiPrompt({title:'Add alternate / variation',label:'For “'+(x.name||'this exercise')+'” — the client can swap to this while logging (e.g. a machine or dumbbell version, or an easier progression)',placeholder:'Alternate exercise name',ok:'Add'});if(!v||!v.trim())return;x.alts=Array.isArray(x.alts)?x.alts:[];x.alts.push(v.trim());edRenderTraining();}
 function edTrExAltDel(di,si,xi,ai){const x=(edTrSecs(di)[si]||{}).exercises&&edTrSecs(di)[si].exercises[xi];if(!x||!Array.isArray(x.alts))return;x.alts.splice(ai,1);edRenderTraining();}
 function edTrExDup(di,si,xi){edTrFlush();const xs=edTrSecs(di)[si].exercises;const c=JSON.parse(JSON.stringify(xs[xi]));c.id=uid();xs.splice(xi+1,0,c);edRenderTraining();}
 function edTrExCopyPrev(di,si,xi){edTrFlush();const xs=edTrSecs(di)[si].exercises;if(xi<=0){toast('No movement above to copy from',true);return;}const p=xs[xi-1],c=xs[xi];['sets','reps','load','rir','tempo','rest'].forEach(k=>c[k]=p[k]);edRenderTraining();toast('Specs copied from '+(p.name||'movement above'));}
@@ -30651,7 +30651,7 @@ function wlibClone(w){const c=JSON.parse(JSON.stringify(w));c.id=uid();(c.sectio
 async function wlibSaveWorkout(wId){const w=wdWorkout(wId);if(!w)return;await wlibLoad();WLIB.workouts.push(wlibClone(w));await wlibSave();toast('⭐ Saved “'+(w.name||'Workout')+'” to the library');if(WD_VIEW==='library')wdRenderLibrary($('wd-host'));}
 async function wlibImportWorkout(libId){await wlibLoad();const w=WLIB.workouts.find(x=>x.id===libId);if(!w)return;t2().workouts.push(wlibClone(w));wdSave(true);toast('Imported “'+(w.name||'Workout')+'” into this client');WD_VIEW='workouts';wdRender();}
 async function wlibDelWorkout(libId){if(!confirm('Remove this workout from the global library?'))return;await wlibLoad();WLIB.workouts=WLIB.workouts.filter(x=>x.id!==libId);await wlibSave();wdRenderLibrary($('wd-host'));}
-async function wlibSaveProgram(){const ws=t2().workouts;if(!ws.length){toast('No workouts to save',true);return;}const name=prompt('Name this program template (e.g. PPL, Beginner 3-day):','');if(!name||!name.trim())return;await wlibLoad();WLIB.programs.push({id:uid(),name:name.trim(),workouts:ws.map(wlibClone)});await wlibSave();toast('⭐ Program template saved');if(WD_VIEW==='library')wdRenderLibrary($('wd-host'));}
+async function wlibSaveProgram(){const ws=t2().workouts;if(!ws.length){toast('No workouts to save',true);return;}const name=await uiPrompt({title:'Save program template',label:'Name',placeholder:'e.g. PPL, Beginner 3-day',ok:'Save'});if(!name||!name.trim())return;await wlibLoad();WLIB.programs.push({id:uid(),name:name.trim(),workouts:ws.map(wlibClone)});await wlibSave();toast('⭐ Program template saved');if(WD_VIEW==='library')wdRenderLibrary($('wd-host'));}
 async function wlibImportProgram(pid){await wlibLoad();const p=WLIB.programs.find(x=>x.id===pid);if(!p)return;if(!confirm('Add all '+((p.workouts||[]).length)+' workouts from “'+p.name+'” to this client?'))return;(p.workouts||[]).forEach(w=>t2().workouts.push(wlibClone(w)));wdSave(true);toast('Imported program “'+p.name+'”');WD_VIEW='workouts';wdRender();}
 async function wlibDelProgram(pid){if(!confirm('Delete this program template?'))return;await wlibLoad();WLIB.programs=WLIB.programs.filter(x=>x.id!==pid);await wlibSave();wdRenderLibrary($('wd-host'));}
 function wdRenderLibrary(host){
@@ -30807,7 +30807,7 @@ function wdToggleVar(sid,eid,v){wdFlush();const e=wdEx(sid,eid);if(!e)return;e.t
 function wdDelEx(sid,eid){wdFlush();const s=wdSecById(sid);if(!s)return;s.exercises=(s.exercises||[]).filter(e=>e.id!==eid);wdSave(true);wdRenderDesigner($('wd-host'));}
 function wdMoveEx(sid,eid,dir){wdFlush();const s=wdSecById(sid);if(!s)return;const arr=s.exercises||[];const i=arr.findIndex(e=>e.id===eid);const j=i+dir;if(i<0||j<0||j>=arr.length)return;const tmp=arr[i];arr[i]=arr[j];arr[j]=tmp;wdSave(true);wdRenderDesigner($('wd-host'));}
 function wdToggleLink(sid,eid){const e=wdEx(sid,eid);if(!e)return;e.linkNext=!e.linkNext;wdSave(true);wdRenderDesigner($('wd-host'));}
-function wdAddAlt(sid,eid){const e=wdEx(sid,eid);if(!e)return;const name=prompt('Alternative exercise name:');if(!name||!name.trim())return;e.alts=Array.isArray(e.alts)?e.alts:[];e.alts.push(name.trim());wdSave(true);wdRenderDesigner($('wd-host'));}
+async function wdAddAlt(sid,eid){const e=wdEx(sid,eid);if(!e)return;const name=await uiPrompt({title:'Add alternative',label:'Alternative exercise name',ok:'Add'});if(!name||!name.trim())return;e.alts=Array.isArray(e.alts)?e.alts:[];e.alts.push(name.trim());wdSave(true);wdRenderDesigner($('wd-host'));}
 function wdDelAlt(sid,eid,i){const e=wdEx(sid,eid);if(!e||!e.alts)return;e.alts.splice(i,1);wdSave(true);wdRenderDesigner($('wd-host'));}
 function wdExFilter(f,v){WD_EXFILTER[f]=v;wdRenderRail();}
 function wdRailList(){let list=EX_LIB||[];const q=(WD_EXFILTER.q||'').toLowerCase();if(q)list=list.filter(e=>(e.name||'').toLowerCase().includes(q));if(WD_EXFILTER.body)list=list.filter(e=>e.bodyPart===WD_EXFILTER.body);return list.slice(0,60);}
