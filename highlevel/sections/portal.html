@@ -7880,7 +7880,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04vq';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04vr';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -14578,8 +14578,9 @@ function wkoReviewHTML(){
     (list||'<div class="empty">No exercises logged.</div>')+
     '<button class="btn-sm" style="margin:10px 0" onclick="wkoAddExercise()">🏋 Add exercise from library</button>'+
     '<div class="card" style="border-color:var(--red);margin-top:6px"><div class="card-body">'+
-      '<div style="display:flex;justify-content:space-between;margin-bottom:2px;font-size:13px"><span>How much did you complete?'+(WKO.completionManual?'':' <span class="funit">(auto from your sets — drag to adjust)</span>')+'</span><b id="wko-pct" class="wk-1rm">'+(WKO.completionManual?(+WKO.completion||0):wkoAutoCompletion())+'%</b></div>'+
-      '<input type="range" min="0" max="100" step="5" value="'+(WKO.completionManual?(+WKO.completion||0):wkoAutoCompletion())+'" class="wk-slider" oninput="wkoSlide(this.value)">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:13px;font-weight:700">'+((!WKO.completionManual&&wkoAutoCompletion()>=100)?'✅ All sets logged':'Completion')+'</span><b id="wko-pct" class="wk-1rm"'+(((WKO.completionManual?(+WKO.completion||0):wkoAutoCompletion())>=100)?' style="color:var(--good)"':'')+'>'+(WKO.completionManual?(+WKO.completion||0):wkoAutoCompletion())+'%</b></div>'+
+      '<button class="btn-sm" type="button" style="margin:0 0 6px" onclick="var d=document.getElementById(\'wko-compadj\');if(d)d.style.display=(d.style.display===\'none\'?\'block\':\'none\');">Didn’t finish everything? Adjust ▾</button>'+
+      '<div id="wko-compadj" style="display:none;margin:0 0 4px"><div class="funit" style="margin-bottom:4px">Drag to set how much you actually completed</div><input type="range" min="0" max="100" step="5" value="'+(WKO.completionManual?(+WKO.completion||0):wkoAutoCompletion())+'" class="wk-slider" oninput="wkoSlide(this.value)"></div>'+
       '<div class="wko-sumgrid">'+
         '<div class="wko-sumtile"><div class="v wk-1rm">'+lcNum(t.vol)+'<small> kg</small></div><div class="k">Total volume</div></div>'+
         '<div class="wko-sumtile"><div class="v">'+durTxt+'</div><div class="k">Duration</div></div>'+
@@ -14592,7 +14593,7 @@ function wkoReviewHTML(){
         (cDist?'<div class="wko-sumtile"><div class="v" style="color:var(--prot)">'+cDist.toFixed(2)+'<small> km</small></div><div class="k">Cardio dist</div></div>':'')+
         (cCal?'<div class="wko-sumtile"><div class="v" style="color:var(--prot)">'+lcNum(Math.round(cCal))+'<small> kcal</small></div><div class="k">Cardio burn</div></div>':'')+
       '</div>'+
-      '<button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="wkoFinish()">✓ Finish &amp; save workout</button>'+
+      '<button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="wkoFinishPrompt()">🏁 Finish workout</button>'+
     '</div></div>'+
     '<div style="text-align:center;margin-top:8px"><button class="btn-sm" onclick="wkoGoto(0)">‹ Back to exercises</button></div>'+
     '</div>';
@@ -14702,7 +14703,9 @@ function wkoSwTick(){if(!WKO_SW)return;WKO_SW.elapsed=Date.now()-WKO_SW.start;co
 function wkoSwStop(){if(WKO_SW&&WKO_SW.timer){clearInterval(WKO_SW.timer);WKO_SW.timer=null;}const b=$('wko-sw-toggle');if(b)b.textContent='Start';}
 function wkoSwReset(){wkoSwStop();WKO_SW={elapsed:0,timer:null};const el=$('wko-sw-num');if(el)el.textContent='00:00.00';const b=$('wko-sw-toggle');if(b)b.textContent='Start';}
 function wkoSkip(ei){WKO.entries[ei].skipped=!WKO.entries[ei].skipped;renderWorkout();}
-function wkoToggleDone(ei,si){const s=WKO.entries[ei].sets[si];s.done=!s.done;if(s.done)wkoStartRest(ei,si);renderWorkout();}
+function wkoToggleDone(ei,si){const s=WKO.entries[ei].sets[si];s.done=!s.done;if(s.done)wkoStartRest(ei,si);else WKO._finishPrompted=false;renderWorkout();
+  // once every set is logged, auto-offer to finish (fixes clients stalling before saving)
+  if(s.done&&!WKO._finishPrompted&&wkoAllDone()){WKO._finishPrompted=true;setTimeout(function(){if(WKO&&wkoAllDone()&&!document.getElementById('wko-summary'))wkoFinishPrompt();},450);}}
 /* ---- per-exercise past-performance graph (always shown) ---- */
 function wkoPerfSeries(en){const rows=[];const brand=(en.brand||''),equip=(en.equipment||'');(WKO_HISTORY||[]).forEach(w=>{(w.entries||[]).forEach(e=>{const idMatch=(en.exId&&e.exId===en.exId)||(e.name===en.name);if(idMatch&&(e.brand||'')===brand&&(e.equipment||'')===equip){let best=0,bs=null;(e.sets||[]).forEach(s=>{const v=est1RM(s.weight,s.reps);if(v>best){best=v;bs=s;}});if(best>0)rows.push({date:(w.date||'').slice(0,10),e:Math.round(best),reps:bs.reps,weight:bs.weight});}});});rows.sort((a,b)=>a.date<b.date?-1:1);return rows;}
 function wkoPerfHTML(en){
@@ -14846,41 +14849,68 @@ function wkoHistoryCardioRender(ei,host,en){
 }
 /* historical best est-1RM for an exercise, EXCLUDING the session being edited */
 function wkoExHistBest(en){let best=0;(WKO_HISTORY||[]).forEach(w=>{if(WKO.editId&&w.id===WKO.editId)return;(w.entries||[]).forEach(e=>{if((en.exId&&e.exId===en.exId)||(e.name===en.name)){(e.sets||[]).forEach(s=>{const v=est1RM(s.weight,s.reps);if(v>best)best=v;});}});});return best;}
-/* Finish → premium celebration summary (volume · sets · duration · streak · PRs); Save commits it. */
-function wkoFinish(){
-  if(!WKO)return;const ex=document.getElementById('wko-summary');if(ex)ex.remove();
-  const t=wkoTotals();
-  const durSec=WKO_START?Math.floor((Date.now()-WKO_START)/1000):0;
-  const mm=Math.floor(durSec/60),ssx=durSec%60;const durStr=(durSec>=3600?Math.floor(durSec/3600)+':'+String(Math.floor(durSec%3600/60)).padStart(2,'0'):mm+':'+String(ssx).padStart(2,'0'));
-  const prs=[];WKO.entries.forEach(en=>{const tb=Math.round(wkoEntryBest1RM(en));if(tb>0){const hb=Math.round(wkoExHistBest(en));if(tb>hb)prs.push({name:en.name,e:tb});}});
-  let streak=0;try{const c=t2c().calendar,done=WD2_DONE||new Set();for(let k=0;k<180;k++){const iso=addDaysISO(WKO.date,-k);if(!(c[iso]||[]).length)continue;if((iso===WKO.date)||done.has(iso))streak++;else break;}}catch(e){}
-  const exN=WKO.entries.length;
-  let prHtml='';if(prs.length)prHtml='<div class="wko-sm-pr">🏆 '+prs.length+' new personal record'+(prs.length>1?'s':'')+' — '+prs.slice(0,3).map(p=>esc(p.name)+' '+p.e+' kg').join(' · ')+(prs.length>3?' +'+(prs.length-3)+' more':'')+'</div>';
-  const streakTxt=streak>1?(streak+' 🔥'):'✓';
-  const o=document.createElement('div');o.id='wko-summary';o.className='wko-sm-back';
-  o.innerHTML='<div class="wko-sm"><div class="big">🎉</div><h3>Workout complete</h3>'+
-    '<div class="sub">'+esc(WKO.day_name||'Session')+' · '+exN+' exercise'+(exN===1?'':'s')+' · great work</div>'+
-    '<div class="wko-sm-grid">'+
-      '<div class="wko-sm-stat"><b>'+lcNum(t.vol)+'</b><span>kg total volume</span></div>'+
-      '<div class="wko-sm-stat"><b>'+t.sets+'</b><span>sets done</span></div>'+
-      '<div class="wko-sm-stat"><b>'+durStr+'</b><span>duration</span></div>'+
-      '<div class="wko-sm-stat"><b>'+streakTxt+'</b><span>'+(streak>1?'day streak':'logged')+'</span></div>'+
-    '</div>'+prHtml+
-    '<button class="wko-sm-cta" onclick="wkoCommit()">Save &amp; finish</button>'+
-    '<button class="wko-sm-back-btn" onclick="(function(){var o=document.getElementById(\'wko-summary\');if(o)o.remove();})()">‹ Back</button></div>';
+/* ── Finish flow (redesigned) ──────────────────────────────────────────────
+   Old flow stalled clients on a completion slider (sessions saved at ~80%, never "done").
+   New flow: when every set is logged, a popup auto-asks to finish → one tap saves →
+   the stats/celebration screen is shown AFTER the workout is completed. */
+function wkoAllDone(){if(!WKO)return false;let planned=0,logged=0;(WKO.entries||[]).forEach(function(en){if(en.skipped)return;(en.sets||[]).forEach(function(s){planned++;if(wkoSetLogged(s))logged++;});});return planned>0&&logged>=planned;}
+function wkoFinishPromptClose(){const o=document.getElementById('wko-finprompt');if(o)o.remove();}
+function wkoFinishPrompt(){
+  if(!WKO)return;wkoFinishPromptClose();
+  const all=wkoAllDone();const pct=WKO.completionManual?(+WKO.completion||0):wkoAutoCompletion();
+  const o=document.createElement('div');o.id='wko-finprompt';o.className='wko-sm-back';
+  o.innerHTML='<div class="wko-sm"><div class="big">'+(all?'🎉':'🏁')+'</div>'+
+    '<h3>'+(all?'All done!':'Finish workout?')+'</h3>'+
+    '<div class="sub">'+(all?'Every set is logged — finish and save this session?':('You’ve logged '+pct+'% so far. Finish and save now? Anything left stays unlogged.'))+'</div>'+
+    '<button class="wko-sm-cta" onclick="wkoFinishConfirm()">✓ Finish &amp; save</button>'+
+    '<button class="wko-sm-back-btn" onclick="wkoFinishPromptClose()">'+(all?'Keep going':'Not yet')+'</button></div>';
   document.body.appendChild(o);
 }
-async function wkoCommit(){
-  if(!WKO)return;const ov=document.getElementById('wko-summary');if(ov)ov.remove();
+function wkoFinish(){wkoFinishPrompt();}   /* back-compat: review-page button routes to the popup */
+async function wkoFinishConfirm(){
+  wkoFinishPromptClose();
+  if(!WKO)return;
   const t=wkoTotals();
   const summary={totalSets:t.sets,totalReps:t.reps,volume:t.vol,exercises:WKO.entries.map(en=>{const es=wkoEntryStats(en);return {name:en.name,brand:en.brand||'',equipment:en.equipment||'',est1rm:Math.round(wkoEntryBest1RM(en)),vol:es.vol,sets:es.sets,reps:es.reps,aerobic:es.aerobic};}).filter(x=>x.est1rm>0||x.vol>0||x.aerobic)};
   const durationSec=WKO_START?Math.floor((Date.now()-WKO_START)/1000):0;
   const editing=!!WKO.editId;
-  // TP-004: if the client never moved the "how much did you complete?" slider, derive completion from
-  // the sets they actually logged vs the sets planned (the slider stays a manual override).
   const comp=WKO.completionManual?(+WKO.completion||0):wkoAutoCompletion();
   const log={id:WKO.editId||WKO.resumeId||uid(),client_id:SESSION.id,date:WKO.date,day_id:WKO.day_id,day_name:WKO.day_name,entries:WKO.entries,summary,completion:comp,duration_sec:durationSec,done:comp>=100};
-  try{await DB.saveWorkoutLog(log);wkoClearActive();wkoStopClock();toast((editing?'✓ Session updated — ':'✓ Workout saved — ')+t.sets+' sets · '+lcNum(t.vol)+' kg volume');$('workout-modal').classList.remove('open');WKO=null;WD2_DONE=null;WD2_LOGS=null;renderTraining();}catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);}
+  try{await DB.saveWorkoutLog(log);wkoClearActive();wkoStopClock();wkoShowSummary(summary,{durationSec:durationSec,comp:comp,editing:editing});}
+  catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);wkoFinishPrompt();}
+}
+async function wkoCommit(){return wkoFinishConfirm();}   /* back-compat alias */
+/* Post-save celebration — the details & stats of the workout, shown AFTER completing it. */
+function wkoShowSummary(summary,meta){
+  meta=meta||{};const ex=document.getElementById('wko-summary');if(ex)ex.remove();wkoFinishPromptClose();
+  const vol=summary.volume||0,sets=summary.totalSets||0,reps=summary.totalReps||0;
+  const durSec=meta.durationSec||0;const mm=Math.floor(durSec/60),ssx=durSec%60;const durStr=(durSec>=3600?Math.floor(durSec/3600)+':'+String(Math.floor(durSec%3600/60)).padStart(2,'0'):mm+':'+String(ssx).padStart(2,'0'));
+  const prs=[];(WKO?WKO.entries:[]).forEach(en=>{const tb=Math.round(wkoEntryBest1RM(en));if(tb>0){const hb=Math.round(wkoExHistBest(en));if(tb>hb)prs.push({name:en.name,e:tb});}});
+  let streak=0;try{const c=t2c().calendar,done=WD2_DONE||new Set();for(let k=0;k<180;k++){const iso=addDaysISO(WKO.date,-k);if(!(c[iso]||[]).length)continue;if((iso===WKO.date)||done.has(iso))streak++;else break;}}catch(e){}
+  const exN=WKO?WKO.entries.length:0;
+  const best1=(WKO?WKO.entries:[]).reduce((m,en)=>Math.max(m,Math.round(wkoEntryBest1RM(en))),0);
+  const comp=(meta.comp==null?100:meta.comp);
+  const nPRs=prs.length;
+  let prHtml='';if(nPRs)prHtml='<div class="wko-sm-pr">🏆 '+nPRs+' new personal record'+(nPRs>1?'s':'')+' — '+prs.slice(0,3).map(p=>esc(p.name)+' '+p.e+' kg').join(' · ')+(nPRs>3?' +'+(nPRs-3)+' more':'')+'</div>';
+  const o=document.createElement('div');o.id='wko-summary';o.className='wko-sm-back';
+  o.innerHTML='<div class="wko-sm"><div class="big">🎉</div><h3>'+(meta.editing?'Session updated':'Workout complete')+'</h3>'+
+    '<div class="sub">'+esc((WKO&&WKO.day_name)||'Session')+' · '+exN+' exercise'+(exN===1?'':'s')+' · '+(comp>=100?'100% complete':comp+'% done')+'</div>'+
+    '<div class="wko-sm-grid">'+
+      '<div class="wko-sm-stat"><b>'+lcNum(vol)+'</b><span>kg total volume</span></div>'+
+      '<div class="wko-sm-stat"><b>'+sets+'</b><span>sets done</span></div>'+
+      '<div class="wko-sm-stat"><b>'+durStr+'</b><span>duration</span></div>'+
+      '<div class="wko-sm-stat"><b>'+reps+'</b><span>total reps</span></div>'+
+      (best1?'<div class="wko-sm-stat"><b>'+best1+'</b><span>best est. 1RM (kg)</span></div>':'')+
+      (streak>1?'<div class="wko-sm-stat"><b>'+streak+' 🔥</b><span>day streak</span></div>':'')+
+    '</div>'+prHtml+
+    '<button class="wko-sm-cta" onclick="wkoSummaryDone()">Done ✓</button></div>';
+  document.body.appendChild(o);
+}
+function wkoSummaryDone(){
+  const o=document.getElementById('wko-summary');if(o)o.remove();
+  try{$('workout-modal').classList.remove('open');}catch(e){}
+  WKO=null;WD2_DONE=null;WD2_LOGS=null;
+  try{renderTraining();}catch(e){}
 }
 function renderHydration(){
   const h=(PLAN.hydration||'').trim(),card=$('hydration-card');if(!h){card.classList.add('hidden');return;}
