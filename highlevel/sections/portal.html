@@ -3828,6 +3828,12 @@ body.gm-has-switch #custom-host{top:var(--gm-h,48px)}
 .wkc-start{font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.03em;border:0;border-radius:13px;background:var(--red);color:#fff;padding:15px;font-size:17px;cursor:pointer}
 .wkc-start:active{transform:scale(.99)}
 .wkc-cancel{border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:13px;padding:12px;font-size:14px;font-weight:600;cursor:pointer}
+.wkc-quick{margin-top:4px;border:1px dashed var(--border);background:transparent;color:var(--muted);border-radius:12px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;width:100%}
+.wkc-quick:active{transform:scale(.99)}
+.wkc-warn{background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.45);color:var(--text);border-radius:12px;padding:11px 13px;font-size:12.5px;line-height:1.5;margin:0 0 14px}
+.wkc-note{width:100%;box-sizing:border-box;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:12px;padding:12px;font-size:16px;font-family:inherit;line-height:1.5;resize:vertical;margin:6px 0 14px}
+.tw-done-note{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:11px 13px;font-size:13px;line-height:1.55;color:var(--text);margin:10px 0 0;overflow-wrap:anywhere;white-space:normal}
+.tw-done-nostat{font-size:11.5px;color:var(--muted);margin:10px 0 0;line-height:1.5}
 /* Week calendar — Option A vertical list with drag-to-reschedule */
 .tw-wkhint{font-size:11.5px;color:var(--muted);margin:0 2px 8px;display:flex;align-items:center;gap:5px}
 .tw-gripmini{color:var(--muted)}
@@ -7820,7 +7826,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04vg';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04vh';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -19709,6 +19715,14 @@ function wd2LogForDate(iso){const m=WD2_LOGS||{};return m[iso]||null;}
 function wd2FinishedPanel(log,iso,id){
   if(!log)return '<button class="tw-cta" onclick="startWorkoutV2(\''+iso+'\',\''+id+'\')">↻ Log this workout</button>';
   const s=log.summary||{};const vol=s.volume||0,sets=s.totalSets||0,comp=log.completion||0;
+  if(s.mode==='description'){
+    return '<div class="tw-done">'+
+      '<div class="tw-done-h">✓ Completed '+(iso===todayISO()?'today':esc(fmtDate(iso)))+'</div>'+
+      (s.description?'<div class="tw-done-note">'+esc(s.description).replace(/\n/g,'<br>')+'</div>':'')+
+      '<div class="tw-done-nostat">Marked done without set logging — training stats weren’t captured for this session.</div>'+
+      '<div class="tw-done-btns"><button class="tw-cta ghost" onclick="startWorkoutV2(\''+iso+'\',\''+id+'\')">↻ Log it properly</button></div>'+
+    '</div>';
+  }
   const dur=log.duration_sec||0;const durStr=dur?(dur>=3600?(Math.floor(dur/3600)+'h'+(Math.floor(dur%3600/60)?(' '+Math.floor(dur%3600/60)+'m'):'')):(Math.floor(dur/60)+'m')):'—';
   const exs=Array.isArray(s.exercises)?s.exercises:[];
   let exli='';exs.forEach(x=>{const st=x.aerobic?'cardio session':((x.sets||0)+'×'+(x.reps||0)+' · '+lcNum(x.vol||0)+' kg'+((x.est1rm>0)?(' · 1RM '+x.est1rm):''));exli+='<div class="tw-done-exrow"><span class="nm">'+esc(x.name||'')+'</span><span class="st">'+st+'</span></div>';});
@@ -19917,13 +19931,39 @@ function wkoShowConfirm(iso,wId,w){
     '<div class="wkc-eyebrow">Ready to train?</div><div class="wkc-title">'+esc(w.name||'Workout')+'</div>'+(w.focus?'<div class="wkc-focus">'+esc(w.focus)+'</div>':'')+
     '<div class="wkc-stats"><div class="wkc-stat"><b>'+flat.length+'</b><span>exercises</span></div><div class="wkc-stat"><b>'+totalSets+'</b><span>sets</span></div><div class="wkc-stat"><b>~'+estMin+'</b><span>min</span></div></div>'+
     '<div class="wkc-uline">What you’re doing</div><div class="wkc-list">'+exRows+'</div>'+
-    '<div class="wkc-actions"><button class="wkc-start" onclick="wkoConfirmGo()">▶ Start workout</button><button class="wkc-cancel" onclick="wkoCloseConfirm()">Not now</button></div></div>';
+    '<div class="wkc-actions"><button class="wkc-start" onclick="wkoConfirmGo()">▶ Start workout</button><button class="wkc-cancel" onclick="wkoCloseConfirm()">Not now</button></div>'+
+    '<button class="wkc-quick" onclick="wkoQuickOpen()">✓ Can’t log today? Mark done with a note</button></div>';
   let ov=$('wko-confirm');
   if(!ov){ov=document.createElement('div');ov.id='wko-confirm';ov.className='wkc-overlay';document.body.appendChild(ov);ov.addEventListener('click',function(e){if(e.target===ov)wkoCloseConfirm();});}
   ov.innerHTML=html;ov.classList.add('open');WKC_PENDING={iso:iso,wId:wId};
 }
 function wkoCloseConfirm(){const ov=$('wko-confirm');if(ov)ov.classList.remove('open');}
 function wkoConfirmGo(){const p=WKC_PENDING;wkoCloseConfirm();if(p&&p.wId)wkoRunV2(p.iso,p.wId);}
+/* Quick-complete: mark the session done with just a written description (no set logging). Counts toward
+   compliance/streak (done:true, 100%) but stores NO stats, so volume/1RM/comparisons are skipped. */
+function wkoQuickOpen(){
+  const p=WKC_PENDING;if(!p||!p.wId)return;const w=t2cWorkout(p.wId)||{};
+  const html='<div class="wkc-sheet"><button class="wkc-x" onclick="wkoCloseConfirm()" aria-label="Close">×</button>'+
+    '<div class="wkc-eyebrow">Mark done</div><div class="wkc-title">'+esc(w.name||'Workout')+'</div>'+
+    '<div class="wkc-warn"><b>⚠ Heads up:</b> saving this way marks the session <b>complete</b> (it still counts toward your streak &amp; compliance), but your <b>training stats aren’t captured or compared</b> — no volume, estimated 1RM or exercise progress. Log your sets if you want to track progress.</div>'+
+    '<label class="wkc-uline" for="wko-qnote" style="display:block">What did you do?</label>'+
+    '<textarea id="wko-qnote" class="wkc-note" rows="5" placeholder="e.g. Full push day — bench, shoulder press, dips, triceps. Felt strong, added 2.5 kg on bench."></textarea>'+
+    '<div class="wkc-actions"><button class="wkc-start" onclick="wkoQuickSave()">✓ Save as done</button><button class="wkc-cancel" onclick="wkoQuickBack()">‹ Back</button></div></div>';
+  const ov=$('wko-confirm');if(ov){ov.innerHTML=html;ov.classList.add('open');}
+  setTimeout(function(){const t=$('wko-qnote');if(t)t.focus();},60);
+}
+function wkoQuickBack(){const p=WKC_PENDING;if(p&&p.wId)wkoShowConfirm(p.iso,p.wId);else wkoCloseConfirm();}
+async function wkoQuickSave(){
+  const p=WKC_PENDING;if(!p||!p.wId){wkoCloseConfirm();return;}
+  const w=t2cWorkout(p.wId)||{};const note=((($('wko-qnote')||{}).value)||'').trim();
+  if(!note){toast('Add a quick note of what you did',true);const t=$('wko-qnote');if(t)t.focus();return;}
+  const iso=p.iso||todayISO();
+  const log={id:uid(),client_id:SESSION.id,date:iso,day_id:w.id||'',day_name:w.name||'Workout',
+    entries:[],summary:{mode:'description',description:note,totalSets:0,totalReps:0,volume:0,exercises:[]},
+    completion:100,duration_sec:0,done:true};
+  try{await DB.saveWorkoutLog(log);wkoCloseConfirm();toast('✓ Marked done');WD2_DONE=null;WD2_PARTIAL=null;WD2_LOGS=null;try{renderTraining();}catch(e){}}
+  catch(e){toast('Could not save — '+((e&&e.message)||'error'),true);}
+}
 /* clicking an already-logged workout shows its recorded stats first, with an Edit option */
 function wkoShowLogSummary(logId){
   const log=(WK_LOGS||[]).find(w=>w.id===logId)||(WKO_HISTORY||[]).find(w=>w.id===logId);
@@ -19936,11 +19976,21 @@ function wkoShowLogSummary(logId){
   const exs=(s.exercises&&s.exercises.length)?s.exercises:((log.entries||[]).map(en=>{const st=(typeof wkoEntryStats==='function')?wkoEntryStats(en):{};return {name:en.name,vol:st.vol,sets:st.sets,est1rm:st.best1};}));
   const exRows=exs.map(function(x){const bits=[];if(x.sets)bits.push(x.sets+' set'+(x.sets===1?'':'s'));if(x.vol)bits.push(Math.round(x.vol).toLocaleString()+' kg');if(x.est1rm)bits.push('1RM '+Math.round(x.est1rm));return '<div class="wkc-ex"><div class="wkc-ex-nm exh-open" onclick="openExHistoryEnc(\''+encodeURIComponent(x.name||'')+'\')" title="See your history for this exercise">'+esc(x.name||'Exercise')+' <span style="color:var(--muted);font-weight:600;font-size:11px">›</span></div><div class="wkc-ex-t">'+esc(bits.join(' · '))+'</div></div>';}).join('');
   const dt=fmtDate(String(log.date||'').slice(0,10));
-  const html='<div class="wkc-sheet"><button class="wkc-x" onclick="wkoCloseConfirm()" aria-label="Close">×</button>'+
+  let html;
+  if(s.mode==='description'){
+    html='<div class="wkc-sheet"><button class="wkc-x" onclick="wkoCloseConfirm()" aria-label="Close">×</button>'+
+      '<div class="wkc-eyebrow" style="color:var(--good)">✓ Completed · '+esc(dt)+'</div><div class="wkc-title">'+esc(log.day_name||'Workout')+'</div>'+
+      '<div class="wkc-uline">What you did</div>'+
+      '<div class="tw-done-note">'+(s.description?esc(s.description).replace(/\n/g,'<br>'):'<span style="color:var(--muted)">No note saved.</span>')+'</div>'+
+      '<div class="tw-done-nostat">Marked done without set logging — training stats weren’t captured for this session.</div>'+
+      '<div class="wkc-actions"><button class="wkc-start" onclick="wkoCloseConfirm();startWorkoutV2(\''+esc(String(log.date||'').slice(0,10))+'\',\''+esc(String(log.day_id||''))+'\')">↻ Log it properly</button><button class="wkc-cancel" onclick="wkoCloseConfirm()">Close</button></div></div>';
+  } else {
+    html='<div class="wkc-sheet"><button class="wkc-x" onclick="wkoCloseConfirm()" aria-label="Close">×</button>'+
     '<div class="wkc-eyebrow" style="color:var(--good)">✓ Logged · '+esc(dt)+'</div><div class="wkc-title">'+esc(log.day_name||'Workout')+'</div>'+
     '<div class="wkc-stats"><div class="wkc-stat"><b>'+Math.round(vol).toLocaleString()+'</b><span>kg volume</span></div><div class="wkc-stat"><b>'+sets+'</b><span>sets</span></div><div class="wkc-stat"><b>'+durStr+'</b><span>time</span></div></div>'+
     '<div class="wkc-uline">What you did · '+comp+'% complete</div><div class="wkc-list">'+(exRows||'<div class="wkc-ex"><div class="wkc-ex-nm" style="color:var(--muted)">No exercise detail saved.</div></div>')+'</div>'+
     '<div class="wkc-actions"><button class="wkc-start" onclick="wkoSummaryEdit()">✏️ Edit this session</button><button class="wkc-cancel" onclick="wkoCloseConfirm()">Close</button></div></div>';
+  }
   let ov=$('wko-confirm');
   if(!ov){ov=document.createElement('div');ov.id='wko-confirm';ov.className='wkc-overlay';document.body.appendChild(ov);ov.addEventListener('click',function(e){if(e.target===ov)wkoCloseConfirm();});}
   ov.innerHTML=html;ov.classList.add('open');WKC_PENDING={editLog:logId};

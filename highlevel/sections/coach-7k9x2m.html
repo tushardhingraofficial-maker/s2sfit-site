@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light" data-version="2026-11-24a">
+<html lang="en" data-theme="light" data-version="2026-11-24b">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -969,8 +969,37 @@ function wkRender(){
   WK.entries.forEach(function(en,ei){var sc=en.sec||'';if(sc!==lastSec){lastSec=sc;if(sc)body+='<div class="wk-sec">'+esc(sc)+'</div>';}body+=wkExHTML(en,ei);});
   body+='<button class="btn ghost" style="margin:4px 0 14px" onclick="wkAddFreeEx()">＋ Add exercise</button>';
   body+='<div class="cm-st" style="margin-bottom:10px"><div class="k">Session so far</div><div class="v">'+t.sets+' set'+(t.sets===1?'':'s')+' · '+round(t.vol).toLocaleString()+' kg</div><div class="d">'+t.done+'/'+t.all+' ticked done · '+t.pct+'%</div></div>';
-  body+='<button class="btn" onclick="wkFinish()">✓ Save session</button><button class="btn ghost" style="margin-top:8px" onclick="wkCancel()">Cancel</button></div>';
+  body+='<button class="btn" onclick="wkFinish()">✓ Save session</button>';
+  body+='<button class="btn ghost" style="margin-top:8px" onclick="wkQuickOpen()">✓ Mark done with a note (no set logging)</button>';
+  body+='<button class="btn ghost" style="margin-top:8px" onclick="wkCancel()">Cancel</button></div>';
   app(head+body);
+}
+/* Quick-complete (coach): mark the session done with just a written description — counts toward
+   compliance/streak (done:true, 100%) but captures NO stats, so volume/1RM/comparisons are skipped. */
+function wkQuickOpen(){
+  if(!WK)return;
+  var head='<div class="cm-top"><button class="cm-back" onclick="wkRender()">‹</button><div style="flex:1;min-width:0"><div class="cm-title" style="font-size:16px">Mark done</div><div class="cm-sub" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(WK.day_name||'Workout')+' · '+esc(CUR.name||'Client')+'</div></div></div>';
+  var body='<div class="cm-body">'+
+    '<div style="background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.45);border-radius:12px;padding:11px 13px;font-size:12.5px;line-height:1.5;margin:0 0 14px"><b>⚠ Heads up:</b> this marks the session <b>complete</b> (counts toward the client’s streak &amp; compliance), but <b>no training stats are captured</b> — no volume, estimated 1RM or exercise comparisons. Log the sets if you want progress tracked.</div>'+
+    '<div class="field"><label>What did they do?</label><textarea id="wk-qnote" rows="5" style="width:100%;box-sizing:border-box;font-family:inherit;font-size:16px;line-height:1.5;resize:vertical" placeholder="e.g. Full push session — bench, shoulder press, dips, triceps. Form solid, bumped bench 2.5 kg."></textarea></div>'+
+    '<button class="btn" onclick="wkQuickSave()">✓ Save as done</button>'+
+    '<button class="btn ghost" style="margin-top:8px" onclick="wkRender()">‹ Back to logging</button></div>';
+  app(head+body);
+  try{setTimeout(function(){var t=document.getElementById('wk-qnote');if(t)t.focus();},60);}catch(e){}
+}
+function wkQuickSave(){
+  if(!WK)return;
+  var note=((document.getElementById('wk-qnote')||{}).value||'').trim();
+  if(!note){toast('Add a quick note of what they did',true);var t=document.getElementById('wk-qnote');if(t)t.focus();return;}
+  var log={id:uid(),client_id:CUR.id,date:WK.date,day_id:WK.day_id||'',day_name:WK.day_name||'Workout',
+    entries:[],summary:{mode:'description',description:note,totalSets:0,totalReps:0,volume:0,exercises:[],loggedBy:(ME.name||'Coach'),by:'coach'},
+    completion:100,duration_sec:0,done:true};
+  toast('Saving…');
+  api('saveWorkoutLog',{log:log}).then(function(){
+    var c=cur();c.workouts=c.workouts||[];c.workouts.unshift(log);
+    WK=null;CTAB='activity';renderClient();
+    toast('Marked done ✓');
+  }).catch(function(e){toast((e&&e.message)||'Could not save',true);});
 }
 /* input handlers — commit into the model WITHOUT re-rendering (so typing never loses focus); only ✓/add/del re-render */
 function wkSet(ei,si,v,val){if(!WK)return;var en=WK.entries[ei];if(en&&en.sets[si])en.sets[si][v]=val;}
