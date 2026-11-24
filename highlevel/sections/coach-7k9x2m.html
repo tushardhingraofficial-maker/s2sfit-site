@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light" data-version="2026-11-24f">
+<html lang="en" data-theme="light" data-version="2026-11-24g">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -977,6 +977,7 @@ function wkExHTML(en,ei){
   var hasInfo=en.lib&&(en.lib.howto||en.lib.mistakes||en.lib.cues||en.lib.breathing);
   var hdr='<button class="wk-mini" onclick="rcOpen('+ei+')" title="Rep coach — auto-count reps &amp; pace the tempo">🔢</button>'+
     '<button class="wk-mini" onclick="wkSwapOpen('+ei+')" title="Swap this exercise — pick another from your library">⇄</button>'+
+    '<button class="wk-mini" onclick="wkHistoryOpen('+ei+')" title="See this client\'s past sessions of this exercise">📈</button>'+
     (vid?'<button class="wk-mini" onclick="wkDemo('+ei+')" title="Watch demo video">▶</button>':'')+
     (hasInfo?'<button class="wk-mini'+(en.showInfo?' on':'')+'" onclick="wkInfo('+ei+')" title="How-to &amp; cues">ℹ</button>':'')+
     '<button class="wk-mini" onclick="wkGen('+ei+')" title="Auto-generate execution, cues, equipment &amp; demo (Smart)">✨</button>'+
@@ -999,6 +1000,64 @@ function wkExHTML(en,ei){
   });
   h+='<div style="display:flex;gap:8px;margin-top:7px"><button class="cm-back" style="padding:5px 11px" onclick="wkAddSet('+ei+')">＋ set</button><button class="cm-back" style="padding:5px 11px" onclick="wkDelSet('+ei+')">－ set</button></div></div>';
   return h;
+}
+/* ---- Exercise history: this client's past logged sessions of the SAME exercise ---- */
+/* One logged set → a readable line. Prefers "Wt kg × reps · RIR n"; falls back to whatever was tracked. */
+function wkSetLine(e,s){
+  var r=s.reps,w=s.weight;
+  if(String(w||'').trim()!==''&&String(r||'').trim()!==''){
+    var ln='<b>'+esc(String(w))+'</b>kg × <b>'+esc(String(r))+'</b>';
+    if(String(s.rir||'').trim()!=='')ln+=' <span class="muted">· RIR '+esc(String(s.rir))+'</span>';
+    return ln;
+  }
+  var track=(e&&e.track&&e.track.length)?e.track:['reps','weight'];
+  var parts=track.filter(function(v){return String(s[v]||'').trim()!=='';}).map(function(v){return esc(wkVarLabel(v))+' '+esc(String(s[v]));});
+  return parts.join(' · ')||'—';
+}
+/* Scan this client's saved workout logs for entries matching `en`; newest first, with est-1RM + PR flags. */
+function wkExHistoryFor(en){
+  var out=[];
+  (cur().workouts||[]).forEach(function(w){
+    if(!w||!Array.isArray(w.entries))return;
+    w.entries.forEach(function(e){
+      if(!wkMatch(en,e))return;
+      var sets=(e.sets||[]).filter(function(s){
+        return s.done||(e.track||['reps','weight']).some(function(v){return String(s[v]||'').trim()!=='';});
+      });
+      if(!sets.length)return;
+      var best=0,vol=0,reps=0;
+      sets.forEach(function(s){var r=num(s.reps),wt=num(s.weight);reps+=r;if(wt&&r){best=Math.max(best,est1RM(wt,r));vol+=wt*r;}});
+      out.push({date:String(w.date||w.created_at||'').slice(0,10),day:w.day_name||'',entry:e,sets:sets,best:best,vol:vol,reps:reps});
+    });
+  });
+  out.sort(function(a,b){return a.date<b.date?-1:1;});        // oldest→newest so we can flag running PRs
+  var run=0;out.forEach(function(h){h.pr=(h.best>0&&h.best>run);if(h.best>run)run=h.best;});
+  return out.reverse();                                        // newest first for display
+}
+function wkHistoryOpen(ei){
+  if(!WK)return;var en=WK.entries[ei];if(!en){toast('No exercise',true);return;}
+  var nm=(en.name||'Exercise').trim();var first=(CUR&&CUR.name?CUR.name:'this client').split(' ')[0];
+  var hist=wkExHistoryFor(en);
+  var body='<h3 style="display:flex;align-items:center;gap:8px;margin-bottom:2px">📈 '+esc(nm)+'</h3>'+
+    '<div class="small muted" style="margin:0 0 12px">'+esc(first)+'’s past sessions of this exercise</div>';
+  if(!hist.length){
+    body+='<div class="small muted" style="padding:6px 2px 12px">No logged sets for this exercise yet. Once you save a session with '+esc(nm)+', it shows up here — so you can see what '+esc(first)+' did last time and decide whether to push the weight.</div>';
+  }else{
+    var best=hist.reduce(function(m,h){return Math.max(m,h.best);},0);
+    var last=hist[0];var est10=best?Math.round(best/1.3333):0;   // Epley: 10RM ≈ 1RM / (1+10/30)
+    body+='<div class="cm-stat" style="margin-bottom:12px">'+
+      '<div class="cm-st"><div class="k">Best est. 1RM</div><div class="v" style="color:var(--good)">'+(best?round(best)+' kg':'—')+'</div><div class="d">across '+hist.length+' session'+(hist.length===1?'':'s')+'</div></div>'+
+      '<div class="cm-st"><div class="k">Est. 10RM</div><div class="v" style="color:var(--prot)">'+(est10?est10+' kg':'—')+'</div><div class="d">≈ working weight</div></div>'+
+      '<div class="cm-st"><div class="k">Last session</div><div class="v">'+(last.best?round(last.best)+' kg':'—')+'</div><div class="d">'+esc(fmtDate(last.date))+'</div></div></div>';
+    body+=hist.slice(0,12).map(function(h){
+      var setsHTML=h.sets.map(function(s,i){return '<div style="display:flex;gap:9px;font-size:13px;padding:2px 0"><span class="muted" style="flex:none;width:18px;text-align:right">'+(i+1)+'</span><span style="min-width:0">'+wkSetLine(h.entry,s)+'</span></div>';}).join('');
+      var meta=[];if(h.best>0)meta.push('1RM ~'+round(h.best)+'kg');if(h.vol>0)meta.push(round(h.vol).toLocaleString()+'kg vol');
+      return '<div class="cm-ev"><div class="cm-ev-h"><b>'+esc(fmtDate(h.date))+'</b>'+(h.pr?'<span class="pill good">★ PR</span>':'')+(h.day?'<span class="pill">'+esc(h.day)+'</span>':'')+'<span class="cm-ev-t">'+esc(ago(h.date))+'</span></div>'+setsHTML+(meta.length?'<div class="small muted" style="margin-top:4px">'+esc(meta.join(' · '))+'</div>':'')+'</div>';
+    }).join('');
+    if(hist.length>12)body+='<div class="small muted" style="padding:2px 2px 8px">Showing the 12 most recent of '+hist.length+' sessions.</div>';
+  }
+  body+='<button class="btn ghost" style="margin-top:6px" onclick="closeSheet()">Close</button>';
+  sheet(body);
 }
 function wkRender(){
   if(!WK)return;
