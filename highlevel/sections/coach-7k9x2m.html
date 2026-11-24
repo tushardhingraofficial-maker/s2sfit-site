@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light" data-version="2026-11-24e">
+<html lang="en" data-theme="light" data-version="2026-11-24f">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -180,6 +180,18 @@ input:focus,select,textarea:focus{outline:none;border-color:var(--red)}
 .wk-chip{border:1px solid var(--border);background:var(--card2);color:var(--muted);border-radius:16px;padding:4px 10px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap}
 .wk-chip.on{background:var(--brand);border-color:var(--brand);color:#fff}
 .wk-chip.add{color:var(--brand);font-weight:900}
+.wk-sel{display:flex;align-items:center;gap:8px;margin:0 0 7px}
+.wk-sel>.wk-chlab{flex:none}
+.wk-sel select{flex:1;min-width:0;padding:9px 10px;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:10px;font-size:13px;font-weight:700;font-family:inherit}
+.uip-ov{position:fixed;inset:0;z-index:800;background:rgba(10,12,18,.6);display:flex;align-items:center;justify-content:center;padding:20px}
+.uip-box{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 20px 50px -20px rgba(0,0,0,.5)}
+.uip-ttl{font-weight:800;font-size:16px;margin:0 0 4px;color:var(--text)}
+.uip-lab{display:block;font-size:12px;color:var(--muted);margin:0 0 6px;line-height:1.4}
+.uip-in{width:100%;box-sizing:border-box;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:11px;padding:12px;font-size:16px;font-family:inherit;line-height:1.4;margin:0 0 14px}
+.uip-in:focus{outline:none;border-color:var(--brand)}
+.uip-btns{display:flex;gap:9px;justify-content:flex-end}
+.uip-cancel{border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:11px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer}
+.uip-ok{border:0;background:var(--brand);color:#fff;border-radius:11px;padding:10px 18px;font-size:14px;font-weight:800;cursor:pointer}
 .wk-swap-item{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:var(--card);border:1px solid var(--border);border-radius:11px;padding:11px 13px;margin-bottom:7px;cursor:pointer}
 .wk-swap-item:active{background:var(--card2)}
 .wk-swap-nm{display:block;font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -977,14 +989,8 @@ function wkExHTML(en,ei){
     (en.lib.mistakes?'<div><b>⚠️ Avoid</b> '+esc(en.lib.mistakes)+'</div>':'')+
     (en.lib.cues?'<div><b>⭐ Cues</b> '+esc(en.lib.cues)+'</div>':'')+
     (en.lib.breathing?'<div><b>🫁 Breathing</b> '+esc(en.lib.breathing)+'</div>':'')+'</div>';
-  var equips=wkEquipFor(en);
-  h+='<div class="wk-chips"><span class="wk-chlab">Equip</span><button class="wk-chip'+(!en.equipment?' on':'')+'" onclick="wkSetEquip('+ei+',\'\')">Any</button>'+
-    equips.map(function(x){return '<button class="wk-chip'+(en.equipment===x?' on':'')+'" onclick="wkSetEquip('+ei+',\''+encodeURIComponent(x)+'\')">'+esc(x)+'</button>';}).join('')+
-    '<button class="wk-chip add" onclick="wkAddEquip('+ei+')">＋</button></div>';
-  var brands=wkBrandsFor(en);
-  h+='<div class="wk-chips"><span class="wk-chlab">Brand</span><button class="wk-chip'+(!en.brand?' on':'')+'" onclick="wkSetBrand('+ei+',\'\')">Default</button>'+
-    brands.map(function(b){return '<button class="wk-chip'+(en.brand===b?' on':'')+'" onclick="wkSetBrand('+ei+',\''+encodeURIComponent(b)+'\')">'+esc(b)+'</button>';}).join('')+
-    '<button class="wk-chip add" onclick="wkAddBrand('+ei+')">＋</button></div>';
+  h+=wkPickRow('Equipment',en,ei,'equip');
+  h+=wkPickRow('Brand',en,ei,'brand');
   h+='<div class="wk-row" style="grid-template-columns:'+gt+'"><div class="wk-th">#</div>'+cols.map(function(v){return '<div class="wk-th">'+esc(wkVarLabel(v))+'</div>';}).join('')+'<div class="wk-th">✓</div></div>';
   en.sets.forEach(function(s,si){
     h+='<div class="wk-row" style="grid-template-columns:'+gt+'"><div class="wk-no">'+(si+1)+'</div>'+
@@ -1311,9 +1317,41 @@ function wkAddSet(ei){if(!WK)return;var en=WK.entries[ei];if(!en)return;var trac
 function wkDelSet(ei){if(!WK)return;var en=WK.entries[ei];if(!en||en.sets.length<=1)return;en.sets.pop();wkRender();}
 function wkDelEx(ei){if(!WK)return;WK.entries.splice(ei,1);wkRender();}
 function wkSetEquip(ei,v){v=decodeURIComponent(v);var en=WK&&WK.entries[ei];if(!en)return;en.equipment=(en.equipment===v?'':v);wkRender();}
-function wkAddEquip(ei){var en=WK&&WK.entries[ei];if(!en)return;var v=prompt('Equipment used for “'+(en.name||'exercise')+'”\n(e.g. Barbell, Dumbbell, Machine, Cable, Smith, Kettlebell):',en.equipment||'');if(v==null)return;en.equipment=v.trim();wkRender();}
+function wkAddEquip(ei){var en=WK&&WK.entries[ei];if(!en)return;uiPrompt({title:'Add equipment',label:'Equipment used for “'+(en.name||'exercise')+'”',placeholder:'e.g. Hack squat machine, Trap bar',ok:'Add',value:en.equipment||''}).then(function(v){if(v==null){wkRender();return;}en.equipment=(v||'').trim();wkRender();});}
 function wkSetBrand(ei,b){b=decodeURIComponent(b);var en=WK&&WK.entries[ei];if(!en)return;en.brand=(en.brand===b?'':b);wkRender();}
-function wkAddBrand(ei){var en=WK&&WK.entries[ei];if(!en)return;var b=prompt('Machine brand / variation for “'+(en.name||'exercise')+'”\n(e.g. Hammer Strength, Cybex, Life Fitness):',en.brand||'');if(b==null)return;en.brand=b.trim();wkRender();}
+function wkAddBrand(ei){var en=WK&&WK.entries[ei];if(!en)return;uiPrompt({title:'Add brand / variation',label:'Machine brand or variation for “'+(en.name||'exercise')+'”',placeholder:'e.g. Hammer Strength, Cybex, Life Fitness',ok:'Add',value:en.brand||''}).then(function(b){if(b==null){wkRender();return;}en.brand=(b||'').trim();wkRender();});}
+/* ── Equipment / brand pick-lists (dropdown + custom) + branded input dialog ── */
+var EQUIP_COMMON=['Barbell','Dumbbell','Machine','Cable','Smith machine','Kettlebell','Bodyweight','Resistance band','EZ bar','Plate-loaded','Landmine'];
+var BRAND_COMMON=['Hammer Strength','Cybex','Life Fitness','Technogym','Nautilus','Precor','Matrix','Atlantis','Watson','Prime'];
+function wkOptList(cur,known,common){var seen={},opts=[];function add(x){x=(x||'').trim();if(x&&!seen[x.toLowerCase()]){seen[x.toLowerCase()]=1;opts.push(x);}}(known||[]).forEach(add);(common||[]).forEach(add);if(cur){var c=cur.trim();if(c&&!seen[c.toLowerCase()])opts.unshift(c);}return opts;}
+function wkPickRow(label,en,ei,kind){
+  var isEq=kind==='equip';var cur=isEq?(en.equipment||''):(en.brand||'');
+  var opts=wkOptList(cur,isEq?wkEquipFor(en):wkBrandsFor(en),isEq?EQUIP_COMMON:BRAND_COMMON);
+  var h='<div class="wk-sel"><span class="wk-chlab">'+label+'</span><select onchange="wkPick('+ei+',\''+kind+'\',this.value)">';
+  h+='<option value=""'+(!cur?' selected':'')+'>'+(isEq?'Any':'Default')+'</option>';
+  opts.forEach(function(x){h+='<option'+(cur===x?' selected':'')+'>'+esc(x)+'</option>';});
+  h+='<option value="__custom__">＋ Add custom…</option></select></div>';
+  return h;
+}
+function wkPick(ei,kind,v){var en=WK&&WK.entries[ei];if(!en)return;if(v==='__custom__'){(kind==='equip'?wkAddEquip:wkAddBrand)(ei);return;}if(kind==='equip')en.equipment=v;else en.brand=v;wkRender();}
+/* branded replacement for window.prompt — returns a Promise that resolves to the string, or null if cancelled */
+function uiPrompt(o){o=o||{};return new Promise(function(resolve){
+  var old=document.getElementById('ui-prompt');if(old)old.remove();
+  var ov=document.createElement('div');ov.id='ui-prompt';ov.className='uip-ov';
+  var ml=!!o.multiline;
+  ov.innerHTML='<div class="uip-box"><div class="uip-ttl">'+esc(o.title||'Enter')+'</div>'+
+    (o.label?'<label class="uip-lab">'+esc(o.label)+'</label>':'')+
+    (ml?'<textarea class="uip-in" rows="4"></textarea>':'<input class="uip-in" type="text">')+
+    '<div class="uip-btns"><button class="uip-cancel" type="button">Cancel</button><button class="uip-ok" type="button">'+esc(o.ok||'OK')+'</button></div></div>';
+  document.body.appendChild(ov);
+  var inp=ov.querySelector('.uip-in');inp.value=o.value||'';inp.setAttribute('placeholder',o.placeholder||'');
+  function done(val){try{ov.remove();}catch(e){}resolve(val);}
+  ov.querySelector('.uip-cancel').onclick=function(){done(null);};
+  ov.querySelector('.uip-ok').onclick=function(){done(inp.value);};
+  ov.addEventListener('click',function(e){if(e.target===ov)done(null);});
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'&&!ml){e.preventDefault();done(inp.value);}else if(e.key==='Escape'){done(null);}});
+  setTimeout(function(){try{inp.focus();}catch(e){}},50);
+});}
 function wkSwapAlt(ei){var en=WK&&WK.entries[ei];if(!en)return;var opts=[en.origName||en.name].concat(en.alts||[]);if(opts.length<2)return;var i=opts.indexOf(en.name);en.name=opts[(i+1)%opts.length];wkRender();}
 /* ── Swap an exercise: pick any exercise from the library (keeps the logged sets); programmed alternatives show as quick-picks ── */
 var WK_SWAP_EI=-1;

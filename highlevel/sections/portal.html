@@ -3866,6 +3866,19 @@ body.gm-has-switch #custom-host{top:var(--gm-h,48px)}
 .rc-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:0 0 12px}
 .rc-stat{background:var(--card2);border-radius:10px;padding:8px;text-align:center}
 .rc-stat .n{font-size:17px;font-weight:900;color:var(--text)}.rc-stat .l{font-size:10.5px;color:var(--muted)}
+/* equipment/brand dropdown + branded input dialog */
+.wko-sel{display:flex;align-items:center;gap:8px;margin:0 0 9px;flex-wrap:wrap}
+.wko-sel>.wko-brand-lbl{flex:none}
+.wko-sel select{flex:1;min-width:140px;padding:9px 10px;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:10px;font-size:13px;font-weight:700;font-family:inherit}
+.uip-ov{position:fixed;inset:0;z-index:2200;background:rgba(10,12,18,.6);display:flex;align-items:center;justify-content:center;padding:20px}
+.uip-box{width:100%;max-width:420px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 20px 50px -20px rgba(0,0,0,.5)}
+.uip-ttl{font-weight:800;font-size:16px;margin:0 0 4px;color:var(--text)}
+.uip-lab{display:block;font-size:12px;color:var(--muted);margin:0 0 6px;line-height:1.4}
+.uip-in{width:100%;box-sizing:border-box;border:1px solid var(--border);background:var(--card2);color:var(--text);border-radius:11px;padding:12px;font-size:16px;font-family:inherit;line-height:1.4;margin:0 0 14px}
+.uip-in:focus{outline:none;border-color:var(--red)}
+.uip-btns{display:flex;gap:9px;justify-content:flex-end}
+.uip-cancel{border:1px solid var(--border);background:var(--card2);color:var(--text);border-radius:11px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer}
+.uip-ok{border:0;background:var(--red);color:#fff;border-radius:11px;padding:10px 18px;font-size:14px;font-weight:800;cursor:pointer}
 /* Week calendar — Option A vertical list with drag-to-reschedule */
 .tw-wkhint{font-size:11.5px;color:var(--muted);margin:0 2px 8px;display:flex;align-items:center;gap:5px}
 .tw-gripmini{color:var(--muted)}
@@ -7858,7 +7871,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04vj';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04vk';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -14100,11 +14113,43 @@ function wkoNav(d){wkoClampIdx();const n=WKO?WKO.entries.length:0;
 function wkoGoto(i){WKO_IDX=(i<(WKO?WKO.entries.length:0))?wkoGroupRange(i)[0]:i;wkoClampIdx();renderWorkout();try{$('wko-body').scrollTop=0;}catch(e){}}
 function wkoBrandsFor(en){const set={};(WKO_HISTORY||[]).forEach(w=>{(w.entries||[]).forEach(e=>{if(((en.exId&&e.exId===en.exId)||(e.name===en.name))&&e.brand)set[e.brand]=1;});});const arr=Object.keys(set);if(en.brand&&arr.indexOf(en.brand)<0)arr.push(en.brand);return arr;}
 function wkoSetBrand(ei,b){b=decodeURIComponent(b);const en=WKO.entries[ei];if(!en)return;en.brand=(en.brand===b?'':b);renderWorkout();}
-function wkoAddBrand(ei){const en=WKO.entries[ei];if(!en)return;const b=prompt('Machine brand / variation for “'+en.name+'”\n(e.g. Hammer Strength, Cybex, Life Fitness, or a dumbbell / cable variation).\nEach brand keeps its own history & PRs.',en.brand||'');if(b==null)return;en.brand=b.trim();renderWorkout();}
+function wkoAddBrand(ei){const en=WKO.entries[ei];if(!en)return;uiPrompt({title:'Add brand / variation',label:'Machine brand or variation for “'+en.name+'” — each keeps its own history & PRs',placeholder:'e.g. Hammer Strength, Cybex, Life Fitness',ok:'Add',value:en.brand||''}).then(function(b){if(b==null){renderWorkout();return;}en.brand=(b||'').trim();renderWorkout();});}
 /* equipment used — a second history axis alongside brand */
 function wkoEquipFor(en){const set={};(WKO_HISTORY||[]).forEach(w=>{(w.entries||[]).forEach(e=>{if(((en.exId&&e.exId===en.exId)||(e.name===en.name))&&e.equipment)set[e.equipment]=1;});});const lib=en.exId&&exById(en.exId);if(lib&&lib.equipment)set[lib.equipment]=1;const arr=Object.keys(set);if(en.equipment&&arr.indexOf(en.equipment)<0)arr.push(en.equipment);return arr;}
 function wkoSetEquip(ei,v){v=decodeURIComponent(v);const en=WKO.entries[ei];if(!en)return;en.equipment=(en.equipment===v?'':v);renderWorkout();}
-function wkoAddEquip(ei){const en=WKO.entries[ei];if(!en)return;const v=prompt('Equipment used for “'+en.name+'”\n(e.g. Barbell, Dumbbell, Machine, Cable, Smith, Kettlebell).\nEach equipment keeps its own history & PRs.',en.equipment||'');if(v==null)return;en.equipment=v.trim();renderWorkout();}
+function wkoAddEquip(ei){const en=WKO.entries[ei];if(!en)return;uiPrompt({title:'Add equipment',label:'Equipment used for “'+en.name+'” — each keeps its own history & PRs',placeholder:'e.g. Hack squat machine, Trap bar',ok:'Add',value:en.equipment||''}).then(function(v){if(v==null){renderWorkout();return;}en.equipment=(v||'').trim();renderWorkout();});}
+/* ── Equipment / brand pick-lists (dropdown + custom) + branded input dialog (shared) ── */
+var EQUIP_COMMON=['Barbell','Dumbbell','Machine','Cable','Smith machine','Kettlebell','Bodyweight','Resistance band','EZ bar','Plate-loaded','Landmine'];
+var BRAND_COMMON=['Hammer Strength','Cybex','Life Fitness','Technogym','Nautilus','Precor','Matrix','Atlantis','Watson','Prime'];
+function wkoOptList(cur,known,common){var seen={},opts=[];function add(x){x=(x||'').trim();if(x&&!seen[x.toLowerCase()]){seen[x.toLowerCase()]=1;opts.push(x);}}(known||[]).forEach(add);(common||[]).forEach(add);if(cur){var c=cur.trim();if(c&&!seen[c.toLowerCase()])opts.unshift(c);}return opts;}
+function wkoPickRow(label,en,ei,kind){
+  var isEq=kind==='equip';var cur=isEq?(en.equipment||''):(en.brand||'');
+  var opts=wkoOptList(cur,isEq?wkoEquipFor(en):wkoBrandsFor(en),isEq?EQUIP_COMMON:BRAND_COMMON);
+  var h='<div class="wko-sel"><span class="wko-brand-lbl">'+label+'</span><select onchange="wkoPick('+ei+',\''+kind+'\',this.value)">';
+  h+='<option value=""'+(!cur?' selected':'')+'>'+(isEq?'Any':'Default')+'</option>';
+  opts.forEach(function(x){h+='<option'+(cur===x?' selected':'')+'>'+esc(x)+'</option>';});
+  h+='<option value="__custom__">＋ Add custom…</option></select></div>';
+  return h;
+}
+function wkoPick(ei,kind,v){var en=WKO&&WKO.entries[ei];if(!en)return;if(v==='__custom__'){(kind==='equip'?wkoAddEquip:wkoAddBrand)(ei);return;}if(kind==='equip')en.equipment=v;else en.brand=v;renderWorkout();}
+/* branded replacement for window.prompt — resolves to the string, or null if cancelled */
+function uiPrompt(o){o=o||{};return new Promise(function(resolve){
+  var old=document.getElementById('ui-prompt');if(old)old.remove();
+  var ov=document.createElement('div');ov.id='ui-prompt';ov.className='uip-ov';
+  var ml=!!o.multiline;
+  ov.innerHTML='<div class="uip-box"><div class="uip-ttl">'+esc(o.title||'Enter')+'</div>'+
+    (o.label?'<label class="uip-lab">'+esc(o.label)+'</label>':'')+
+    (ml?'<textarea class="uip-in" rows="4"></textarea>':'<input class="uip-in" type="text">')+
+    '<div class="uip-btns"><button class="uip-cancel" type="button">Cancel</button><button class="uip-ok" type="button">'+esc(o.ok||'OK')+'</button></div></div>';
+  document.body.appendChild(ov);
+  var inp=ov.querySelector('.uip-in');inp.value=o.value||'';inp.setAttribute('placeholder',o.placeholder||'');
+  function done(val){try{ov.remove();}catch(e){}resolve(val);}
+  ov.querySelector('.uip-cancel').onclick=function(){done(null);};
+  ov.querySelector('.uip-ok').onclick=function(){done(inp.value);};
+  ov.addEventListener('click',function(e){if(e.target===ov)done(null);});
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'&&!ml){e.preventDefault();done(inp.value);}else if(e.key==='Escape'){done(null);}});
+  setTimeout(function(){try{inp.focus();}catch(e){}},50);
+});}
 function wkoTopbarHTML(){
   const n=WKO.entries.length;const idx=Math.min(WKO_IDX,n);const pct=n?Math.round(idx/n*100):0;
   return '<div class="wko-top2">'+
@@ -14402,15 +14447,8 @@ function wkoFocusHTML(en,ei,noNav){
     '<button class="wko-tool'+(en.group?' on':'')+'" onclick="wkoToggleSuperset('+ei+')" title="Superset with the next exercise" aria-label="Superset">'+svgIcon('link')+'</button>'+
     '</div>';
   const equips=wkoEquipFor(en);
-  const equipRow='<div class="wko-brand"><span class="wko-brand-lbl">🛠 Equipment</span>'+
-    '<button class="wko-brand-chip'+(!en.equipment?' on':'')+'" onclick="wkoSetEquip('+ei+',\'\')">Any</button>'+
-    equips.map(x=>'<button class="wko-brand-chip'+(en.equipment===x?' on':'')+'" onclick="wkoSetEquip('+ei+',\''+encodeURIComponent(x)+'\')">'+esc(x)+'</button>').join('')+
-    '<button class="wko-brand-chip add" onclick="wkoAddEquip('+ei+')">＋ equipment</button></div>';
-  const brands=wkoBrandsFor(en);
-  const brandRow='<div class="wko-brand"><span class="wko-brand-lbl">🏷 Brand / variation</span>'+
-    '<button class="wko-brand-chip'+(!en.brand?' on':'')+'" onclick="wkoSetBrand('+ei+',\'\')">Default</button>'+
-    brands.map(b=>'<button class="wko-brand-chip'+(en.brand===b?' on':'')+'" onclick="wkoSetBrand('+ei+',\''+encodeURIComponent(b)+'\')">'+esc(b)+'</button>').join('')+
-    '<button class="wko-brand-chip add" onclick="wkoAddBrand('+ei+')">＋ brand</button></div>';
+  const equipRow=wkoPickRow('🛠 Equipment',en,ei,'equip');
+  const brandRow=wkoPickRow('🏷 Brand / variation',en,ei,'brand');
   const altRow=((en.origName&&en.name!==en.origName)||(en.alts&&en.alts.length))?
     '<div class="wk-alts"><span class="wk-alts-lbl">Swap to</span>'+
       ((en.origName&&en.name!==en.origName)?'<button class="wk-alt" onclick="wkoUseAlt('+ei+',-1)" title="Back to the exercise your coach programmed">↩ '+esc(en.origName)+'</button>':'')+
@@ -14473,7 +14511,7 @@ function wkoGroupNav(gs,ge){const atStart=gs<=0;const atEnd=ge>=WKO.entries.leng
 let WKO_CLIENT_COLS=[];
 function wkoLoadClientCols(){try{const raw=localStorage.getItem('s2s_wkocols_'+((SESSION&&SESSION.id)||''));WKO_CLIENT_COLS=raw?JSON.parse(raw):[];}catch(e){WKO_CLIENT_COLS=[];}if(!Array.isArray(WKO_CLIENT_COLS))WKO_CLIENT_COLS=[];}
 function wkoSaveClientCols(){try{localStorage.setItem('s2s_wkocols_'+((SESSION&&SESSION.id)||''),JSON.stringify(WKO_CLIENT_COLS));}catch(e){}}
-function wkoAddClientCol(){const name=(prompt('Add a tracking column (e.g. Calories, Incline, Band, Distance):','')||'').trim();if(!name)return;WKO_CLIENT_COLS.push({key:'cc_'+uid(),label:name,client:true});wkoSaveClientCols();renderWorkout();}
+function wkoAddClientCol(){uiPrompt({title:'Add a tracking column',label:'Track an extra metric for this exercise',placeholder:'e.g. Calories, Incline, Band, Distance',ok:'Add',value:''}).then(function(name){name=(name||'').trim();if(!name)return;WKO_CLIENT_COLS.push({key:'cc_'+uid(),label:name,client:true});wkoSaveClientCols();renderWorkout();});}
 function wkoDelClientCol(key){if(!confirm('Remove this column? Values already logged stay in past workouts.'))return;WKO_CLIENT_COLS=(WKO_CLIENT_COLS||[]).filter(c=>c.key!==key);wkoSaveClientCols();renderWorkout();}
 function wkoExtraCols(){return (WKO_COLS||[]).filter(c=>c.key!=='rir'&&c.key!=='rest'&&c.key!=='tempo');}   /* coach-defined columns only; client add/change removed */
 /* ---- reps↔time, RIR↔RPE toggles ---- */
