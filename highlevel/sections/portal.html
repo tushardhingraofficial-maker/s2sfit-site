@@ -2426,6 +2426,12 @@ table.pf-cmp th:first-child,table.pf-cmp td:first-child{text-align:left}
 /* Admin client overview: force a wide, side-scrolling table */
 .ov-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:12px;background:var(--card)}
 .ov-table{min-width:1160px}
+.ov-table.ov-status{min-width:2340px}
+.tk-auto{margin-bottom:10px}
+.tk-autogrp{border:1px solid var(--border);border-radius:10px;padding:6px 8px;margin:0 0 8px;background:var(--card2)}
+.tk-autohd{display:flex;align-items:center;gap:7px;cursor:pointer;padding:3px 2px 6px;font-size:13.5px}
+.tk-autohd:hover b{color:var(--red)}
+.tk-autohd .funit{margin-left:auto}
 .ov-table th,.ov-table td{white-space:nowrap;vertical-align:top;padding:10px 12px}
 .ov-table .funit{white-space:normal}
 .ov-table td.clickname:hover{color:var(--red)}
@@ -7871,7 +7877,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04vl';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04vm';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -25981,6 +25987,7 @@ async function gcalLoadLinks(){ if(DB.mode!=='api'||!gcalConnected()){GCAL_TASK_
 async function gcalLoadLists(force){ if(!gcalConnected()){GCAL_LISTS=null;return;} if(GCAL_LISTS&&!force)return; try{const r=await gcalApi('/tasklists',{coach_id:gcalCoachId()});GCAL_LISTS=(r&&r.lists)||[];}catch(e){GCAL_LISTS=[];} }
 function gcalTaskBtn(t){
   if(!t||t.status==='done')return '';
+  if(t.source==='auto')return '';   // daily auto-tasks are never synced to Google Tasks
   if(gcalConnected()){
     if(GCAL_TASK_LINKS&&GCAL_TASK_LINKS.has(t.id))
       return ' <button class="icon-x" style="font-size:14px;color:var(--good)" title="In your Google Tasks — tap to remove" onclick="gcalTaskRemove(\''+t.id+'\')">✅</button>';
@@ -26003,6 +26010,21 @@ async function gcalTaskRemove(id){
   else toast((r&&r.error)||'Could not remove',true);
 }
 async function gcalSetList(id){ if(GCAL_CONN)GCAL_CONN.tasklist_id=id; try{await gcalApi('/settings',{coach_id:gcalCoachId(),tasklist_id:id});toast('Google Tasks list updated');}catch(e){toast('Could not set list',true);} }
+/* Daily auto-task helpers (source==='auto', created by dp_generate_daily_tasks) */
+function tabForRule(code){code=String(code||'').toUpperCase();const c=code.charAt(0);if(c==='W')return 'training';if(c==='N')return 'nutrition';if(c==='R')return 'goals';if(c==='O')return 'client';if(c==='P')return 'goals';return 'client';}
+async function taskOpenClient(cid,code){if(!cid)return;try{await editClient(cid);}catch(e){}try{edTab(tabForRule(code));}catch(e){}}
+function tkAutoSectionHTML(list,rowFn){
+  if(!list||!list.length)return '';
+  const CR={W:0,N:1,R:2,O:3,P:4},PR={high:0,medium:1,low:2};
+  const byC={};list.forEach(t=>{const g=(byC[t.client_id]=byC[t.client_id]||{cid:t.client_id,name:t.client_name||'—',pri:(t.priority||'medium'),items:[]});g.items.push(t);});
+  const groups=Object.keys(byC).map(k=>byC[k]);
+  groups.sort((a,b)=>{const d=(PR[a.pri]??3)-(PR[b.pri]??3);return d!==0?d:String(a.name).localeCompare(String(b.name));});
+  return '<div class="tk-auto"><div class="uline" style="margin:2px 0 6px">🔁 Daily auto-tasks <span class="funit" style="font-weight:600">· built each morning from client status</span></div>'+
+    groups.map(g=>{
+      g.items.sort((a,b)=>(CR[String(a.rule_code||'').charAt(0)]??9)-(CR[String(b.rule_code||'').charAt(0)]??9));
+      return '<div class="tk-autogrp"><div class="tk-autohd" onclick="editClient(\''+g.cid+'\')" title="Open this client"><span class="pri-dot '+g.pri+'"></span><b>'+esc(g.name)+'</b><span class="funit">'+g.items.length+' to do</span></div>'+g.items.map(rowFn).join('')+'</div>';
+    }).join('')+'</div>';
+}
 async function renderTasks(){
   const host=$('tasks-host');if(!host)return;
   try{TASKS=await DB.listTasks();}catch(e){host.innerHTML='<div class="empty">Could not load tasks.</div>';return;}
@@ -26022,21 +26044,24 @@ async function renderTasks(){
   const overdue=open.filter(t=>t.due_date&&t.due_date<today).length;
   const cnt=$('tasks-count');if(cnt){cnt.textContent=open.length+' open'+(overdue?' · '+overdue+' overdue':'');cnt.className='pill '+(overdue?'crit':open.length?'warn':'good');}
   const tc=$('tasks-card');if(tc)tc.style.borderColor=overdue?'var(--red)':'var(--border)';
-  const row=t=>{const od=t.due_date&&t.due_date<today&&t.status!=='done';const cName=t.client_name||'';const pri=t.priority||'medium';
+  const row=t=>{const od=t.due_date&&t.due_date<today&&t.status!=='done';const cName=t.client_name||'';const pri=t.priority||'medium';const auto=t.source==='auto';
+    const titleHTML=auto?'<span class="clickname" style="cursor:pointer" title="Open this client on the relevant tab" onclick="taskOpenClient(\''+t.client_id+'\',\''+(t.rule_code||'')+'\')">'+esc(t.title)+'</span>':esc(t.title);
     return '<div class="task-item pri-'+pri+'"'+(t.status==='done'?' style="opacity:.65"':'')+'><input type="checkbox"'+(t.status==='done'?' checked':'')+' onchange="taskToggle(\''+t.id+'\')" style="width:auto;margin-top:3px">'+
-      '<div style="flex:1;min-width:0"><div style="font-weight:700'+(t.status==='done'?';text-decoration:line-through;color:var(--muted)':'')+'"><span class="pri-dot '+pri+'" style="margin-right:5px" title="'+pri+' priority"></span>'+esc(t.title)+(t.recurrence&&t.recurrence!=='none'?' <span class="pill" style="padding:0 6px">↻ '+esc(recurLabel(t))+'</span>':'')+'</div>'+
-      (cName?'<div class="funit">👤 '+esc(cName)+'</div>':'')+
+      '<div style="flex:1;min-width:0"><div style="font-weight:700'+(t.status==='done'?';text-decoration:line-through;color:var(--muted)':'')+'"><span class="pri-dot '+pri+'" style="margin-right:5px" title="'+pri+' priority"></span>'+(auto?'<span class="pill" style="background:rgba(74,158,232,.16);color:var(--prot);border-color:rgba(74,158,232,.4);padding:0 6px;margin-right:5px;font-size:10px;font-weight:800" title="Auto-generated from client status">AUTO</span>':'')+titleHTML+(t.recurrence&&t.recurrence!=='none'?' <span class="pill" style="padding:0 6px">↻ '+esc(recurLabel(t))+'</span>':'')+'</div>'+
+      (cName&&!auto?'<div class="funit">👤 '+esc(cName)+'</div>':'')+
       (t.details?'<div class="small" style="margin-top:2px;white-space:pre-wrap">'+esc(t.details)+'</div>':'')+
       (TK_AUDIO_MAP[t.id]?'<button class="btn-xxs" style="margin-top:5px" onclick="tkPlayAudio(\''+t.id+'\')" title="Play voice note">🎙 Play voice note</button>':'')+'</div>'+
       '<div style="text-align:right;white-space:nowrap;flex:none">'+(t.status==='done'?(t.done_at?'<span class="funit">done '+esc(fmtDate((t.done_at||'').slice(0,10)))+'</span>':''):(t.due_date?'<span class="pill '+(od?'crit':'')+'">'+(od?'⏰ ':'')+esc(fmtDate(t.due_date))+'</span>':'<span class="funit">no date</span>'))+
       gcalTaskBtn(t)+
-      (t.status==='done'?'':' <button class="icon-x" style="font-size:14px" title="Edit task" onclick="taskEdit(\''+t.id+'\')">✏️</button>')+
+      (t.status==='done'||auto?'':' <button class="icon-x" style="font-size:14px" title="Edit task" onclick="taskEdit(\''+t.id+'\')">✏️</button>')+
       ' <button class="icon-x" style="font-size:16px" title="Delete task" onclick="taskDelete(\''+t.id+'\')">×</button></div></div>';};
   // ----- team / project tasks from Team & Calendar (shared objects → completing here syncs there) -----
   let teamTasks=[];try{teamTasks=await tkEnsureTeam();}catch(e){teamTasks=[];}
   const tOpen=tkTeamOpenSorted(teamTasks.filter(e=>!tkTeamDone(e)));
   const owner=(typeof teamIsOwner==='function')?teamIsOwner():true;
-  const genRows=(open.length?open.map(row).join(''):'')+(tOpen.length?tOpen.map(e=>tkTeamRow(e,false)).join(''):'');
+  const openAuto=open.filter(t=>t.source==='auto');
+  const openManual=open.filter(t=>t.source!=='auto');
+  const genRows=tkAutoSectionHTML(openAuto,row)+(openManual.length?openManual.map(row).join(''):'')+(tOpen.length?tOpen.map(e=>tkTeamRow(e,false)).join(''):'');
   host.innerHTML='<div class="tk-cols">'+
     '<div class="tk-col"><div class="uline" style="margin:2px 0 8px">👥 Team / general tasks</div>'+
       (genRows||'<div class="empty">🎉 All caught up — no open team or general tasks.</div>')+'</div>'+
@@ -26121,10 +26146,11 @@ async function renderOverview(){
   }
   const days=parseInt((($('ov-range')||{}).value))||14;OV_DAYS=days;
   const today=todayISO(),start=addDaysISO(today,-(days-1));
-  let clients=[],issues=[],plansByC=null;
+  let clients=[],issues=[],plansByC=null,statusByC={};
   try{
     const [ov,iss]=await Promise.all([DB.overview().catch(()=>null),DB.listIssues().catch(()=>[])]);
     issues=iss||[];
+    if(ov&&Array.isArray(ov.status))ov.status.forEach(s=>{if(s&&s.client_id)statusByC[s.client_id]=s;});   // centralised dp_client_status() rows — status/priority/next actions for the new dashboard columns
     if(ov&&Array.isArray(ov.clients)&&Array.isArray(ov.plans)){clients=ov.clients;plansByC={};ov.plans.forEach(p=>{if(p&&p.client_id)plansByC[p.client_id]=p;});}   // one bulk call for clients + plans
     else clients=await DB.listClients();   // fallback: overview unavailable → per-client getPlan path below
   }catch(e){try{[clients,issues]=await Promise.all([DB.listClients(),DB.listIssues()]);}catch(e2){if(host)host.innerHTML='<div class="empty">Could not load clients.</div>';return;}}
@@ -26192,7 +26218,8 @@ async function renderOverview(){
       susp:((plan&&plan.milestones&&plan.milestones.suspension)||null),
       leadProfile:((plan&&plan.milestones&&plan.milestones.leadProfile)||null),   // client's sign-up answers → Business Health Audience
       weekProg:progByClient[c.id]||null,
-      phase:(function(){try{return effectivePhase(plan);}catch(e){return (plan&&plan.phase)||'Foundation';}})(),mcFlags:(function(){try{return plan?mcEvalClient(plan):[];}catch(e){return [];}})()};
+      phase:(function(){try{return effectivePhase(plan);}catch(e){return (plan&&plan.phase)||'Foundation';}})(),mcFlags:(function(){try{return plan?mcEvalClient(plan):[];}catch(e){return [];}})(),
+      st:statusByC[c.id]||null};   // dp_client_status() row for this client (new dashboard columns + priority)
   }));
   renderOverviewSummary();renderOverviewTable();
   try{mcWatchBadge();}catch(e){}
@@ -26343,6 +26370,16 @@ function renderOverviewSummary(){
   const wpDue=live.filter(r=>!r.paused&&!r.weekProg).length;
   host.innerHTML=macroCard('Clients','k',live.length,'')+macroCard('Avg adherence','p',avgAdh,'%')+macroCard('Needs attention','f',needs,'clients')+macroCard('Weekly updates due','c',wpDue,'')+macroCard('Revisions due','c',due,'');
 }
+/* ---- dp_client_status() dashboard cell helpers ---- */
+function ovStChip(txt,tone){if(!txt)return '<span class="funit">—</span>';const c={good:['rgba(34,197,94,.16)','var(--green)','rgba(34,197,94,.4)'],warn:['rgba(245,200,66,.18)','var(--gold)','rgba(245,200,66,.5)'],crit:['rgba(239,68,68,.16)','#ef4444','rgba(239,68,68,.45)'],muted:['var(--card2)','var(--muted)','var(--border)']}[tone]||['var(--card2)','var(--muted)','var(--border)'];return '<span class="pill" style="background:'+c[0]+';color:'+c[1]+';border-color:'+c[2]+';white-space:normal">'+esc(txt)+'</span>';}
+function ovWorkoutTone(s){s=s||'';if(s==='Live')return 'good';if(s==='No program'||s==='Schedule ended')return 'crit';return 'warn';}
+function ovNutriTone(s){s=s||'';if(s==='Done')return 'good';if(s==='No plan'||s==='Not signed off, 8+ wks old')return 'crit';return 'warn';}
+function ovRoadTone(s){s=s||'';if(s==='Live')return 'good';if(s==='Dates incomplete')return 'warn';return 'muted';}
+function ovOnbTone(s){s=s||'';if(s==='Complete')return 'good';if(s==='Not recorded')return 'muted';return 'warn';}
+function ovPriPill(p){const m={High:['#ef4444','rgba(239,68,68,.16)'],Medium:['var(--gold)','rgba(245,200,66,.18)'],Low:['var(--green)','rgba(34,197,94,.16)'],None:['var(--muted)','var(--card2)']}[p||'None']||['var(--muted)','var(--card2)'];return '<span class="pill" style="background:'+m[1]+';color:'+m[0]+';border-color:'+m[0]+';font-weight:800">'+esc(p||'None')+'</span>';}
+function ovDateCell(d,never){if(!d)return '<span class="funit">'+(never||'—')+'</span>';return esc(fmtDate(String(d).slice(0,10)));}
+function ovMarkBadge(label,mk){const on=mk==='done',pend=mk==='pending';const col=on?['rgba(34,197,94,.16)','var(--green)','rgba(34,197,94,.4)']:pend?['rgba(245,200,66,.18)','var(--gold)','rgba(245,200,66,.5)']:['var(--card2)','var(--muted)','var(--border)'];return '<span title="'+label+': '+(mk||'not set')+'" style="display:inline-block;min-width:20px;text-align:center;border-radius:6px;font-size:11px;font-weight:800;font-family:var(--disp);padding:2px 5px;background:'+col[0]+';color:'+col[1]+';border:1px solid '+col[2]+'">'+label.charAt(0)+'</span>';}
+function ovPriRank(r){return {High:0,Medium:1,Low:2,None:3}[(r.st&&r.st.priority)||'None']??3;}
 function renderOverviewTable(){
   const host=$('adm-overview-host');if(!host)return;
   const _prev=host.querySelector('.ov-scroll');const _sx=_prev?_prev.scrollLeft:0,_sy=_prev?_prev.scrollTop:0;   // keep scroll position across an in-place refresh
@@ -26358,9 +26395,10 @@ function renderOverviewTable(){
       case 'issues': arr.sort((a,b)=>(b.open||0)-(a.open||0));break;
       case 'revision': arr.sort((a,b)=>{const av=a.remDate?(a.remDue?0:1):2,bv=b.remDate?(b.remDue?0:1):2;if(av!==bv)return av-bv;return (a.remDate||'9999')<(b.remDate||'9999')?-1:1;});break;
       case 'feedback': arr.sort((a,b)=>fbOldestPending(a)-fbOldestPending(b));break;
+      case 'priority': arr.sort((a,b)=>{const d=ovPriRank(a)-ovPriRank(b);return d!==0?d:String(a.name||'').localeCompare(String(b.name||''));});break;
       default:
         if(OV_FILTER==='feedback')arr.sort((a,b)=>fbOldestPending(a)-fbOldestPending(b));
-        else arr.sort((a,b)=>{const pa=fbPending(a)?0:1,pb=fbPending(b)?0:1;if(pa!==pb)return pa-pb;const sa=(a.daysSince>=3?0:1),sb=(b.daysSince>=3?0:1);if(sa!==sb)return sa-sb;return a.adherence-b.adherence;});
+        else arr.sort((a,b)=>{const d=ovPriRank(a)-ovPriRank(b);return d!==0?d:String(a.name||'').localeCompare(String(b.name||''));});   // default: Priority (High→None) then name
     }
     return arr;
   };
@@ -26368,8 +26406,9 @@ function renderOverviewTable(){
   const live=all.filter(r=>!r.archived);   // archived clients sit in their own panel, off the active roster
   const active=sortRows(live.filter(r=>!r.paused));
   const paused=live.filter(r=>r.paused).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
-  const HEAD='<th style="text-align:left">Client</th><th style="text-align:left">Weekly progress</th><th style="text-align:left">Internal feedback</th><th style="text-align:left">Last call</th><th style="text-align:left">Plan</th><th style="text-align:left">Focus</th><th style="text-align:left">Weight → goal</th><th style="text-align:left">Sections set up</th><th>Adherence</th><th>Logged</th><th style="text-align:left">Last log</th><th>Issues</th><th style="text-align:left">Revision due</th><th style="text-align:left">Coach reminder</th><th style="text-align:left">Actions</th>';
+  const HEAD='<th style="text-align:left">Client</th><th>Priority</th><th style="text-align:left">Next actions</th><th style="text-align:left">Workout</th><th style="text-align:left">Nutrition</th><th style="text-align:left">Roadmap</th><th style="text-align:left">Onboarding</th><th style="text-align:left">Progress status</th><th style="text-align:left">Last call made</th><th style="text-align:left">Phase</th><th style="text-align:left">Joined</th><th>Workouts built</th><th style="text-align:left">Schedule ends</th><th>Meals built</th><th style="text-align:left">Nutrition last updated</th><th>Roadmap blocks</th><th style="text-align:left">Current block</th><th style="text-align:left">Allocation marks (T/N/G)</th><th style="text-align:left">Last workout log</th><th style="text-align:left">Last food log</th>';
   const trFor=r=>{
+      const st=r.st||{};
       const adhCls=r.daysLogged===0?'muted':(r.adherence>=90?'good':r.adherence>=75?'warn':'crit');
       const lastCls=r.daysSince>=3?'crit':(r.daysSince>=2?'warn':'good');
       const lastTxt=r.lastLog?(r.daysSince===0?'today':r.daysSince===1?'yesterday':r.daysSince+'d ago'):'never';
@@ -26394,23 +26433,28 @@ function renderOverviewTable(){
         : '<button class="ov-wp due" onclick="ovOpenWeekProgress(\''+r.id+'\')" title="No weekly progress logged this week — click to add">⚠ update due</button>';
       return '<tr>'+
         '<td style="text-align:left;'+rowAccent+'"><div style="display:flex;align-items:flex-start;gap:7px">'+tlDot+'<div style="min-width:0"><span class="fname clickname" style="cursor:pointer'+(r.paused?';color:var(--muted)':'')+'" title="Open this client" onclick="editClient(\''+r.id+'\')">'+(r.paused?'⏸ ':'')+esc(r.name)+'</span>'+(r.paused?' <span class="pill" style="background:rgba(232,120,13,.2);color:#ff8a3d;border-color:rgba(232,120,13,.5)">Paused</span>':'')+(r.redeemReq?' <span class="pill" style="background:rgba(245,200,66,.2);color:var(--gold);border-color:var(--gold)" title="Requested to redeem points — open Rewards &amp; points to process">🎁 redeem</span>':'')+(r.pointReq?' <span class="pill" style="background:rgba(90,200,120,.18);color:var(--good);border-color:var(--good)" title="Requested points to approve — open Rewards &amp; points">🙋 '+r.pointReq+' point req</span>':'')+dwu+mcRowChips(r)+'<div class="funit">'+esc(r.email)+'</div></div></div></td>'+
+        '<td>'+ovPriPill(st.priority)+'</td>'+
+        '<td style="text-align:left;white-space:normal;min-width:180px">'+(st.next_actions?('<span class="small">'+esc(st.next_actions)+'</span>'):'<span class="funit">—</span>')+'</td>'+
+        '<td style="text-align:left">'+ovStChip(st.workout_status,ovWorkoutTone(st.workout_status))+'</td>'+
+        '<td style="text-align:left">'+ovStChip(st.nutrition_status,ovNutriTone(st.nutrition_status))+'</td>'+
+        '<td style="text-align:left">'+ovStChip(st.roadmap_status,ovRoadTone(st.roadmap_status))+'</td>'+
+        '<td style="text-align:left">'+ovStChip(st.onboarding_status,ovOnbTone(st.onboarding_status))+'</td>'+
         '<td style="text-align:left">'+wpCell+'</td>'+
-        '<td class="fbcol" style="text-align:left">'+fbCellHTML(r)+'</td>'+
         '<td class="fbcol" style="text-align:left">'+lastCall+'</td>'+
-        '<td style="text-align:left">'+(r.hasMeals?esc(r.title||'Plan'):'<span class="pill crit">no plan</span>')+(r.startDate?'<div class="funit">since '+esc(fmtDate(r.startDate))+'</div>':'')+'</td>'+
-        '<td style="text-align:left">'+focus+'</td>'+
-        '<td style="text-align:left">'+wt+'</td>'+
-        '<td style="text-align:left">'+allocCell+'</td>'+
-        '<td><span class="pill '+adhCls+'">'+(r.daysLogged?r.adherence+'%':'—')+'</span></td>'+
-        '<td class="tnum">'+r.daysLogged+'/'+OV_DAYS+'</td>'+
-        '<td style="text-align:left"><span class="pill '+lastCls+'">'+lastTxt+'</span></td>'+
-        '<td>'+(r.open?'<span class="pill warn">'+r.open+'</span>':'<span class="funit">0</span>')+'</td>'+
-        '<td style="text-align:left">'+review+'</td>'+
-        '<td style="text-align:left">'+cRem+'</td>'+
-        '<td style="text-align:left;white-space:nowrap"><button class="btn-sm solid" onclick="editClient(\''+r.id+'\')">Open</button> <button class="btn-sm" onclick="sendReminder(\''+r.id+'\')" title="'+(r.cRemMsg?esc(r.cRemMsg):'Pops up on the client’s portal until they mark it done')+'">📣 '+(r.cRemStatus==='open'?'Re-send':'Remind')+'</button> <button class="btn-sm'+(r.paused?' solid':'')+'" onclick="togglePause(\''+r.id+'\','+(r.paused?'false':'true')+')" title="'+(r.paused?'Reactivate this client':'Pause this client — they see an “account paused” screen')+'">'+(r.paused?'▶ Resume':'⏸ Pause')+'</button></td>'+
+        '<td style="text-align:left">'+(st.phase?esc(st.phase):'<span class="funit">—</span>')+'</td>'+
+        '<td style="text-align:left">'+ovDateCell(st.joined)+'</td>'+
+        '<td class="tnum">'+(st.workouts_built!=null?st.workouts_built:'<span class="funit">—</span>')+'</td>'+
+        '<td style="text-align:left">'+ovDateCell(st.schedule_ends)+'</td>'+
+        '<td class="tnum">'+(st.meals_built!=null?st.meals_built:'<span class="funit">—</span>')+'</td>'+
+        '<td style="text-align:left">'+ovDateCell(st.nutrition_updated)+'</td>'+
+        '<td class="tnum">'+(st.roadmap_blocks!=null?st.roadmap_blocks:'<span class="funit">—</span>')+'</td>'+
+        '<td style="text-align:left">'+(st.current_block?('<span class="small">'+esc(st.current_block)+'</span>'):'<span class="funit">—</span>')+'</td>'+
+        '<td style="text-align:left"><span style="display:inline-flex;gap:3px">'+ovMarkBadge('Training',st.mk_t)+ovMarkBadge('Nutrition',st.mk_n)+ovMarkBadge('Goals',st.mk_g)+'</span></td>'+
+        '<td style="text-align:left">'+ovDateCell(st.last_workout_log,'never')+'</td>'+
+        '<td style="text-align:left">'+ovDateCell(st.last_food_log,'never')+'</td>'+
       '</tr>';
   };
-  const tableOf=list=>'<div class="tbl-scroll ov-scroll"><table class="itbl ov-table"><thead><tr>'+HEAD+'</tr></thead><tbody>'+list.map(trFor).join('')+'</tbody></table></div>';
+  const tableOf=list=>'<div class="tbl-scroll ov-scroll"><table class="itbl ov-table ov-status"><thead><tr>'+HEAD+'</tr></thead><tbody>'+list.map(trFor).join('')+'</tbody></table></div>';
   let html=active.length?tableOf(active):'<div class="empty">No active clients match this filter.</div>';
   if(paused.length)html+='<details class="paused-panel"'+(OV_PAUSED_OPEN?' open':'')+' ontoggle="OV_PAUSED_OPEN=this.open"><summary>⏸ Paused clients ('+paused.length+') — separate from your active roster</summary>'+tableOf(paused)+'</details>';
   if(archived.length){
