@@ -7858,7 +7858,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04vi';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04vj';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -14117,7 +14117,7 @@ function wkoTopbarHTML(){
 /* ═══════════════ REP COACH — auto rep counter + tempo pacer (client runner) ═══════════════
    Default = Pace (audio-led, phone in hand/pocket); Auto = propped camera (beta, on-device pose).
    Counts reps so the client keeps rhythm; writes the count into the set on End. Mirrors the coach app. */
-var RC=null, RC_RAF=null, RC_AC=null, RC_POSE=null, RC_STREAM=null, RC_CAM_RAF=null;
+var RC=null, RC_RAF=null, RC_AC=null, RC_POSE=null, RC_STREAM=null, RC_CAM_RAF=null, RC_VOICE=null, RC_VOICE_INIT=false;
 function rcParseTempo(str){
   str=String(str||'').trim();
   var m=str.match(/(\d+)\s*[-:\/ ]\s*(\d+)\s*[-:\/ ]\s*(\d+)(?:\s*[-:\/ ]\s*(\d+))?/);
@@ -14146,6 +14146,7 @@ function rcOpen(ei){
   if(!ov){ov=document.createElement('div');ov.id='rc-ov';ov.className='rc-ov';document.body.appendChild(ov);
     ov.addEventListener('click',function(e){if(e.target===ov)rcClose();});}
   ov.classList.add('open');
+  rcVoiceInit();
   rcRender();
 }
 function rcClose(){ rcStopEngines(); var ov=document.getElementById('rc-ov');if(ov)ov.classList.remove('open'); RC=null; }
@@ -14211,7 +14212,7 @@ function rcToggle(){
   if(!RC)return;
   if(!RC.running){ rcAudioInit(); RC.running=true;RC.paused=false;RC.count=0;RC.done=false;RC.pi=0;RC.lead=3;rcRender();
     var steps=[3,2,1];RC.leadTimers=[];
-    steps.forEach(function(n,i){RC.leadTimers.push(setTimeout(function(){RC.lead=n;rcSpeak(String(n));rcBeep(520,90);var p=document.getElementById('rc-phase');if(p)p.textContent='Get ready… '+n;},i*800));});
+    steps.forEach(function(n,i){RC.leadTimers.push(setTimeout(function(){RC.lead=n;rcSpeak(String(n));rcBeep(660,90,0.10);var p=document.getElementById('rc-phase');if(p)p.textContent='Get ready… '+n;},i*800));});
     RC.leadTimers.push(setTimeout(function(){RC.lead=0;rcSpeak('go');RC._phases=rcPhases();RC.pi=0;RC.phase=RC._phases[0].k;RC.phaseStart=performance.now();rcPhaseEnter(RC.phase);RC_RAF=requestAnimationFrame(rcTick);},steps.length*800));
     return;
   }
@@ -14232,7 +14233,7 @@ function rcTick(){
 }
 function rcPhaseEnter(k){
   var p=document.getElementById('rc-phase');if(p)p.textContent=rcPhaseLabel(k);
-  if(k==='down')rcBeep(300,70); else if(k==='up')rcBeep(600,70);
+  if(k==='down')rcBeep(294,120,0.10); else if(k==='up')rcBeep(440,120,0.12);
 }
 function rcDrawRing(k,prog){
   var r=document.getElementById('rc-ring');if(!r)return;
@@ -14245,9 +14246,9 @@ function rcRepDone(){
   var c=document.getElementById('rc-count');if(c)c.textContent=RC.count;
   rcVibrate(60);
   var last=RC.count>=RC.target;
-  if(RC.voice)rcSpeak(last?(RC.count+', last'):String(RC.count));
+  if(RC.voice)rcSpeak(last?(RC.count+'. last one'):String(RC.count));
   if(last){ RC.done=true;RC.running=false; if(RC_RAF){cancelAnimationFrame(RC_RAF);RC_RAF=null;}
-    setTimeout(function(){rcSpeak('set complete');},350); rcRender(); }
+    rcChime(); setTimeout(function(){rcSpeak('Set done. Nice work.');},700); rcRender(); }
 }
 function rcStep(d){ if(!RC)return; RC.count=Math.max(0,RC.count+d); var c=document.getElementById('rc-count');if(c)c.textContent=RC.count; var e=document.querySelector('.rc-end');if(e&&!RC.done)e.textContent='End set · log '+RC.count+' reps'; }
 function rcRestart(){ if(!RC)return; RC.done=false;RC.count=0;RC.running=false;RC.paused=false;RC.pi=0;RC.phase=''; rcRender(); }
@@ -14262,9 +14263,26 @@ function rcEndSet(){
 }
 /* ---- audio / voice / haptics ---- */
 function rcAudioInit(){ try{ if(!RC_AC){RC_AC=new (window.AudioContext||window.webkitAudioContext)();} if(RC_AC.state==='suspended')RC_AC.resume(); }catch(e){} }
-function rcBeep(freq,ms){ try{ if(!RC_AC)return; var o=RC_AC.createOscillator(),g=RC_AC.createGain(); o.frequency.value=freq;o.type='sine';g.gain.value=0.0001;o.connect(g);g.connect(RC_AC.destination); var t=RC_AC.currentTime;g.gain.exponentialRampToValueAtTime(0.18,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+(ms/1000)); o.start(t);o.stop(t+(ms/1000)+0.02); }catch(e){} }
+/* warm, soft tone (triangle + lowpass + gentle attack/decay) instead of a hard beep */
+function rcBeep(freq,ms,vol){ try{ if(!RC_AC)return; var now=RC_AC.currentTime; var o=RC_AC.createOscillator(),g=RC_AC.createGain(),f=RC_AC.createBiquadFilter();
+  o.type='triangle';o.frequency.value=freq; f.type='lowpass';f.frequency.value=Math.max(900,freq*2.6);
+  g.gain.setValueAtTime(0.0001,now); g.gain.exponentialRampToValueAtTime((vol||0.11),now+0.014); g.gain.exponentialRampToValueAtTime(0.0001,now+Math.max(0.06,ms/1000));
+  o.connect(f);f.connect(g);g.connect(RC_AC.destination); o.start(now);o.stop(now+(ms/1000)+0.04); }catch(e){} }
+/* pleasant two-note finish chime */
+function rcChime(){ rcBeep(523,170,0.12); setTimeout(function(){rcBeep(784,300,0.12);},155); }
 function rcVibrate(ms){ try{ if(navigator.vibrate)navigator.vibrate(ms); }catch(e){} }
-function rcSpeak(txt){ try{ if(!RC||!RC.voice||!window.speechSynthesis)return; speechSynthesis.cancel(); var u=new SpeechSynthesisUtterance(String(txt)); u.rate=1.08;u.pitch=1; speechSynthesis.speak(u); }catch(e){} }
+/* pick the most natural available voice once (Samantha / Google / Microsoft Natural …) rather than the robotic default */
+function rcVoiceInit(){ try{ if(RC_VOICE_INIT||!window.speechSynthesis)return; RC_VOICE_INIT=true; rcPickVoice(); speechSynthesis.onvoiceschanged=function(){RC_VOICE=null;rcPickVoice();}; }catch(e){} }
+function rcPickVoice(){ try{
+  if(RC_VOICE)return RC_VOICE; if(!window.speechSynthesis)return null;
+  var vs=speechSynthesis.getVoices()||[]; if(!vs.length)return null;
+  var en=vs.filter(function(v){return /^en/i.test(v.lang||'');}); var pool=en.length?en:vs;
+  var prefer=['samantha','aria','jenny','google us english','google uk english female','natural','daniel','karen','moira','serena','allison','ava'];
+  for(var i=0;i<prefer.length;i++){ var hit=pool.find(function(v){return (v.name||'').toLowerCase().indexOf(prefer[i])>=0;}); if(hit){RC_VOICE=hit;return hit;} }
+  var good=pool.find(function(v){return v.localService && !/compact|espeak|robot/i.test(v.name||'');})||pool.find(function(v){return !/compact|espeak|robot/i.test(v.name||'');});
+  RC_VOICE=good||pool[0]; return RC_VOICE;
+}catch(e){return null;} }
+function rcSpeak(txt){ try{ if(!RC||!RC.voice||!window.speechSynthesis)return; speechSynthesis.cancel(); var u=new SpeechSynthesisUtterance(String(txt)); var v=rcPickVoice(); if(v){u.voice=v;u.lang=v.lang||'en-US';} u.rate=0.98;u.pitch=1.0;u.volume=1; speechSynthesis.speak(u); }catch(e){} }
 /* ---- Camera (Auto) mode — beta: on-device pose, counts actual reps ---- */
 function rcCamHTML(){
   var h='<div class="rc-sub">Prop the phone facing you, full body in frame, good light. It counts the reps on-device — nothing leaves your phone.</div>'+
@@ -14351,7 +14369,7 @@ function rcCamStep(v,now){
     c.wasHigh=false; c.lastRep=now; c.lastRom=range;
     RC.count++; rcVibrate(55);
     var last=RC.count>=RC.target;
-    if(RC.voice)rcSpeak(last?(RC.count+', last'):String(RC.count));
+    if(RC.voice)rcSpeak(last?(RC.count+'. last one'):String(RC.count));
     rcDrawCamNum(); var rr=document.getElementById('rc-s-rom'); if(rr)rr.textContent=(range>0.09?'full':'part');
   }
   return RC.count;
