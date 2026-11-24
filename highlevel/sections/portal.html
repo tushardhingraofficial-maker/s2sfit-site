@@ -2426,7 +2426,10 @@ table.pf-cmp th:first-child,table.pf-cmp td:first-child{text-align:left}
 /* Admin client overview: force a wide, side-scrolling table */
 .ov-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:12px;background:var(--card)}
 .ov-table{min-width:1160px}
-.ov-table.ov-status{min-width:2340px}
+.ov-table.ov-status{min-width:2040px}
+.ov-table.ov-status td{vertical-align:middle;white-space:nowrap}
+.ov-table.ov-status td:first-child{vertical-align:top;white-space:normal}
+.ov-table.ov-status .pill{display:inline-block}
 .tk-auto{margin-bottom:10px}
 .tk-autogrp{border:1px solid var(--border);border-radius:10px;padding:6px 8px;margin:0 0 8px;background:var(--card2)}
 .tk-autohd{display:flex;align-items:center;gap:7px;cursor:pointer;padding:3px 2px 6px;font-size:13.5px}
@@ -7877,7 +7880,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04vn';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04vo';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -26371,7 +26374,8 @@ function renderOverviewSummary(){
   host.innerHTML=macroCard('Clients','k',live.length,'')+macroCard('Avg adherence','p',avgAdh,'%')+macroCard('Needs attention','f',needs,'clients')+macroCard('Weekly updates due','c',wpDue,'')+macroCard('Revisions due','c',due,'');
 }
 /* ---- dp_client_status() dashboard cell helpers ---- */
-function ovStChip(txt,tone){if(!txt)return '<span class="funit">—</span>';const c={good:['rgba(34,197,94,.16)','var(--green)','rgba(34,197,94,.4)'],warn:['rgba(245,200,66,.18)','var(--gold)','rgba(245,200,66,.5)'],crit:['rgba(239,68,68,.16)','#ef4444','rgba(239,68,68,.45)'],muted:['var(--card2)','var(--muted)','var(--border)']}[tone]||['var(--card2)','var(--muted)','var(--border)'];return '<span class="pill" style="background:'+c[0]+';color:'+c[1]+';border-color:'+c[2]+';white-space:normal">'+esc(txt)+'</span>';}
+function ovStChip(txt,tone){if(!txt)return '<span class="funit">—</span>';const c={good:['rgba(34,197,94,.16)','var(--green)','rgba(34,197,94,.4)'],warn:['rgba(245,200,66,.18)','var(--gold)','rgba(245,200,66,.5)'],crit:['rgba(239,68,68,.16)','#ef4444','rgba(239,68,68,.45)'],muted:['var(--card2)','var(--muted)','var(--border)']}[tone]||['var(--card2)','var(--muted)','var(--border)'];return '<span class="pill" style="background:'+c[0]+';color:'+c[1]+';border-color:'+c[2]+';white-space:nowrap">'+esc(txt)+'</span>';}
+function ovActionChips(st){const a=(st&&st.actions)||[];if(!a.length)return '<span class="funit">—</span>';const CC={W:'var(--prot)',N:'var(--green)',R:'var(--gold)',O:'#e0863d',P:'var(--muted)'};return '<span style="display:inline-flex;gap:5px;white-space:nowrap">'+a.map(x=>{const col=CC[String(x.code||'').charAt(0)]||'var(--text)';return '<span style="display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:6px;background:var(--card2);border:1px solid var(--border);font-size:11.5px;white-space:nowrap"><b style="font-family:var(--disp);color:'+col+'">'+esc(x.code)+'</b><span style="color:var(--muted)">'+esc(x.label)+'</span></span>';}).join('')+'</span>';}
 function ovWorkoutTone(s){s=s||'';if(s==='Live')return 'good';if(s==='No program'||s==='Schedule ended')return 'crit';return 'warn';}
 function ovNutriTone(s){s=s||'';if(s==='Done')return 'good';if(s==='No plan'||s==='Not signed off, 8+ wks old')return 'crit';return 'warn';}
 function ovRoadTone(s){s=s||'';if(s==='Live')return 'good';if(s==='Dates incomplete')return 'warn';return 'muted';}
@@ -26434,7 +26438,7 @@ function renderOverviewTable(){
       return '<tr>'+
         '<td style="text-align:left;'+rowAccent+'"><div style="display:flex;align-items:flex-start;gap:7px">'+tlDot+'<div style="min-width:0"><span class="fname clickname" style="cursor:pointer'+(r.paused?';color:var(--muted)':'')+'" title="Open this client" onclick="editClient(\''+r.id+'\')">'+(r.paused?'⏸ ':'')+esc(r.name)+'</span>'+(r.paused?' <span class="pill" style="background:rgba(232,120,13,.2);color:#ff8a3d;border-color:rgba(232,120,13,.5)">Paused</span>':'')+(r.redeemReq?' <span class="pill" style="background:rgba(245,200,66,.2);color:var(--gold);border-color:var(--gold)" title="Requested to redeem points — open Rewards &amp; points to process">🎁 redeem</span>':'')+(r.pointReq?' <span class="pill" style="background:rgba(90,200,120,.18);color:var(--good);border-color:var(--good)" title="Requested points to approve — open Rewards &amp; points">🙋 '+r.pointReq+' point req</span>':'')+dwu+mcRowChips(r)+'<div class="funit">'+esc(r.email)+'</div></div></div></td>'+
         '<td>'+ovPriPill(st.priority)+'</td>'+
-        '<td style="text-align:left;white-space:normal;min-width:180px">'+(st.next_actions?('<span class="small">'+esc(st.next_actions)+'</span>'):'<span class="funit">—</span>')+'</td>'+
+        '<td style="text-align:left" title="'+(st.next_actions?esc(st.next_actions):'')+'">'+ovActionChips(st)+'</td>'+
         '<td style="text-align:left">'+ovStChip(st.workout_status,ovWorkoutTone(st.workout_status))+'</td>'+
         '<td style="text-align:left">'+ovStChip(st.nutrition_status,ovNutriTone(st.nutrition_status))+'</td>'+
         '<td style="text-align:left">'+ovStChip(st.roadmap_status,ovRoadTone(st.roadmap_status))+'</td>'+
