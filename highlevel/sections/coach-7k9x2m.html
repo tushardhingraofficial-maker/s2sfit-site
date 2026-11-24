@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light" data-version="2026-11-24c">
+<html lang="en" data-theme="light" data-version="2026-11-24d">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -963,7 +963,7 @@ function wkExHTML(en,ei){
   var gt='24px repeat('+cols.length+',1fr) 34px';
   var vid=en.lib&&en.lib.video;
   var hasInfo=en.lib&&(en.lib.howto||en.lib.mistakes||en.lib.cues||en.lib.breathing);
-  var hdr='<button class="wk-mini" onclick="rcOpen('+ei+')" title="Rep coach — auto-count reps &amp; pace the tempo">⏱</button>'+
+  var hdr='<button class="wk-mini" onclick="rcOpen('+ei+')" title="Rep coach — auto-count reps &amp; pace the tempo">🔢</button>'+
     '<button class="wk-mini" onclick="wkSwapOpen('+ei+')" title="Swap this exercise — pick another from your library">⇄</button>'+
     (vid?'<button class="wk-mini" onclick="wkDemo('+ei+')" title="Watch demo video">▶</button>':'')+
     (hasInfo?'<button class="wk-mini'+(en.showInfo?' on':'')+'" onclick="wkInfo('+ei+')" title="How-to &amp; cues">ℹ</button>':'')+
@@ -1090,7 +1090,7 @@ function rcSetMode(m){
 function rcRender(){
   if(!RC)return;var ov=document.getElementById('rc-ov');if(!ov)return;
   var paceOn=RC.mode==='pace';
-  var body='<div class="rc-sheet"><div class="rc-top"><div class="rc-ttl">⏱ '+esc(RC.name)+'</div>'+
+  var body='<div class="rc-sheet"><div class="rc-top"><div class="rc-ttl">🔢 '+esc(RC.name)+'</div>'+
       '<label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px"><input type="checkbox" '+(RC.voice?'checked':'')+' onchange="RC.voice=this.checked"> voice</label>'+
       '<button class="rc-x" onclick="rcClose()" aria-label="Close">×</button></div>'+
     '<div class="rc-tabs"><button class="rc-tab'+(paceOn?' on':'')+'" onclick="rcSetMode(\'pace\')">Pace · audio</button>'+
