@@ -7887,7 +7887,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04vw';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04vx';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -9134,7 +9134,7 @@ function showPaused(archived){$('portal').classList.add('hidden');showAuthScreen
   if(archived){if(em)em.textContent='📦';if(ti)ti.textContent='Account inactive';if(ms)ms.textContent='Your account is currently inactive. Reach out to your coach to reactivate it and pick up right where you left off — your plan and progress are safe.';}
   else{if(em)em.textContent='⏸️';if(ti)ti.textContent='Account paused';if(ms)ms.textContent='Your account is currently paused. Reach out to your coach to reactivate it and pick up right where you left off — your plan and progress are safe.';}
   if(CHAT_POLL){clearInterval(CHAT_POLL);CHAT_POLL=null;}['chat-fab','chat-panel','issue-fab','tasks-dock','chat-dock','tasks-reopen','chat-reopen','coach-chat-fab'].forEach(id=>{const e=$(id);if(e)e.classList.add('hidden');});}
-function showLogin(){SESSION=null;DB.token=null;try{localStorage.removeItem('s2s_session');}catch(e){}
+function showLogin(){SESSION=null;DB.token=null;try{coachPushStopPoll();}catch(e){}try{localStorage.removeItem('s2s_session');}catch(e){}
   if(location.hash){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}}   // client login lives at the plain URL — no #tag
   showAuthScreen('login');const p=$('login-pass');if(p)p.value='';
   if(CHAT_POLL){clearInterval(CHAT_POLL);CHAT_POLL=null;}['tasks-dock','chat-dock','tasks-reopen','chat-reopen','issue-fab','coach-chat-fab'].forEach(id=>{const e=$(id);if(e)e.classList.add('hidden');});}
@@ -9370,6 +9370,7 @@ async function enterPortal(restore){
     if(!pcOpen())maybeShowReminder();
     if(!pcOpen()&&!$('reminder-modal').classList.contains('open'))maybeShowResolvedIssue();
     if(!pcOpen()&&!$('reminder-modal').classList.contains('open')&&!$('issue-modal').classList.contains('open'))maybeShowAssignedTasks();}
+  if(!ADMIN_OK){coachPushStartPoll();setTimeout(function(){try{coachPushCheck();}catch(e){}},1600);}   // coach-pushed workout handoff
   chatShowFab();startChatPolling();
 }
 
@@ -12935,6 +12936,65 @@ function mrPopupCheck(){try{
   if(snooze===todayISO())return;
   mrShowPopup();
 }catch(e){}}
+/* ── Coach-pushed workout: the coach sends a session from the coach app → milestones.coachPush;
+   the client gets a pop-up on ANY screen to start it live (pre-filled), then runs it in the normal runner. ── */
+var COACHPUSH_POLL=null;
+function coachPushGet(){try{return (PLAN&&PLAN.milestones&&PLAN.milestones.coachPush)||null;}catch(e){return null;}}
+function coachPushDismissed(id){try{return localStorage.getItem('s2s_coachpush_x_'+id)==='1';}catch(e){return false;}}
+function coachPushCheck(){try{
+  if(typeof SESSION==='undefined'||!SESSION||(typeof ADMIN_OK!=='undefined'&&ADMIN_OK)||(typeof PREVIEW!=='undefined'&&PREVIEW))return;
+  var cp=coachPushGet();if(!cp||!cp.id)return;
+  if(cp.at&&(Date.now()-cp.at)>7*24*3600*1000)return;          // ignore stale (>7 days)
+  if(coachPushDismissed(cp.id))return;
+  if(document.getElementById('coachpush-modal'))return;         // already showing
+  var wm=$('workout-modal');if(wm&&wm.classList.contains('open'))return;   // mid-workout
+  var busy=['planchange-modal','reminder-modal','issue-modal','mr-popup'].some(function(id){var el=$(id);return el&&el.classList.contains('open');});
+  if(busy)return;                                               // let other popups go first; the poll re-checks
+  coachPushPopup(cp);
+}catch(e){}}
+function coachPushPopup(cp){
+  var ex=document.getElementById('coachpush-modal');if(ex)ex.remove();
+  var exN=(cp.entries||[]).length;
+  var o=document.createElement('div');o.id='coachpush-modal';o.className='wko-sm-back';
+  o.innerHTML='<div class="wko-sm" style="background:linear-gradient(160deg,#241016,#160f24)"><div class="big">🏋️</div><h3>Workout from your coach</h3>'+
+    '<div class="sub">'+esc(cp.by||'Your coach')+' set up <b>'+esc(cp.day_name||'a workout')+'</b>'+(exN?(' · '+exN+' exercise'+(exN===1?'':'s')):'')+' — ready to start now?</div>'+
+    (cp.note?'<div class="small" style="color:#cdb9e7;margin-top:10px">📝 '+esc(cp.note)+'</div>':'')+
+    '<button class="wko-sm-cta" onclick="coachPushStart()">▶ Start workout</button>'+
+    '<button class="wko-sm-back-btn" onclick="coachPushLater()">Later</button></div>';
+  document.body.appendChild(o);
+}
+function coachPushLater(){var cp=coachPushGet();if(cp&&cp.id){try{localStorage.setItem('s2s_coachpush_x_'+cp.id,'1');}catch(e){}}var o=document.getElementById('coachpush-modal');if(o)o.remove();}
+async function coachPushStart(){
+  var cp=coachPushGet();var o=document.getElementById('coachpush-modal');if(o)o.remove();
+  if(!cp)return;
+  try{localStorage.setItem('s2s_coachpush_x_'+cp.id,'1');}catch(e){}
+  // clear the push from the plan so it doesn't pop again (one-time handoff)
+  try{PLAN.milestones=PLAN.milestones||{};delete PLAN.milestones.coachPush;await DB.saveMilestones(SESSION.id,PLAN.milestones);}catch(e){}
+  await loadExLib();try{WKO_HISTORY=await DB.listWorkoutLogs(SESSION.id);}catch(e){WKO_HISTORY=[];}
+  try{await wkGearLoad();}catch(e){}
+  try{WKO_COLS=(await DB.getKV('workout_log_cols'))||[];}catch(e){WKO_COLS=[];}if(!Array.isArray(WKO_COLS))WKO_COLS=[];
+  try{wkoLoadClientCols();}catch(e){}
+  WKO={client_id:SESSION.id,date:todayISO(),day_id:cp.day_id||'',day_name:cp.day_name||'Workout',completion:0,note:cp.note||'',
+    entries:(cp.entries||[]).map(function(e){
+      var track=(e.track&&e.track.length)?e.track:['reps','weight'];
+      var sets=(e.sets||[]).map(function(s){var so={done:false};track.forEach(function(v){so[v]=s[v]||'';});if(so.reps==null)so.reps='';if(so.weight==null)so.weight='';return so;});
+      if(!sets.length)sets=[{reps:'',weight:'',done:false}];
+      return {exId:e.exId||'',name:e.name||'Exercise',origName:e.origName||e.name||'',brand:e.brand||'',equipment:e.equipment||'',alts:[],group:'',repType:(track.indexOf('time')>=0?'time':track.indexOf('distance')>=0?'distance':'reps'),target:e.target||'',restTarget:0,note:e.note||'',skipped:false,sets:sets};
+    })};
+  WKO_IDX=0;WKO_START=Date.now();
+  $('workout-modal').classList.add('open');renderWorkout();wkoStartClock();
+  try{toast('Let’s go 💪');}catch(e){}
+}
+async function coachPushPoll(){try{
+  if(typeof SESSION==='undefined'||!SESSION||(typeof ADMIN_OK!=='undefined'&&ADMIN_OK)||(typeof PREVIEW!=='undefined'&&PREVIEW))return;
+  if(document.hidden)return;
+  if(document.getElementById('coachpush-modal'))return;
+  var wm=$('workout-modal');if(wm&&wm.classList.contains('open'))return;
+  var fresh=await DB.getPlan(SESSION.id);var cp=fresh&&fresh.milestones&&fresh.milestones.coachPush;
+  if(cp&&cp.id&&!coachPushDismissed(cp.id)){PLAN.milestones=PLAN.milestones||{};PLAN.milestones.coachPush=cp;coachPushCheck();}
+}catch(e){}}
+function coachPushStartPoll(){if(COACHPUSH_POLL)return;try{COACHPUSH_POLL=setInterval(coachPushPoll,25000);}catch(e){}}
+function coachPushStopPoll(){if(COACHPUSH_POLL){clearInterval(COACHPUSH_POLL);COACHPUSH_POLL=null;}}
 function mrDashCardHTML(){
   if(typeof sectionLive==='function'&&!sectionLive('goals'))return '';
   const act=mrActiveList();if(!act.length)return '';

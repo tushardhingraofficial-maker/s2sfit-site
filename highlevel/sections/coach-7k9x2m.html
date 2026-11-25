@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light" data-version="2026-11-24l">
+<html lang="en" data-theme="light" data-version="2026-11-24m">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -1097,6 +1097,7 @@ function wkRender(){
   body+='<div onclick="wkSessionNote()" style="border:1px dashed var(--border);border-radius:12px;padding:11px 13px;margin:0 0 10px;cursor:pointer;font-size:13px;line-height:1.45">'+(WK.note?('<b>📝 Session note</b><div style="margin-top:3px">'+esc(WK.note)+'</div>'):'<span class="muted">📝 Add a note for this whole session…</span>')+'</div>';
   body+='<div class="cm-st" style="margin-bottom:10px"><div class="k">Session so far</div><div class="v">'+t.sets+' set'+(t.sets===1?'':'s')+' · '+round(t.vol).toLocaleString()+' kg</div><div class="d">'+t.done+'/'+t.all+' ticked done · '+t.pct+'%</div></div>';
   body+='<button class="btn" onclick="wkFinish()">✓ Save session</button>';
+  body+='<button class="btn ghost" style="margin-top:8px" onclick="wkPushToClient()">📲 Push to '+esc((CUR.name||'client').split(' ')[0])+'’s app — they start it live</button>';
   body+='<button class="btn ghost" style="margin-top:8px" onclick="wkQuickOpen()">✓ Mark done with a note (no set logging)</button>';
   body+='<button class="btn ghost" style="margin-top:8px" onclick="wkCancel()">🗑 Discard session</button></div>';
   app(head+body);
@@ -1520,6 +1521,20 @@ function wkSessionNote(){
 }
 function wkAddFreeEx(quiet){if(!WK)return;var tr=WK_DEFAULT_TRACK.slice();var s={done:false,t:{}};tr.forEach(function(v){s[v]='';});WK.entries.push({name:'',origName:'',exId:'',alts:[],track:tr,note:'',comment:'',target:'',sec:'',brand:'',equipment:'',showInfo:false,lib:{video:'',howto:'',mistakes:'',cues:'',breathing:''},sets:[s]});if(!quiet)wkRender();}
 function wkCancel(){if(WK&&wkTotals().sets>0&&!confirm('Discard this session? Your logged progress will be deleted.'))return;wkClearSaved(CUR&&CUR.id);WK=null;renderClient();}
+/* Push the current workout to the client's app — they get a pop-up (any screen) to start it live, pre-filled with what the coach set. */
+function wkPushToClient(){
+  if(!WK||!CUR)return;
+  var ents=(WK.entries||[]).filter(function(en){return (en.name||'').trim();});
+  if(!ents.length){toast('Add at least one exercise first',true);return;}
+  var first=((CUR.name||'the client').split(' ')[0]);
+  if(!confirm('Send this workout to '+first+'’s app?\n\nThey’ll get a pop-up to start it live, pre-filled with what you set here.'))return;
+  var payload={id:'cp'+Date.now(),at:Date.now(),by:(ME.name||'Coach'),date:WK.date,day_id:WK.day_id||'',day_name:WK.day_name||'Workout',note:WK.note||'',
+    entries:ents.map(function(en){var track=(en.track&&en.track.length)?en.track:['reps','weight'];
+      return {name:en.name||'Exercise',exId:en.exId||'',origName:en.origName||en.name||'',brand:en.brand||'',equipment:en.equipment||'',track:track,note:en.note||'',target:en.target||'',
+        sets:(en.sets||[]).map(function(s){var o={};track.forEach(function(v){o[v]=s[v]||'';});return o;})};})};
+  toast('Sending…');
+  cmMergeMilestone(function(m){m.coachPush=payload;}).then(function(){toast('📲 Sent — '+first+' will get a pop-up to start it');}).catch(function(e){toast((e&&e.message)||'Could not send',true);});
+}
 function wkFinish(){
   if(!WK)return;
   var entries=WK.entries.filter(function(en){
