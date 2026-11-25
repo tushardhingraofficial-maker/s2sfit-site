@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light" data-version="2026-11-24j">
+<html lang="en" data-theme="light" data-version="2026-11-24k">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -1005,7 +1005,10 @@ function wkExHTML(en,ei){
       cols.map(function(v){return '<input type="'+(v==='tempo'?'text':'number')+'" inputmode="'+(v==='tempo'?'text':'decimal')+'" value="'+esc(s[v]||'')+'" placeholder="'+esc((s.t&&s.t[v])||'')+'" oninput="wkSet('+ei+','+si+',\''+v+'\',this.value)">';}).join('')+
       '<button class="wk-done'+(s.done?' on':'')+'" onclick="wkDone('+ei+','+si+')">'+(s.done?'✓':'')+'</button></div>';
   });
-  h+='<div style="display:flex;gap:8px;margin-top:7px"><button class="cm-back" style="padding:5px 11px" onclick="wkAddSet('+ei+')">＋ set</button><button class="cm-back" style="padding:5px 11px" onclick="wkDelSet('+ei+')">－ set</button></div></div>';
+  var allDone=en.sets.length&&en.sets.every(function(s){return s.done;});
+  h+='<div style="display:flex;gap:8px;margin-top:7px;flex-wrap:wrap">'+
+    '<button class="cm-back" style="padding:5px 11px'+(allDone?';background:var(--good);border-color:var(--good);color:#fff':'')+'" onclick="wkDoneAll('+ei+')" title="Mark every set done at once (fills blanks from the targets); tap again to clear">'+(allDone?'✓ All done':'✓ All sets')+'</button>'+
+    '<button class="cm-back" style="padding:5px 11px" onclick="wkAddSet('+ei+')">＋ set</button><button class="cm-back" style="padding:5px 11px" onclick="wkDelSet('+ei+')">－ set</button></div></div>';
   return h;
 }
 /* ---- Exercise history: this client's past logged sessions of the SAME exercise ---- */
@@ -1380,6 +1383,16 @@ function rcCamStep(v,now){
 function wkSet(ei,si,v,val){if(!WK)return;var en=WK.entries[ei];if(en&&en.sets[si])en.sets[si][v]=val;}
 function wkName(ei,val){if(!WK)return;var en=WK.entries[ei];if(en)en.name=val;}
 function wkDone(ei,si){if(!WK)return;var en=WK.entries[ei];if(!en||!en.sets[si])return;en.sets[si].done=!en.sets[si].done;wkRender();}
+/* mark every set of an exercise done in one tap — fills any blank tracked field from its target; tap again to clear */
+function wkDoneAll(ei){if(!WK)return;var en=WK.entries[ei];if(!en||!en.sets||!en.sets.length)return;
+  var cols=(en.track&&en.track.length)?en.track:['reps','weight'];
+  var allDone=en.sets.every(function(s){return s.done;});
+  en.sets.forEach(function(s){
+    if(allDone){s.done=false;return;}
+    cols.forEach(function(v){if(String(s[v]==null?'':s[v]).trim()===''&&s.t&&String(s.t[v]==null?'':s.t[v]).trim()!=='')s[v]=s.t[v];});
+    s.done=true;
+  });
+  wkRender();}
 function wkAddSet(ei){if(!WK)return;var en=WK.entries[ei];if(!en)return;var track=en.track&&en.track.length?en.track:['reps','weight'];var last=en.sets[en.sets.length-1]||{};var s={done:false,t:(last.t||{})};track.forEach(function(v){s[v]='';});en.sets.push(s);wkRender();}
 function wkDelSet(ei){if(!WK)return;var en=WK.entries[ei];if(!en||en.sets.length<=1)return;en.sets.pop();wkRender();}
 function wkDelEx(ei){if(!WK)return;WK.entries.splice(ei,1);wkRender();}
