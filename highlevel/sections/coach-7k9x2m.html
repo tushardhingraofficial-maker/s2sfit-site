@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light" data-version="2026-11-24k">
+<html lang="en" data-theme="light" data-version="2026-11-24l">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -415,8 +415,10 @@ function overviewHTML(){
   var open=d.tasks&&d.tasks.filter(function(t){return t.status!=='done';}).length;
   var tasksLine=open?('<div class="pill crit" style="display:block;text-align:center;margin-top:10px">✅ '+open+' open task'+(open===1?'':'s')+' — see the Activity tab chart below</div>'):'';
   var wkoBtn='<button class="btn" style="margin:2px 0 8px" onclick="wkOpen()">🏋 Log a workout for '+esc((CUR.name||'client').split(' ')[0])+'</button>';
+  var _sv=wkLoadSaved(CUR.id);
+  var resumeBtn=(_sv&&_sv.wk&&wkHasProgress(_sv.wk))?('<button class="btn" style="margin:2px 0 8px;background:var(--good);border-color:var(--good)" onclick="wkResume()">▶ Resume “'+esc(_sv.wk.day_name||'workout')+'” · '+wkSavedPct(_sv.wk)+'% logged</button>'):'';
   var openBtn='<button class="btn ghost" style="margin:0 0 10px" onclick="openPortalEdit()">✏️ Open full profile to edit ↗</button>';
-  return qa+wkoBtn+openBtn+stats+profCard+tasksSection();
+  return qa+resumeBtn+wkoBtn+openBtn+stats+profCard+tasksSection();
 }
 /* deep-link into the full Transformation Portal editor for this client (edit plans, progress, everything) */
 function openPortalEdit(){if(!CUR)return;var u=PORTAL_URL+'#coach-edit='+encodeURIComponent(CUR.id);try{window.open(u,'_blank','noopener');}catch(e){location.href=u;}toast('Opening full profile in the portal…');}
@@ -833,6 +835,16 @@ function saveTask(){
    that is byte-for-byte compatible with the client's own runner — so it shows up in the client portal,
    the admin editor, and this app's Activity/Progress tabs, and marks the day done on the client's calendar. */
 var WK=null, WK_START=0;
+/* ── Resume support: an in-progress workout is checkpointed on-device per client, so closing the
+   app (or tapping back) keeps it and the coach can resume from the client's profile where they left off. ── */
+function wkPersistKey(cid){return 's2s_cm_wk_'+(cid||'');}
+function wkPersist(){try{if(WK&&WK.client_id)localStorage.setItem(wkPersistKey(WK.client_id),JSON.stringify({wk:WK,start:WK_START,at:Date.now()}));}catch(e){}}
+function wkClearSaved(cid){try{localStorage.removeItem(wkPersistKey(cid));}catch(e){}}
+function wkLoadSaved(cid){try{var raw=localStorage.getItem(wkPersistKey(cid));if(!raw)return null;var o=JSON.parse(raw);if(!o||!o.wk)return null;if(o.at&&(Date.now()-o.at)>36*3600*1000){wkClearSaved(cid);return null;}return o;}catch(e){return null;}}
+function wkHasProgress(wk){return !!(wk&&((wk.note&&String(wk.note).trim())||(wk.entries||[]).some(function(en){return (en.comment&&String(en.comment).trim())||(en.sets||[]).some(function(s){return s.done||(en.track||['reps','weight']).some(function(v){return String(s[v]||'').trim()!=='';});});})));}
+function wkSavedPct(wk){var all=0,dn=0;((wk&&wk.entries)||[]).forEach(function(en){(en.sets||[]).forEach(function(s){all++;if(s.done)dn++;});});return all?Math.round(dn/all*100):0;}
+function wkExit(){wkPersist();WK=null;renderClient();}   /* back = keep the session for later, don't discard */
+function wkResume(){if(!CUR)return;var o=wkLoadSaved(CUR.id);if(!o||!o.wk){toast('Nothing to resume',true);renderClient();return;}WK=o.wk;WK_START=o.start||Date.now();Promise.all([wkEnsureLib(),wkGearLoad()]).then(function(){wkRender();}).catch(function(){wkRender();});}
 var WK_LIB=null, WK_EXBYID={}, WK_EXBYNAME={}, WK_GENURL=null;   // shared exercise library + Smart-webhook URL
 var WK_DEFAULT_TRACK=['reps','weight','rir'];                    // RIR column on by default
 function wkVarLabel(v){return ({reps:'Reps',weight:'Wt kg',rir:'RIR',rest:'Rest',tempo:'Tempo',time:'Time',distance:'Dist',height:'Ht'})[v]||v;}
@@ -949,6 +961,11 @@ function wkRenderPick(){
 /* ---- step 2: build WK from the chosen workout and run the entry screen ---- */
 function wkStart(kind,id){ Promise.all([wkEnsureLib(),wkGearLoad()]).then(function(){wkStartBuild(kind,id);}); }
 function wkStartBuild(kind,id){
+  var _sv=wkLoadSaved(CUR&&CUR.id);
+  if(_sv&&_sv.wk&&wkHasProgress(_sv.wk)){
+    if(confirm('Resume your unfinished “'+(_sv.wk.day_name||'workout')+'” ('+wkSavedPct(_sv.wk)+'% done)?\n\nOK = resume   ·   Cancel = start this one fresh')){WK=_sv.wk;WK_START=_sv.start||Date.now();wkRender();return;}
+    wkClearSaved(CUR&&CUR.id);
+  }
   var p=CURPLAN||{};var entries=[],dayName='Workout',dayId='';
   if(kind==='v2'){
     var ws=((p.training&&p.training.v2&&p.training.v2.workouts)||[]);
@@ -1071,7 +1088,7 @@ function wkHistoryOpen(ei){
 }
 function wkRender(){
   if(!WK)return;
-  var head='<div class="cm-top"><button class="cm-back" onclick="wkCancel()">‹</button><div style="flex:1;min-width:0"><div class="cm-title" style="font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(WK.day_name||'Workout')+'</div><div class="cm-sub">'+esc(CUR.name||'Client')+' · '+esc(fmtDate(WK.date))+'</div></div></div>';
+  var head='<div class="cm-top"><button class="cm-back" onclick="wkExit()" title="Back — your progress is saved, resume it anytime from the profile">‹</button><div style="flex:1;min-width:0"><div class="cm-title" style="font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(WK.day_name||'Workout')+'</div><div class="cm-sub">'+esc(CUR.name||'Client')+' · '+esc(fmtDate(WK.date))+'</div></div></div>';
   var t=wkTotals();
   var body='<div class="cm-body"><div class="small muted" style="margin:0 0 10px">Enter what '+esc((CUR.name||'the client').split(' ')[0])+' actually did, then tick ✓ each set completed.</div>';
   var lastSec=null;
@@ -1081,8 +1098,9 @@ function wkRender(){
   body+='<div class="cm-st" style="margin-bottom:10px"><div class="k">Session so far</div><div class="v">'+t.sets+' set'+(t.sets===1?'':'s')+' · '+round(t.vol).toLocaleString()+' kg</div><div class="d">'+t.done+'/'+t.all+' ticked done · '+t.pct+'%</div></div>';
   body+='<button class="btn" onclick="wkFinish()">✓ Save session</button>';
   body+='<button class="btn ghost" style="margin-top:8px" onclick="wkQuickOpen()">✓ Mark done with a note (no set logging)</button>';
-  body+='<button class="btn ghost" style="margin-top:8px" onclick="wkCancel()">Cancel</button></div>';
+  body+='<button class="btn ghost" style="margin-top:8px" onclick="wkCancel()">🗑 Discard session</button></div>';
   app(head+body);
+  wkPersist();   // checkpoint so the coach can close the app and resume from the profile
 }
 /* Quick-complete (coach): mark the session done with just a written description — counts toward
    compliance/streak (done:true, 100%) but captures NO stats, so volume/1RM/comparisons are skipped. */
@@ -1107,7 +1125,7 @@ function wkQuickSave(){
   toast('Saving…');
   api('saveWorkoutLog',{log:log}).then(function(){
     var c=cur();c.workouts=c.workouts||[];c.workouts.unshift(log);
-    WK=null;CTAB='activity';renderClient();
+    wkClearSaved(CUR.id);WK=null;CTAB='activity';renderClient();
     toast('Marked done ✓');
   }).catch(function(e){toast((e&&e.message)||'Could not save',true);});
 }
@@ -1380,7 +1398,7 @@ function rcCamStep(v,now){
   return RC.count;
 }
 /* input handlers — commit into the model WITHOUT re-rendering (so typing never loses focus); only ✓/add/del re-render */
-function wkSet(ei,si,v,val){if(!WK)return;var en=WK.entries[ei];if(en&&en.sets[si])en.sets[si][v]=val;}
+function wkSet(ei,si,v,val){if(!WK)return;var en=WK.entries[ei];if(en&&en.sets[si])en.sets[si][v]=val;wkPersist();}
 function wkName(ei,val){if(!WK)return;var en=WK.entries[ei];if(en)en.name=val;}
 function wkDone(ei,si){if(!WK)return;var en=WK.entries[ei];if(!en||!en.sets[si])return;en.sets[si].done=!en.sets[si].done;wkRender();}
 /* mark every set of an exercise done in one tap — fills any blank tracked field from its target; tap again to clear */
@@ -1501,7 +1519,7 @@ function wkSessionNote(){
   uiPrompt({title:'Session note',label:'An overall note for this whole session',multiline:true,ok:'Save',placeholder:'e.g. Great energy today — pushed hard on the compounds, bumped squat 5 kg.',value:WK.note||''}).then(function(v){if(v==null)return;WK.note=(v||'').trim();wkRender();});
 }
 function wkAddFreeEx(quiet){if(!WK)return;var tr=WK_DEFAULT_TRACK.slice();var s={done:false,t:{}};tr.forEach(function(v){s[v]='';});WK.entries.push({name:'',origName:'',exId:'',alts:[],track:tr,note:'',comment:'',target:'',sec:'',brand:'',equipment:'',showInfo:false,lib:{video:'',howto:'',mistakes:'',cues:'',breathing:''},sets:[s]});if(!quiet)wkRender();}
-function wkCancel(){if(WK&&wkTotals().sets>0&&!confirm('Discard this unsaved session?'))return;WK=null;renderClient();}
+function wkCancel(){if(WK&&wkTotals().sets>0&&!confirm('Discard this session? Your logged progress will be deleted.'))return;wkClearSaved(CUR&&CUR.id);WK=null;renderClient();}
 function wkFinish(){
   if(!WK)return;
   var entries=WK.entries.filter(function(en){
@@ -1528,7 +1546,7 @@ function wkFinish(){
   toast('Saving…');
   api('saveWorkoutLog',{log:log}).then(function(){
     var c=cur();c.workouts=c.workouts||[];c.workouts.unshift(log);
-    WK=null;CTAB='activity';renderClient();
+    wkClearSaved(CUR.id);WK=null;CTAB='activity';renderClient();
     toast('Workout logged ✓ '+totalSets+' set'+(totalSets===1?'':'s')+' · '+round(volume).toLocaleString()+' kg');
   }).catch(function(e){toast((e&&e.message)||'Could not save',true);});
 }
