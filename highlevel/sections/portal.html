@@ -7887,7 +7887,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04vy';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04vz';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -20222,15 +20222,16 @@ function t2c(){const v=(PLAN&&PLAN.training&&PLAN.training.v2)||{};
   if(typeof ADMIN_OK==='undefined'||!ADMIN_OK){const ov=PLAN&&PLAN.milestones&&PLAN.milestones.trainingCal;if(ov&&typeof ov==='object'){cal=Object.assign({},cal);Object.keys(ov).forEach(function(d){cal[d]=ov[d];});}}
   return {active:!!v.active,workouts:Array.isArray(v.workouts)?v.workouts:[],calendar:cal};}
 function t2cWorkout(id){return t2c().workouts.find(w=>w.id===id)||null;}
-let WD2_DONE=null, WD2_PARTIAL=null, WD2_LOGS=null, WD2=null, WD2_TIMER=null, WD2_WEEK=0, TW_RELIB=false, WD2_FRESH_AT=0, WD2_LOADING=false;
+let WD2_DONE=null, WD2_PARTIAL=null, WD2_LOGS=null, WD2_LOG_WID=null, WD2=null, WD2_TIMER=null, WD2_WEEK=0, TW_RELIB=false, WD2_FRESH_AT=0, WD2_LOADING=false;
 async function wd2LoadDone(){WD2_LOADING=true;try{const logs=await DB.listWorkoutLogs(SESSION.id);WK_LOGS=logs||[];
-  WD2_LOGS={};(logs||[]).forEach(l=>{const d=String(l.date||'').slice(0,10);if(!d)return;const prev=WD2_LOGS[d];if(!prev||String(l.created_at||'')>String(prev.created_at||''))WD2_LOGS[d]=l;});
+  WD2_LOGS={};WD2_LOG_WID={};(logs||[]).forEach(l=>{const d=String(l.date||'').slice(0,10);if(!d)return;const prev=WD2_LOGS[d];if(!prev||String(l.created_at||'')>String(prev.created_at||''))WD2_LOGS[d]=l;const wk=d+'|'+String(l.day_id||'');const pw=WD2_LOG_WID[wk];if(!pw||String(l.created_at||'')>String(pw.created_at||''))WD2_LOG_WID[wk]=l;});
   WD2_DONE=new Set();WD2_PARTIAL=new Set();
   Object.keys(WD2_LOGS).forEach(d=>{const l=WD2_LOGS[d];if(l.done||(+l.completion||0)>=100)WD2_DONE.add(d);else WD2_PARTIAL.add(d);});   // a logged-but-unfinished day is "partial", not done
   WD2_FRESH_AT=Date.now();
 }catch(e){WD2_DONE=new Set();WD2_PARTIAL=new Set();WD2_LOGS={};}WD2_LOADING=false;try{renderTrainingV2();}catch(e){}}
 /* the logged session for a date (latest, if logged twice) + its stats-and-edit panel for a finished day */
 function wd2LogForDate(iso){const m=WD2_LOGS||{};return m[iso]||null;}
+function wd2LogForWorkout(iso,wid){const m=WD2_LOG_WID||{};return m[iso+'|'+String(wid||'')]||null;}   // per-WORKOUT log so multiple workouts/day each track independently
 function wd2FinishedPanel(log,iso,id){
   if(!log)return '<button class="tw-cta" onclick="startWorkoutV2(\''+iso+'\',\''+id+'\')">↻ Log this workout</button>';
   const s=log.summary||{};const vol=s.volume||0,sets=s.totalSets||0,comp=log.completion||0;
@@ -20299,7 +20300,7 @@ function renderTrainingV2(){
   if(todayW.length){
     h+=todayW.map(id=>{
       const w=t2cWorkout(id);if(!w)return '';
-      const dn=done.has(today);
+      const myLog=wd2LogForWorkout(today,id);const dn=!!(myLog&&(myLog.done||(+myLog.completion||0)>=100));
       let exCount=0,setCount=0;const flat=[];
       (w.sections||[]).forEach(s=>(s.exercises||[]).forEach(e=>{flat.push(e);exCount++;setCount+=wdExSets(e).filter(x=>!x.tech).length;}));
       const mins=Math.max(10,Math.round(setCount*2.6));
@@ -20315,9 +20316,9 @@ function renderTrainingV2(){
         '<div class="tw-stat"><b>~'+mins+'</b><span>Minutes</span></div></div>'+
         '<svg class="tw-ring" width="64" height="64" viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="7"/><circle cx="32" cy="32" r="26" fill="none" stroke="#3ed47e" stroke-width="7" stroke-linecap="round" stroke-dasharray="'+dash.toFixed(1)+' '+circ+'" transform="rotate(-90 32 32)"/><text x="32" y="30" text-anchor="middle" font-size="15" font-weight="900" fill="#fff" font-family="Archivo">'+wkDoneN+'/'+wkPlan+'</text><text x="32" y="43" text-anchor="middle" font-size="8" fill="#aab2bf" font-family="Inter">week</text></svg>';
       hero+='</div>';
-      if(dn){hero+=wd2FinishedPanel(wd2LogForDate(today),today,id)+'</div>';return hero;}
-      const _part=!!(WD2_PARTIAL&&WD2_PARTIAL.has&&WD2_PARTIAL.has(today));
-      const _ppct=_part?Math.round((wd2LogForDate(today)||{}).completion||0):0;
+      if(dn){hero+=wd2FinishedPanel(myLog,today,id)+'</div>';return hero;}
+      const _part=!!(myLog&&!dn);
+      const _ppct=_part?Math.round(myLog.completion||0):0;
       if(_part)hero=hero.replace('<div class="tw-chips">','<div class="tw-chips"><span class="tw-chip" style="background:rgba(245,158,11,.22);color:#fde68a">↻ In progress'+(_ppct?' · '+_ppct+'%':'')+'</span>');
       hero+='<button class="tw-cta" onclick="startWorkoutV2(\''+today+'\',\''+id+'\')">'+(_part?('↻ Resume workout'+(_ppct?' · '+_ppct+'% done':'')):'▶ Start workout')+'</button></div>';
       let li='',idx=0;
@@ -20354,13 +20355,18 @@ function renderTrainingV2(){
         const mins=Math.max(10,Math.round(setCount*2.6));
         const musc=[];flat.forEach(e=>{const lib=e.exId?exById(e.exId):null;const bp=lib&&lib.bodyPart;if(bp&&musc.indexOf(bp)<0)musc.push(bp);});
         const summ=(multi?('#'+(wi+1)+' · '):'')+exCount+' ex · ~'+mins+' min'+(musc.length?(' · '+musc.slice(0,2).join(', ')):(w.focus?(' · '+esc(w.focus)):''));
-        // "done" is tracked per-day; a logged day opens its summary, otherwise each workout starts on its own
-        const onclick=dlog?('wkoShowLogSummary(\''+dlog.id+'\')'):('startWorkoutV2(\''+iso+'\',\''+esc(wid)+'\')');
-        const canDrag=canResched&&!dn;
-        return '<div class="tw-wk-card'+(dn?' done':isT?' today':missed?' missed':'')+'"'+(canDrag?' data-wid="'+esc(wid)+'" data-date="'+iso+'"':'')+' onclick="'+onclick+'">'+
-          (canDrag?'<span class="tw-grip" aria-label="Drag to another day">⠿</span>':'<span class="tw-grip ghost">'+(dn?'✓':missed?'!':'·')+'</span>')+
+        // done is per-WORKOUT (not per-day): each allocated workout starts / opens its own log independently
+        const myLog=wd2LogForWorkout(iso,wid);
+        const cDone=!!(myLog&&(myLog.done||(+myLog.completion||0)>=100));
+        const cPart=!!(myLog&&!cDone), cMiss=(iso<today)&&!cDone&&!cPart;
+        const onclick=cDone?('wkoShowLogSummary(\''+myLog.id+'\')'):('startWorkoutV2(\''+iso+'\',\''+esc(wid)+'\')');
+        const canDrag=canResched&&!cDone;
+        const cls=cDone?'done':isT?'today':cMiss?'missed':'';
+        const statTxt=cDone?'done':cPart?'resume':isT?'today':cMiss?'missed':'';
+        return '<div class="tw-wk-card'+(cls?' '+cls:'')+'"'+(canDrag?' data-wid="'+esc(wid)+'" data-date="'+iso+'"':'')+' onclick="'+onclick+'">'+
+          (canDrag?'<span class="tw-grip" aria-label="Drag to another day">⠿</span>':'<span class="tw-grip ghost">'+(cDone?'✓':cMiss?'!':'·')+'</span>')+
           '<div class="tw-wk-meta"><b>'+esc(w.name||'Workout')+'</b><span>'+summ+'</span></div>'+
-          '<span class="tw-wk-stat '+(dn?'done':isT?'today':missed?'missed':'')+'">'+(dn?'done':isT?'today':missed?'missed':'')+'</span>'+
+          '<span class="tw-wk-stat '+cls+'">'+statTxt+'</span>'+
           '<span class="tw-wk-go">›</span></div>';
       }).join('');
     } else { slot='<div class="tw-rest-cell">Rest day</div>'; }
