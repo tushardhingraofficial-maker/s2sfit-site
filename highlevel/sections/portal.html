@@ -7887,7 +7887,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04vx';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04vy';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -20222,12 +20222,13 @@ function t2c(){const v=(PLAN&&PLAN.training&&PLAN.training.v2)||{};
   if(typeof ADMIN_OK==='undefined'||!ADMIN_OK){const ov=PLAN&&PLAN.milestones&&PLAN.milestones.trainingCal;if(ov&&typeof ov==='object'){cal=Object.assign({},cal);Object.keys(ov).forEach(function(d){cal[d]=ov[d];});}}
   return {active:!!v.active,workouts:Array.isArray(v.workouts)?v.workouts:[],calendar:cal};}
 function t2cWorkout(id){return t2c().workouts.find(w=>w.id===id)||null;}
-let WD2_DONE=null, WD2_PARTIAL=null, WD2_LOGS=null, WD2=null, WD2_TIMER=null, WD2_WEEK=0, TW_RELIB=false;
-async function wd2LoadDone(){try{const logs=await DB.listWorkoutLogs(SESSION.id);WK_LOGS=logs||[];
+let WD2_DONE=null, WD2_PARTIAL=null, WD2_LOGS=null, WD2=null, WD2_TIMER=null, WD2_WEEK=0, TW_RELIB=false, WD2_FRESH_AT=0, WD2_LOADING=false;
+async function wd2LoadDone(){WD2_LOADING=true;try{const logs=await DB.listWorkoutLogs(SESSION.id);WK_LOGS=logs||[];
   WD2_LOGS={};(logs||[]).forEach(l=>{const d=String(l.date||'').slice(0,10);if(!d)return;const prev=WD2_LOGS[d];if(!prev||String(l.created_at||'')>String(prev.created_at||''))WD2_LOGS[d]=l;});
   WD2_DONE=new Set();WD2_PARTIAL=new Set();
   Object.keys(WD2_LOGS).forEach(d=>{const l=WD2_LOGS[d];if(l.done||(+l.completion||0)>=100)WD2_DONE.add(d);else WD2_PARTIAL.add(d);});   // a logged-but-unfinished day is "partial", not done
-}catch(e){WD2_DONE=new Set();WD2_PARTIAL=new Set();WD2_LOGS={};}try{renderTrainingV2();}catch(e){}}
+  WD2_FRESH_AT=Date.now();
+}catch(e){WD2_DONE=new Set();WD2_PARTIAL=new Set();WD2_LOGS={};}WD2_LOADING=false;try{renderTrainingV2();}catch(e){}}
 /* the logged session for a date (latest, if logged twice) + its stats-and-edit panel for a finished day */
 function wd2LogForDate(iso){const m=WD2_LOGS||{};return m[iso]||null;}
 function wd2FinishedPanel(log,iso,id){
@@ -20280,7 +20281,7 @@ function renderTrainingV2(){
   { const _c=t2c(); const _hasPlan=(_c.workouts&&_c.workouts.length)||(_c.calendar&&Object.keys(_c.calendar).length);
     if(!_hasPlan){host.innerHTML=trainingWelcomeHTML();return;} }   // live but empty → premium welcome, not a blank week
   try{const _fresh=(Date.now()-EXLIB_FRESH_AT>45000);loadExLib(_fresh).then(()=>{EXLIB_FRESH_AT=Date.now();try{if(($('training-host'))&&PLAN&&PLAN.training&&PLAN.training.v2&&PLAN.training.v2.active&&(!TW_RELIB||_fresh)){TW_RELIB=true;renderTrainingV2();}}catch(e){}});}catch(e){}   // refresh the library on open (throttled) so coach edits to an exercise show up
-  if(WD2_DONE===null){wd2LoadDone();}
+  if(!WD2_LOADING&&(WD2_DONE===null||Date.now()-WD2_FRESH_AT>20000)){wd2LoadDone();}   // refresh on open (throttled) so coach-logged workouts reflect here, not just the dashboard
   const done=WD2_DONE||new Set();
   const cfg=(PLAN&&PLAN.training&&PLAN.training.v2)||{};const showPast=cfg.showPast!==false,showNext=cfg.showNext!==false;
   if(!showPast&&WD2_WEEK<0)WD2_WEEK=0;if(!showNext&&WD2_WEEK>0)WD2_WEEK=0;
