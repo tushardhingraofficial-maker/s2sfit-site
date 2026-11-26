@@ -4666,6 +4666,8 @@ tr.tr-gr td:first-child{border-left:3px solid var(--red)}
 .wko-set-flds{flex:1;min-width:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(48px,1fr));gap:5px;align-items:center}
 .wko-set-fld{display:flex;flex-direction:column;align-items:center;min-width:0}
 .wko-set-fld input{width:100%;text-align:center;font-family:var(--disp);font-weight:800;font-size:16px;padding:9px 3px;border-radius:8px;box-sizing:border-box}
+.wko-set-fld .wko-sel{width:100%;text-align:center;text-align-last:center;font-family:var(--disp);font-weight:800;font-size:16px;padding:9px 15px 9px 3px;border-radius:8px;box-sizing:border-box;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23697079' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>");background-repeat:no-repeat;background-position:right 3px center}
+.wko-set-fld .wko-sel.empty{color:var(--muted)}
 .wko-set-fld span{display:none}
 .wko-rest-cap{width:100%;margin-top:2px;background:none;border:none;color:var(--good);font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;cursor:pointer;padding:0;line-height:1.2}
 .wko-rest-cap:hover{color:var(--text)}
@@ -7887,7 +7889,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04vz';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04wa';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -14575,6 +14577,36 @@ function rcCamStep(v,now){
   }
   return RC.count;
 }
+/* ---- tap-to-pick dropdowns for Reps / Time / effort (RIR·RPE). Weight & cardio stay numeric inputs. ---- */
+var WKO_REPS_OPTS=(function(){var a=[];for(var i=1;i<=40;i++)a.push([String(i),String(i)]);return a;})();
+var WKO_TIME_OPTS=[['10','10s'],['15','15s'],['20','20s'],['30','30s'],['45','45s'],['60','1:00'],['75','1:15'],['90','1:30'],['120','2:00'],['150','2:30'],['180','3:00'],['240','4:00'],['300','5:00']];
+var WKO_RIR_OPTS=[['0','0'],['1','1'],['2','2'],['3','3'],['4','4'],['5','5'],['F','F']];
+var WKO_RPE_OPTS=[['10','10'],['9.5','9.5'],['9','9'],['8.5','8.5'],['8','8'],['7.5','7.5'],['7','7'],['6.5','6.5'],['6','6'],['5','5']];
+function wkoSelField(opts,cur,tgt,ei,si,field,lbl){
+  cur=String(cur==null?'':cur).trim();tgt=String(tgt==null?'':tgt).trim();
+  var list=opts.slice();
+  if(cur!==''&&!list.some(function(o){return o[0]===cur;}))list.unshift([cur,cur]); // keep a legacy/custom value visible & selected
+  var empt=tgt!==''?('—('+esc(tgt)+')'):'—';
+  var h='<label class="wko-set-fld"><select class="wko-sel'+(cur!==''?' set':' empty')+'" onchange="wkoSelChange('+ei+','+si+',\''+field+'\',this)">';
+  h+='<option value=""'+(cur===''?' selected':'')+'>'+empt+'</option>';
+  list.forEach(function(o){h+='<option value="'+esc(o[0])+'"'+(cur===o[0]?' selected':'')+'>'+esc(o[1])+'</option>';});
+  h+='<option value="__custom__">✎ Custom…</option></select><span>'+esc(lbl)+'</span></label>';
+  return h;
+}
+function wkoSelChange(ei,si,field,sel){
+  if(!WKO||!WKO.entries[ei]||!WKO.entries[ei].sets[si])return;
+  var val=sel?sel.value:'';
+  if(val==='__custom__'){
+    var old=String(WKO.entries[ei].sets[si][field]==null?'':WKO.entries[ei].sets[si][field]);
+    uiPrompt({title:'Custom value',label:'Enter a value for this set',value:old,ok:'Set'}).then(function(x){
+      if(x==null){renderWorkout();return;}                 // cancel → re-render resets the select
+      WKO.entries[ei].sets[si][field]=(x||'').trim();wkoUpdateLive(ei);wkoPersist();renderWorkout();
+    });
+    return;
+  }
+  WKO.entries[ei].sets[si][field]=val;wkoUpdateLive(ei);wkoPersist();
+  if(sel)sel.className='wko-sel'+(val!==''?' set':' empty');  // recolour without a full re-render (keeps rest timers running)
+}
 function wkoFocusHTML(en,ei,noNav){
   const grpBadge=en.group?'<span class="pill" title="Superset / circuit — do these back-to-back">🔗 '+esc((/circuit/i.test(en.group)?'Circuit ':'SS ')+en.group.replace(/circuit|superset|SS-?/ig,'').trim())+'</span>':'';
   const navBtns=noNav?'':wkoGroupNav(ei,ei);
@@ -14625,8 +14657,10 @@ function wkoFocusHTML(en,ei,noNav){
       (aerobic
         ? cardFld(s,si,'dur','min','MIN')+cardFld(s,si,'dist','km','KM')+cardFld(s,si,'cal','kcal','CAL')+cardFld(s,si,'hr','bpm','AVG HR')
         : '<label class="wko-set-fld"><input type="number" inputmode="decimal" min="0" step="0.5" value="'+esc(s.weight)+'" placeholder="'+esc((s.target&&s.target.weight)||'0')+'" oninput="wkoSet('+ei+','+si+',\'weight\',this.value)"><span>kg</span></label>'+
-          '<label class="wko-set-fld"><input type="number" inputmode="decimal" min="0" step="'+rstep+'" value="'+esc(s.reps)+'" placeholder="'+esc((s.target&&s.target.reps)||'0')+'" oninput="wkoSet('+ei+','+si+',\'reps\',this.value)"><span>'+rpl+'</span></label>'+
-          '<label class="wko-set-fld"><input inputmode="decimal" value="'+esc(s.rir||'')+'" placeholder="'+esc((s.target&&s.target.rir)||'–')+'" onchange="wkoSet('+ei+','+si+',\'rir\',this.value)"><span>'+effLbl+'</span></label>')+
+          ((rt==='reps'||rt==='time')
+            ? wkoSelField(rt==='time'?WKO_TIME_OPTS:WKO_REPS_OPTS,s.reps,(s.target&&s.target.reps)||'',ei,si,'reps',rpl)
+            : '<label class="wko-set-fld"><input type="number" inputmode="decimal" min="0" step="'+rstep+'" value="'+esc(s.reps)+'" placeholder="'+esc((s.target&&s.target.reps)||'0')+'" oninput="wkoSet('+ei+','+si+',\'reps\',this.value)"><span>'+rpl+'</span></label>')+
+          wkoSelField(eff==='rpe'?WKO_RPE_OPTS:WKO_RIR_OPTS,s.rir,(s.target&&s.target.rir)||'',ei,si,'rir',effLbl))+
       extra.map(c=>'<label class="wko-set-fld"><input value="'+esc(s[c.key]||'')+'" placeholder="'+esc((s.target&&s.target[c.key])||'–')+'" onchange="wkoSet('+ei+','+si+',\''+c.key+'\',this.value)"><span>'+esc((c.label||c.key).split(/[ (]/)[0])+'</span></label>').join('')+
     '</div>'+
     '<button class="wko-set-done'+(s.done?' on':'')+'" title="Mark done'+(aerobic?'':' — starts rest timer')+'" onclick="wkoToggleDone('+ei+','+si+')">'+(s.done?'✓':'○')+'</button>'+
