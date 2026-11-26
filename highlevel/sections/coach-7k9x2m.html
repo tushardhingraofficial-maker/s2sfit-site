@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light" data-version="2026-11-24n">
+<html lang="en" data-theme="light" data-version="2026-11-26a">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -206,6 +206,8 @@ input:focus,select,textarea:focus{outline:none;border-color:var(--red)}
 .wk-th{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.02em;color:var(--muted);text-align:center;overflow:hidden}
 .wk-no{text-align:center;font-family:var(--disp);font-weight:900;font-size:15px;color:var(--muted)}
 .wk-row input{padding:8px 3px;text-align:center;border-radius:9px;font-size:15px}
+.wk-sel-in{padding:8px 15px 8px 3px;text-align:center;border-radius:9px;font-size:15px;font-weight:600;line-height:1.1;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23697079' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>");background-repeat:no-repeat;background-position:right 4px center}
+.wk-sel-in.empty{color:var(--muted)}
 .wk-done{border:1px solid var(--border);background:var(--card2);border-radius:9px;height:38px;font-size:15px;font-weight:800;color:var(--muted);cursor:pointer}
 .wk-done.on{background:var(--good);border-color:var(--good);color:#fff}
 </style>
@@ -852,6 +854,39 @@ function wkResume(){if(!CUR)return;var o=wkLoadSaved(CUR.id);if(!o||!o.wk){toast
 var WK_LIB=null, WK_EXBYID={}, WK_EXBYNAME={}, WK_GENURL=null;   // shared exercise library + Smart-webhook URL
 var WK_DEFAULT_TRACK=['reps','weight','rir'];                    // RIR column on by default
 function wkVarLabel(v){return ({reps:'Reps',weight:'Wt kg',rir:'RIR',rest:'Rest',tempo:'Tempo',time:'Time',distance:'Dist',height:'Ht'})[v]||v;}
+/* ---- tap-to-pick dropdowns for Reps / RIR / Time (no typing). Weight & others stay numeric inputs. ---- */
+var WK_SEL_OPTS={
+  reps:(function(){var a=[];for(var i=1;i<=40;i++)a.push(String(i));return a;})(),
+  rir:['0','1','2','3','4','5','F'],
+  time:['0:10','0:15','0:20','0:30','0:45','1:00','1:15','1:30','2:00','2:30','3:00','4:00','5:00']
+};
+function wkIsSelVar(v){return v==='reps'||v==='rir'||v==='time';}
+function wkSelHTML(v,s,ei,si){
+  var cur=String(s[v]==null?'':s[v]).trim();
+  var tgt=String((s.t&&s.t[v]!=null)?s.t[v]:'').trim();
+  var list=(WK_SEL_OPTS[v]||[]).slice();
+  if(cur!==''&&list.indexOf(cur)<0)list.unshift(cur);         // keep a legacy/custom value visible & selected
+  var empt=tgt!==''?('— ('+esc(tgt)+')'):'—';
+  var h='<select class="wk-sel-in '+(cur!==''?'set':'empty')+'" onchange="wkSelChange('+ei+','+si+',\''+v+'\',this)">';
+  h+='<option value=""'+(cur===''?' selected':'')+'>'+empt+'</option>';
+  list.forEach(function(o){h+='<option value="'+esc(o)+'"'+(cur===o?' selected':'')+'>'+esc(o)+'</option>';});
+  h+='<option value="__custom__">Custom…</option></select>';
+  return h;
+}
+function wkSelChange(ei,si,v,sel){
+  if(!WK)return;var en=WK.entries[ei];if(!en||!en.sets[si])return;
+  var val=sel?sel.value:'';
+  if(val==='__custom__'){
+    var old=String(en.sets[si][v]==null?'':en.sets[si][v]);
+    uiPrompt({title:'Custom '+wkVarLabel(v),label:'Enter a '+wkVarLabel(v)+' value for this set',value:old,ok:'Set'}).then(function(x){
+      if(x==null){wkRender();return;}                          // cancel → re-render resets the select to its previous value
+      en.sets[si][v]=(x||'').trim();wkPersistSoon();wkRender(); // re-render so the custom value becomes a selectable option
+    });
+    return;
+  }
+  en.sets[si][v]=val;wkPersistSoon();
+  if(sel)sel.className='wk-sel-in '+(val!==''?'set':'empty');  // recolour without a full re-render
+}
 function wkExCount(w){return (w&&w.sections||[]).reduce(function(a,s){return a+((s.exercises||[]).length);},0);}
 function wkDayExCount(dy){return (dy&&(dy.sections||[dy])||[]).reduce(function(a,s){return a+((s.exercises||[]).length);},0);}
 /* ---- shared exercise library (same dp_config 'exercise_library' the portal/client use) ---- */
@@ -1023,7 +1058,10 @@ function wkExHTML(en,ei){
   h+='<div class="wk-row" style="grid-template-columns:'+gt+'"><div class="wk-th">#</div>'+cols.map(function(v){return '<div class="wk-th">'+esc(wkVarLabel(v))+'</div>';}).join('')+'<div class="wk-th">✓</div></div>';
   en.sets.forEach(function(s,si){
     h+='<div class="wk-row" style="grid-template-columns:'+gt+'"><div class="wk-no">'+(si+1)+'</div>'+
-      cols.map(function(v){return '<input type="'+(v==='tempo'?'text':'number')+'" inputmode="'+(v==='tempo'?'text':'decimal')+'" value="'+esc(s[v]||'')+'" placeholder="'+esc((s.t&&s.t[v])||'')+'" oninput="wkSet('+ei+','+si+',\''+v+'\',this.value)">';}).join('')+
+      cols.map(function(v){
+        if(wkIsSelVar(v))return wkSelHTML(v,s,ei,si);
+        return '<input type="'+(v==='tempo'?'text':'number')+'" inputmode="'+(v==='tempo'?'text':'decimal')+'" value="'+esc(s[v]||'')+'" placeholder="'+esc((s.t&&s.t[v])||'')+'" oninput="wkSet('+ei+','+si+',\''+v+'\',this.value)">';
+      }).join('')+
       '<button class="wk-done'+(s.done?' on':'')+'" onclick="wkDone('+ei+','+si+')">'+(s.done?'✓':'')+'</button></div>';
   });
   var allDone=en.sets.length&&en.sets.every(function(s){return s.done;});
