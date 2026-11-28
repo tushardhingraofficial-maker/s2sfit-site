@@ -4160,6 +4160,8 @@ svg.ic.ic-sm{width:13px;height:13px;vertical-align:-1px;margin-right:0}
 .chat-emoji-pop{position:absolute;bottom:70px;left:12px;right:12px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:8px;display:flex;flex-wrap:wrap;gap:2px;box-shadow:0 10px 34px rgba(0,0,0,.45);max-height:176px;overflow-y:auto;z-index:7}
 .chat-emoji-pop button{background:none;border:none;font-size:22px;cursor:pointer;padding:4px 5px;border-radius:8px;line-height:1}
 .chat-emoji-pop button:hover{background:var(--card2)}
+.chat-emoji-head{width:100%;display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:2px 2px 6px;position:sticky;top:0;background:var(--card);z-index:1}
+.chat-emoji-pop .chat-emoji-close{font-size:17px!important;width:28px;height:28px;border-radius:50%;background:var(--card2)!important;border:1px solid var(--border)!important;color:var(--text);line-height:1;padding:0!important;display:flex;align-items:center;justify-content:center;flex:none}
 .chat-input textarea{flex:1;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:9px 16px;color:var(--text);font-size:16px;resize:none;font-family:var(--sans);line-height:1.4;max-height:120px;overflow-y:auto;box-sizing:border-box}
 .chat-input textarea:focus{outline:none;border-color:var(--red)}
 .chat-send-btn{flex:none;width:38px;height:38px;border-radius:50%!important;padding:0!important;font-size:14px;display:inline-flex;align-items:center;justify-content:center}
@@ -7987,7 +7989,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04wv';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04ww';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -23843,16 +23845,29 @@ function chatGrow(el){if(!el)return;el.style.height='auto';el.style.height=Math.
 function chatScrollBottom(){const b=$('chat-body');if(!b)return;b.scrollTop=b.scrollHeight;const sd=$('chat-scrolldown');if(sd)sd.classList.add('hidden');}
 let _chatScrollBound=false;
 function chatBindScroll(){const b=$('chat-body');if(!b||_chatScrollBound)return;_chatScrollBound=true;b.addEventListener('scroll',function(){const sd=$('chat-scrolldown');if(!sd)return;const near=(b.scrollHeight-b.scrollTop-b.clientHeight)<90;sd.classList.toggle('hidden',near);});}
-function chatToggleEmoji(){const p=$('chat-emoji-pop');if(!p)return;if(p.classList.contains('hidden')){p.innerHTML=CHAT_EMOJIS.map(function(e){return '<button type="button" onclick="chatInsertEmoji(\''+e+'\')">'+e+'</button>';}).join('');p.classList.remove('hidden');}else p.classList.add('hidden');}
+let _chatEmojiAway=null;
+function chatCloseEmoji(){const p=$('chat-emoji-pop');if(p)p.classList.add('hidden');if(_chatEmojiAway){document.removeEventListener('pointerdown',_chatEmojiAway,true);_chatEmojiAway=null;}}
+function chatToggleEmoji(){const p=$('chat-emoji-pop');if(!p)return;
+  if(p.classList.contains('hidden')){
+    p.innerHTML='<div class="chat-emoji-head">Emoji<button type="button" class="chat-emoji-close" onclick="chatCloseEmoji()" aria-label="Close">×</button></div>'+CHAT_EMOJIS.map(function(e){return '<button type="button" onclick="chatInsertEmoji(\''+e+'\')">'+e+'</button>';}).join('');
+    p.classList.remove('hidden');
+    setTimeout(function(){_chatEmojiAway=function(ev){const btn=$('chat-emoji-btn');if(p.contains(ev.target)||(btn&&btn.contains(ev.target)))return;chatCloseEmoji();};document.addEventListener('pointerdown',_chatEmojiAway,true);},0);
+  }else chatCloseEmoji();}
 function chatInsertEmoji(e){const t=$('chat-text');if(!t)return;const a=(t.selectionStart!=null)?t.selectionStart:t.value.length;const b=(t.selectionEnd!=null)?t.selectionEnd:a;t.value=t.value.slice(0,a)+e+t.value.slice(b);t.focus();try{t.selectionStart=t.selectionEnd=a+e.length;}catch(_){}chatGrow(t);}
 /* ───── GIF picker (Giphy) ───── */
-let GIF_KEY='';   // Giphy API key — coach sets it once via KV 'gif_api_key' (developers.giphy.com)
+let GIF_KEY='';   // Giphy API key — lives in the PUBLIC config (_gifKey) so CLIENTS can load GIFs too; KV 'gif_api_key' is the admin-only fallback
 let GIF_CTX='client',_gifDeb=null;
-(function(){try{DB.getKV&&DB.getKV('gif_api_key').then(function(v){if(v&&typeof v==='string'&&v.length>6)GIF_KEY=v;}).catch(function(){});}catch(e){}})();
+(function(){try{
+  // read the client-readable public config first (works for clients); only the admin KV as a fallback
+  DB.getConfig&&DB.getConfig().then(function(c){var k=c&&c._gifKey;if(k&&typeof k==='string'&&k.length>6){GIF_KEY=k;return;}if(DB.getKV)DB.getKV('gif_api_key').then(function(v){if(v&&typeof v==='string'&&v.length>6)GIF_KEY=v;}).catch(function(){});}).catch(function(){if(DB.getKV)DB.getKV('gif_api_key').then(function(v){if(v&&typeof v==='string'&&v.length>6)GIF_KEY=v;}).catch(function(){});});
+}catch(e){}})();
 function chatGifOpen(ctx){GIF_CTX=ctx||'client';let ov=$('gif-ov');if(!ov){ov=document.createElement('div');ov.id='gif-ov';ov.className='gif-ov';ov.innerHTML='<div class="gif-sheet"><div class="gif-top"><input id="gif-q" placeholder="Search GIFs…" autocomplete="off" oninput="chatGifSearch(this.value)"><button class="gif-x" onclick="chatGifClose()" aria-label="Close">×</button></div><div class="gif-grid" id="gif-grid"></div><div class="gif-credit">Powered by GIPHY</div></div>';document.body.appendChild(ov);ov.addEventListener('click',function(e){if(e.target===ov)chatGifClose();});}
   ov.classList.remove('hidden');const q=$('gif-q');if(q){q.value='';setTimeout(function(){q.focus();},50);}chatGifSearch('');}
 function chatGifClose(){const ov=$('gif-ov');if(ov)ov.classList.add('hidden');}
-function chatGifSetKey(){const k=prompt('Paste your free Giphy API key (from developers.giphy.com → Create an App → API):');if(k==null)return;const t=k.trim();if(!t)return;GIF_KEY=t;try{DB.setKV('gif_api_key',t);}catch(e){}chatGifSearch((($('gif-q')||{}).value)||'');}
+function chatGifSetKey(){const k=prompt('Paste your free Giphy API key (from developers.giphy.com → Create an App → API):');if(k==null)return;const t=k.trim();if(!t)return;GIF_KEY=t;
+  // store in the PUBLIC config so every client can read it (not just the admin KV); keep the KV copy for back-compat
+  (async function(){try{const cfg=(await DB.getConfig())||{};cfg._gifKey=t;await DB.saveConfig(cfg);}catch(e){}try{DB.setKV('gif_api_key',t);}catch(e){}})();
+  chatGifSearch((($('gif-q')||{}).value)||'');}
 function chatGifSearch(q){clearTimeout(_gifDeb);const g=$('gif-grid');
   if(!GIF_KEY){if(g)g.innerHTML='<div class="gif-load">GIFs need a free Giphy API key.'+((typeof ADMIN_OK!=='undefined'&&ADMIN_OK)?'<br><button class="sr-add" style="margin-top:12px" onclick="chatGifSetKey()">Add Giphy key</button>':'<br>Ask your coach to enable this.')+'</div>';return;}
   if(g&&!g.innerHTML)g.innerHTML='<div class="gif-load">Loading…</div>';_gifDeb=setTimeout(function(){
