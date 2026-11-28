@@ -7900,7 +7900,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04wg';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04wh';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -31141,7 +31141,7 @@ function wdAddBlank(){wdFlush();const s=wdSecById(WD_SEC)||wdSecs()[wdSecs().len
 function wdExSet(sid,eid,f,v){const e=wdEx(sid,eid);if(!e)return;e[f]=v;wdSave(true);}
 /* As the coach types/picks an exercise name, link it to the matching library exercise (exId) so the
    client inherits the library's video/cues/name — and any later library edit flows through automatically. */
-function wdExLink(sid,eid,val){const e=wdEx(sid,eid);if(!e)return;const n=(val||'').trim().toLowerCase();let lib=null;if(n){lib=(EX_LIB||[]).find(x=>(x.name||'').trim().toLowerCase()===n);}const newId=lib?lib.id:'';if((e.exId||'')!==newId){e.exId=newId;wdSave(true);}}
+function wdExLink(sid,eid,val){const e=wdEx(sid,eid);if(!e)return;const n=(val||'').trim().toLowerCase();let lib=null;if(n){lib=(EX_LIB||[]).find(x=>(x.name||'').trim().toLowerCase()===n);}const newId=lib?lib.id:'';if((e.exId||'')!==newId){e.exId=newId;try{wdFlush();}catch(_){}wdSave(true);try{wdRenderDesigner();}catch(_){}}}   // re-render on link so the exercise's demo video shows (the name field itself doesn't re-render on partial typing, so this only fires on a full-name / dropdown match)
 function wdExScheme(sid,eid,k,v){const e=wdEx(sid,eid);if(!e)return;e.scheme=e.scheme||{};e.scheme[k]=v;wdSave(true);}
 /* per-set targets: each exercise has sets:[{<var>:value}] so reps/weight/etc can differ per set */
 function wdExSets(e){if(Array.isArray(e.sets)&&e.sets.length)return e.sets;const n=Math.max(1,Math.min(20,parseInt(e.scheme&&e.scheme.sets)||3));const base={};((e.track&&e.track.length)?e.track:WD_DEFAULT_TRACK).forEach(v=>{base[v]=(e.scheme&&e.scheme[v]!=null&&e.scheme[v]!=='')?e.scheme[v]:'';});e.sets=Array.from({length:n},()=>Object.assign({},base));return e.sets;}
@@ -31308,6 +31308,7 @@ function wdExHTML(s,e,i,n){
   h+='</div><div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;align-items:center"><button class="btn-xxs" onclick="wdAddSetRow(\''+sid+'\',\''+eid+'\')">＋ set</button><button class="btn-xxs" title="Add a drop set — lower the weight and go again; the client logs it as its own set" onclick="wdAddSetRow(\''+sid+'\',\''+eid+'\',\'drop\')" style="color:var(--gold)">＋ drop</button><button class="btn-xxs" title="Add a rest-pause burst — short rest then a few more reps; logged as its own set" onclick="wdAddSetRow(\''+sid+'\',\''+eid+'\',\'rp\')" style="color:#8b5cf6">＋ rest-pause</button><span class="wd-mini" style="color:var(--muted)">tip: tap a set’s number to tag ↓D / RP</span></div>';
   h+='<div class="wd-alts"><span class="wd-mini">Alt:</span>'+((e.alts||[]).map((a,ai)=>'<span class="wd-altchip">'+esc(a)+' <button onclick="wdDelAlt(\''+sid+'\',\''+eid+'\','+ai+')">×</button></span>').join(''))+'<button class="btn-xxs" onclick="wdAddAlt(\''+sid+'\',\''+eid+'\')">＋ alt</button></div>';
   h+='<div class="wd-ex-foot"><button class="btn-xxs'+(e.linkNext?' solid':'')+'" onclick="wdToggleLink(\''+sid+'\',\''+eid+'\')"'+(i===n-1?' disabled':'')+'>⛓ superset w/ next</button>'+(lib&&lib.video?'<a class="btn-xxs" href="'+esc(lib.video)+'" target="_blank" rel="noopener">▶ demo</a>':'')+(lib?'<button class="btn-xxs" title="Edit this exercise in your library — fix the video, cues, etc. (updates everywhere it’s used)" onclick="wdEditInLib(\''+e.exId+'\')">✎ lib</button>':'')+'<input class="wd-note" placeholder="note (optional)" value="'+esc(e.notes||'')+'" oninput="wdExSet(\''+sid+'\',\''+eid+'\',\'notes\',this.value)"></div>';
+  h+=edTrExVidHTML(e);   // visible demo-video thumbnail at the bottom of the exercise when it's linked to the library
   h+='</div>';return h;
 }
 function wdRailView(v){WD_RAIL_VIEW=v;wdRenderRail();}
