@@ -4267,7 +4267,7 @@ body.chat-thread-open #chat-thread-view .chat-thread-head{padding-top:calc(12px 
 .gif-grid{overflow-y:auto;padding:4px 10px 8px;columns:3;column-gap:6px}
 .gif-item{break-inside:avoid;border:none;background:none;padding:0;margin:0 0 6px;cursor:pointer;width:100%;display:block;border-radius:9px;overflow:hidden}
 .gif-item img{width:100%;display:block;border-radius:9px;background:var(--card2)}
-.gif-load{columns:1;padding:30px;text-align:center;color:var(--muted);font-size:13px}
+.gif-load{column-span:all;padding:30px;text-align:center;color:var(--muted);font-size:13px}
 .gif-credit{text-align:center;font-size:9.5px;color:var(--muted);letter-spacing:.08em;padding:4px 0 calc(8px + env(safe-area-inset-bottom))}
 /* saved replies */
 .sr-h{display:flex;align-items:center;gap:7px;font-weight:800;font-size:15px;padding:4px 8px 10px;border-bottom:1px solid var(--border);margin-bottom:6px}
@@ -7506,8 +7506,8 @@ img,svg,canvas,video{max-width:100%}
     <div class="modal-head"><h2><svg class="hd-ic"><use href="#ic-scale"/></svg>Log your weight</h2><span class="sp"></span><button class="icon-x" onclick="closeWeightModal()">×</button></div>
     <div class="modal-body">
       <div class="row" style="align-items:flex-end">
-        <div class="field" style="max-width:170px"><label class="lab">Date</label><input id="wt-date" type="date"></div>
-        <div class="field"><label class="lab">Weight (kg)</label><input id="wt-val" type="number" step="any" placeholder="74.5" onkeydown="if(event.key==='Enter')mtSaveWeight()"></div>
+        <div class="field" style="max-width:170px"><label class="lab">Date</label><input id="wtm-date" type="date"></div>
+        <div class="field"><label class="lab">Weight (kg)</label><input id="wtm-val" type="number" step="any" placeholder="74.5" onkeydown="if(event.key==='Enter')mtSaveWeight()"></div>
       </div>
       <button class="btn btn-primary" style="width:100%" onclick="mtSaveWeight()">Save weight</button>
       <p class="small" style="margin-top:8px">This adds to your weight goal in Goals &amp; Milestones.</p>
@@ -7989,7 +7989,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04wx';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04wy';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -9447,6 +9447,7 @@ async function tryRestore(){
 }
 
 async function enterPortal(restore){
+  ['register','admin-login'].forEach(id=>{const e=$(id);if(e)e.classList.add('hidden');});   // enterPortal previously only hid #login/#paused-screen, leaving the sign-up form visible after registering
   $('login').classList.add('hidden');{const ps=$('paused-screen');if(ps)ps.classList.add('hidden');}$('portal').classList.remove('hidden');
   $('p-hello').textContent='Welcome back';$('p-title').textContent=(SESSION.name||SESSION.email);
   const sw=$('client-switch');if(sw)sw.value=SESSION.id;
@@ -9459,7 +9460,7 @@ async function enterPortal(restore){
   $('log-date').value=todayISO();$('gro-start').value=todayISO();
   quickRangeInit();
   renderPlan();
-  try{if(!ADMIN_OK)setTimeout(function(){try{pushMaybePrompt();}catch(e){}},1800);}catch(e){}   // one-time soft nudge to turn on reminders
+  try{var _wp=(PLAN&&PLAN.milestones&&PLAN.milestones.onboardPending&&!PLAN.milestones.onboardDone);if(!ADMIN_OK&&!_wp)setTimeout(function(){try{pushMaybePrompt();}catch(e){}},1800);}catch(e){}   // one-time soft nudge to turn on reminders — NOT over the first-login wizard (it fires on onbWizClose instead)
   // On a page refresh (auto-restore), return the client to the screen they were on; otherwise land on Home.
   var _ns=(restore&&!ADMIN_OK)?navStateGet():null;
   if(_ns&&_ns.section&&_ns.section!=='home'&&sectionLive(_ns.section)){
@@ -9524,7 +9525,7 @@ function onbWizStart(){
   o.classList.add('open');document.body.classList.add('onb-wiz-open');
   onbWizRender();
 }
-function onbWizClose(){const o=$('onb-wizard');if(o)o.classList.remove('open');document.body.classList.remove('onb-wiz-open');}
+function onbWizClose(){const o=$('onb-wizard');if(o)o.classList.remove('open');document.body.classList.remove('onb-wiz-open');if(!ADMIN_OK){setTimeout(function(){try{pushMaybePrompt();}catch(e){}},600);try{maybeFullTour();}catch(e){}}}   // new clients get the reminders nudge + tour offer only AFTER finishing onboarding (not over the wizard)
 function onbWizCapture(){const g=id=>{const e=$('onbw-'+id);return e?e.value:undefined;};
   ['goal','goalWeight','weight','height','sex','age','diet','level','activity','bodyFat','bodyType','waist','hips','note'].forEach(k=>{const v=g(k);if(v!==undefined)ONB_WIZ[k]=v;});}
 function onbWizRender(){
@@ -10582,7 +10583,7 @@ async function renderRewards(){
     :'<button class="rw-cta locked" disabled><span class="rw-cta-lock">'+eicon('lock')+'</span> <b>'+toGo+' pts</b> to unlock your reward</button>'
   ):'';
   let h='<div class="card rw-card"><div class="card-body rw-body">'+
-    '<div class="rw-top"><div class="rw-badge'+(canRedeem?' glow':'')+'">🏆</div><div><div class="rw-h">Your rewards</div><div class="rw-sub">'+(canRedeem?'You’ve unlocked a reward! '+eicon('celebrate')+'':(total>0?'You’re making great progress — keep it up!':'Start earning points with your coach'))+'</div></div></div>'+
+    '<div class="rw-top"><div class="rw-badge'+(canRedeem?' glow':'')+'">'+eicon('trophy')+'</div><div><div class="rw-h">Your rewards</div><div class="rw-sub">'+(canRedeem?'You’ve unlocked a reward! '+eicon('celebrate')+'':(total>0?'You’re making great progress — keep it up!':'Start earning points with your coach'))+'</div></div></div>'+
     '<div class="rw-stats">'+
       '<div class="rw-stat"><div class="rw-stat-v">'+total.toLocaleString()+'</div><div class="rw-stat-k">S2S Points</div></div>'+
       '<div class="rw-stat"><div class="rw-stat-v" style="color:var(--good)">'+esc(rwMoney(cfg,total))+'</div><div class="rw-stat-k">plan value</div></div>'+
@@ -10970,7 +10971,7 @@ function renderDietToday(){
     '<button onclick="setNutri(\'log\')"><span class="qi">'+eicon('plus')+'</span><span class="ql">Log food</span></button>'+
     '<button onclick="setNutri(\'swap\')"><span class="qi">'+eicon('repeat')+'</span><span class="ql">Swap food</span></button>'+
     '<button onclick="foodPlanOpen(\'dp\')"><span class="qi">'+eicon('crystal')+'</span><span class="ql">Plan a meal</span></button>'+
-    '<button onclick="setNutri(\'prep\')"><span class="qi">🧑‍🍳</span><span class="ql">Meal prep</span></button></div>';
+    '<button onclick="setNutri(\'prep\')"><span class="qi">'+eicon('fork')+'</span><span class="ql">Meal prep</span></button></div>';
   html+='<div class="dp-tools-h">Food tools</div><div class="dp-qa dp-qa3">'+
     '<button onclick="setNutri(\'findfood\')"><span class="qi">'+eicon('search')+'</span><span class="ql">Find food</span></button>'+
     '<button onclick="setNutri(\'breakdown\')"><span class="qi">'+eicon('clipboard')+'</span><span class="ql">Recipe breakdown</span></button>'+
@@ -23035,11 +23036,11 @@ function mtDoAction(id){const t=(MT_LIST||[]).find(x=>x.id===id);if(!t)return;
   if(t.action_type==='checkin'){setSection('checkins');setTimeout(()=>{const el=$('view-checkins');if(el)el.scrollIntoView();},80);toast('Fill in your check-in below');}
   else if(t.action_type==='weight'){mtOpenWeight(t);}
 }
-function mtOpenWeight(task){MT_WEIGHT_TASK=task||null;$('wt-date').value=todayISO();$('wt-val').value='';$('weight-modal').classList.add('open');setTimeout(()=>{try{$('wt-val').focus();}catch(e){}},30);}
+function mtOpenWeight(task){MT_WEIGHT_TASK=task||null;$('wtm-date').value=todayISO();$('wtm-val').value='';$('weight-modal').classList.add('open');setTimeout(()=>{try{$('wtm-val').focus();}catch(e){}},30);}
 function closeWeightModal(){$('weight-modal').classList.remove('open');}
 async function mtSaveWeight(){
-  const v=parseFloat($('wt-val').value);if(!(v>0)){toast('Enter your weight',true);return;}
-  const d=$('wt-date').value||todayISO();
+  const v=parseFloat($('wtm-val').value);if(!(v>0)){toast('Enter your weight',true);return;}
+  const d=$('wtm-date').value||todayISO();
   const goals=(PLAN.milestones&&PLAN.milestones.goals)||[];
   const g=goals.find(x=>/weight/i.test((x.metric||'')+' '+(x.name||'')));
   if(!g){toast('Ask your coach to set up a weight goal in Goals & Milestones first',true);return;}
@@ -23282,9 +23283,9 @@ function bdMatch(me,them){
 async function renderBuddy(){
   const host=$('buddy-host');if(!host)return;
   host.innerHTML='<div class="buddy-tabs">'+
-    '<button id="bd-tab-find" class="buddy-tab'+(BD_TAB==='find'?' active':'')+'" onclick="buddyTab(\'find\')">🔎 Find a buddy</button>'+
-    '<button id="bd-tab-me" class="buddy-tab'+(BD_TAB==='me'?' active':'')+'" onclick="buddyTab(\'me\')">🧍 My profile</button>'+
-    '<button id="bd-tab-msgs" class="buddy-tab'+(BD_TAB==='msgs'?' active':'')+'" onclick="buddyTab(\'msgs\')">💬 Messages <span class="chat-badge hidden" id="bd-msg-badge"></span></button>'+
+    '<button id="bd-tab-find" class="buddy-tab'+(BD_TAB==='find'?' active':'')+'" onclick="buddyTab(\'find\')">'+svgIcon('search')+' Find a buddy</button>'+
+    '<button id="bd-tab-me" class="buddy-tab'+(BD_TAB==='me'?' active':'')+'" onclick="buddyTab(\'me\')">'+svgIcon('person')+' My profile</button>'+
+    '<button id="bd-tab-msgs" class="buddy-tab'+(BD_TAB==='msgs'?' active':'')+'" onclick="buddyTab(\'msgs\')">'+svgIcon('chat')+' Messages <span class="chat-badge hidden" id="bd-msg-badge"></span></button>'+
     '</div><div id="bd-pane"></div>';
   try{BD_PROFILE=await DB.buddyGetMine();}catch(e){BD_PROFILE=null;}
   if(BD_TAB==='me')bdRenderMe();
