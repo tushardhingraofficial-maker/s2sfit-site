@@ -7979,7 +7979,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04wm';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04wn';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -8674,7 +8674,7 @@ const DB={
     if(this.mode==='cloud'){const{data:pl}=await this.sb.from('dp_plans').select('client_id').eq('client_id',clientId).maybeSingle();if(pl)await this.sb.from('dp_plans').update({onboarding,updated_at:new Date().toISOString()}).eq('client_id',clientId);else await this.sb.from('dp_plans').insert({client_id:clientId,title:'Diet Plan',onboarding});return;}
     const arr=this._get('plans');let p=arr.find(x=>x.client_id===clientId);if(!p){p={client_id:clientId,title:'Diet Plan'};arr.push(p);}p.onboarding=onboarding;this._set('plans',arr);return;},
   async sendMessage(clientId,text,media,asCoach){text=String(text||'').trim();if(!text&&!media)return;
-    const _c=asCoach||((typeof COACH!=='undefined')?COACH:null);   // asCoach overrides the signed-in coach (e.g. owner replying as a specific coach)
+    const _c=asCoach||((typeof COACH!=='undefined')?COACH:null)||((typeof ADMIN_OK!=='undefined'&&ADMIN_OK&&typeof OWNER_COACH!=='undefined')?OWNER_COACH:null);   // asCoach overrides; the owner (admin, no coach) posts as "Tushar Dhingra"; clients never get tagged
     if(_c&&_c.name)media=Object.assign({},media,{_coach:{id:_c.id,name:_c.name}});   // tag which coach sent it
     if(this.mode==='api')return this._api('sendMessage',{clientId:clientId||null,text,media:media||null});
     const admin=(typeof ADMIN_OK!=='undefined'&&ADMIN_OK===true);
@@ -8702,7 +8702,7 @@ const DB={
     if(this.mode==='cloud'){await this.sb.from('dp_messages').delete().eq('group_id',id);await this.sb.from('dp_groups').delete().eq('id',id);return;}
     this._set('groups',this._get('groups').filter(g=>g.id!==id));this._set('messages',this._get('messages').filter(m=>m.group_id!==id));},
   async sendGroupMessage(groupId,text,media,asCoach){text=String(text||'').trim();if(!text&&!media)return;
-    const _c=asCoach||((typeof COACH!=='undefined')?COACH:null);   // asCoach overrides the signed-in coach (e.g. owner replying as a specific coach)
+    const _c=asCoach||((typeof COACH!=='undefined')?COACH:null)||((typeof ADMIN_OK!=='undefined'&&ADMIN_OK&&typeof OWNER_COACH!=='undefined')?OWNER_COACH:null);   // owner posts as "Tushar Dhingra"; clients never tagged
     if(_c&&_c.name)media=Object.assign({},media,{_coach:{id:_c.id,name:_c.name}});   // tag which coach sent it
     if(this.mode==='api')return this._api('sendGroupMessage',{groupId,text,media:media||null});
     const admin=(typeof ADMIN_OK!=='undefined'&&ADMIN_OK===true);
@@ -9314,6 +9314,8 @@ async function _deriveKey(password,saltHex){const km=await crypto.subtle.importK
 async function _encSecret(plain,password,saltHex){const key=await _deriveKey(password,saltHex);const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(plain));return {iv:_bytesToHex(iv),ct:_bytesToHex(ct)};}
 async function _decSecret(enc,password,saltHex){const key=await _deriveKey(password,saltHex);const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:_hexToBytes(enc.iv)},key,_hexToBytes(enc.ct));return new TextDecoder().decode(pt);}
 const OWNER_NAME='Tushar Dhingra';   // display name for the owner / master account
+const OWNER_COACH={id:'owner',name:OWNER_NAME};   // the owner posts & is messaged AS a named coach ("Tushar Dhingra")
+function chatAllCoaches(list){const base=(Array.isArray(list)?list:[]).filter(c=>c&&c.id&&c.name&&c.active!==false&&c.id!=='owner');return [OWNER_COACH].concat(base);}   // owner (Tushar) is always a selectable coach for client DMs + the view-as switcher
 /* keep a pre-auth-readable copy of the coach roster in the PUBLIC config (getConfig is read on the
    login screen; plain getKV is not), so the coach sign-in picker can list coaches before anyone logs in */
 async function coachMirrorToConfig(list){const arr=Array.isArray(list)?list:[];
@@ -23901,7 +23903,7 @@ async function renderChatThreadsList(){
   [['adr-chat-badge'],['adr-rail-chat']].forEach(([id])=>{const b=$(id);if(b){if(totalUnread){b.textContent=totalUnread;b.classList.remove('hidden');}else b.classList.add('hidden');}});
   // per-coach 1:1 DMs are routed through the client rows + the "viewing as" switcher — keep them out of the flat Groups list
   const vgroups=(groups||[]).filter(g=>!isCoachDM(g));
-  let coaches=[];try{coaches=((await loadCoaches())||[]).filter(c=>c&&c.id&&c.name&&c.active!==false);}catch(e){}
+  let coaches=[];try{coaches=chatAllCoaches(await loadCoaches());}catch(e){coaches=chatAllCoaches([]);}
   if(CHAT_ADM_COACHVIEW===null)CHAT_ADM_COACHVIEW=(COACH&&COACH.id)||'';   // a signed-in coach defaults to their own view
   const cv=CHAT_ADM_COACHVIEW;
   const cvName=cv?(((coaches.find(c=>c.id===cv))||{}).name||'Coach'):'';
@@ -23922,7 +23924,7 @@ function chatAdmSetCoachView(v){CHAT_ADM_COACHVIEW=v||'';renderChatThreadsList()
 async function admClientOpen(cid){
   const cv=CHAT_ADM_COACHVIEW;
   if(cv){
-    let coaches=[];try{coaches=(await loadCoaches())||[];}catch(e){}
+    let coaches=[];try{coaches=chatAllCoaches(await loadCoaches());}catch(e){coaches=chatAllCoaches([]);}
     const co=coaches.find(c=>c.id===cv)||{id:cv,name:'Coach'};
     const gid=coachDmId(cid,cv);
     let groups=[];try{groups=await DB.listGroups();}catch(e){}
@@ -24134,7 +24136,7 @@ async function ensureCoachGroups(force){
   try{gs=await DB.listGroups();}catch(e){gs=[];}
   try{ov=await DB.overview();}catch(e){}
   try{coaches=(await loadCoaches())||[];}catch(e){}
-  coaches=(coaches||[]).filter(c=>c&&c.id&&c.name&&c.active!==false);
+  coaches=chatAllCoaches(coaches);   // includes the owner (Tushar) so every client gets a "Coach Tushar" DM too
   if(!coaches.length)return;
   const archived=new Set();(ov&&ov.plans||[]).forEach(p=>{if(p&&p.archived&&p.client_id)archived.add(p.client_id);});
   const active=(cs||[]).filter(c=>c&&c.id&&!archived.has(c.id));
