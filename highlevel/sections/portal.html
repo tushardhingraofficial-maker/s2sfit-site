@@ -3012,6 +3012,7 @@ svg.ic{width:22px;height:22px;display:inline-block;vertical-align:middle;flex:no
 #portal .wrap{padding-bottom:calc(104px + env(safe-area-inset-bottom))}
 #bottom-nav .chat-badge{position:absolute;top:0;right:calc(50% - 20px)}
 .bnav-flag .bnav-ic{color:var(--red)}
+#bottom-nav .bnav-btn[data-sec="chat"] .bnav-ic{color:var(--red)}   /* highlight the Coaching / Inbox chat icon in red */
 @media(min-width:900px){#bottom-nav{justify-content:center;gap:6px;padding-left:12px;padding-right:12px}.bnav-btn{flex:0 1 130px;max-width:150px}}
 /* More menu (header actions folded into the task bar) */
 #more-backdrop{position:fixed;inset:0;z-index:1195;background:rgba(0,0,0,.4)}
@@ -4123,6 +4124,7 @@ body.tw-dragging{user-select:none;-webkit-user-select:none}
 .chat-coachview{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);background:var(--card2)}
 .chat-coachview .ccv-lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);flex:none;font-family:var(--disp)}
 .chat-coachview .ccv-sel{flex:1;min-width:0;font-size:14px;font-weight:700;padding:7px 10px;border-radius:9px;border:1px solid var(--border);background:var(--card);color:var(--text)}
+svg.ic.ic-sm{width:13px;height:13px;vertical-align:-1px;margin-right:0}
 .ccv-note{padding:7px 12px;font-size:11.5px;color:var(--muted);background:rgba(232,23,13,.05);border-bottom:1px solid var(--border)}
 @keyframes chatpop{from{transform:translateY(6px);opacity:.4}to{transform:translateY(0);opacity:1}}
 .chat-msg.fresh{animation:chatpop .18s ease}
@@ -7894,7 +7896,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04we';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04wf';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -9578,6 +9580,7 @@ const SVG_ICONS={
   square:'<rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>',
   health:'<path d="M3 12h4l2 6 4-14 2 8h6"/>',
   plus:'<path d="M12 5v14M5 12h14"/>',
+  lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
   link:'<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
   settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
   bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
@@ -23682,9 +23685,9 @@ async function renderChatList(){
   const lastCoach=coachMsgs.length?coachMsgs[coachMsgs.length-1]:null;
   const coachUnread=(u&&(u.coach!=null?u.coach:u.total))||0;
   const coachNm=clientCoachLabel(coachMsgs);
-  entries.push({gid:null,icon:'people',title:'👥 Your Coaching Team',sub:'All your coaches — any of them can reply',last:lastCoach,unread:coachUnread,at:(lastCoach&&lastCoach.created_at)||''});
+  entries.push({gid:null,icon:'people',title:'Your Coaching Team',sub:'All your coaches — any of them can reply',last:lastCoach,unread:coachUnread,at:(lastCoach&&lastCoach.created_at)||''});
   for(const g of (CLIENT_GROUPS||[])){let gm=[];try{gm=await DB.listGroupMessages(g.id);}catch(e){}const last=gm.length?gm[gm.length-1]:null;const isAll=isAllMembersGroup(g);const isDM=isCoachDM(g);
-    entries.push({gid:g.id,icon:isDM?'person':'people',title:isDM?('🧑‍🏫 Coach '+(g.name||'')):(g.name||'Group'),sub:isDM?'Private 1:1 with your coach':(isAll?('Everyone at S2S Fit · '+((g.members&&g.members.length)||0)+' members'):((g.members&&g.members.length)?g.members.length+' members':'Group chat')),last:last,unread:0,at:(last&&last.created_at)||'',isAll:isAll,isDM:isDM});}
+    entries.push({gid:g.id,icon:isDM?'person':'people',title:isDM?('Coach '+(g.name||'')):(g.name||'Group'),sub:isDM?'Private 1:1 with your coach':(isAll?('Everyone at S2S Fit · '+((g.members&&g.members.length)||0)+' members'):((g.members&&g.members.length)?g.members.length+' members':'Group chat')),last:last,unread:0,at:(last&&last.created_at)||'',isAll:isAll,isDM:isDM});}
   let list=entries.filter(e=>!q||String(e.title||'').toLowerCase().indexOf(q)>=0||(e.gid===null&&'coach your coaching team'.indexOf(q)>=0));
   // Your Coaching Team on top; private coach 1:1s next; the All-Members community chat; then other groups by recency
   list.sort((a,b)=>{if(a.gid===null)return -1;if(b.gid===null)return 1;if(a.isDM&&!b.isDM)return -1;if(b.isDM&&!a.isDM)return 1;if(a.isAll&&!b.isAll)return -1;if(b.isAll&&!a.isAll)return 1;return String(b.at||'').localeCompare(String(a.at||''));});
@@ -23768,14 +23771,14 @@ async function renderChatThreadsList(){
   const cvName=cv?(((coaches.find(c=>c.id===cv))||{}).name||'Coach'):'';
   let html='';
   if(coaches.length){
-    html+='<div class="chat-coachview"><span class="ccv-lbl">Viewing as</span><select class="ccv-sel" onchange="chatAdmSetCoachView(this.value)"><option value=""'+(cv===''?' selected':'')+'>👥 All coaches (team)</option>'+
-      coaches.map(c=>'<option value="'+esc(c.id)+'"'+(cv===c.id?' selected':'')+'>🧑‍🏫 '+esc(c.name)+'</option>').join('')+'</select></div>';
+    html+='<div class="chat-coachview"><span class="ccv-lbl">Viewing as</span><select class="ccv-sel" onchange="chatAdmSetCoachView(this.value)"><option value=""'+(cv===''?' selected':'')+'>All coaches (team)</option>'+
+      coaches.map(c=>'<option value="'+esc(c.id)+'"'+(cv===c.id?' selected':'')+'>'+esc(c.name)+'</option>').join('')+'</select></div>';
   }
   if(cv)html+='<div class="ccv-note">Client rows below open your <b>private 1:1</b> with each client. Switch to “All coaches” for the shared team chat.</div>';
   if(vgroups.length){html+='<div class="uline" style="padding:8px 12px 4px">Groups</div>'+
     vgroups.map(g=>'<div class="chat-thread grp'+(CHAT_ADM_GROUP===g.id?' active':'')+'" onclick="openGroupThread(\''+g.id+'\')">'+chatAvatar(g.name,true)+'<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(g.name)+'</b></div><div class="small" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+((g.members||[]).length)+' member'+((g.members||[]).length===1?'':'s')+'</div></div></div>').join('');}
   html+='<div class="uline" style="padding:8px 12px 4px">'+(cv?('1:1 chats · as '+esc(cvName)):'Clients · team chat')+'</div>';
-  html+=rows.map(t=>'<div class="chat-thread'+(CHAT_ADM_CLIENT===t.client_id?' active':'')+'" onclick="admClientOpen(\''+t.client_id+'\')">'+chatAvatar(nameById[t.client_id]||'Client')+'<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(nameById[t.client_id]||'Client')+'</b>'+((!cv&&t.unread)?'<span class="chat-badge" style="background:var(--red);color:#fff">'+t.unread+'</span>':'')+'</div><div class="small" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(cv?('🔒 private 1:1'):((t.last_sender==='admin'?'You: ':'')+esc(t.last_text||'— no messages —')))+'</div></div></div>').join('');
+  html+=rows.map(t=>'<div class="chat-thread'+(CHAT_ADM_CLIENT===t.client_id?' active':'')+'" onclick="admClientOpen(\''+t.client_id+'\')">'+chatAvatar(nameById[t.client_id]||'Client')+'<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(nameById[t.client_id]||'Client')+'</b>'+((!cv&&t.unread)?'<span class="chat-badge" style="background:var(--red);color:#fff">'+t.unread+'</span>':'')+'</div><div class="small" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(cv?(svgIcon('lock','ic-sm')+' private 1:1'):((t.last_sender==='admin'?'You: ':'')+esc(t.last_text||'— no messages —')))+'</div></div></div>').join('');
   host.innerHTML=html;
 }
 function chatAdmSetCoachView(v){CHAT_ADM_COACHVIEW=v||'';renderChatThreadsList();}
@@ -23791,7 +23794,7 @@ async function admClientOpen(cid){
     await openGroupThread(gid);
     CHAT_ADM_ASCOACH={id:co.id,name:co.name};   // replies in this thread are tagged as the viewed coach
     let cl={};try{cl=(await DB.listClients()).find(x=>x.id===cid)||{};}catch(e){}
-    const head=$('chat-adm-thread-head');if(head)head.innerHTML='<b>'+esc(cl.name||cl.email||'Client')+'</b> <span class="pill">🔒 1:1 · as '+esc(co.name)+'</span><div style="flex:1"></div>';
+    const head=$('chat-adm-thread-head');if(head)head.innerHTML='<b>'+esc(cl.name||cl.email||'Client')+'</b> <span class="pill">'+svgIcon('lock','ic-sm')+' 1:1 · as '+esc(co.name)+'</span><div style="flex:1"></div>';
   }else{
     CHAT_ADM_ASCOACH=null;
     openChatThread(cid);
@@ -23947,7 +23950,7 @@ async function chatAdmPoll(){await chatAdmBadge();const cd=$('chat-dock'),td=$('
   if(td&&getComputedStyle(td).display!=='none'&&!td.classList.contains('hidden'))renderDrawerTasks();}
 /* ---- "All Members" auto-group: every active client is always in it, so the whole of S2S Fit can chat together ---- */
 const ALL_GROUP_ID='grp-all-members';
-const ALL_GROUP_NAME='🏠 S2S Fit — All Members';
+const ALL_GROUP_NAME='S2S Fit — All Members';
 let ALLGRP_SYNCING=false;
 function isAllMembersGroup(g){return !!(g&&g.id===ALL_GROUP_ID);}
 /* Reconciles the all-members group's member list to = every non-archived client. Admin-only (only an admin token may saveGroup).
@@ -24012,7 +24015,7 @@ async function saveGroupForm(){const name=($('grp-name').value||'').trim();if(!n
 async function renderGroupList(){const host=$('grp-list');if(!host)return;let gs=[];try{gs=await DB.listGroups();}catch(e){}
   gs=(gs||[]).slice().sort((a,b)=>(isAllMembersGroup(b)?1:0)-(isAllMembersGroup(a)?1:0));   // all-members group on top
   host.innerHTML=gs.length?gs.map(g=>{
-    if(isAllMembersGroup(g))return '<div class="task-item" style="border:1px solid var(--red);background:rgba(232,23,13,.05)"><div style="flex:1"><b>'+esc(g.name)+'</b> <span class="pill">AUTO · EVERYONE</span><div class="small">'+((g.members||[]).length)+' member'+((g.members||[]).length===1?'':'s')+' · every active client is added automatically</div></div><div style="white-space:nowrap;flex:none"><button class="btn-sm" onclick="syncAllMembersGroup()" title="Re-check and add any new clients now">🔄 Sync now</button></div></div>';
+    if(isAllMembersGroup(g))return '<div class="task-item" style="border:1px solid var(--red);background:rgba(232,23,13,.05)"><div style="flex:1"><b>'+svgIcon('home')+' '+esc(g.name)+'</b> <span class="pill">AUTO · EVERYONE</span><div class="small">'+((g.members||[]).length)+' member'+((g.members||[]).length===1?'':'s')+' · every active client is added automatically</div></div><div style="white-space:nowrap;flex:none"><button class="btn-sm" onclick="syncAllMembersGroup()" title="Re-check and add any new clients now">'+svgIcon('refresh')+' Sync now</button></div></div>';
     return '<div class="task-item"><div style="flex:1"><b>👥 '+esc(g.name)+'</b><div class="small">'+((g.members||[]).length)+' member'+((g.members||[]).length===1?'':'s')+'</div></div><div style="white-space:nowrap;flex:none"><button class="btn-sm" onclick="editGroup(\''+g.id+'\')">Edit</button> <button class="icon-x" onclick="deleteGroupUI(\''+g.id+'\')" title="Delete group">×</button></div></div>';
   }).join(''):'<div class="small">No groups yet.</div>';}
 async function editGroup(id){let g={};try{g=(await DB.listGroups()).find(x=>x.id===id)||{};}catch(e){}

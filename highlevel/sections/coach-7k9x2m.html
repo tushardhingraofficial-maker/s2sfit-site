@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light" data-version="2026-11-26b">
+<html lang="en" data-theme="light" data-version="2026-11-26c">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -249,6 +249,7 @@ function num(v){var n=Number(v);return isFinite(n)?n:0;}
 function fmtDate(iso){iso=String(iso||'').slice(0,10);if(!iso)return '';var d=new Date(iso+'T00:00:00');if(isNaN(d))return iso;return d.toLocaleDateString(undefined,{month:'short',day:'numeric'});}
 function ago(iso){var t=Date.parse(iso||'');if(!t)return '';var s=Math.max(0,(Date.now()-t)/1000);if(s<60)return 'just now';var m=s/60;if(m<60)return Math.floor(m)+'m ago';var h=m/60;if(h<24)return Math.floor(h)+'h ago';var dd=h/24;if(dd<7)return Math.floor(dd)+'d ago';return fmtDate(iso);}
 function initial(s){return (String(s||'?').trim().charAt(0)||'?').toUpperCase();}
+function safeName(n){n=String(n==null?'':n).trim();return (!n||n.indexOf('@')>=0)?'':n;}   /* never show an email as a name */
 function toast(msg,bad){var t=document.createElement('div');t.className='toast';if(bad)t.style.background='var(--crit)';t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},2600);}
 function calOf(t){t=t||{};if(t.cal!=null)return num(t.cal);return num(t.p)*4+num(t.c)*4+num(t.f)*9;}
 function sumNutr(items){return (items||[]).reduce(function(a,it){a.cal+=num(it&&it.cal);a.p+=num(it&&it.p);a.c+=num(it&&it.c);a.f+=num(it&&it.f);return a;},{cal:0,p:0,c:0,f:0});}
@@ -447,7 +448,7 @@ function cmtBlock(postType,pk,list){
   list=list||[];
   var inner=list.slice().sort(function(a,b){return String(a.created_at)<String(b.created_at)?-1:1;}).map(function(c){
     var mine=(c.sender==='admin'||c.by==='admin'||c.author==='admin');
-    var who=mine?'You':esc(c.sender_name||CUR.name||'Client');
+    var who=mine?'You':esc(safeName(c.sender_name)||CUR.name||'Member');
     return '<div class="c'+(mine?' me':'')+'"><b>'+who+'</b> '+esc(c.text||'')+'</div>';
   }).join('');
   var iid='ci_'+postType+'_'+String(pk).replace(/[^a-z0-9]/gi,'');
@@ -1617,8 +1618,8 @@ function openChat(){
 function renderChat(msgs){
   var html='<div class="cm-msgs">'+(msgs.length?msgs.map(function(m){
     var mine=(m.sender==='admin');
-    return '<div class="cm-msg '+(mine?'me':'them')+'">'+(!mine?'<b style="font-size:11px;opacity:.75">'+esc(m.sender_name||CUR.name||'Client')+'</b><br>':'')+esc(m.text||'')+'<div class="t">'+ago(m.created_at)+'</div></div>';
-  }).join(''):'<div class="empty">No messages yet — say hello 👋</div>')+'</div>';
+    return '<div class="cm-msg '+(mine?'me':'them')+'">'+(!mine?'<b style="font-size:11px;opacity:.75">'+esc(safeName(m.sender_name)||CUR.name||'Member')+'</b><br>':'')+esc(m.text||'')+'<div class="t">'+ago(m.created_at)+'</div></div>';
+  }).join(''):'<div class="empty">No messages yet — say hello</div>')+'</div>';
   var cb=$('chat-body');if(cb)cb.innerHTML=html;
   // sticky composer at the very bottom of the app
   var old=$('chat-composer');if(old)old.remove();
