@@ -7979,7 +7979,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04wr';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04ws';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -8790,6 +8790,11 @@ const DB={
     else arr=this._get('messages').slice().sort((a,b)=>a.created_at<b.created_at?1:-1);
     const seen={},unread={};arr.forEach(m=>{if(!seen[m.client_id])seen[m.client_id]={client_id:m.client_id,last_text:m.text,last_at:m.created_at,last_sender:m.sender};if(m.sender==='client'&&!m.read_by_admin)unread[m.client_id]=(unread[m.client_id]||0)+1;});
     return Object.values(seen).map(t=>Object.assign({},t,{unread:unread[t.client_id]||0}));},
+  async chatGroupThreads(){   // last message + unread per GROUP (cdm DMs + other groups) via a SECURITY DEFINER rpc (admin dock only)
+    if(this.mode==='api'){try{const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/dp_chat_group_threads',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY},body:'{}'});const j=await r.json();return Array.isArray(j)?j:[];}catch(e){return [];}}
+    const arr=(this.mode==='cloud')?((await this.sb.from('dp_messages').select('*').order('created_at',{ascending:false})).data||[]):this._get('messages').slice().sort((a,b)=>a.created_at<b.created_at?1:-1);
+    const seen={},un={};arr.forEach(m=>{if(!m.group_id)return;if(!seen[m.group_id])seen[m.group_id]={group_id:m.group_id,last_text:m.text,last_at:m.created_at,last_sender:m.sender,last_coach:(m.media&&m.media._coach&&m.media._coach.name)||null};if(m.sender==='client'&&!m.read_by_admin)un[m.group_id]=(un[m.group_id]||0)+1;});
+    return Object.values(seen).map(t=>Object.assign({},t,{unread:un[t.group_id]||0}));},
   async clearThread(clientId){
     if(this.mode==='api')return this._api('clearThread',{clientId});
     if(this.mode==='cloud'){await this.sb.from('dp_messages').delete().eq('client_id',clientId);return;}
@@ -23790,15 +23795,15 @@ async function renderChatList(){
   const lastCoach=coachMsgs.length?coachMsgs[coachMsgs.length-1]:null;
   const coachUnread=(u&&(u.coach!=null?u.coach:u.total))||0;
   const coachNm=clientCoachLabel(coachMsgs);
-  entries.push({gid:null,icon:'people',title:'Your Coaching Team',sub:'All your coaches — any of them can reply',last:lastCoach,unread:coachUnread,at:(lastCoach&&lastCoach.created_at)||''});
+  entries.push({gid:null,icon:'people',title:'Your Private Coaching Group',sub:'Your private group with the coaching team',last:lastCoach,unread:coachUnread,at:(lastCoach&&lastCoach.created_at)||''});
   for(const g of (CLIENT_GROUPS||[])){let gm=[];try{gm=await DB.listGroupMessages(g.id);}catch(e){}const last=gm.length?gm[gm.length-1]:null;const isAll=isAllMembersGroup(g);const isDM=isCoachDM(g);
     entries.push({gid:g.id,icon:isDM?'person':'people',title:isDM?('Coach '+(g.name||'')):(g.name||'Group'),sub:isDM?'Private 1:1 with your coach':(isAll?('Everyone at S2S Fit · '+((g.members&&g.members.length)||0)+' members'):((g.members&&g.members.length)?g.members.length+' members':'Group chat')),last:last,unread:0,at:(last&&last.created_at)||'',isAll:isAll,isDM:isDM,memberN:(g.members&&g.members.length)||0});}
   // a client sees ONLY: their own private coach thread, per-coach 1:1s, and the All-Members group (no other groups)
   let list=entries.filter(e=>(e.gid===null||e.isDM||e.isAll)&&(!q||String(e.title||'').toLowerCase().indexOf(q)>=0||(e.gid===null&&'coach your coaching team'.indexOf(q)>=0)));
   if(CHAT_FILTER==='unread')list=list.filter(e=>(e.unread||0)>0);
   else if(CHAT_FILTER==='groups')list=list.filter(e=>e.gid===null||e.isAll);
-  // Your Coaching Team on top; private coach 1:1s next; the All-Members community chat; then other groups by recency
-  list.sort((a,b)=>{if(a.gid===null)return -1;if(b.gid===null)return 1;if(a.isDM&&!b.isDM)return -1;if(b.isDM&&!a.isDM)return 1;if(a.isAll&&!b.isAll)return -1;if(b.isAll&&!a.isAll)return 1;return String(b.at||'').localeCompare(String(a.at||''));});
+  // sort purely by most-recent message (active conversations bubble to the top); never-messaged ones fall to the bottom
+  list.sort((a,b)=>String(b.at||'').localeCompare(String(a.at||'')));
   let rows=list.map(e=>chatListRow(e)).join('');
   if(!rows)rows='<div class="chat-list-none">No conversations match “'+esc(q)+'”.</div>';
   host.innerHTML=rows;
@@ -23894,32 +23899,53 @@ async function chatClientBadge(){try{const u=await DB.chatUnread();const n=(u&&u
 function closeChatAdmin(){CHAT_ADM_CLIENT=null;CHAT_ADM_GROUP=null;try{chatStopLive();}catch(e){}}
 async function renderChatThreadsList(){
   const host=$('chat-adm-list');if(!host)return;if(!host.innerHTML)host.innerHTML='<div class="empty">Loading…</div>';
-  let threads=[],clients=[],groups=[];try{[threads,clients,groups]=await Promise.all([DB.chatThreads(),DB.listClients(),DB.listGroups()]);}catch(e){host.innerHTML='<div class="empty">Could not load.</div>';return;}
+  let threads=[],clients=[],groups=[],gthreads=[];try{[threads,clients,groups,gthreads]=await Promise.all([DB.chatThreads(),DB.listClients(),DB.listGroups(),DB.chatGroupThreads()]);}catch(e){host.innerHTML='<div class="empty">Could not load.</div>';return;}
   const nameById={};clients.forEach(c=>nameById[c.id]=c.name||c.email);
   const tById={};threads.forEach(t=>tById[t.client_id]=t);
-  const rows=clients.map(c=>tById[c.id]||{client_id:c.id,last_text:'',last_at:'',unread:0,last_sender:''});
-  rows.sort((a,b)=>((a.last_at||'')<(b.last_at||'')?1:-1));
-  const totalUnread=rows.reduce((a,t)=>a+(t.unread||0),0);
-  [['adr-chat-badge'],['adr-rail-chat']].forEach(([id])=>{const b=$(id);if(b){if(totalUnread){b.textContent=totalUnread;b.classList.remove('hidden');}else b.classList.add('hidden');}});
-  // per-coach 1:1 DMs are routed through the client rows + the "viewing as" switcher — keep them out of the flat Groups list
-  const vgroups=(groups||[]).filter(g=>!isCoachDM(g));
+  const gtById={};(gthreads||[]).forEach(g=>gtById[g.group_id]=g);
   let coaches=[];try{coaches=chatAllCoaches(await loadCoaches());}catch(e){coaches=chatAllCoaches([]);}
+  const coachName=id=>((coaches.find(c=>c.id===id))||{}).name||'Coach';
   if(CHAT_ADM_COACHVIEW===null)CHAT_ADM_COACHVIEW=(COACH&&COACH.id)||'';   // a signed-in coach defaults to their own view
   const cv=CHAT_ADM_COACHVIEW;
-  const cvName=cv?(((coaches.find(c=>c.id===cv))||{}).name||'Coach'):'';
+  const cvName=cv?coachName(cv):'';
+  const totalUnread=threads.reduce((a,t)=>a+(+t.unread||0),0)+(gthreads||[]).reduce((a,g)=>a+(+g.unread||0),0);
+  [['adr-chat-badge'],['adr-rail-chat']].forEach(([id])=>{const b=$(id);if(b){if(totalUnread){b.textContent=totalUnread;b.classList.remove('hidden');}else b.classList.add('hidden');}});
+  const activeFor=it=>((it.gid&&CHAT_ADM_GROUP===it.gid)||(!it.gid&&CHAT_ADM_CLIENT===it.cid&&!CHAT_ADM_GROUP));
+  const rowHTML=it=>'<div class="chat-thread'+(it.grp?' grp':'')+(activeFor(it)?' active':'')+'" onclick="'+it.open+'">'+chatAvatar(it.avatarName||it.title,!!it.grp)+'<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(it.title)+'</b>'+(it.unread?'<span class="chat-badge" style="background:var(--red);color:#fff">'+it.unread+'</span>':'')+'</div><div class="small" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(it.preview||'')+'</div></div></div>';
   let html='';
   if(coaches.length){
     html+='<div class="chat-coachview"><span class="ccv-lbl">Viewing as</span><select class="ccv-sel" onchange="chatAdmSetCoachView(this.value)"><option value=""'+(cv===''?' selected':'')+'>All coaches (team)</option>'+
       coaches.map(c=>'<option value="'+esc(c.id)+'"'+(cv===c.id?' selected':'')+'>'+esc(c.name)+'</option>').join('')+'</select></div>';
   }
-  if(cv)html+='<div class="ccv-note">Client rows below open your <b>private 1:1</b> with each client. Switch to “All coaches” for the shared team chat.</div>';
-  if(vgroups.length){html+='<div class="uline" style="padding:8px 12px 4px">Groups</div>'+
-    vgroups.map(g=>'<div class="chat-thread grp'+(CHAT_ADM_GROUP===g.id?' active':'')+'" onclick="openGroupThread(\''+g.id+'\')">'+chatAvatar(g.name,true)+'<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(g.name)+'</b></div><div class="small" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+((g.members||[]).length)+' member'+((g.members||[]).length===1?'':'s')+'</div></div></div>').join('');}
-  html+='<div class="uline" style="padding:8px 12px 4px">'+(cv?('1:1 chats · as '+esc(cvName)):'Clients · team chat')+'</div>';
-  html+=rows.map(t=>'<div class="chat-thread'+(CHAT_ADM_CLIENT===t.client_id?' active':'')+'" onclick="admClientOpen(\''+t.client_id+'\')">'+chatAvatar(nameById[t.client_id]||'Client')+'<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(nameById[t.client_id]||'Client')+'</b>'+((!cv&&t.unread)?'<span class="chat-badge" style="background:var(--red);color:#fff">'+t.unread+'</span>':'')+'</div><div class="small" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(cv?(svgIcon('lock','ic-sm')+' private 1:1'):((t.last_sender==='admin'?'You: ':'')+esc(t.last_text||'— no messages —')))+'</div></div></div>').join('');
+  let items=[];
+  if(cv){
+    html+='<div class="ccv-note">Your <b>private 1:1</b> chats with each client — most recent first.</div>';
+    clients.forEach(c=>{const gid=coachDmId(c.id,cv);const gt=gtById[gid];items.push({cid:c.id,gid:gid,title:(nameById[c.id]||'Client'),avatarName:(nameById[c.id]||'Client'),grp:false,last_at:gt?gt.last_at:'',unread:gt?(+gt.unread||0):0,preview:gt?((gt.last_sender==='admin'?'You: ':'')+esc(String(gt.last_text||''))):(svgIcon('lock','ic-sm')+' no messages yet'),open:"admClientOpen('"+c.id+"')"});});
+    items.sort((a,b)=>String(b.last_at||'').localeCompare(String(a.last_at||'')));
+    html+='<div class="uline" style="padding:8px 12px 4px">1:1 chats · as '+esc(cvName)+'</div>';
+    html+=items.map(rowHTML).join('');
+  }else{
+    // ALL COACHES: private coaching groups + every coach↔client DM + other groups, newest first
+    clients.forEach(c=>{const t=tById[c.id];items.push({cid:c.id,gid:null,title:(nameById[c.id]||'Client')+' - Private Coaching Group',avatarName:(nameById[c.id]||'Client'),grp:true,last_at:(t&&t.last_at)||'',unread:t?(+t.unread||0):0,preview:t?((t.last_sender==='admin'?'You: ':'')+esc(String(t.last_text||''))):'— no messages —',open:"admClientOpen('"+c.id+"')"});});
+    (groups||[]).filter(isCoachDM).forEach(g=>{const gt=gtById[g.id];if(!gt)return;const p=String(g.id).split('-');const cid=p[1],coachId=p[2];items.push({cid:cid,gid:g.id,title:(nameById[cid]||'Client')+' · '+coachName(coachId),avatarName:coachName(coachId),grp:false,last_at:gt.last_at||'',unread:+gt.unread||0,preview:(gt.last_coach?esc(String(gt.last_coach))+': ':'')+esc(String(gt.last_text||'')),open:"openCoachDmG('"+g.id+"','"+coachId+"')"});});
+    (groups||[]).filter(g=>!isCoachDM(g)).forEach(g=>{const gt=gtById[g.id];items.push({cid:null,gid:g.id,title:(g.name||'Group'),avatarName:(g.name||'Group'),grp:true,last_at:gt?(gt.last_at||''):'',unread:gt?(+gt.unread||0):0,preview:gt?((gt.last_coach?esc(String(gt.last_coach))+': ':'')+esc(String(gt.last_text||''))):((g.members||[]).length+' members'),open:"openGroupThread('"+g.id+"')"});});
+    items.sort((a,b)=>String(b.last_at||'').localeCompare(String(a.last_at||'')));
+    html+='<div class="uline" style="padding:8px 12px 4px">All conversations · recent first</div>';
+    html+=items.length?items.map(rowHTML).join(''):'<div class="adr-thread-empty">No conversations yet.</div>';
+  }
   host.innerHTML=html;
 }
 function chatAdmSetCoachView(v){CHAT_ADM_COACHVIEW=v||'';renderChatThreadsList();}
+/* open a specific coach↔client 1:1 DM (from the "All coaches" list) and reply AS that coach */
+async function openCoachDmG(gid,coachId){
+  let coaches=[];try{coaches=chatAllCoaches(await loadCoaches());}catch(e){coaches=chatAllCoaches([]);}
+  const co=coaches.find(c=>c.id===coachId)||{id:coachId,name:'Coach'};
+  await openGroupThread(gid);
+  CHAT_ADM_ASCOACH={id:co.id,name:co.name};   // replies in this thread are tagged as that coach
+  const cid=String(gid).split('-')[1];
+  let cl={};try{cl=(await DB.listClients()).find(x=>x.id===cid)||{};}catch(e){}
+  const head=$('chat-adm-thread-head');if(head)head.innerHTML='<b>'+esc(cl.name||cl.email||'Client')+'</b> <span class="pill">'+svgIcon('lock','ic-sm')+' 1:1 · '+esc(co.name)+'</span><div style="flex:1"></div>';
+}
 /* open a client row honouring the "viewing as" switcher: a coach view opens that coach's private 1:1; "all" opens the shared team (direct) chat */
 async function admClientOpen(cid){
   const cv=CHAT_ADM_COACHVIEW;
@@ -24188,7 +24214,7 @@ async function sendBroadcast(){const t=($('bc-text').value||'').trim();const med
   $('bc-note').textContent='Sending…';
   try{await DB.broadcast(ids,t,media);toast('Broadcast sent to '+ids.length+' client'+(ids.length===1?'':'s'));closeBroadcast();renderChatThreadsList();}catch(e){$('bc-note').textContent='';toast('Broadcast failed — '+((e&&e.message)||'error'),true);}}
 function startChatPolling(){if(CHAT_POLL)clearInterval(CHAT_POLL);
-  const tick=()=>{if(ADMIN_OK)chatAdmPoll();else if(SESSION)chatClientBadge();};
+  const tick=()=>{if(ADMIN_OK)chatAdmPoll();else if(SESSION){chatClientBadge();if(CHAT_OPEN&&!(typeof CHAT_THREAD_OPEN!=='undefined'&&CHAT_THREAD_OPEN)){try{renderChatList();}catch(e){}}}};   // keep the client inbox re-sorted by recency while it's open
   tick();CHAT_POLL=setInterval(tick,15000);}
 
 /* ═══════════════ 10a · CALENDAR — embedded Priority Planner ═══════════════ */
