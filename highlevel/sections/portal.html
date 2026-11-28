@@ -4592,6 +4592,10 @@ body.coach-mode .master-only{display:none !important}   /* owner-only tools hidd
 .tr-alt-add:hover{border-color:var(--red);color:var(--red)}
 .tr-altline{font-size:11.5px;color:var(--muted);margin-top:3px}
 .tr-xmeta{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.tr-exvid{display:inline-flex;align-items:center;gap:7px;margin-top:7px;text-decoration:none;background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:3px 9px 3px 3px;max-width:230px}
+.tr-exvid img{width:54px;height:32px;object-fit:cover;border-radius:6px;flex:none;background:#000}
+.tr-exvid .tr-exvid-ph{width:54px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--card);color:var(--muted);flex:none}
+.tr-exvid .tr-exvid-play{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:800;color:var(--red);font-family:var(--disp);text-transform:uppercase;letter-spacing:.03em}
 .tr-rtype{font-size:11px;padding:2px 4px;max-width:120px}
 .tr-grp{font-size:11px;padding:3px 7px;max-width:130px;border-radius:8px}
 /* superset / circuit grouping in the read-only plan */
@@ -5945,6 +5949,7 @@ img,svg,canvas,video{max-width:100%}
           <!-- ░░ LEFT RAIL — tools & settings ░░ -->
           <aside class="adash-side">
             <button class="btn btn-primary" style="width:100%" onclick="newClient()">＋ New client</button>
+            <button class="adash-navbtn adash-msgs" onclick="openChatAdmin()" title="Client messages — open chat" style="position:relative;margin-top:8px;border-color:var(--red);color:var(--red);font-weight:800"><svg class="nav-ic"><use href="#ic-chat"/></svg> Messages <span class="chat-badge hidden" id="chat-adm-btn-badge" style="position:absolute;top:6px;right:8px"></span></button>
             <div class="adash-navtitle">Manage</div>
             <nav class="adash-nav">
               <button class="adash-navbtn" onclick="openTeam()" title="Team &amp; Personal calendar — schedule tasks &amp; events, recurring routines, plan the day, start task timers, clock shifts, and track staff performance"><svg class="nav-ic"><use href="#ic-calendar"/></svg> Team &amp; Calendar</button>
@@ -5971,7 +5976,6 @@ img,svg,canvas,video{max-width:100%}
               <button class="adash-navbtn" onclick="openActivity()" title="A live timeline of everything every client has logged or posted"><svg class="nav-ic"><use href="#ic-book"/></svg> Activity feed <span class="chat-badge hidden" id="act-nav-badge" style="position:absolute;top:6px;right:8px"></span></button>
               <button class="adash-navbtn" onclick="openFbLog()" title="A log of internal feedback across all clients — what was set and what's been actioned"><svg class="nav-ic"><use href="#ic-file-text"/></svg> Feedback log</button>
               <button class="adash-navbtn" onclick="openFeatureActivity()" title="See which portal features are being used and which have gone quiet — last used date and days inactive for each"><svg class="nav-ic"><use href="#ic-radio"/></svg> Feature activity</button>
-              <button class="adash-navbtn" onclick="openChatAdmin()" title="Client messages"><svg class="nav-ic"><use href="#ic-chat"/></svg> Messages <span class="chat-badge hidden" id="chat-adm-btn-badge" style="position:absolute;top:6px;right:8px"></span></button>
               <button class="adash-navbtn" onclick="openBuddyAdmin()" title="S2S Fit Gym Buddy — see every client's buddy profile and read the messages they exchange"><svg class="nav-ic"><use href="#ic-link"/></svg> Gym Buddy</button>
               <button class="adash-navbtn" onclick="openTaskAlloc()" title="Allocate tasks &amp; manage the task library"><svg class="nav-ic"><use href="#ic-puzzle"/></svg> Task allocation</button>
               <button class="adash-navbtn" onclick="openNotes()" title="Shared notes &amp; sales scripts — editable text, headings and checklists"><svg class="nav-ic"><use href="#ic-edit"/></svg> Notes &amp; scripts</button>
@@ -7243,7 +7247,7 @@ img,svg,canvas,video{max-width:100%}
           </div></details>
       </div></div>
       <div class="row" style="align-items:flex-end;margin-bottom:10px">
-        <div class="field" style="max-width:240px;margin:0"><label class="lab">Search</label><input id="ex-search" placeholder="🔍 name…" oninput="renderExList()"></div>
+        <div class="field" style="max-width:240px;margin:0"><label class="lab">Search</label><input id="ex-search" placeholder="Search name…" oninput="exSearchInput()"></div>
         <div class="field" style="max-width:200px;margin:0"><label class="lab">Body part</label><select id="ex-filter-body" onchange="renderExList()"><option value="">All body parts</option></select></div>
         <span class="small" id="ex-count" style="align-self:center"></span>
         <span id="ex-audit-wrap" style="align-self:center;margin-left:auto;display:none"><button class="btn-sm" id="gear-mgr-btn" onclick="gearMgrOpen()" title="Add or delete the equipment &amp; machine brands clients can pick when logging a workout" style="margin-right:6px">🏷 Equipment &amp; brands</button><button class="btn-sm" id="ex-audit-btn" onclick="exAuditToggle()" title="Find and fix exercises whose demo video is a broken / search link, or that have no demo yet">🔎 Video audit <span id="ex-audit-badge" class="exa-badge" style="display:none"></span></button></span>
@@ -7896,7 +7900,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04wf';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04wg';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -9581,6 +9585,7 @@ const SVG_ICONS={
   health:'<path d="M3 12h4l2 6 4-14 2 8h6"/>',
   plus:'<path d="M12 5v14M5 12h14"/>',
   lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  play:'<path d="M6 4l14 8-14 8z" fill="currentColor" stroke="none"/>',
   link:'<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
   settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
   bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
@@ -13492,6 +13497,8 @@ const EX_EQUIPMENT=['Barbell','Dumbbell','Machine','Cable','Kettlebell','Bodywei
 let EX_LIB=[];
 async function loadExLib(force){if(EX_LIB.length&&!force)return EX_LIB;try{EX_LIB=await DB.getExercises();}catch(e){EX_LIB=[];}return EX_LIB;}
 function exById(id){return EX_LIB.find(e=>e.id===id)||null;}
+let EX_SEARCH_DEB=null;
+function exSearchInput(){if(EX_SEARCH_DEB)clearTimeout(EX_SEARCH_DEB);EX_SEARCH_DEB=setTimeout(function(){EX_SEARCH_DEB=null;renderExList();},170);}   /* debounce: the list rebuilds thumbnails, so re-rendering on every keystroke made typing janky */
 let EXLIB_FRESH_AT=0;   // throttles the client-side library refresh so coach edits propagate on open
 /* The display name for a workout exercise: when it's linked to a library exercise (exId), the library's
    current name wins — so renaming/editing in the library flows through to every client's workout. */
@@ -30453,7 +30460,25 @@ function edTrExAdd(di,si){edTrFlush();const s=edTrSecs(di)[si];if(!s)return;s.ex
    creation form (AI auto-generate + video) linked to that row so Save adds it here AND to the library. */
 function edTrExNew(di,si){edTrFlush();const s=edTrSecs(di)[si];if(!s)return;s.exercises=s.exercises||[];const xi=s.exercises.length;s.exercises.push({id:uid(),name:'',sets:'',reps:'',load:'',rir:'',tempo:'',rest:'',notes:''});edRenderTraining();try{edTrExEditLib(di,si,xi);}catch(e){toast('Could not open the exercise creator',true);}}
 function edTrExDel(di,si,xi){edTrFlush();edTrSecs(di)[si].exercises.splice(xi,1);edRenderTraining();}
-function edTrExSet(di,si,xi,k,v){const s=edTrSecs(di)[si];if(s&&s.exercises[xi])s.exercises[xi][k]=v;}
+/* inline demo-video thumbnail shown under a linked exercise in the builder (so the coach sees the existing video when an exercise is picked) */
+function edTrExVidHTML(x){
+  if(!x||!x.exId)return '';
+  const e=exById(x.exId);if(!e)return '';
+  const vid=(e.video||'').trim();const yid=(typeof ytId==='function')?ytId(vid):'';
+  if(!yid&&!(e.videoFile||'').trim())return '';
+  const thumb=yid?ytThumb(vid):'';
+  return '<a class="tr-exvid" href="#" onclick="event.preventDefault();openExVideo(\''+esc(x.exId)+'\')" title="Play the demo video for this exercise">'+
+    (thumb?'<img src="'+thumb+'" alt="">':'<span class="tr-exvid-ph">'+svgIcon('formcheck')+'</span>')+
+    '<span class="tr-exvid-play">'+svgIcon('play','ic-sm')+' Demo video</span></a>';
+}
+function edTrExSet(di,si,xi,k,v){const s=edTrSecs(di)[si];if(!s||!s.exercises[xi])return;const x=s.exercises[xi];x[k]=v;
+  if(k==='name'){   // link the row to its library exercise by exact name so its demo video (and the ▶ / thumbnail) shows when picked from the dropdown
+    const nm=String(v||'').trim().toLowerCase();
+    const match=nm?(EX_LIB||[]).find(e=>(e.name||'').trim().toLowerCase()===nm):null;
+    const newId=match?match.id:'';
+    if(newId!==(x.exId||'')){x.exId=newId;edRenderTraining();}   // only re-render when the link changes (datalist pick / clear) — partial typing doesn't match, so it stays smooth
+  }
+}
 /* safety net: before any training re-render, commit every live exercise-row field into the model,
    so adding a row / exercise never wipes in-progress reps/sets/etc. even if an input event was missed */
 function edTrFlush(){try{document.querySelectorAll('.tr-exrow input,.tr-exrow textarea,.tr-exrow select').forEach(function(el){
@@ -30637,7 +30662,8 @@ function edRenderTraining(){
               '<input class="tr-grp" value="'+esc(x.group||'')+'" oninput="edTrExSet('+di+','+si+','+xi+',\'group\',this.value)" placeholder="⛓ superset tag" title="Give two or more exercises the same tag (e.g. A) to make them a superset/circuit — the client performs them back-to-back">'+
             '</div>'+
             '<div class="tr-alts">'+(x.alts||[]).filter(Boolean).map((a,ai)=>'<span class="tr-alt">⇄ '+esc(a)+'<button class="tr-alt-x" title="Remove alternate" onclick="edTrExAltDel('+di+','+si+','+xi+','+ai+')">×</button></span>').join('')+
-              '<button class="tr-alt-add" title="Add an alternate / variation exercise the client can swap to" onclick="edTrExAltAdd('+di+','+si+','+xi+')">＋ alt</button></div></td>'+
+              '<button class="tr-alt-add" title="Add an alternate / variation exercise the client can swap to" onclick="edTrExAltAdd('+di+','+si+','+xi+')">＋ alt</button></div>'+
+            edTrExVidHTML(x)+'</td>'+
           '<td data-l="Sets"><input value="'+esc(x.sets||'')+'" oninput="edTrExSet('+di+','+si+','+xi+',\'sets\',this.value)" style="width:46px"></td>'+
           '<td data-l="'+esc(repColShort(x.repType))+'"><input value="'+esc(x.reps||'')+'" oninput="edTrExSet('+di+','+si+','+xi+',\'reps\',this.value)" style="width:56px" placeholder="'+esc(repPlaceholder(x.repType))+'"></td>'+
           '<td data-l="Load"><input value="'+esc(x.load||'')+'" oninput="edTrExSet('+di+','+si+','+xi+',\'load\',this.value)" style="width:60px"></td>'+
