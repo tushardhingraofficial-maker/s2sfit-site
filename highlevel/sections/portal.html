@@ -7987,7 +7987,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04wu';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04wv';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -8787,6 +8787,11 @@ const DB={
     const admin=(typeof ADMIN_OK!=='undefined'&&ADMIN_OK===true);
     if(this.mode==='cloud'){try{if(admin)await this.sb.from('dp_messages').update({read_by_admin:true}).eq('client_id',clientId).eq('sender','client');else await this.sb.from('dp_messages').update({read_by_client:true}).eq('client_id',clientId).eq('sender','admin');}catch(e){}return;}
     const arr=this._get('messages');arr.forEach(m=>{if(m.client_id===clientId){if(admin&&m.sender==='client')m.read_by_admin=true;if(!admin&&m.sender==='admin')m.read_by_client=true;}});this._set('messages',arr);},
+  async markGroupRead(groupId,side){   // group threads aren't covered by markChatRead (client_id only); flip read flags via SECURITY DEFINER rpc so group unread badges clear
+    if(!groupId)return;side=(side==='admin')?'admin':'client';
+    if(this.mode==='api'){try{await fetch(SUPABASE_URL+'/rest/v1/rpc/dp_mark_group_read',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY},body:JSON.stringify({p_group:groupId,p_side:side})});}catch(e){}return;}
+    if(this.mode==='cloud'){try{if(side==='admin')await this.sb.from('dp_messages').update({read_by_admin:true}).eq('group_id',groupId).eq('sender','client');else await this.sb.from('dp_messages').update({read_by_client:true}).eq('group_id',groupId).eq('sender','admin');}catch(e){}return;}
+    const arr=this._get('messages');arr.forEach(m=>{if(m.group_id===groupId){if(side==='admin'&&m.sender==='client')m.read_by_admin=true;if(side==='client'&&m.sender==='admin')m.read_by_client=true;}});this._set('messages',arr);},
   async chatUnread(){
     if(this.mode==='api')return this._api('chatUnread');
     const admin=(typeof ADMIN_OK!=='undefined'&&ADMIN_OK===true);const arr=this._get('messages');
@@ -23853,7 +23858,7 @@ function chatGifSearch(q){clearTimeout(_gifDeb);const g=$('gif-grid');
   if(g&&!g.innerHTML)g.innerHTML='<div class="gif-load">Loading…</div>';_gifDeb=setTimeout(function(){
   const url=q&&q.trim()?('https://api.giphy.com/v1/gifs/search?api_key='+GIF_KEY+'&limit=24&rating=pg&bundle=messaging_non_clips&q='+encodeURIComponent(q)):('https://api.giphy.com/v1/gifs/trending?api_key='+GIF_KEY+'&limit=24&rating=pg&bundle=messaging_non_clips');
   fetch(url).then(function(r){return r.json();}).then(function(d){const gg=$('gif-grid');if(!gg)return;const items=(d&&d.data)||[];if(!items.length){gg.innerHTML='<div class="gif-load">No GIFs found.</div>';return;}
-    gg.innerHTML=items.map(function(it){const im=it.images||{};const prev=(im.fixed_width_small&&im.fixed_width_small.url)||(im.fixed_width&&im.fixed_width.url)||'';const full=(im.downsized_medium&&im.downsized_medium.url)||(im.fixed_width&&im.fixed_width.url)||prev;return prev?('<button class="gif-item" onclick="chatGifPick(\''+String(full).replace(/\\?.*$/,'').replace(/[\'"\\\\]/g,'')+'\')"><img src="'+prev+'" loading="lazy" alt="gif"></button>'):'';}).join('');
+    gg.innerHTML=items.map(function(it){const im=it.images||{};const prev=(im.fixed_width_small&&im.fixed_width_small.url)||(im.fixed_width&&im.fixed_width.url)||'';const full=(im.downsized_medium&&im.downsized_medium.url)||(im.fixed_width&&im.fixed_width.url)||prev;return prev?('<button class="gif-item" onclick="chatGifPick(\''+String(full).replace(/\?.*$/,'').replace(/[\'"\\\\]/g,'')+'\')"><img src="'+prev+'" loading="lazy" alt="gif"></button>'):'';}).join('');
   }).catch(function(){const gg=$('gif-grid');if(gg)gg.innerHTML='<div class="gif-load">Could not load GIFs. Try again.</div>';});
 },q?280:0);}
 function chatGifPick(url){if(!url)return;chatGifClose();PEND[GIF_CTX]={type:'image',data:url,gif:true};try{renderPendPreview(GIF_CTX);}catch(e){}
@@ -23884,7 +23889,7 @@ async function clientOpenThread(gid){
   const ep=$('chat-emoji-pop');if(ep)ep.classList.add('hidden');
   chatShowThreadView();
   await renderChatThread();
-  if(!gid){try{await DB.markChatRead(SESSION.id);}catch(e){}}
+  if(!gid){try{await DB.markChatRead(SESSION.id);}catch(e){}}else{try{await DB.markGroupRead(gid,'client');}catch(e){}}
   chatClientBadge();
   try{$('chat-text').focus();}catch(e){}
 }
@@ -23986,7 +23991,7 @@ async function openGroupThread(gid){CHAT_ADM_GROUP=gid;CHAT_ADM_CLIENT=null;CHAT
   let g={};try{g=(await DB.listGroups()).find(x=>x.id===gid)||{};}catch(e){}
   $('chat-adm-thread-head').innerHTML='<b>'+eicon('people')+' '+esc(g.name||'Group')+'</b><div style="flex:1"></div><button class="btn-sm" onclick="editGroup(\''+gid+'\')">Edit</button>';
   $('chat-adm-input').style.display='';
-  await renderChatAdmBody();renderChatThreadsList();
+  await renderChatAdmBody();try{await DB.markGroupRead(gid,'admin');}catch(e){}renderChatThreadsList();try{chatAdmBadge();}catch(e){}
 }
 async function renderChatAdmBody(){const body=$('chat-adm-body');if(!body)return;const grp=!!CHAT_ADM_GROUP;
   if(!grp&&!CHAT_ADM_CLIENT)return;
