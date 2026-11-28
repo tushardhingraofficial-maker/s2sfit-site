@@ -7890,7 +7890,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04wb';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04wc';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -23673,11 +23673,11 @@ async function renderChatList(){
   const coachUnread=(u&&(u.coach!=null?u.coach:u.total))||0;
   const coachNm=clientCoachLabel(coachMsgs);
   entries.push({gid:null,icon:'person',title:coachNm||'Coach',sub:'Your coach',last:lastCoach,unread:coachUnread,at:(lastCoach&&lastCoach.created_at)||''});
-  for(const g of (CLIENT_GROUPS||[])){let gm=[];try{gm=await DB.listGroupMessages(g.id);}catch(e){}const last=gm.length?gm[gm.length-1]:null;
-    entries.push({gid:g.id,icon:'people',title:g.name||'Group',sub:((g.members&&g.members.length)?g.members.length+' members':'Group chat'),last:last,unread:0,at:(last&&last.created_at)||''});}
+  for(const g of (CLIENT_GROUPS||[])){let gm=[];try{gm=await DB.listGroupMessages(g.id);}catch(e){}const last=gm.length?gm[gm.length-1]:null;const isAll=isAllMembersGroup(g);
+    entries.push({gid:g.id,icon:'people',title:g.name||'Group',sub:isAll?('Everyone at S2S Fit · '+((g.members&&g.members.length)||0)+' members'):((g.members&&g.members.length)?g.members.length+' members':'Group chat'),last:last,unread:0,at:(last&&last.created_at)||'',isAll:isAll});}
   let list=entries.filter(e=>!q||String(e.title||'').toLowerCase().indexOf(q)>=0||(e.gid===null&&'coach your coach'.indexOf(q)>=0));
-  // coach pinned on top; groups below, most recently active first
-  list.sort((a,b)=>{if(a.gid===null)return -1;if(b.gid===null)return 1;return String(b.at||'').localeCompare(String(a.at||''));});
+  // coach pinned on top; the All-Members community chat next; other groups below, most recently active first
+  list.sort((a,b)=>{if(a.gid===null)return -1;if(b.gid===null)return 1;if(a.isAll&&!b.isAll)return -1;if(b.isAll&&!a.isAll)return 1;return String(b.at||'').localeCompare(String(a.at||''));});
   let rows=list.map(e=>chatListRow(e.gid,e.icon,e.title,e.sub,e.last,e.unread)).join('');
   if(!rows)rows='<div class="chat-list-none">No conversations match “'+esc(q)+'”.</div>';
   host.innerHTML=rows;
@@ -23905,8 +23905,35 @@ async function chatAdmBadge(){try{const u=await DB.chatUnread();const n=(u&&u.to
 async function chatAdmPoll(){await chatAdmBadge();const cd=$('chat-dock'),td=$('tasks-dock');
   if(cd&&getComputedStyle(cd).display!=='none'&&!cd.classList.contains('hidden')){renderChatThreadsList();if(CHAT_ADM_CLIENT||CHAT_ADM_GROUP)renderChatAdmBody();}
   if(td&&getComputedStyle(td).display!=='none'&&!td.classList.contains('hidden'))renderDrawerTasks();}
+/* ---- "All Members" auto-group: every active client is always in it, so the whole of S2S Fit can chat together ---- */
+const ALL_GROUP_ID='grp-all-members';
+const ALL_GROUP_NAME='🏠 S2S Fit — All Members';
+let ALLGRP_SYNCING=false;
+function isAllMembersGroup(g){return !!(g&&g.id===ALL_GROUP_ID);}
+/* Reconciles the all-members group's member list to = every non-archived client. Admin-only (only an admin token may saveGroup).
+   Writes ONLY when something changed, so it's cheap to call on load. Keeps a coach-renamed title + original created_at. */
+async function ensureAllMembersGroup(force){
+  if(!ADMIN_OK)return null;
+  if(ALLGRP_SYNCING)return null;ALLGRP_SYNCING=true;
+  try{
+    let cs=[],gs=[],ov=null;
+    try{cs=await DB.listClients();}catch(e){return null;}
+    try{gs=await DB.listGroups();}catch(e){gs=[];}
+    try{ov=await DB.overview();}catch(e){}
+    const archived=new Set();(ov&&ov.plans||[]).forEach(p=>{if(p&&p.archived&&p.client_id)archived.add(p.client_id);});
+    const wantIds=(cs||[]).filter(c=>c&&c.id&&!archived.has(c.id)).map(c=>c.id);
+    const g=(gs||[]).find(isAllMembersGroup)||null;
+    const have=((g&&g.members)||[]);
+    const sameAll=g&&have.length===wantIds.length&&wantIds.every(id=>have.indexOf(id)>=0);
+    if(g&&sameAll&&!force)return g;                       // already in sync — no write
+    const ng={id:(g&&g.id)||ALL_GROUP_ID,name:(g&&g.name)||ALL_GROUP_NAME,members:wantIds};
+    if(g&&g.created_at)ng.created_at=g.created_at;
+    try{await DB.saveGroup(ng);return ng;}catch(e){return g;}
+  }finally{ALLGRP_SYNCING=false;}
+}
+async function syncAllMembersGroup(){const g=await ensureAllMembersGroup(true);toast(g?('All-Members group synced · '+((g.members||[]).length)+' member'+(((g.members||[]).length)===1?'':'s')):'Sync failed',!g);try{await renderGroupList();renderChatThreadsList();}catch(e){}}
 /* ---- group editor ---- */
-async function openGroupEditor(){resetGroupForm();$('group-modal').classList.add('open');await renderGroupMembers([]);await renderGroupList();}
+async function openGroupEditor(){resetGroupForm();$('group-modal').classList.add('open');await renderGroupMembers([]);try{await ensureAllMembersGroup();}catch(e){}await renderGroupList();}
 function closeGroupEditor(){$('group-modal').classList.remove('open');}
 function resetGroupForm(){$('grp-id').value='';$('grp-name').value='';$('grp-form-title').textContent='New group';renderGroupMembers([]);}
 async function renderGroupMembers(selected){const host=$('grp-members');if(!host)return;let cs=[];try{cs=await DB.listClients();}catch(e){}
@@ -23919,7 +23946,11 @@ async function saveGroupForm(){const name=($('grp-name').value||'').trim();if(!n
   const g={id:$('grp-id').value||null,name,members};
   try{await DB.saveGroup(g);toast('Group saved');resetGroupForm();await renderGroupList();renderChatThreadsList();}catch(e){toast('Could not save group — '+((e&&e.message)||'error'),true);}}
 async function renderGroupList(){const host=$('grp-list');if(!host)return;let gs=[];try{gs=await DB.listGroups();}catch(e){}
-  host.innerHTML=gs.length?gs.map(g=>'<div class="task-item"><div style="flex:1"><b>👥 '+esc(g.name)+'</b><div class="small">'+((g.members||[]).length)+' member'+((g.members||[]).length===1?'':'s')+'</div></div><div style="white-space:nowrap;flex:none"><button class="btn-sm" onclick="editGroup(\''+g.id+'\')">Edit</button> <button class="icon-x" onclick="deleteGroupUI(\''+g.id+'\')" title="Delete group">×</button></div></div>').join(''):'<div class="small">No groups yet.</div>';}
+  gs=(gs||[]).slice().sort((a,b)=>(isAllMembersGroup(b)?1:0)-(isAllMembersGroup(a)?1:0));   // all-members group on top
+  host.innerHTML=gs.length?gs.map(g=>{
+    if(isAllMembersGroup(g))return '<div class="task-item" style="border:1px solid var(--red);background:rgba(232,23,13,.05)"><div style="flex:1"><b>'+esc(g.name)+'</b> <span class="pill">AUTO · EVERYONE</span><div class="small">'+((g.members||[]).length)+' member'+((g.members||[]).length===1?'':'s')+' · every active client is added automatically</div></div><div style="white-space:nowrap;flex:none"><button class="btn-sm" onclick="syncAllMembersGroup()" title="Re-check and add any new clients now">🔄 Sync now</button></div></div>';
+    return '<div class="task-item"><div style="flex:1"><b>👥 '+esc(g.name)+'</b><div class="small">'+((g.members||[]).length)+' member'+((g.members||[]).length===1?'':'s')+'</div></div><div style="white-space:nowrap;flex:none"><button class="btn-sm" onclick="editGroup(\''+g.id+'\')">Edit</button> <button class="icon-x" onclick="deleteGroupUI(\''+g.id+'\')" title="Delete group">×</button></div></div>';
+  }).join(''):'<div class="small">No groups yet.</div>';}
 async function editGroup(id){let g={};try{g=(await DB.listGroups()).find(x=>x.id===id)||{};}catch(e){}
   $('group-modal').classList.add('open');$('grp-id').value=g.id||'';$('grp-name').value=g.name||'';$('grp-form-title').textContent='Edit group';await renderGroupMembers(g.members||[]);await renderGroupList();
   try{$('grp-name').scrollIntoView({block:'nearest'});}catch(e){}}
@@ -26048,6 +26079,7 @@ function closeAdminGate(){$('admin-gate').classList.remove('open');}
 async function checkAdmin(){try{const ok=await DB.adminLogin($('admin-pass').value);if(ok){ADMIN_OK=true;saveAdminSession();try{localStorage.setItem('s2s_is_coach_device','1');}catch(e){}closeAdminGate();openAdmin();}else $('admin-err').textContent='Wrong password.';}catch(e){$('admin-err').textContent=(e&&e.message)||'Wrong password.';}}
 function applyCoachUI(){try{const coach=!isMaster();document.body.classList.toggle('coach-mode',coach);const chip=$('coach-id-chip');if(chip){chip.textContent=coach?('🧑‍🏫 '+((COACH&&COACH.name)||'Coach')):'👑 Owner';chip.className='pill '+(coach?'':'good');chip.style.display='';}}catch(e){}}
 async function openAdmin(){$('login').classList.add('hidden');$('admin').classList.add('open');applyCoachUI();loadSupplements();loadActiveClients();backToList();chatShowFab();chatAdmBadge();startChatPolling();loadExLib(true);
+  try{ensureAllMembersGroup();}catch(e){}   // keep the All-Members community chat populated with every active client
   try{if(window.Notification&&Notification.permission==='default')Notification.requestPermission();}catch(e){}   // so plan follow-ups can fire real notifications
   try{if(typeof teamLoad==='function')teamLoad().then(function(){try{planFuCheckDue();}catch(e){}});}catch(e){}
   try{if(!PLANFU_TICK&&typeof planFuCheckDue==='function')PLANFU_TICK=setInterval(planFuCheckDue,600000);}catch(e){}   // re-check every 10 min while the portal stays open (e.g. across the due date)
@@ -31737,6 +31769,7 @@ async function savePlan(){
   fbLogPush(plan,(oldPlan&&oldPlan.feedback_notes)||'',(oldPlan&&oldPlan.feedback_status)||'pending');
   try{
     await DB.saveClient(edClient,passChanged?newPass:'');await DB.savePlanRow(plan);
+    if(isNew){try{ensureAllMembersGroup();}catch(e){}}   // a brand-new client joins the All-Members community chat immediately
     // record training / nutrition version snapshots (of the OLD program) so the coach & client can view past versions
     if(oldPlan&&!isNew){
       try{
