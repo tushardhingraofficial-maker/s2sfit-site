@@ -41,8 +41,7 @@ window.addEventListener('appinstalled',function(){window.__s2sBIP=null;try{if(ty
      • Backend: Supabase if configured below, else browser demo mode
      • Ingredients + Supplements: live from the S2S Fit sheet
      ============================================================ -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<!-- supabase-js removed: production uses the Edge Function (DB.mode 'api'); window.supabase was only the demo/dev fallback and DB.init guards on it. jsPDF is now lazy-loaded on first PDF export via loadJsPDF() — see below. Both were render-blocking in <head>. -->
 
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -7989,7 +7988,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04wy';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04wz';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -18886,10 +18885,12 @@ function renderGrocery(){
       g.byCat[cat].map(x=>'<li class="mi"><span class="mi-food">'+esc(x.name)+'</span><span class="mi-qty">'+round(x.qty,2)+'×'+(x.units?' '+esc(x.units):'')+'</span></li>').join('')+
       '</ul></div>').join('');
 }
-function downloadGrocery(){
+function loadJsPDF(){return window.jspdf&&window.jspdf.jsPDF?Promise.resolve():new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
+async function downloadGrocery(){
   const g=groceryData();if(!g.total){toast('Nothing to export',true);return;}
   const title='S2S Fit — Grocery List';
   const sub=(SESSION.name||SESSION.email)+'  ·  '+g.days+' days  ·  '+fmtDate(g.start)+' – '+fmtDate(g.end);
+  try{await loadJsPDF();}catch(e){}
   if(window.jspdf&&window.jspdf.jsPDF){
     const {jsPDF}=window.jspdf;const doc=new jsPDF({unit:'pt',format:'a4'});const M=48;let y=M;
     doc.setFont('helvetica','bold');doc.setTextColor(232,23,13);doc.setFontSize(20);doc.text('S2S FIT',M,y);
@@ -18919,9 +18920,10 @@ function downloadGrocery(){
   }
 }
 /* ---- download the full diet plan as a PDF ---- */
-function downloadDietPlanPDF(){
+async function downloadDietPlanPDF(){
   if(!PLAN||!(PLAN.dayTypes||[]).length){toast('No plan to export yet',true);return;}
   const name=(SESSION&&(SESSION.name||SESSION.email))||'Client';
+  try{await loadJsPDF();}catch(e){}
   if(window.jspdf&&window.jspdf.jsPDF){
     const {jsPDF}=window.jspdf;const doc=new jsPDF({unit:'pt',format:'a4'});
     const M=56,RW=539,BOT=788;let y=66;
@@ -32844,7 +32846,10 @@ try{applyTheme(getThemePref());}catch(e){}
   const av=$('app-ver');if(av)av.textContent='v'+APP_VERSION;
   a2hsRefresh();
   setTimeout(function(){try{maybeShowIosInstallTip();}catch(e){}},2600);   // iPhone has no install button — nudge Safari / redirect in-app browsers
-  DB.init();loadIngredients();loadSupplements();
+  DB.init();
+  // Defer the food DB + supplement loads off the critical boot path so their network fetches don't compete with first paint.
+  // requestIdleCallback runs only AFTER the browser's critical render work; on-demand callers (Nutrition/challenge/admin) still trigger them, and both loaders are idempotent, so nothing breaks if the user navigates first.
+  (window.requestIdleCallback||function(fn){return setTimeout(fn,800);})(function(){try{loadIngredients();}catch(e){}try{loadSupplements();}catch(e){}},{timeout:2500});
   try{const cfg=await DB.getConfig();if(cfg&&typeof cfg==='object')SECTION_LIVE=Object.assign({nutrition:true,training:false,cardio:false,time:true,availability:true,goals:false,checkins:false,habits:false,mytasks:false,reports:false,rewards:false,livechal:false,buddy:false,knowledge:false,suspension:false,sleep:false,formcheck:true},cfg);}catch(e){}
   try{const sp=await DB.getSops();if(sp&&typeof sp==='object')SOPS=sp;}catch(e){}
   try{updBootNotice();}catch(e){}
