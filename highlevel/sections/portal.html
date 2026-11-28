@@ -7979,7 +7979,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04wp';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04wq';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -12978,7 +12978,7 @@ function mcWatchRender(){const host=$('mc-watch-host');if(!host)return;const row
       '</div></div>').join(''):'<div class="empty">✓ Everyone’s metrics are tracking with their phase. Nice work.</div>');
 }
 async function mcWatchTask(cid,name,detail){
-  try{await DB.saveTask({id:uid(),client_id:cid,client_name:name||'',title:''+eicon('chartbar')+' Metric off-track — '+(name||'client'),details:'Metric watch: '+(detail||''),due_date:null,recurrence:'none',priority:'high',status:'open',created_at:new Date().toISOString()});
+  try{await DB.saveTask({id:uid(),client_id:cid,client_name:name||'',title:''+'📊'+' Metric off-track — '+(name||'client'),details:'Metric watch: '+(detail||''),due_date:null,recurrence:'none',priority:'high',status:'open',created_at:new Date().toISOString()});
     toast('Task created for '+(name||'client')+' ✓');try{if(typeof renderTasks==='function')renderTasks();}catch(e){}try{if(typeof renderDrawerTasks==='function')renderDrawerTasks();}catch(e){}
   }catch(e){toast('Could not create task',true);}
 }
@@ -17843,17 +17843,17 @@ function lcCueCardMember(chId,cid){
   const finals=dates.map(d=>lcEntryFinal(e[d]));
   // ---- dynamic tier: colour + medal + headline adapt to how this athlete is doing ----
   let tier;
-  if(isMvp||overallRank===1)tier={a:'#f5c842',a2:'#ffe9a6',medal:'🥇',label:(isMvp?''+eicon('star')+' MVP · TOP MOVER OF THE CHALLENGE':''+eicon('medal1')+' #1 ACROSS EVERY TEAM')};
-  else if(overallRank===2)tier={a:'#cfd6e0',a2:'#ffffff',medal:'🥈',label:''+eicon('medal2')+' #2 ACROSS EVERY TEAM'};
-  else if(overallRank===3)tier={a:'#d98a4b',a2:'#f4b483',medal:'🥉',label:''+eicon('medal3')+' #3 ACROSS EVERY TEAM'};
+  if(isMvp||overallRank===1)tier={a:'#f5c842',a2:'#ffe9a6',medal:'🥇',label:(isMvp?''+'⭐'+' MVP · TOP MOVER OF THE CHALLENGE':''+'🏅'+' #1 ACROSS EVERY TEAM')};
+  else if(overallRank===2)tier={a:'#cfd6e0',a2:'#ffffff',medal:'🥈',label:''+'🥈'+' #2 ACROSS EVERY TEAM'};
+  else if(overallRank===3)tier={a:'#d98a4b',a2:'#f4b483',medal:'🥉',label:''+'🥉'+' #3 ACROSS EVERY TEAM'};
   else tier={a:'#E8170D',a2:'#ff8a5b',medal:'#'+overallRank,label:'RANK #'+overallRank+' OF '+allM.length};
   let tagline;
-  if(active&&dates.length&&active>=dates.length&&dates.length>=3)tagline=''+eicon('fire')+' Perfect attendance — logged every single day';
-  else if(mem.pct>=40)tagline=''+eicon('muscle')+' Carrying the team — '+mem.pct+'% of the total';
-  else if(overallRank>0&&overallRank<=3&&allM.length>3)tagline=''+eicon('medal1')+' Top-3 mover across every team';
-  else if(best>0&&avg>0&&best>=avg*1.5)tagline=''+eicon('rocket')+' Monster best day — '+lcNum(best)+' '+unit;
+  if(active&&dates.length&&active>=dates.length&&dates.length>=3)tagline=''+'🔥'+' Perfect attendance — logged every single day';
+  else if(mem.pct>=40)tagline=''+'💪'+' Carrying the team — '+mem.pct+'% of the total';
+  else if(overallRank>0&&overallRank<=3&&allM.length>3)tagline=''+'🏅'+' Top-3 mover across every team';
+  else if(best>0&&avg>0&&best>=avg*1.5)tagline=''+'🚀'+' Monster best day — '+lcNum(best)+' '+unit;
   else if(mem.total>0)tagline='Keep stacking those '+unit+'! 💥';
-  else tagline='Your challenge starts now — log your first day! '+eicon('run')+'';
+  else tagline='Your challenge starts now — log your first day! '+'👟'+'';
   // ---- dynamic tiles (penalties/booster only appear when they exist) ----
   const tiles=[['Best day',lcNum(best),null],['Avg / day',lcNum(avg),null],['Contribution',mem.pct+'%',tier.a],['Overall rank','#'+overallRank+' / '+allM.length,null],['Active days',active+' / '+(dates.length||0),null],['Walked',lcNum(walked),null]];
   if(pen>0)tiles.push([''+eicon('warn')+' Penalty '+unit,'−'+lcNum(pen),'#FF6B5E']);
@@ -21167,7 +21167,7 @@ const TOURS={
  training:[
   {sel:'#training-host .card',title:'Your programme',text:'Your split, phases and each training day live here.'},
   {sel:'[onclick^="startWorkout"]',title:'Start / log a workout',text:'Tap here to record your sets, reps and weight as you train.'},
-  {sel:'[onclick^="openExVideo"]',title:'Watch the technique',text:'The '+eicon('play')+' button plays a video tutorial and shows coaching cues for that exercise.'},
+  {sel:'[onclick^="openExVideo"]',title:'Watch the technique',text:'The '+'▶️'+' button plays a video tutorial and shows coaching cues for that exercise.'},
   {sel:'#recent-workouts',title:'Your performance',text:'Your best lifts (estimated 1-rep max) and recent sessions are tracked here.'}
  ],
  workout:[
@@ -21259,10 +21259,10 @@ const _navHabits=()=>setSection('habits');
 const _navTasks=()=>setSection('mytasks');
 const FULL_TOUR=[
  // ── intro & top bar ──
- {sel:'#p-title',nav:_navPlan,title:'Welcome '+eicon('wave')+'',text:'This is your Transformation Portal — nutrition, training, goals and your coach, all in one place. I’ll walk you through every part in the order you’ll use it.'},
+ {sel:'#p-title',nav:_navPlan,title:'Welcome '+'👋'+'',text:'This is your Transformation Portal — nutrition, training, goals and your coach, all in one place. I’ll walk you through every part in the order you’ll use it.'},
  {sel:'.tabs',title:'The main sections',text:'These tabs move you between Nutrition, Training, Time Management, Goals, Check-ins, Habits and Tasks. We’ll visit each one — nothing is left out.'},
  {sel:'#progress-card',title:'Your weekly highlight',text:'Your coach’s latest progress note and feedback always sits right here at the top, on every screen.'},
- {sel:'[onclick="openHelp()"]',title:''+eicon('help')+' How to use',text:'Opens the help centre — replay this whole walkthrough, or jump to a single feature, whenever you like.'},
+ {sel:'[onclick="openHelp()"]',title:''+'❓'+' How to use',text:'Opens the help centre — replay this whole walkthrough, or jump to a single feature, whenever you like.'},
  {sel:'[onclick="loadIngredients(true)"]',title:'Refresh',text:'Pulls the latest food and plan data from your coach if something looks out of date.'},
 
  // ── 1 · NUTRITION · Diet Plan ──
@@ -21297,7 +21297,7 @@ const FULL_TOUR=[
  // ── 4 · TRAINING ──
  {sel:'#training-host',nav:_navTraining,title:'Training',text:'Your full programme lives here — overview, phases, your weekly split and each training day’s exercises. When your coach publishes it, it all appears on this screen.'},
  {sel:'[onclick^="startWorkout"]',title:'Start / log a workout',text:'On a training day, tap this to record your actual sets, reps and weight as you train — with a completion slider at the end.'},
- {sel:'[onclick^="openExVideo"]',title:'Exercise tutorials',text:'The '+eicon('play')+' button on an exercise plays a video demo and shows your coach’s cues.'},
+ {sel:'[onclick^="openExVideo"]',title:'Exercise tutorials',text:'The '+'▶️'+' button on an exercise plays a video demo and shows your coach’s cues.'},
  {sel:'#recent-workouts',title:'Your performance',text:'Your best lifts (estimated 1-rep max) and recent sessions are tracked here automatically.'},
 
  // ── 5 · AVAILABILITY ──
@@ -21333,7 +21333,7 @@ const FULL_TOUR=[
  {sel:'[data-sec="chat"]',nav:_chatOpen,title:'Chat with your coach',text:'Tap Chat in the bottom bar to message your coach directly.'},
  {sel:'#chat-list-view',nav:_chatOpen,title:'Message your coach',text:'Pick a conversation to open it, then type, attach a photo/video with 📎, or hold-to-record a voice note with 🎙.'},
  {sel:'[onclick="openHelp()"]',nav:_chatClose,title:'Help any time',text:'Remember: tap “How to use” to replay this whole walkthrough, or any single feature, whenever you need a refresher.'},
- {sel:'[onclick="logout()"]',title:'You’re all set! '+eicon('celebrate')+'',text:'That’s the entire portal, end to end. Your coach keeps everything updated, so check in regularly. Sign out here when you’re done.'}
+ {sel:'[onclick="logout()"]',title:'You’re all set! '+'🎉'+'',text:'That’s the entire portal, end to end. Your coach keeps everything updated, so check in regularly. Sign out here when you’re done.'}
 ];
 function maybeFullTour(){if(ADMIN_OK||!SESSION)return;if(guidesOff())return;if(guidesSeen().fulltour)return;
   setTimeout(()=>{if(!SESSION||ADMIN_OK||TOUR)return;$('tour-prompt').classList.add('open');},700);}
@@ -27223,7 +27223,7 @@ async function callRemind(cid){
   const c=(CALL_CLIENTS||[]).find(x=>x.id===cid);if(!c)return;const name=c.name||c.email;
   const st=callClientStats(cid),d=st.daysSince;
   const due=(prompt('Reminder to reach out to '+name+'.\nDue date (YYYY-MM-DD) — optional, leave blank for none:','')||'').trim();
-  try{await DB.saveTask({id:uid(),client_id:cid,client_name:name,title:''+eicon('phone')+' Reach out to '+name+(d!=null?' — '+d+'d since contact':' — no recent contact'),details:'Follow-up reminder: client falling behind on contact.',due_date:(/^\d{4}-\d{2}-\d{2}$/.test(due)?due:null),recurrence:'none',priority:'high',status:'open',created_at:new Date().toISOString()});
+  try{await DB.saveTask({id:uid(),client_id:cid,client_name:name,title:''+'📞'+' Reach out to '+name+(d!=null?' — '+d+'d since contact':' — no recent contact'),details:'Follow-up reminder: client falling behind on contact.',due_date:(/^\d{4}-\d{2}-\d{2}$/.test(due)?due:null),recurrence:'none',priority:'high',status:'open',created_at:new Date().toISOString()});
     toast('Reminder added to Tasks for '+name);try{if(typeof renderTasks==='function')renderTasks();}catch(e){}}
   catch(e){toast('Could not add reminder — '+((e&&e.message)||'error'),true);}
 }
@@ -27316,7 +27316,7 @@ async function planFuCreateTask(cid,name,track,nextDueISO){
   TEAM.events=TEAM.events||[];const tag=cid+'|'+track;
   TEAM.events=TEAM.events.filter(e=>!(e&&e._autoFu===tag&&e.status!=='done'));   // replace any prior open auto follow-up for this client+track
   const taskDue=addDaysISO(nextDueISO,-7);const meId=(typeof teamStaffId==='function')?teamStaffId():'owner';const lbl=track==='nutrition'?'diet plan':'training plan';
-  const ev={id:uid(),kind:'task',title:''+eicon('repeat')+' Follow-up: update '+(name||'client')+'’s '+lbl,projectId:null,parentId:null,date:taskDue,start:'',end:'',allDay:true,assignee:(meId==='owner'?'':meId),assigneeName:(meId&&meId!=='owner'&&typeof teamStaffNameById==='function')?teamStaffNameById(meId):'',category:'Plan updates',priority:'high',deadline:nextDueISO,estimate:0,stage:'To do',blockedBy:[],recur:'none',recurDays:[],notes:'Client: '+(name||'')+' — next '+lbl+' review due '+fmtDate(nextDueISO)+'. Auto-created from Plan updates.',status:'todo',private:false,owner:'',createdBy:meId,createdAt:new Date().toISOString(),_src:'plan-updates',_autoFu:tag,clientId:cid};
+  const ev={id:uid(),kind:'task',title:''+'🔁'+' Follow-up: update '+(name||'client')+'’s '+lbl,projectId:null,parentId:null,date:taskDue,start:'',end:'',allDay:true,assignee:(meId==='owner'?'':meId),assigneeName:(meId&&meId!=='owner'&&typeof teamStaffNameById==='function')?teamStaffNameById(meId):'',category:'Plan updates',priority:'high',deadline:nextDueISO,estimate:0,stage:'To do',blockedBy:[],recur:'none',recurDays:[],notes:'Client: '+(name||'')+' — next '+lbl+' review due '+fmtDate(nextDueISO)+'. Auto-created from Plan updates.',status:'todo',private:false,owner:'',createdBy:meId,createdAt:new Date().toISOString(),_src:'plan-updates',_autoFu:tag,clientId:cid};
   TEAM.events.push(ev);
   try{if(typeof teamSave==='function')await teamSave('events');}catch(e){}
   try{if(typeof tkRefreshPanels==='function')tkRefreshPanels();}catch(e){}
@@ -27337,7 +27337,7 @@ function planFuCheckDue(){
       if(!mine)return;
       const due=ev.date||'';if(!due||due>iso)return;                       // only once the follow-up date has arrived
       const key=ev.id+'@'+iso;if(seen[key])return;seen[key]=1;changed=true;
-      teamNotify((due<iso?''+eicon('alarm')+' Overdue plan follow-up':''+eicon('bell')+' Plan follow-up due today'),String(ev.title||'').replace(/^🔄\s*/,''));
+      teamNotify((due<iso?''+'⏰'+' Overdue plan follow-up':''+'🔔'+' Plan follow-up due today'),String(ev.title||'').replace(/^🔄\s*/,''));
     });
     if(changed){try{localStorage.setItem('s2s_planfu_alerted',JSON.stringify(seen));}catch(e){}}
   }catch(e){}
@@ -28142,7 +28142,7 @@ function bhChurnChartsHTML(){bhEnsure();
   const haveBase=startDates.length>0;
   const ratePts=seq.map(k=>{const base=activeBefore(k),c=churn[k]||0;return {date:k,value:(base>0)?Math.round((c/base)*1000)/10:0};});
   const served=activeBefore(from)+totSign,winRate=(served>0)?Math.round((totChurn/served)*1000)/10:null;   // churn ÷ clients active at any point in the window (active at start + joined during)
-  const cmpChart=seq.length?lineChartSVG([{label:''+eicon('dotgreen')+' Sign-ups',color:'var(--good)',pts:signPts},{label:''+eicon('dotred')+' Churn',color:'var(--red)',pts:churnPts}],{min:0}):'<div class="empty">Pick a wider range.</div>';
+  const cmpChart=seq.length?lineChartSVG([{label:''+'🟢'+' Sign-ups',color:'var(--good)',pts:signPts},{label:''+'🔴'+' Churn',color:'var(--red)',pts:churnPts}],{min:0}):'<div class="empty">Pick a wider range.</div>';
   const rateChart=(seq.length&&haveBase)?lineChartSVG([{label:'Churn rate %',color:'#ef4444',pts:ratePts}],{min:0}):'<div class="empty">Churn-rate % needs client start dates — set them in the <b>'+eicon('dotgreen')+' Sign-ups</b> tab of Business health.</div>';
   const chip=(v,l,col)=>'<div class="macro" style="text-align:left"><div class="k">'+l+'</div><div style="font-family:var(--disp);font-weight:800;font-size:22px'+(col?';color:'+col:'')+'">'+v+'</div></div>';
   return '<div class="card" style="margin:0 0 14px"><div class="card-body">'+
@@ -28391,7 +28391,7 @@ function teamCheckReminders(){const now=Date.now();if(now-TEAM_REM_LAST<15000)re
   (TEAM.events||[]).forEach(ev=>{if(ev.kind!=='task'||!ev.start)return;if(!teamVisible(ev))return;if(!teamTaskUnassigned(ev)&&!teamTaskIsFor(ev,sid))return;if(!teamOccursOn(ev,iso))return;if(teamDoneOn(ev,iso))return;
     const key=ev.id+'@'+iso;if(TEAM_ALERTED[key])return;
     const parts=String(ev.start).split(':');const due=new Date();due.setHours(+parts[0]||0,+parts[1]||0,0,0);const diff=now-due.getTime();
-    if(diff>=0&&diff<10*60000){TEAM_ALERTED[key]=1;teamNotify(''+eicon('alarm')+' '+ev.title,'Scheduled for '+ev.start+(ev.category?' · '+ev.category:''));}
+    if(diff>=0&&diff<10*60000){TEAM_ALERTED[key]=1;teamNotify(''+'⏰'+' '+ev.title,'Scheduled for '+ev.start+(ev.category?' · '+ev.category:''));}
   });}
 function teamDueLabel(ev,iso){if(ev.kind!=='task'||!ev.start||teamDoneOn(ev,iso)||iso!==todayISO())return '';
   const parts=String(ev.start).split(':');const due=new Date();due.setHours(+parts[0]||0,+parts[1]||0,0,0);const diff=Date.now()-due.getTime();
@@ -32160,32 +32160,32 @@ const PUSH_GROUPS=[['exp',''+eicon('heart')+' Experience','Timely, helpful — m
 /* each: {id, g(group), pref(client opt-out category), icon, name, desc, kind:'event'|'sched', schedLabel, title, body, on(default)} — message tokens: {name} {preview} {points} {streak} {pct} {milestone} {challenge} {when} {date} */
 const PUSH_CATALOG=[
   // EXPERIENCE
-  {id:'coach',g:'exp',pref:'coach',icon:'💬',name:'Coach message',desc:'Instant ping when their coach messages them.',kind:'event',schedLabel:'Instant',on:true,title:''+eicon('chat')+' Message from your coach',body:'{preview}'},
-  {id:'plan_update',g:'exp',pref:'updates',icon:'📝',name:'Plan updated',desc:'Their training or nutrition plan was changed by the coach.',kind:'event',schedLabel:'On change',on:false,title:''+eicon('note')+' Your plan was updated',body:'Hi {name}, your coach just updated your plan — tap to see what changed.'},
-  {id:'checkin_reviewed',g:'exp',pref:'coach',icon:'✅',name:'Check-in reviewed · feedback ready',desc:'Coach read their weekly check-in and left feedback.',kind:'event',schedLabel:'On review',on:false,title:''+eicon('check')+' Your check-in has feedback',body:'{name}, your coach reviewed your check-in — tap to read their notes.'},
-  {id:'formcheck_reviewed',g:'exp',pref:'coach',icon:'🎥',name:'Form-check reviewed',desc:'Coach reviewed their uploaded lift video.',kind:'event',schedLabel:'On review',on:false,title:''+eicon('camera')+' Form check reviewed',body:'{name}, your coach reviewed your lift video — tap for feedback.'},
-  {id:'reward',g:'exp',pref:'rewards',icon:'🏆',name:'Reward / points milestone',desc:'They earned a reward or crossed a points milestone.',kind:'event',schedLabel:'On earn',on:false,title:''+eicon('trophy')+' You earned points!',body:'Nice work {name} — you just earned points. Keep it going!'},
-  {id:'session',g:'exp',pref:'sessions',icon:'📅',name:'Session / call reminder',desc:'Heads-up before a booked PT session or strategy call.',kind:'sched',schedLabel:'1 day + 1 hr before',on:false,title:''+eicon('calendar')+' Session coming up',body:'{name}, you have a session {when}. See you there!'},
-  {id:'content',g:'exp',pref:'content',icon:'📚',name:'New knowledge / lesson',desc:'A new course lesson or guide is available.',kind:'event',schedLabel:'On publish',on:false,title:''+eicon('book')+' New lesson available',body:'Fresh content just dropped — tap to learn something new.'},
+  {id:'coach',g:'exp',pref:'coach',icon:'💬',name:'Coach message',desc:'Instant ping when their coach messages them.',kind:'event',schedLabel:'Instant',on:true,title:''+'💬'+' Message from your coach',body:'{preview}'},
+  {id:'plan_update',g:'exp',pref:'updates',icon:'📝',name:'Plan updated',desc:'Their training or nutrition plan was changed by the coach.',kind:'event',schedLabel:'On change',on:false,title:''+'📝'+' Your plan was updated',body:'Hi {name}, your coach just updated your plan — tap to see what changed.'},
+  {id:'checkin_reviewed',g:'exp',pref:'coach',icon:'✅',name:'Check-in reviewed · feedback ready',desc:'Coach read their weekly check-in and left feedback.',kind:'event',schedLabel:'On review',on:false,title:''+'✅'+' Your check-in has feedback',body:'{name}, your coach reviewed your check-in — tap to read their notes.'},
+  {id:'formcheck_reviewed',g:'exp',pref:'coach',icon:'🎥',name:'Form-check reviewed',desc:'Coach reviewed their uploaded lift video.',kind:'event',schedLabel:'On review',on:false,title:''+'🎥'+' Form check reviewed',body:'{name}, your coach reviewed your lift video — tap for feedback.'},
+  {id:'reward',g:'exp',pref:'rewards',icon:'🏆',name:'Reward / points milestone',desc:'They earned a reward or crossed a points milestone.',kind:'event',schedLabel:'On earn',on:false,title:''+'🏆'+' You earned points!',body:'Nice work {name} — you just earned points. Keep it going!'},
+  {id:'session',g:'exp',pref:'sessions',icon:'📅',name:'Session / call reminder',desc:'Heads-up before a booked PT session or strategy call.',kind:'sched',schedLabel:'1 day + 1 hr before',on:false,title:''+'📅'+' Session coming up',body:'{name}, you have a session {when}. See you there!'},
+  {id:'content',g:'exp',pref:'content',icon:'📚',name:'New knowledge / lesson',desc:'A new course lesson or guide is available.',kind:'event',schedLabel:'On publish',on:false,title:''+'📚'+' New lesson available',body:'Fresh content just dropped — tap to learn something new.'},
   // COMPLIANCE
-  {id:'meal',g:'comp',pref:'meal',icon:'🍽',name:'Log your meals',desc:"Evening nudge if nothing's been logged today.",kind:'sched',schedLabel:'Daily · 7pm',on:true,title:''+eicon('fork')+' Log your meals',body:"{name}, don't forget to log today's food to stay on your macros."},
-  {id:'weight',g:'comp',pref:'weight',icon:'⚖️',name:"Log today's weight",desc:'Morning reminder on weigh-in days.',kind:'sched',schedLabel:'Daily · 7am',on:false,title:''+eicon('weight')+' Morning weigh-in',body:'Good morning {name} — a quick weigh-in keeps your trend moving.'},
-  {id:'checkin',g:'comp',pref:'checkin',icon:'📋',name:'Weekly check-in due',desc:'The morning their check-in is due.',kind:'sched',schedLabel:'Weekly · Mon 8am',on:true,title:''+eicon('clipboard')+' Check-in time',body:'{name}, your weekly check-in is ready — 2 minutes keeps your coach in the loop.'},
-  {id:'workout',g:'comp',pref:'training',icon:'🏋️',name:"Today's workout",desc:'Reminder on scheduled training days if not logged.',kind:'sched',schedLabel:'Training days',on:false,title:''+eicon('dumbbell')+' Training today',body:"{name}, your workout is waiting — let's get it done 💪"},
-  {id:'cardio',g:'comp',pref:'cardio',icon:'👟',name:'Steps / cardio target',desc:'Afternoon nudge if behind the daily step/cardio goal.',kind:'sched',schedLabel:'Daily · 5pm',on:false,title:''+eicon('run')+' Move a little more',body:"{name}, a short walk now gets you to today's step goal."},
+  {id:'meal',g:'comp',pref:'meal',icon:'🍽',name:'Log your meals',desc:"Evening nudge if nothing's been logged today.",kind:'sched',schedLabel:'Daily · 7pm',on:true,title:''+'🍽️'+' Log your meals',body:"{name}, don't forget to log today's food to stay on your macros."},
+  {id:'weight',g:'comp',pref:'weight',icon:'⚖️',name:"Log today's weight",desc:'Morning reminder on weigh-in days.',kind:'sched',schedLabel:'Daily · 7am',on:false,title:''+'⚖️'+' Morning weigh-in',body:'Good morning {name} — a quick weigh-in keeps your trend moving.'},
+  {id:'checkin',g:'comp',pref:'checkin',icon:'📋',name:'Weekly check-in due',desc:'The morning their check-in is due.',kind:'sched',schedLabel:'Weekly · Mon 8am',on:true,title:''+'📋'+' Check-in time',body:'{name}, your weekly check-in is ready — 2 minutes keeps your coach in the loop.'},
+  {id:'workout',g:'comp',pref:'training',icon:'🏋️',name:"Today's workout",desc:'Reminder on scheduled training days if not logged.',kind:'sched',schedLabel:'Training days',on:false,title:''+'🏋️'+' Training today',body:"{name}, your workout is waiting — let's get it done 💪"},
+  {id:'cardio',g:'comp',pref:'cardio',icon:'👟',name:'Steps / cardio target',desc:'Afternoon nudge if behind the daily step/cardio goal.',kind:'sched',schedLabel:'Daily · 5pm',on:false,title:''+'👟'+' Move a little more',body:"{name}, a short walk now gets you to today's step goal."},
   {id:'habits',g:'comp',pref:'habits',icon:'🔗',name:"Tick today's habits",desc:'Keep the habit chain going.',kind:'sched',schedLabel:'Daily · 8pm',on:false,title:"🔗 Today's habits",body:"{name}, tick off today's habits before bed — keep the chain alive."},
-  {id:'sleep',g:'comp',pref:'sleep',icon:'😴',name:'Log sleep',desc:"Morning prompt to log last night's sleep.",kind:'sched',schedLabel:'Daily · 9am',on:false,title:''+eicon('sleepz')+' How did you sleep?',body:"Log last night's sleep, {name} — recovery matters as much as training."},
-  {id:'metrics',g:'comp',pref:'metrics',icon:'📏',name:'Measurements / photos due',desc:"When a metric's update cycle comes round (uses your metric schedule).",kind:'sched',schedLabel:'Per schedule',on:false,title:''+eicon('ruler')+' Time to measure up',body:"{name}, your measurements/photos are due — they show progress the scale can't."},
+  {id:'sleep',g:'comp',pref:'sleep',icon:'😴',name:'Log sleep',desc:"Morning prompt to log last night's sleep.",kind:'sched',schedLabel:'Daily · 9am',on:false,title:''+'😴'+' How did you sleep?',body:"Log last night's sleep, {name} — recovery matters as much as training."},
+  {id:'metrics',g:'comp',pref:'metrics',icon:'📏',name:'Measurements / photos due',desc:"When a metric's update cycle comes round (uses your metric schedule).",kind:'sched',schedLabel:'Per schedule',on:false,title:''+'📏'+' Time to measure up',body:"{name}, your measurements/photos are due — they show progress the scale can't."},
   {id:'streak',g:'comp',pref:'streak',icon:'🔥',name:'Streak at risk',desc:"Don't break a 2+ day logging streak.",kind:'sched',schedLabel:'Evening',on:true,title:"🔥 Don't break your streak!",body:"{name}, you're on a {streak}-day streak — log today to keep it alive."},
   // RETENTION
-  {id:'inactive',g:'ret',pref:'retention',icon:'👋',name:'We miss you (inactivity)',desc:'Win-back nudge after 3+ days of no activity.',kind:'sched',schedLabel:'After 3 days quiet',on:false,title:''+eicon('wave')+' We miss you, {name}',body:'It\'s been a few days — hop back in, even a quick log keeps your momentum.'},
-  {id:'milestone',g:'ret',pref:'retention',icon:'🎉',name:'Milestone celebration',desc:'Hit a weight %, a PR, or a body-composition win → auto-congrats.',kind:'event',schedLabel:'On milestone',on:false,title:''+eicon('celebrate')+' Milestone unlocked!',body:'Huge, {name} — {milestone}. Proud of you '+eicon('thumbsup')+''},
-  {id:'recap',g:'ret',pref:'retention',icon:'📊',name:'Weekly progress recap',desc:'"Your week in review" — logged days, weight trend, wins.',kind:'sched',schedLabel:'Weekly · Sun 6pm',on:false,title:''+eicon('chartbar')+' Your week in review',body:"{name}, here's how your week went — tap to see your progress."},
-  {id:'streak_milestone',g:'ret',pref:'streak',icon:'🥇',name:'Streak milestone',desc:'Celebrate 7 / 30 / 100-day streaks.',kind:'event',schedLabel:'On milestone',on:false,title:''+eicon('medal1')+' {streak}-day streak!',body:"{streak} days straight, {name} — that's how results are built 🔥"},
-  {id:'goal_progress',g:'ret',pref:'retention',icon:'🎯',name:'Goal progress nudge',desc:'"You\'re 80% to your goal — keep going."',kind:'event',schedLabel:'On threshold',on:false,title:''+eicon('targetC')+' Almost there, {name}',body:"You're {pct}% of the way to your goal — the finish line is close!"},
-  {id:'challenge',g:'ret',pref:'challenges',icon:'🏅',name:'Challenge updates',desc:'New live challenge, leaderboard moves, or "ends tomorrow".',kind:'event',schedLabel:'On event',on:false,title:''+eicon('medal1')+' Challenge update',body:'{name}, {challenge} — tap to jump in.'},
+  {id:'inactive',g:'ret',pref:'retention',icon:'👋',name:'We miss you (inactivity)',desc:'Win-back nudge after 3+ days of no activity.',kind:'sched',schedLabel:'After 3 days quiet',on:false,title:''+'👋'+' We miss you, {name}',body:'It\'s been a few days — hop back in, even a quick log keeps your momentum.'},
+  {id:'milestone',g:'ret',pref:'retention',icon:'🎉',name:'Milestone celebration',desc:'Hit a weight %, a PR, or a body-composition win → auto-congrats.',kind:'event',schedLabel:'On milestone',on:false,title:''+'🎉'+' Milestone unlocked!',body:'Huge, {name} — {milestone}. Proud of you '+'👍'+''},
+  {id:'recap',g:'ret',pref:'retention',icon:'📊',name:'Weekly progress recap',desc:'"Your week in review" — logged days, weight trend, wins.',kind:'sched',schedLabel:'Weekly · Sun 6pm',on:false,title:''+'📊'+' Your week in review',body:"{name}, here's how your week went — tap to see your progress."},
+  {id:'streak_milestone',g:'ret',pref:'streak',icon:'🥇',name:'Streak milestone',desc:'Celebrate 7 / 30 / 100-day streaks.',kind:'event',schedLabel:'On milestone',on:false,title:''+'🏅'+' {streak}-day streak!',body:"{streak} days straight, {name} — that's how results are built 🔥"},
+  {id:'goal_progress',g:'ret',pref:'retention',icon:'🎯',name:'Goal progress nudge',desc:'"You\'re 80% to your goal — keep going."',kind:'event',schedLabel:'On threshold',on:false,title:''+'🎯'+' Almost there, {name}',body:"You're {pct}% of the way to your goal — the finish line is close!"},
+  {id:'challenge',g:'ret',pref:'challenges',icon:'🏅',name:'Challenge updates',desc:'New live challenge, leaderboard moves, or "ends tomorrow".',kind:'event',schedLabel:'On event',on:false,title:''+'🏅'+' Challenge update',body:'{name}, {challenge} — tap to jump in.'},
   {id:'birthday',g:'ret',pref:'retention',icon:'🎂',name:'Birthday / anniversary',desc:'Birthday wish + "X months with S2S".',kind:'sched',schedLabel:'On date',on:false,title:'🎂 Happy birthday, {name}!',body:'Wishing you a brilliant day from the whole S2S team '+eicon('celebrate')+''},
-  {id:'renewal',g:'ret',pref:'billing',icon:'💳',name:'Membership / renewal reminder',desc:'Heads-up before their plan renews or lapses.',kind:'sched',schedLabel:'Before expiry',on:false,title:''+eicon('card')+' Membership renewing soon',body:'{name}, your membership renews on {date} — reach out with any questions.'}
+  {id:'renewal',g:'ret',pref:'billing',icon:'💳',name:'Membership / renewal reminder',desc:'Heads-up before their plan renews or lapses.',kind:'sched',schedLabel:'Before expiry',on:false,title:''+'💳'+' Membership renewing soon',body:'{name}, your membership renews on {date} — reach out with any questions.'}
 ];
 /* client opt-out categories (grouped) — one toggle per category covers all notifications that use that pref key */
 const PUSH_PREF_CATS=[
@@ -32300,7 +32300,7 @@ function pushPromptNo(){pushPromptDismiss();}
 async function pushNotifyCoachMsg(cid,text,media){
   if(!cid)return;
   var preview=(text&&String(text).trim())?(String(text).length>90?String(text).slice(0,87)+'…':String(text)):''+eicon('clip')+' Sent you a photo';
-  try{await pushApi('send',{clientIds:[cid],prefKey:'coach',title:''+eicon('chat')+' Message from your coach',body:preview,url:'/',tag:'s2s-chat'});}catch(e){}
+  try{await pushApi('send',{clientIds:[cid],prefKey:'coach',title:''+'💬'+' Message from your coach',body:preview,url:'/',tag:'s2s-chat'});}catch(e){}
 }
 
 /* ── EVENT-driven push: fire a catalog notification on an app event (coach/admin context only, so the pushApi('send') auth works) ── */
