@@ -7894,7 +7894,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04wd';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04we';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -23411,14 +23411,16 @@ function chatFileCardHTML(m){
 function chatLinkify(t){return esc(t).replace(/\n/g,'<br>').replace(/(https?:\/\/[^\s<]+)/g,function(u){return '<a href="'+u+'" target="_blank" rel="noopener" class="chat-link">'+u+'</a>';});}
 function chatMsgTime(at){try{const s=String(at);return s.length>=16?s.slice(11,16):esc(fmtDT(at));}catch(e){return '';}}
 function chatReceipt(m,mine){if(!mine||m.group_id)return '';const read=(m.sender==='admin')?!!m.read_by_client:!!m.read_by_admin;return '<span class="chat-rcpt'+(read?' read':'')+'" title="'+(read?'Read':'Sent')+'">'+(read?'✓✓':'✓')+'</span>';}
+/* never show an email as someone's name — a nameless member's sender_name can be their email (server falls back name||email); show a neutral label instead */
+function chatSafeName(n,fb){n=String(n==null?'':n).trim();return (!n||n.indexOf('@')>=0)?(fb||'Member'):n;}
 function chatBubble(m,mine,showSender,cont){
   const body=(m.text?chatLinkify(m.text):'')+mediaHTML(m.media);
   const coachNm=(m.media&&m.media._coach&&m.media._coach.name)?m.media._coach.name:'';
   let senderLbl='';
-  if(showSender&&!mine&&!cont){senderLbl=(m.sender==='admin')?(coachNm||m.sender_name||'Coach'):(m.sender_name||'Client');}
+  if(showSender&&!mine&&!cont){senderLbl=(m.sender==='admin')?(coachNm||m.sender_name||'Coach'):chatSafeName(m.sender_name,'Member');}
   else if(!mine&&!cont&&m.sender==='admin'&&coachNm){senderLbl=coachNm;}   // show which coach even in a 1:1 chat
   const sender=senderLbl?'<div class="chat-sender">'+esc(senderLbl)+'</div>':'';
-  const reply=(m.media&&m.media.reply)?('<div class="chat-quote"><b>'+esc(m.media.reply.sender||'')+'</b>'+esc(String(m.media.reply.text||'').slice(0,140))+'</div>'):'';
+  const reply=(m.media&&m.media.reply)?('<div class="chat-quote"><b>'+esc(chatSafeName(m.media.reply.sender,'Member'))+'</b>'+esc(String(m.media.reply.text||'').slice(0,140))+'</div>'):'';
   const rx=(typeof chatRxHTML==='function')?chatRxHTML(m.id):'';
   const th='';   // threaded replies removed — quote-reply only
   const more='<button class="chat-more" onclick="chatMsgMenu(this.closest(\'.chat-msg\').getAttribute(\'data-mid\'))" aria-label="Message options">'+svgIcon('more')+'</button>';
@@ -23828,7 +23830,7 @@ function chatCtx(){
   if(adm)return {admin:true,grp:!!CHAT_ADM_GROUP,cid:(CHAT_ADM_GROUP?null:CHAT_ADM_CLIENT),threadKey:(CHAT_ADM_GROUP||CHAT_ADM_CLIENT||''),body:'chat-adm-body',textEl:'chat-adm-text',replyBar:'chat-adm-reply-bar',render:renderChatAdmBody};
   return {admin:false,grp:!!CHAT_CLIENT_GROUP,cid:(CHAT_CLIENT_GROUP?null:(SESSION&&SESSION.id)),threadKey:(CHAT_CLIENT_GROUP||(SESSION&&SESSION.id)||''),body:'chat-body',textEl:'chat-text',replyBar:'chat-reply-bar',render:renderChatThread};
 }
-function chatSenderName(m){if(!m)return '';if(m.sender==='admin')return (m.media&&m.media._coach&&m.media._coach.name)||m.sender_name||'Coach';return m.sender_name||'Client';}
+function chatSenderName(m){if(!m)return '';if(m.sender==='admin')return (m.media&&m.media._coach&&m.media._coach.name)||m.sender_name||'Coach';return chatSafeName(m.sender_name,'Member');}
 function chatMediaLabel(md){if(!md)return '';if(md.type==='image')return 'Photo';if(md.type==='audio')return 'Voice note';if(md.type==='video')return 'Video';if(md.type==='file')return md.name||'Document';return md.data?'Attachment':'';}
 function chatRxHTML(mid){const r=CHAT_RX[mid];if(!r)return '';const chips=Object.keys(r).filter(function(e){return r[e].count>0;}).map(function(e){return '<button class="chat-rx'+(r[e].mine?' mine':'')+'" onclick="chatReact(\''+mid+'\',\''+e+'\')">'+e+' '+r[e].count+'</button>';}).join('');return chips?('<div class="chat-rxs">'+chips+'</div>'):'';}
 function chatRxSig(){return Object.keys(CHAT_RX).map(function(k){return k+':'+Object.keys(CHAT_RX[k]).map(function(e){return e+CHAT_RX[k][e].count;}).join('');}).sort().join(',')+'|'+Object.keys(CHAT_TH).map(function(k){return k+CHAT_TH[k];}).sort().join(',')+'|'+(CHAT_PIN?CHAT_PIN.mid:'');}
