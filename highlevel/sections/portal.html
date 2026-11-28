@@ -7979,7 +7979,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04wq';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04wr';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -16599,14 +16599,14 @@ function cheatLocalReco(cal,p,tg){const band=cheatBand(cal,tg);const bits=[];
   const P=Math.round(+p||0);const protShare=(+cal>0)?(P*4)/(+cal):0;
   const proteinOk=(P>=25)||(protShare>=0.2);   // enough protein for the size of the meal
   if(proteinOk&&band!=='over'){
-    bits.push(''+eicon('check')+' Nicely done — this is balanced and lands right in your range ('+tg.lo+'–'+tg.hi+' kcal) with solid protein (~'+P+'g). Nothing to add — enjoy it as-is. '+eicon('thumbsup')+'');
+    bits.push(''+'✅'+' Nicely done — this is balanced and lands right in your range ('+tg.lo+'–'+tg.hi+' kcal) with solid protein (~'+P+'g). Nothing to add — enjoy it as-is. '+'👍'+'');
   } else {
-    if(!proteinOk)bits.push(''+eicon('muscle')+' Add protein: this looks protein-light (~'+P+'g). Pair it with ~20–30g protein — '+cheatProteinEg()+' — to make it more muscle-friendly without killing the fun.');
-    if(band==='over')bits.push(''+eicon('weight')+' You’re over today’s calorie ceiling ('+tg.hi+' kcal). Keep the same food next time but trim the portion a little, or swap fried for grilled/baked to land in range.');
-    else if(band==='under')bits.push(''+eicon('thumbsup')+' You’re comfortably under today’s limit ('+tg.lo+'–'+tg.hi+' kcal) — you’ve got room to enjoy it fully.');
-    else bits.push(''+eicon('targetC')+' Nicely inside today’s range ('+tg.lo+'–'+tg.hi+' kcal) — enjoy the food and stay on target.');
+    if(!proteinOk)bits.push(''+'💪'+' Add protein: this looks protein-light (~'+P+'g). Pair it with ~20–30g protein — '+cheatProteinEg()+' — to make it more muscle-friendly without killing the fun.');
+    if(band==='over')bits.push(''+'⚖️'+' You’re over today’s calorie ceiling ('+tg.hi+' kcal). Keep the same food next time but trim the portion a little, or swap fried for grilled/baked to land in range.');
+    else if(band==='under')bits.push(''+'👍'+' You’re comfortably under today’s limit ('+tg.lo+'–'+tg.hi+' kcal) — you’ve got room to enjoy it fully.');
+    else bits.push(''+'🎯'+' Nicely inside today’s range ('+tg.lo+'–'+tg.hi+' kcal) — enjoy the food and stay on target.');
   }
-  bits.push(''+eicon('fork')+' Drink water with it and keep the rest of the day a touch lighter in fats to balance it out.');
+  bits.push(''+'🍽️'+' Drink water with it and keep the rest of the day a touch lighter in fats to balance it out.');
   return bits.join('\n\n');
 }
 /* ---- client actions ---- */
@@ -17163,12 +17163,12 @@ function cheatProfile(cal,p,c,f,tg){
 function cheatPlanLocalSugg(res,tg){
   var cal=+res.cal||0,p=+res.p||0,f=+res.f||0;var band=cheatBand(cal,tg);
   var pPct=cal>0?p*4/cal*100:0, fPct=cal>0?f*9/cal*100:0;var out=[];
-  if(pPct<15)out.push(''+eicon('muscle')+' Add ~20–30g protein on the side — a cup of Greek yoghurt, 2 boiled eggs, a few pieces of grilled chicken/paneer, or a scoop of whey. Barely any extra calories, but it makes the cheat far more muscle‑friendly and keeps you fuller.');
-  if(band==='over'){var over=cal-tg.hi;out.push(''+eicon('weight')+' You’re about '+lcNum(over)+' kcal over today’s ceiling ('+lcNum(tg.hi)+'). Trim one thing — half the fries/rice, one less piece, or skip the sugary drink — to land in range for the full 50 points.');}
+  if(pPct<15)out.push(''+'💪'+' Add ~20–30g protein on the side — a cup of Greek yoghurt, 2 boiled eggs, a few pieces of grilled chicken/paneer, or a scoop of whey. Barely any extra calories, but it makes the cheat far more muscle‑friendly and keeps you fuller.');
+  if(band==='over'){var over=cal-tg.hi;out.push(''+'⚖️'+' You’re about '+lcNum(over)+' kcal over today’s ceiling ('+lcNum(tg.hi)+'). Trim one thing — half the fries/rice, one less piece, or skip the sugary drink — to land in range for the full 50 points.');}
   if(fPct>45)out.push('🫒 Fat is doing most of the work here (~'+Math.round(fPct)+'%). Swap fried for grilled/baked, go easy on cheese, cream, mayo or ghee, and you’ll cut a few hundred calories without losing the treat.');
-  if(band!=='over'&&pPct>=15&&fPct<=45)out.push(''+eicon('targetC')+' This is already a well‑balanced cheat — in range with decent protein. Enjoy it fully and just keep the water up.');
-  out.push(''+eicon('fork')+' Add a plain salad or some veg alongside — the fibre fills you up so you’re less likely to go back for seconds.');
-  out.push(''+eicon('fork')+' Keep the drink calorie‑free (water, diet soda, sparkling water or black coffee) — liquid calories are the easiest place to blow the budget.');
+  if(band!=='over'&&pPct>=15&&fPct<=45)out.push(''+'🎯'+' This is already a well‑balanced cheat — in range with decent protein. Enjoy it fully and just keep the water up.');
+  out.push(''+'🍽️'+' Add a plain salad or some veg alongside — the fibre fills you up so you’re less likely to go back for seconds.');
+  out.push(''+'🍽️'+' Keep the drink calorie‑free (water, diet soda, sparkling water or black coffee) — liquid calories are the easiest place to blow the budget.');
   return out.slice(0,5);
 }
 async function cheatPlanRun(){
@@ -19090,9 +19090,9 @@ function jrNormNutri(d,src){
 function jrLocalSugg(res){
   const cal=+res.cal||0,p=+res.p||0,f=+res.f||0;
   const pPct=cal>0?p*4/cal*100:0,fPct=cal>0?f*9/cal*100:0;const out=[];
-  if(pPct<20)out.push(''+eicon('muscle')+' Add ~20–30 g protein — a 170 g cup of Greek yoghurt is about +17 g protein (~100 kcal) and makes the meal more filling.');
+  if(pPct<20)out.push(''+'💪'+' Add ~20–30 g protein — a 170 g cup of Greek yoghurt is about +17 g protein (~100 kcal) and makes the meal more filling.');
   if(fPct>40)out.push('🫒 Go a little lighter on oil/cheese/cream — 1 tbsp less oil saves ~120 kcal.');
-  out.push(''+eicon('fork')+' Add some veg or salad on the side for fibre, so you stay full on fewer calories.');
+  out.push(''+'🍽️'+' Add some veg or salad on the side for fibre, so you stay full on fewer calories.');
   return out.slice(0,3);
 }
 /* today's calorie pool for the food-journal AI: daily allocation + what's left after logged food & journal */
@@ -19224,14 +19224,14 @@ function jrFlexAdvice(ctx,meal,mealCounted){
   var remAfter={cal:ctx.remaining.cal-(mealCounted?0:(+meal.cal||0)),p:ctx.remaining.p-(mealCounted?0:(+meal.p||0)),c:ctx.remaining.c-(mealCounted?0:(+meal.c||0)),f:ctx.remaining.f-(mealCounted?0:(+meal.f||0))};
   var mealsAfter=Math.max(0,ctx.mealsLeft-add);var lines=[];
   if(!ctx.hasTarget){return {lines:['Set a day-type target to unlock remaining-calorie guidance.'],remAfter:remAfter,mealsAfter:mealsAfter};}
-  if(remAfter.cal<-40){lines.push(''+eicon('warn')+' This puts you ~'+lcNum(Math.abs(Math.round(remAfter.cal)))+' kcal over today — keep the rest light: veg + lean protein, plenty of water, go easy on added fats & carbs.');}
+  if(remAfter.cal<-40){lines.push(''+'⚠️'+' This puts you ~'+lcNum(Math.abs(Math.round(remAfter.cal)))+' kcal over today — keep the rest light: veg + lean protein, plenty of water, go easy on added fats & carbs.');}
   else if(mealsAfter<=0){lines.push('That rounds out your meals for the day — you\'ll finish ~'+lcNum(Math.max(0,Math.round(remAfter.cal)))+' kcal under target, which is right on track.');}
   else{var perMeal=Math.round(remAfter.cal/mealsAfter/10)*10;
     lines.push('~'+lcNum(Math.round(remAfter.cal))+' kcal left over '+mealsAfter+' more meal'+(mealsAfter===1?'':'s')+' → aim ~'+lcNum(perMeal)+' kcal each.');
     if(remAfter.p>15)lines.push('Protein left ~'+Math.round(remAfter.p)+'g — make the next meal protein-forward (chicken, paneer, eggs, Greek yoghurt, dal/legumes).');
     if(remAfter.f<-5)lines.push('You\'re over on fat — pick leaner cooking for the rest (grill/bake, less oil/ghee).');
     else if(remAfter.c<-5)lines.push('Carbs are nearly used up — lean on protein + veg for the remaining meals.');}
-  lines.push(''+eicon('bulb')+' Flexible dieting = hit the day\'s totals, not perfection at every meal. A treat fits when the rest of the day balances it out.');
+  lines.push(''+'💡'+' Flexible dieting = hit the day\'s totals, not perfection at every meal. A treat fits when the rest of the day balances it out.');
   return {lines:lines,remAfter:remAfter,mealsAfter:mealsAfter};
 }
 /* on-screen "how this fits your day" block shown under the estimate */
@@ -27065,7 +27065,7 @@ function callDispoLabel(r){r=r||{};const a=r.answered||'yes';return a==='custom'
 /* show/hide the custom status text box */
 function callAnsweredChange(){const v=($('cl-answered')||{}).value;const c=$('cl-answered-custom');if(c){c.style.display=(v==='custom')?'block':'none';if(v==='custom')setTimeout(()=>{try{c.focus();}catch(e){}},30);}}
 const CALL_TYPES_MSG=['Coordination','Check-in','Follow-up','Reminder','Onboarding','Support','Other'];
-const CALL_MEDIUM={phone:''+eicon('phone')+' Phone',meet:''+eicon('camera')+' Google Meet',message:''+eicon('chat')+' Message'};
+const CALL_MEDIUM={phone:''+'📞'+' Phone',meet:''+'🎥'+' Google Meet',message:''+'💬'+' Message'};
 const CALL_TYPES_PHONE=['Coaching check-in','Sales / consult','Onboarding','Follow-up','Support','Other'];
 const CALL_TYPES_MEET=['Onboarding','Revision call','Check-in call'];
 function callFillTypes(medium,keep){const sel=$('cl-type');if(!sel)return;const list=(medium==='meet')?CALL_TYPES_MEET:(medium==='message')?CALL_TYPES_MSG:CALL_TYPES_PHONE;const cur=keep||sel.value;sel.innerHTML=list.map(t=>'<option value="'+esc(t)+'"'+(t===cur?' selected':'')+'>'+esc(t)+'</option>').join('');if(cur&&list.indexOf(cur)<0){sel.insertAdjacentHTML('afterbegin','<option value="'+esc(cur)+'" selected>'+esc(cur)+'</option>');}}
@@ -29477,15 +29477,15 @@ function copyCallMsg(){const t=$('call-msg-text');if(!t)return;t.focus();t.selec
 function callSummaryText(r){
   if(!r)return '';
   const dirL=r.direction==='inbound'?''+eicon('inbox')+' Inbound':''+eicon('outbox')+' Outbound';
-  const ansL=({yes:''+eicon('phone')+' Picked up',no:''+eicon('ban')+' Not picked up',scheduled:''+eicon('calendar')+' Scheduled'})[r.answered]||r.answered||'—';
-  const stL=({positive:''+eicon('dotgreen')+' Positive',neutral:''+eicon('dotwhite')+' Neutral',concern:''+eicon('dotred')+' Needs attention'})[r.status]||r.status||'—';
+  const ansL=({yes:''+'📞'+' Picked up',no:''+'🚫'+' Not picked up',scheduled:''+'📅'+' Scheduled'})[r.answered]||r.answered||'—';
+  const stL=({positive:''+'🟢'+' Positive',neutral:''+'⚪'+' Neutral',concern:''+'🔴'+' Needs attention'})[r.status]||r.status||'—';
   const L=[];
-  L.push(''+eicon('phone')+' S2S FIT — CALL LOG');
+  L.push(''+'📞'+' S2S FIT — CALL LOG');
   L.push('──────────────────────────');
   L.push('Client:      '+(r.client_name||'General (no client)'));
   L.push('Date & time: '+callFmtDT(r.call_at));
   L.push('Duration:    '+(r.duration?(r.duration+' min'):'—'));
-  L.push('Medium:      '+(CALL_MEDIUM[r.medium||'phone']||''+eicon('phone')+' Phone'));
+  L.push('Medium:      '+(CALL_MEDIUM[r.medium||'phone']||''+'📞'+' Phone'));
   L.push('Direction:   '+dirL);
   L.push('Call type:   '+(r.call_type||'—'));
   if(r.handled_by)L.push('Handled by:  '+r.handled_by);
@@ -30466,7 +30466,7 @@ function edTrRecalc(){
   sv('tr-workout-day',dc.workoutPerDay+' kcal');
   sv('tr-burn',dc.burn?dc.burn+' kcal':'—');
   const defEl=$('tr-deficit');if(defEl){const bal=dc.balance;defEl.value=bal>0?(bal+' kcal'):(bal<0?(Math.abs(bal)+' kcal '+(gain?'deficit':'surplus')):'0');defEl.style.color=bal>0?'var(--good)':(bal<0?'var(--red)':'');}
-  const kwEl=$('tr-kgweek');if(kwEl){kwEl.value=dc.changePerWeek?(dc.changePerWeek+' kg'+(dc.onTrack?'':' '+eicon('warn')+' wrong way')):'—';kwEl.style.color=dc.onTrack?'':(dc.changePerWeek?'var(--red)':'');}
+  const kwEl=$('tr-kgweek');if(kwEl){kwEl.value=dc.changePerWeek?(dc.changePerWeek+' kg'+(dc.onTrack?'':' '+'⚠️'+' wrong way')):'—';kwEl.style.color=dc.onTrack?'':(dc.changePerWeek?'var(--red)':'');}
   const note=$('tr-def-note');if(note){const bits=['Maintenance '+(dc.maint||'—')+' kcal'];if(dc.autoIntake)bits.push('nutrition plan ≈ '+dc.autoIntake+' kcal/day'+((Df.intake!=null&&String(Df.intake).trim()!=='')?' (overridden)':' (used when blank)'));if(dc.hasComp)bits.push('projection at '+dc.compliance+'% compliance');note.textContent=bits.join(' · ');}
   sv('tr-def-needed',req?(req.reqDaily+' kcal / day'):'—');
   sv('tr-req-intake',req?(req.reqIntake+' kcal'):'—');
