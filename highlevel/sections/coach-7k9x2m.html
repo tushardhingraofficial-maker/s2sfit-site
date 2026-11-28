@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light" data-version="2026-11-26c">
+<html lang="en" data-theme="light" data-version="2026-11-28a">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -210,6 +210,30 @@ input:focus,select,textarea:focus{outline:none;border-color:var(--red)}
 .wk-sel-in.empty{color:var(--muted)}
 .wk-done{border:1px solid var(--border);background:var(--card2);border-radius:9px;height:38px;font-size:15px;font-weight:800;color:var(--muted);cursor:pointer}
 .wk-done.on{background:var(--good);border-color:var(--good);color:#fff}
+/* ===== floating coach chat widget (global inbox) ===== */
+.cmfab{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:40;width:56px;height:56px;border-radius:50%;background:var(--red);color:#fff;border:none;box-shadow:0 10px 26px -8px rgba(232,23,13,.6);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.cmfab svg{width:26px;height:26px}
+.cmfab-badge{position:absolute;top:-3px;right:-3px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#111;color:#fff;font-size:11px;font-weight:800;line-height:20px;text-align:center;border:2px solid var(--surface)}
+.cmfab.pulse{animation:cmfabPulse 1.5s infinite}
+@keyframes cmfabPulse{0%{box-shadow:0 0 0 0 rgba(232,23,13,.5)}70%{box-shadow:0 0 0 14px rgba(232,23,13,0)}100%{box-shadow:0 0 0 0 rgba(232,23,13,0)}}
+.cmchat-ov{position:fixed;inset:0;z-index:950;background:rgba(10,12,18,.55);display:flex;flex-direction:column;justify-content:flex-end}
+.cmchat-panel{background:var(--surface);border-radius:18px 18px 0 0;max-height:82vh;display:flex;flex-direction:column;width:100%;max-width:520px;margin:0 auto;box-shadow:0 -14px 40px -16px rgba(0,0,0,.5)}
+.cmchat-hd{display:flex;align-items:center;gap:10px;padding:16px 16px 10px}
+.cmchat-hd h3{margin:0;font-family:var(--disp);font-weight:900;font-size:18px;flex:1}
+.cmchat-x{border:none;background:var(--card2);color:var(--text);width:34px;height:34px;border-radius:50%;font-size:18px;cursor:pointer;line-height:1}
+.cmchat-search{margin:0 16px 8px;padding:10px 12px;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:11px;font-size:15px;font-family:inherit}
+.cmchat-list{overflow-y:auto;padding:0 8px 16px}
+.cmchat-row{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-radius:12px;padding:11px 10px;cursor:pointer;font-family:inherit;color:var(--text)}
+.cmchat-row:active{background:var(--card2)}
+.cmchat-row+.cmchat-row{border-top:1px solid var(--border)}
+.cmchat-row .cm-av{flex:none}
+.cmchat-main{flex:1;min-width:0}
+.cmchat-nm{font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cmchat-prev{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.cmchat-row.unread .cmchat-prev{color:var(--text);font-weight:600}
+.cmchat-meta{flex:none;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.cmchat-when{font-size:10.5px;color:var(--muted)}
+.cmchat-ubadge{min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--red);color:#fff;font-size:11px;font-weight:800;line-height:20px;text-align:center}
 </style>
 </head>
 <body>
@@ -291,7 +315,7 @@ function doLogin(){
     loadClients();
   }).catch(function(e){renderLogin((e&&e.message)||'Wrong password');});
 }
-function logout(){TOKEN=null;try{localStorage.removeItem('s2s_coach_tok');}catch(e){}CLIENTS=[];PLANS={};CUR=null;renderLogin();}
+function logout(){TOKEN=null;try{localStorage.removeItem('s2s_coach_tok');}catch(e){}CLIENTS=[];PLANS={};CUR=null;cmChatDestroy();renderLogin();}
 
 /* ========================= CLIENTS LIST ========================= */
 function loadClients(){
@@ -343,6 +367,7 @@ function renderClients(){
     '<div id="cm-cl-list">'+cmClientListHTML()+'</div>'+
     '</div>';
   app(html);
+  cmChatInit();cmFabShow(true);
 }
 /* filter is a tap, not typing — update the chips + list in place (don't rebuild the search box) */
 function setFilter(f){FILTER=f;
@@ -382,11 +407,12 @@ function cur(){return CACHE[CUR.id]||{plan:{},logs:[],journal:[],workouts:[],che
 function weightLog(){var m=(CURPLAN&&CURPLAN.milestones)||{};var w=m.weightLog||(m.weight&&m.weight.log)||[];return (Array.isArray(w)?w:[]).slice().filter(function(e){return e&&e.value!=null;}).sort(function(a,b){return String(a.date)<String(b.date)?-1:1;});}
 
 function renderClient(){
+  cmFabShow(true);
   var c=CUR;
   var head='<div class="cm-top"><button class="cm-back" onclick="renderClients()">‹</button><div class="cm-av sm">'+esc(initial(c.name||c.email))+'</div>'+
     '<div style="flex:1;min-width:0"><div class="cm-title" style="font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(c.name||'Client')+'</div><div class="cm-sub">'+esc((CURPLAN&&CURPLAN.title)||'Client')+'</div></div>'+
     '<button class="cm-back" title="Open full profile in the portal" onclick="openPortalEdit()">↗</button>'+
-    '<button class="cm-back" onclick="openChat()">💬</button></div>';
+    '<button class="cm-back" onclick="openChat()" aria-label="Chat" style="color:var(--red)"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></button></div>';
   var seg='<div class="cm-seg" style="overflow:auto">'+[['overview','Overview'],['activity','Activity'],['progress','Progress'],['plan','Plan'],['calls','Calls']].map(function(t){return '<button class="'+(CTAB===t[0]?'on':'')+'" style="white-space:nowrap" onclick="setCTab(\''+t[0]+'\')">'+t[1]+'</button>';}).join('')+'</div>';
   var body=CTAB==='overview'?overviewHTML():CTAB==='activity'?activityHTML():CTAB==='progress'?progressHTML():CTAB==='calls'?callsHTML():planHTML();
   app(head+'<div class="cm-body">'+seg+body+'</div>');
@@ -1611,7 +1637,7 @@ function wkFinish(){
 
 /* ========================= CHAT ========================= */
 function openChat(){
-  var id=CUR.id;
+  var id=CUR.id;cmFabShow(false);
   app('<div class="cm-top"><button class="cm-back" onclick="renderClient()">‹</button><div class="cm-av sm">'+esc(initial(CUR.name||CUR.email))+'</div><div style="flex:1;min-width:0"><div class="cm-title" style="font-size:16px">'+esc(CUR.name||'Client')+'</div><div class="cm-sub">Chat</div></div></div><div class="cm-body" id="chat-body"><div class="empty"><span class="spin"></span></div></div>');
   api('listMessages',{clientId:id}).then(function(msgs){renderChat(msgs||[]);}).catch(function(e){$('chat-body').innerHTML='<div class="empty">Could not load messages.</div>';});
 }
@@ -1633,6 +1659,69 @@ function sendChat(){
   api('sendMessage',{clientId:CUR.id,text:txt,media:null}).then(function(){
     api('listMessages',{clientId:CUR.id}).then(function(m){renderChat(m||[]);});
   }).catch(function(e){toast((e&&e.message)||'Could not send',true);if(el)el.value=txt;});
+}
+
+/* ========================= floating chat widget (global inbox) ========================= */
+var CMCHAT_THREADS=[], CMCHAT_POLL=null;
+function cmChatInit(){
+  if($('cmfab')||!TOKEN)return;
+  var b=document.createElement('button');
+  b.id='cmfab';b.className='cmfab';b.title='Messages';b.setAttribute('aria-label','Messages');
+  b.onclick=cmChatOpen;
+  b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg><span class="cmfab-badge" id="cmfab-badge" style="display:none">0</span>';
+  document.body.appendChild(b);
+  cmChatPoll();
+  if(CMCHAT_POLL)clearInterval(CMCHAT_POLL);
+  CMCHAT_POLL=setInterval(cmChatPoll,45000);
+}
+function cmChatDestroy(){var b=$('cmfab');if(b)b.remove();if(CMCHAT_POLL){clearInterval(CMCHAT_POLL);CMCHAT_POLL=null;}cmChatClose();}
+function cmFabShow(show){var b=$('cmfab');if(b)b.style.display=show?'':'none';}
+function cmChatPoll(){
+  if(!TOKEN)return;
+  api('chatUnread').then(function(d){
+    var total=(d&&d.total)||0;var b=$('cmfab'),badge=$('cmfab-badge');if(!b)return;
+    if(total>0){b.classList.add('pulse');if(badge){badge.textContent=total>99?'99+':total;badge.style.display='';}}
+    else{b.classList.remove('pulse');if(badge)badge.style.display='none';}
+  }).catch(function(){});
+}
+function cmChatName(id){var c=CLIENTS.find(function(x){return x.id===id;});return (c&&(c.name||c.email))||'Client';}
+function cmChatOpen(){
+  if($('cmchat-ov'))return;
+  var ov=document.createElement('div');ov.className='cmchat-ov';ov.id='cmchat-ov';
+  ov.onclick=function(e){if(e.target===ov)cmChatClose();};
+  ov.innerHTML='<div class="cmchat-panel">'+
+    '<div class="cmchat-hd"><h3>Messages</h3><button class="cmchat-x" onclick="cmChatClose()" aria-label="Close">×</button></div>'+
+    '<input class="cmchat-search" id="cmchat-q" placeholder="Search clients…" oninput="cmChatFilter(this.value)" autocomplete="off">'+
+    '<div class="cmchat-list" id="cmchat-list"><div class="empty"><span class="spin"></span></div></div></div>';
+  document.body.appendChild(ov);
+  api('chatThreads').then(function(t){
+    CMCHAT_THREADS=(t||[]).slice().sort(function(a,b){return String(a.last_at||'')<String(b.last_at||'')?1:-1;});
+    cmChatRenderList('');
+  }).catch(function(){var l=$('cmchat-list');if(l)l.innerHTML='<div class="empty">Could not load messages.</div>';});
+}
+function cmChatClose(){var ov=$('cmchat-ov');if(ov)ov.remove();}
+function cmChatFilter(v){cmChatRenderList(v);}
+function cmChatRenderList(q){
+  var l=$('cmchat-list');if(!l)return;q=(q||'').toLowerCase();
+  var rows=CMCHAT_THREADS.filter(function(t){if(!q)return true;return cmChatName(t.client_id).toLowerCase().indexOf(q)>=0;});
+  if(!rows.length){l.innerHTML='<div class="empty" style="padding:30px 16px">'+(q?'No clients match.':'No conversations yet.')+'</div>';return;}
+  l.innerHTML=rows.map(function(t){
+    var nm=cmChatName(t.client_id);var un=t.unread||0;
+    var prev=(t.last_sender==='admin'?'You: ':'')+(t.last_text||'');
+    return '<button class="cmchat-row'+(un?' unread':'')+'" onclick="cmChatOpenFor(\''+t.client_id+'\')">'+
+      '<div class="cm-av">'+esc(initial(nm))+'</div>'+
+      '<div class="cmchat-main"><div class="cmchat-nm">'+esc(nm)+'</div><div class="cmchat-prev">'+esc(prev||'No messages yet')+'</div></div>'+
+      '<div class="cmchat-meta"><span class="cmchat-when">'+ago(t.last_at)+'</span>'+(un?'<span class="cmchat-ubadge">'+(un>9?'9+':un)+'</span>':'')+'</div>'+
+    '</button>';
+  }).join('');
+}
+function cmChatOpenFor(id){
+  cmChatClose();
+  CUR=CLIENTS.find(function(c){return c.id===id;})||{id:id,name:cmChatName(id)};
+  CURPLAN=PLANS[id]||null;
+  loadClientBundle(id).catch(function(){});   /* warm the bundle so "back" lands on a full profile */
+  openChat();
+  api('markChatRead',{clientId:id}).then(function(){cmChatPoll();}).catch(function(){});
 }
 
 /* ========================= boot ========================= */
