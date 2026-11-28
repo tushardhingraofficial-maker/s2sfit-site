@@ -7967,6 +7967,7 @@ const TRIAGE_URL    = 'https://iiaqezfiqkonajqqcrcj.supabase.co/functions/v1/s2s
 /* AI weekly coach performance report (owner → weekend head-coach briefing). */
 const PERF_URL      = 'https://iiaqezfiqkonajqqcrcj.supabase.co/functions/v1/s2s-perf-report';
 const GCAL_URL      = 'https://iiaqezfiqkonajqqcrcj.supabase.co/functions/v1/s2s-gcal';
+const REACT_URL     = 'https://iiaqezfiqkonajqqcrcj.supabase.co/functions/v1/s2s-chat-react';   // emoji reactions that work in GROUP chats (shared, any member)
 /* Demo-only fallback admin password (used when API_URL is blank; the real one lives
    as a secret inside the Edge Function in secure mode). */
 const ADMIN_PASSWORD    = 'demo-only';   // demo mode (this device) only — the live owner password is the ADMIN_PASSWORD secret on super-api; never put it here
@@ -7978,7 +7979,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04wl';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04wm';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -23974,7 +23975,15 @@ function chatRxHTML(mid){const r=CHAT_RX[mid];if(!r)return '';const chips=Object
 function chatRxSig(){return Object.keys(CHAT_RX).map(function(k){return k+':'+Object.keys(CHAT_RX[k]).map(function(e){return e+CHAT_RX[k][e].count;}).join('');}).sort().join(',')+'|'+Object.keys(CHAT_TH).map(function(k){return k+CHAT_TH[k];}).sort().join(',')+'|'+(CHAT_PIN?CHAT_PIN.mid:'');}
 async function chatLoadMeta(msgs,ctx,bodyEl){
   CHAT_MSGS={};(msgs||[]).forEach(function(m){CHAT_MSGS[m.id]=m;});
-  if(ctx.grp){CHAT_RX={};CHAT_TH={};CHAT_PIN=null;return;}   // reactions/threads/pins are 1:1 only (the comment/like store is client-scoped)
+  if(ctx.grp){   // GROUP reactions via the s2s-chat-react edge fn (shared across all members); threads/pins stay 1:1-only
+    CHAT_TH={};CHAT_PIN=null;
+    const gsig=(msgs.length)+'|'+(msgs.length?msgs[msgs.length-1].id:'');
+    if(bodyEl&&bodyEl._metasig===gsig&&bodyEl._metaat&&(Date.now()-bodyEl._metaat<4500))return;
+    CHAT_RX={};
+    try{const me=chatMe();const ids=(msgs||[]).map(function(m){return m.id;}).filter(Boolean);const d=await chatReactApi({action:'list',messageIds:ids,userId:me.id});Object.keys(d||{}).forEach(function(mid){CHAT_RX[mid]={};Object.keys(d[mid]).forEach(function(e){CHAT_RX[mid][e]={count:d[mid][e].count,mine:!!d[mid][e].mine};});});}catch(e){}
+    if(bodyEl){bodyEl._metasig=gsig;bodyEl._metaat=Date.now();}
+    return;
+  }
   const metasig=(msgs.length)+'|'+(msgs.length?msgs[msgs.length-1].id:'');
   if(bodyEl&&bodyEl._metasig===metasig&&bodyEl._metaat&&(Date.now()-bodyEl._metaat<4500))return;   // msgs unchanged AND refreshed <4.5s ago → reuse cache (keeps reactions/threads live without hammering the API)
   CHAT_RX={};CHAT_TH={};CHAT_PIN=null;
@@ -24017,7 +24026,7 @@ function chatBindMenu(bodyId){const b=$(bodyId);if(!b||_chatMenuBound[bodyId])re
 function chatMsgMenu(mid){const m=CHAT_MSGS[mid];if(!m)return;const ctx=chatCtx();
   const old=document.getElementById('chat-menu-back');if(old)old.remove();
   const back=document.createElement('div');back.id='chat-menu-back';back.className='chat-menu-back';
-  const rx=!ctx.grp?('<div class="cm-rx">'+CHAT_RX_EMOJIS.map(function(e){return '<button onclick="chatMenuClose();chatReact(\''+mid+'\',\''+e+'\')">'+e+'</button>';}).join('')+'</div>'):'';
+  const rx='<div class="cm-rx">'+CHAT_RX_EMOJIS.map(function(e){return '<button onclick="chatMenuClose();chatReact(\''+mid+'\',\''+e+'\')">'+e+'</button>';}).join('')+'</div>';
   let items='<button class="cm-i" onclick="chatMenuClose();chatReplyTo(\''+mid+'\')">'+svgIcon('send')+' Reply</button>';
   items+='<button class="cm-i" onclick="chatMenuClose();chatCopyMsg(\''+mid+'\')">'+svgIcon('clip')+' Copy text</button>';
   if(ctx.admin&&!ctx.grp){items+='<button class="cm-i adm" onclick="chatMenuClose();chatMsgToTask(\''+mid+'\')">'+svgIcon('mytasks')+' Create task</button>';
@@ -24029,10 +24038,13 @@ function chatMenuClose(){const ov=document.getElementById('chat-menu-back');if(o
 function chatReplyTo(mid){const m=CHAT_MSGS[mid];if(!m)return;const ctx=chatCtx();CHAT_REPLY={id:mid,text:String(m.text||chatMediaLabel(m.media)||'Attachment').slice(0,160),sender:chatSenderName(m)};chatRenderReplyBar(ctx);const te=$(ctx.textEl);if(te)te.focus();}
 function chatCancelReply(){CHAT_REPLY=null;chatRenderReplyBar(chatCtx());}
 function chatRenderReplyBar(ctx){const bar=$(ctx.replyBar);if(!bar)return;if(!CHAT_REPLY){bar.classList.add('hidden');bar.innerHTML='';return;}bar.classList.remove('hidden');bar.innerHTML='<div class="crb-q"><b>Replying to '+esc(CHAT_REPLY.sender)+'</b><span>'+esc(CHAT_REPLY.text)+'</span></div><button class="icon-x" onclick="chatCancelReply()" aria-label="Cancel">×</button>';}
-async function chatReact(mid,emo){const ctx=chatCtx();if(ctx.grp){toast('Reactions are available in 1:1 chats',true);return;}
+function chatMe(){const a=(typeof ADMIN_OK!=='undefined'&&ADMIN_OK);if(a){const c=(typeof COACH!=='undefined'&&COACH)?COACH:null;return {id:(c&&c.id)||'owner',name:(c&&c.name)||'Coach'};}return {id:(SESSION&&SESSION.id)||'me',name:(SESSION&&SESSION.name)||'You'};}
+function chatReactApi(body){return fetch(REACT_URL,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY},body:JSON.stringify(body)}).then(function(r){return r.json();}).then(function(j){return (j&&j.data)||{};});}
+async function chatReact(mid,emo){const ctx=chatCtx();
   CHAT_RX[mid]=CHAT_RX[mid]||{};const r=CHAT_RX[mid][emo]=CHAT_RX[mid][emo]||{count:0,mine:false};
   if(r.mine){r.mine=false;r.count=Math.max(0,r.count-1);}else{r.mine=true;r.count++;}
   chatUpdateRx(mid);
+  if(ctx.grp){const me=chatMe();try{await chatReactApi({action:'toggle',messageId:mid,emoji:emo,userId:me.id,userName:me.name,groupId:ctx.threadKey});}catch(e){}return;}
   try{await DB.toggleLike(Object.assign({post_type:'msgrx',post_key:mid+'|'+emo},ctx.admin?{client_id:ctx.cid}:{}));}catch(e){}
 }
 function chatUpdateRx(mid){const b=$(chatCtx().body);if(!b)return;const el=b.querySelector('.chat-msg[data-mid="'+String(mid).replace(/"/g,'')+'"]');if(!el)return;const rxs=el.querySelector('.chat-rxs');const html=chatRxHTML(mid);if(html){const tmp=document.createElement('div');tmp.innerHTML=html;const node=tmp.firstChild;if(rxs)rxs.replaceWith(node);else{const bub=el.querySelector('.chat-bubble');if(bub)bub.after(node);}}else if(rxs)rxs.remove();try{b.dataset.rxsig=chatRxSig();}catch(e){}}
