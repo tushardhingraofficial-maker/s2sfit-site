@@ -7989,7 +7989,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04ww';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04wx';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -33557,6 +33557,7 @@ async function pushAll(){
   try{keys=await existingKeys();}
   catch(e){S.pushing=false;S.pushSummary="Nothing was pushed. "+mcpMessage(e,"Google Calendar");S.pushKind="bad";renderList();return;}
   var todo=sorted().filter(function(s){return !s.pushed||s.pushed.stale;}),made=0,found=0,updated=0,failed=0,stopped="";
+  var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms);});};
   for(var i=0;i<todo.length;i++){
     var s=todo[i],w=who(s),date=dateOf(s),startT=date+"T"+hhmm(s.start)+":00",endT=date+"T"+hhmm(s.start+s.dur)+":00";
     var input={calendarId:CAL_ID,summary:title(s),startTime:startT,endTime:endT,location:locFull(s),colorId:s.lk==="WG"?"9":"10",notificationLevel:S.invites?"ALL":"NONE"};
@@ -33566,30 +33567,36 @@ async function pushAll(){
       S.log[s.id]={state:"working"};S.pushSummary="Updating "+(i+1)+" of "+todo.length+"…";renderList();
       try{
         await S.mcp.callTool("Google Calendar","update_event",Object.assign({eventId:s.pushed.id},input),{cache:false});
-        delete s.pushed.stale;s.pushed.at=new Date().toISOString();S.log[s.id]={state:"ok"};updated++;saveWeek();continue;
+        delete s.pushed.stale;s.pushed.at=new Date().toISOString();S.log[s.id]={state:"ok"};updated++;saveWeek();await sleep(300);continue;
       }catch(e){
         if(e&&e.code==="tool_error"&&/404|not.?found/i.test((e.message||"")+"")){delete s.pushed;}   // event gone → recreate below
-        else{var amb0=!e||["server_unavailable","upstream_error","cancelled"].indexOf(e.code)>=0||!e.code;S.log[s.id]={state:amb0?"unknown":"fail",msg:mcpMessage(e,"Google Calendar")};failed++;if(amb0){stopped="Stopped while updating "+w.first+". Push again to carry on.";break;}continue;}
+        else{S.log[s.id]={state:"fail",msg:mcpMessage(e,"Google Calendar")};failed++;await sleep(300);continue;}   // ambiguous/failed UPDATE of an EXISTING event: no dup risk, leave it stale for the next push, never stop the whole run
       }
     }
     var key=title(s)+"|"+startT.slice(0,16);
     if(keys[key]){s.pushed={at:new Date().toISOString(),id:keys[key]===true?"":keys[key]};S.log[s.id]={state:"found"};found++;continue;}
     S.log[s.id]={state:"working"};S.pushSummary="Creating "+(i+1)+" of "+todo.length+"…";renderList();
-    try{
-      var p=payload(await S.mcp.callTool("Google Calendar","create_event",input,{cache:false}));
-      s.pushed={at:new Date().toISOString(),id:p.id||(p.event&&p.event.id)||""};S.log[s.id]={state:"ok"};made++;keys[key]=true;saveWeek();
-    }catch(e){
-      if(e&&e.code==="tool_error"){S.log[s.id]={state:"fail",msg:mcpMessage(e,"Google Calendar")};failed++;}
-      else{var amb=!e||["server_unavailable","upstream_error","cancelled"].indexOf(e.code)>=0||!e.code;
-        S.log[s.id]={state:amb?"unknown":"fail",msg:mcpMessage(e,"Google Calendar")};
-        stopped=(amb?"Stopped at "+w.first+" ("+DAYS[s.day]+" "+t12(s.start)+"): the calendar did not confirm, so that session may or may not exist. ":"Stopped: ")+mcpMessage(e,"Google Calendar")+" Push again to carry on; the calendar is re-read first, so nothing is created twice.";
-        break;}
+    var cdone=false;
+    for(var att=0;att<3&&!cdone;att++){
+      try{
+        var p=payload(await S.mcp.callTool("Google Calendar","create_event",input,{cache:false}));
+        s.pushed={at:new Date().toISOString(),id:p.id||(p.event&&p.event.id)||""};S.log[s.id]={state:"ok"};made++;keys[key]=true;saveWeek();cdone=true;
+      }catch(e){
+        if(e&&e.code==="tool_error"){S.log[s.id]={state:"fail",msg:mcpMessage(e,"Google Calendar")};failed++;cdone=true;}   // a definite rejection — don't retry, just skip this one
+        else{   // ambiguous (timeout / unavailable): the event MIGHT have been created — re-read the calendar BEFORE retrying so we never make a duplicate
+          try{keys=await existingKeys();}catch(_){}
+          if(keys[key]){s.pushed={at:new Date().toISOString(),id:keys[key]===true?"":keys[key]};S.log[s.id]={state:"found"};found++;cdone=true;}
+          else if(att<2){await sleep(1000);}   // genuinely not created — back off and retry
+          else{S.log[s.id]={state:"fail",msg:mcpMessage(e,"Google Calendar")};failed++;}   // gave up on THIS one after retries, but keep going through the rest
+        }
+      }
     }
+    await sleep(300);   // gentle throttle between creates so a burst doesn't trip the calendar's rate limit
   }
   saveWeek();S.pushing=false;
   var left=S.sessions.filter(function(s){return !s.pushed||s.pushed.stale;}).length;
-  S.pushSummary=made+" created, "+updated+" updated, "+found+" already in the calendar"+(failed?", "+failed+" failed":"")+(left?", "+left+" still to push. ":". ")+stopped;
-  S.pushKind=(stopped||failed)?"warn":"ok";
+  S.pushSummary=made+" created, "+updated+" updated, "+found+" already in the calendar"+(failed?", "+failed+" failed":"")+(left?", "+left+" still to push — tap Push again to retry them (nothing is created twice).":". All set.");
+  S.pushKind=(failed||left)?"warn":"ok";
   renderHdr();renderStats();renderList();
 }
 
