@@ -393,7 +393,7 @@ html.sv-gated,html.sv-gated body{overflow:hidden}
 @media(max-width:560px){#pa .gr{grid-template-columns:1fr}#pa .row img,#pa .row .ph{width:58px;height:42px}}
 </style>
 
-<div id="s2sv" data-version="2026-11-15a">
+<div id="s2sv" data-version="2026-11-28a">
   <div class="gate" id="sv-gate" role="dialog" aria-modal="true" aria-labelledby="sv-gh"><div class="gbox">
     <div class="logo">S2S <b>FIT</b></div>
     <div id="sv-gq">
@@ -444,7 +444,7 @@ html.sv-gated,html.sv-gated body{overflow:hidden}
     <h2 style="margin:6px 0 18px">Meet your coach, and how S2S works</h2>
     <div class="vid" id="sv-vid"></div>
     <div class="vbar"><span id="sv-vtxt">Not started</span><span class="track"><i id="sv-vfill"></i></span></div>
-    <p class="nosk">Watch it all the way through to bank this step. If you come back later through the link we sent you, it picks up where you left off.</p>
+    <p class="nosk">Watch it through to bank this step. If you come back later through the link we sent you, it picks up where you left off.</p>
   </div></section>
 
   <section id="sv-proof" data-lock="proof" style="padding-top:20px"><div class="wrap">
@@ -665,9 +665,9 @@ function fx(step){if(NOTRACK||st.fx[step])return;st.fx[step]=1;save();
 fx('visit');
 
 /* ---------- steps: order, reward share, names ---------- */
-var NOVIDEO=false, VFULL=98, lockInit=false, lockPrev={}, bankPrev=null;
+var NOVIDEO=false, VFULL=80, lockInit=false, lockPrev={}, bankPrev=null;
 var STEPS=[
- {k:'video', sec:'sv-video', w:20,t:'Watch the video',s:'How we work · about 3 min',c:'Watch the video all the way through',need:'Watch the video all the way through'},
+ {k:'video', sec:'sv-video', w:20,t:'Watch the video',s:'How we work · about 3 min',c:'Watch the video through',need:'Watch the video through'},
  {k:'proof', sec:'sv-proof', w:20,t:'See the results',s:'Client stories + before & afters',c:'Watch a client story and see the results',need:'Press play on a client story'},
  {k:'assess',sec:'sv-assess',w:20,t:'Find your S2S level',s:'5 or 15 min · goes to your coach',c:'Complete your 7-Level assessment',need:'Finish your assessment'}];
 var TOTAL=STEPS.length+1;                       /* + the call */
@@ -755,10 +755,10 @@ function restore(p){
   if(pv>0||p.proof||p.assess)gateOpen();   /* they already said "I'm new" on an earlier visit */
   if(!ch)return;
   /* these steps were already counted on an earlier visit: don't send them to the funnel again */
-  if(pv>0)st.fx.video_start=1;if(pv>=25)st.fx.video_25=1;if(pv>=50)st.fx.video_50=1;if(pv>=75)st.fx.video_75=1;if(pv>=98)st.fx.video_done=1;
+  if(pv>0)st.fx.video_start=1;if(pv>=25)st.fx.video_25=1;if(pv>=50)st.fx.video_50=1;if(pv>=75)st.fx.video_75=1;if(pv>=80)st.fx.video_done=1;
   if(pr.proof){st.fx.proof_start=1;st.fx.proof_done=1;}if(pr.assess){st.fx.assess_start=1;st.fx.assess_intake=1;st.fx.assess_done=1;}if(pr.pdf)st.fx.pdf_done=1;
   lockInit=false;lockPrev={};bankPrev=null;          /* repaint quietly */
-  $('sv-vfill').style.width=vMax+'%';$('sv-vtxt').textContent=vMax>=98?'Watched ✓':vMax>0?('Watched '+vMax+'%'):'Not started';
+  $('sv-vfill').style.width=vMax+'%';$('sv-vtxt').textContent=vMax>=80?'Watched ✓':vMax>0?('Watched '+vMax+'%'):'Not started';
   paintSteps();
   if(vResume)vResume();
   if(!A.result&&(steps()[A.step]||'mode')==='mode')render();
@@ -784,12 +784,12 @@ function vProgress(pct){
   pct=Math.max(0,Math.min(100,Math.round(pct)));
   if(pct>vMax){vMax=pct;st.prog.video=vMax;save();}
   $('sv-vfill').style.width=vMax+'%';
-  $('sv-vtxt').textContent=vMax>=98?'Watched ✓':vMax>0?('Watched '+vMax+'%'):'Not started';
-  [25,50,75,90,100].forEach(function(m){if(vMax>=(m===100?98:m)&&!sentMarks[m]){sentMarks[m]=1;track('video',{pct:m});}});
-  if(vMax>0)fx('video_start');if(vMax>=25)fx('video_25');if(vMax>=50)fx('video_50');if(vMax>=75)fx('video_75');if(vMax>=98)fx('video_done');
+  $('sv-vtxt').textContent=vMax>=80?'Watched ✓':vMax>0?('Watched '+vMax+'%'):'Not started';
+  [25,50,75,90,100].forEach(function(m){if(vMax>=(m===100?80:m)&&!sentMarks[m]){sentMarks[m]=1;track('video',{pct:m});}});
+  if(vMax>0)fx('video_start');if(vMax>=25)fx('video_25');if(vMax>=50)fx('video_50');if(vMax>=75)fx('video_75');if(vMax>=80)fx('video_done');
   paintSteps();
 }
-[25,50,75,90,100].forEach(function(m){if(vMax>=(m===100?98:m))sentMarks[m]=1;});
+[25,50,75,90,100].forEach(function(m){if(vMax>=(m===100?80:m))sentMarks[m]=1;});
 vProgress(vMax);
 function initVideo(){
   var host=$('sv-vid'), u=(C.VIDEO_URL||'').trim(), maxT=+st.prog.vmaxT||0;
@@ -812,7 +812,7 @@ function initVideo(){
   }else{
     host.innerHTML='<video controls playsinline preload="metadata" controlsList="nodownload noplaybackrate" disablepictureinpicture src="'+esc(u)+'"></video>';
     var v=host.querySelector('video');
-    vResume=function(){if(!v.duration)return;var pc=st.prog.video||0,t=pc>=98?v.duration:pc/100*v.duration;if(t>maxT){maxT=t;if(t>5&&t<v.duration-3){try{v.currentTime=t;}catch(e){}}}};
+    vResume=function(){if(!v.duration)return;var pc=st.prog.video||0,t=pc>=80?v.duration:pc/100*v.duration;if(t>maxT){maxT=t;if(t>5&&t<v.duration-3){try{v.currentTime=t;}catch(e){}}}};
     v.addEventListener('loadedmetadata',function(){vResume();if(maxT>5&&maxT<v.duration-3){v.currentTime=maxT;}});
     if(v.readyState>=1)vResume();
     v.addEventListener('timeupdate',function(){if(!v.seeking&&v.currentTime<=maxT+1.5)seen(v.currentTime,v.duration);});
@@ -1070,7 +1070,7 @@ function render(){
   var k=steps()[A.step], b=$('sv-abody'), h='';
   if(k==='mode'){
     h='<p style="color:var(--mu)">Pick the one that fits. Both give you an S2S level using the same rule as our full in-gym assessment.</p>'+
-      '<div class="modes"><button class="mode" data-mode="quick"><span class="tag">Recommended · 5 minutes</span><h3>Quick at-home assessment</h3><p>Five honest questions and two simple tests you can do in your living room: push-ups, chair stands and a plank.</p></button>'+
+      '<div class="modes"><button class="mode" data-mode="quick"><span class="tag">Recommended · 5 minutes</span><h3>Quick at-home assessment</h3><p>Five honest questions about what you can do right now. No equipment or tests needed.</p></button>'+
       '<button class="mode" data-mode="full"><span class="tag">10–15 minutes · I already train</span><h3>Full 7-Level assessment</h3><p>The S2S benchmark matrix, word for word, with your own numbers (run times, lifts, carries) to check each level.</p></button></div>'+
       (A.result?'<p class="note" style="margin-top:14px">You finished this already ('+esc(LV[A.result.level].n)+'). Starting again replaces your answer.</p>':
        st.prog.assess?'<p style="margin-top:14px;padding:12px 14px;border-radius:10px;background:rgba(62,207,114,.1);border:1px solid rgba(62,207,114,.4);color:#9fe3b9;font-weight:600">✓ You have already completed your assessment, and your coach has your result. Only redo it if something has changed.</p>':'');
@@ -1140,7 +1140,7 @@ function wire(k){
     var e=$('sv-aerr');
     if(k==='profile'){readProfile();}
     else if(k==='intake'){readIntake();var I=A.intake,miss=[];
-      if(!I.name)miss.push('first name');if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(I.email||''))miss.push('a valid email');if(!I.sex)miss.push('sex');if(!I.age)miss.push('age');if(!I.weight)miss.push('weight');if(!I.goal)miss.push('your main goal');if(!I.consent)miss.push('your OK to use your answers (tick box)');
+      if(!I.name)miss.push('first name');if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(I.email||''))miss.push('a valid email');if(!I.sex)miss.push('sex');if(!I.weight)miss.push('weight');if(!I.consent)miss.push('your OK to use your answers (tick box)');
       if(miss.length){e.textContent='Please add '+miss.join(', ')+'.';return;}
       st.id.name=I.name;st.id.email=I.email.toLowerCase();st.id.phone=I.phone||st.id.phone;
       var nv=vidOf(st.id.email);if(nv!==st.vid){st.vidOld=st.vid;st.vid=nv;}
