@@ -2931,9 +2931,17 @@ details.meal-add-choose[open]>summary{background:none;color:var(--muted);box-sha
 #tasks-dock,#tasks-reopen,#chat-reopen{display:none!important}
 #chat-back{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);z-index:1600}
 #chat-back.hidden{display:none}
-#chat-dock{top:auto;bottom:auto;right:auto;left:50%;top:50%;transform:translate(-50%,-50%);width:min(920px,95vw);height:min(82vh,760px);border:1px solid var(--border);border-radius:16px;z-index:1610;box-shadow:0 24px 70px rgba(0,0,0,.6)}
+#chat-dock{top:auto;bottom:auto;right:auto;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1240px,97vw);height:min(92vh,940px);border:1px solid var(--border);border-radius:16px;z-index:1610;box-shadow:0 24px 70px rgba(0,0,0,.6)}
 #chat-dock .dock-resize{display:none}
-@media(min-width:761px){#chat-dock{flex-direction:row}#chat-dock .dock-head{position:absolute;top:0;left:0;right:0;z-index:2;border-radius:16px 16px 0 0}#chat-dock #chat-adm-list{width:300px;flex:none;border-right:1px solid var(--border);padding-top:46px;overflow-y:auto}#chat-dock .adr-convo{flex:1;min-width:0;display:flex;flex-direction:column;padding-top:46px}}
+@media(min-width:761px){#chat-dock{flex-direction:row}#chat-dock .dock-head{position:absolute;top:0;left:0;right:0;z-index:2;border-radius:16px 16px 0 0}#chat-dock #chat-adm-list{width:360px;flex:none;border-right:1px solid var(--border);padding-top:46px;overflow:hidden;display:flex;flex-direction:column}#chat-dock #chat-adm-rows{flex:1;min-height:0;overflow-y:auto}#chat-dock .adr-convo{flex:1;min-width:0;display:flex;flex-direction:column;padding-top:46px}}
+/* admin dock search */
+#chat-adm-list{display:flex;flex-direction:column;overflow:hidden}
+#chat-adm-rows{flex:1;min-height:0;overflow-y:auto}
+.adr-search{position:relative;flex:none;padding:8px 10px;border-bottom:1px solid var(--border);background:var(--card)}
+.adr-search input{width:100%;box-sizing:border-box;background:var(--card2);border:1px solid var(--border);border-radius:18px;padding:8px 32px;color:var(--text);font-size:13.5px;outline:none;font-family:inherit}
+.adr-search input:focus{border-color:var(--red)}
+.adr-search svg.ic{position:absolute;left:20px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--muted);pointer-events:none}
+.adr-search-x{position:absolute;right:18px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1}
 #tasks-dock .dock-head,#chat-dock .dock-head{display:flex;align-items:center;padding:11px 12px;background:var(--card2);border-bottom:1px solid var(--border);font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.02em;font-size:13px}
 .dock-resize{position:absolute;top:0;bottom:0;width:8px;cursor:col-resize;z-index:6;background:transparent;transition:background .15s}
 .dock-resize:hover,.dock-resize.dragging{background:linear-gradient(var(--red),var(--red));background-size:3px 100%;background-repeat:no-repeat;background-position:center}
@@ -7611,7 +7619,7 @@ img,svg,canvas,video{max-width:100%}
     <button class="hbtn" onclick="openGroupEditor()" title="Create or manage group chats">＋ Group</button>
     <button class="hbtn" onclick="openBroadcast()" title="Send one message to many clients"><svg class="ic ic-emo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 8a5 5 0 0 1 0 8"/></svg> Cast</button>
     <button class="dock-x" onclick="closeDock('chat')" title="Hide chat panel">×</button></div>
-  <div id="chat-adm-list" class="adr-threads"></div>
+  <div id="chat-adm-list" class="adr-threads"><div class="adr-search"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input id="chat-adm-search" placeholder="Search clients, coaches or groups…" autocomplete="off" oninput="chatAdmSearchInput()"><button class="adr-search-x hidden" id="chat-adm-search-x" title="Clear" onclick="$('chat-adm-search').value='';$('chat-adm-search-x').classList.add('hidden');renderChatThreadsList();">×</button></div><div id="chat-adm-rows"></div></div>
   <div class="adr-convo">
     <div id="chat-adm-thread-head" style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;min-height:20px"></div>
     <div id="chat-adm-body" class="chat-body"></div>
@@ -7979,7 +7987,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04wt';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04wu';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -23897,8 +23905,10 @@ async function chatClientBadge(){try{const u=await DB.chatUnread();const n=(u&&u
   if(CHAT_OPEN&&CHAT_THREAD_OPEN)renderChatThread();}catch(e){}}
 /* ---- ADMIN messages: client threads + group threads ---- */
 function closeChatAdmin(){CHAT_ADM_CLIENT=null;CHAT_ADM_GROUP=null;try{chatStopLive();}catch(e){}}
+function chatAdmSearchInput(){const sx=$('chat-adm-search-x');const q=(($('chat-adm-search')||{}).value)||'';if(sx)sx.classList.toggle('hidden',!q.trim());clearTimeout(window._admSearchDeb);window._admSearchDeb=setTimeout(renderChatThreadsList,120);}
 async function renderChatThreadsList(){
-  const host=$('chat-adm-list');if(!host)return;if(!host.innerHTML)host.innerHTML='<div class="empty">Loading…</div>';
+  const host=$('chat-adm-rows');if(!host)return;if(!host.innerHTML)host.innerHTML='<div class="empty">Loading…</div>';
+  const q=(($('chat-adm-search')||{}).value||'').trim().toLowerCase();
   let threads=[],clients=[],groups=[],gthreads=[];try{[threads,clients,groups,gthreads]=await Promise.all([DB.chatThreads(),DB.listClients(),DB.listGroups(),DB.chatGroupThreads()]);}catch(e){host.innerHTML='<div class="empty">Could not load.</div>';return;}
   const nameById={};clients.forEach(c=>nameById[c.id]=c.name||c.email);
   const tById={};threads.forEach(t=>tById[t.client_id]=t);
@@ -23922,16 +23932,18 @@ async function renderChatThreadsList(){
     html+='<div class="ccv-note">Your <b>private 1:1</b> chats with each client — most recent first.</div>';
     clients.forEach(c=>{const gid=coachDmId(c.id,cv);const gt=gtById[gid];items.push({cid:c.id,gid:gid,title:(nameById[c.id]||'Client'),avatarName:(nameById[c.id]||'Client'),grp:false,last_at:gt?gt.last_at:'',unread:gt?(+gt.unread||0):0,preview:gt?((gt.last_sender==='admin'?'You: ':'')+esc(String(gt.last_text||''))):(svgIcon('lock','ic-sm')+' no messages yet'),open:"admClientOpen('"+c.id+"')"});});
     items.sort((a,b)=>String(b.last_at||'').localeCompare(String(a.last_at||'')));
+    if(q)items=items.filter(it=>String(it.title||'').toLowerCase().indexOf(q)>=0);
     html+='<div class="uline" style="padding:8px 12px 4px">1:1 chats · as '+esc(cvName)+'</div>';
-    html+=items.map(rowHTML).join('');
+    html+=items.length?items.map(rowHTML).join(''):'<div class="adr-thread-empty">No matches for “'+esc(q)+'”.</div>';
   }else{
     // ALL COACHES: private coaching groups + every coach↔client DM + other groups, newest first
     clients.forEach(c=>{const t=tById[c.id];items.push({cid:c.id,gid:null,title:(nameById[c.id]||'Client')+' - Private Coaching Group',avatarName:(nameById[c.id]||'Client'),grp:true,last_at:(t&&t.last_at)||'',unread:t?(+t.unread||0):0,preview:t?((t.last_sender==='admin'?'You: ':'')+esc(String(t.last_text||''))):'— no messages —',open:"admClientOpen('"+c.id+"')"});});
     (groups||[]).filter(isCoachDM).forEach(g=>{const gt=gtById[g.id];if(!gt)return;const p=String(g.id).split('-');const cid=p[1],coachId=p[2];items.push({cid:cid,gid:g.id,title:(nameById[cid]||'Client')+' · '+coachName(coachId),avatarName:coachName(coachId),grp:false,last_at:gt.last_at||'',unread:+gt.unread||0,preview:(gt.last_coach?esc(String(gt.last_coach))+': ':'')+esc(String(gt.last_text||'')),open:"openCoachDmG('"+g.id+"','"+coachId+"')"});});
     (groups||[]).filter(g=>!isCoachDM(g)).forEach(g=>{const gt=gtById[g.id];items.push({cid:null,gid:g.id,title:(g.name||'Group'),avatarName:(g.name||'Group'),grp:true,last_at:gt?(gt.last_at||''):'',unread:gt?(+gt.unread||0):0,preview:gt?((gt.last_coach?esc(String(gt.last_coach))+': ':'')+esc(String(gt.last_text||''))):((g.members||[]).length+' members'),open:"openGroupThread('"+g.id+"')"});});
     items.sort((a,b)=>String(b.last_at||'').localeCompare(String(a.last_at||'')));
-    html+='<div class="uline" style="padding:8px 12px 4px">All conversations · recent first</div>';
-    html+=items.length?items.map(rowHTML).join(''):'<div class="adr-thread-empty">No conversations yet.</div>';
+    if(q)items=items.filter(it=>String(it.title||'').toLowerCase().indexOf(q)>=0);
+    html+='<div class="uline" style="padding:8px 12px 4px">'+(q?('Search · '+items.length+' match'+(items.length===1?'':'es')):'All conversations · recent first')+'</div>';
+    html+=items.length?items.map(rowHTML).join(''):'<div class="adr-thread-empty">No conversations match “'+esc(q)+'”.</div>';
   }
   host.innerHTML=html;
 }
