@@ -7979,7 +7979,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04wo';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04wp';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
@@ -24006,7 +24006,7 @@ function chatRenderSmart(bodyId,msgs,grp,mineFn){
   const append=prevIds.length&&newIds.length>prevIds.length&&b.querySelector('.chat-msg')&&b.dataset.rxsig===rxsig&&prevIds.every(function(id,i){return newIds[i]===id;});
   if(append){
     let add='',lastDay=b._lastDay||'',lastKey=b._lastKey||'';
-    for(let i=prevIds.length;i<msgs.length;i++){const m=msgs[i];const day=String(m.created_at||'').slice(0,10);if(day&&day!==lastDay){add+='<div class="chat-day">'+esc(chatDayLabel(day))+'</div>';lastDay=day;lastKey='';}const mine=mineFn(m);const key=chatGroupKey(m,mine);const prev=msgs[i-1];let cont=false;if(prev&&key===lastKey){const dt=(new Date(m.created_at)-new Date(prev.created_at));if(dt>=0&&dt<4*60000)cont=true;}add+=chatBubble(m,mine,grp,cont);lastKey=key;}
+    for(let i=prevIds.length;i<msgs.length;i++){const m=msgs[i];const day=String(m.created_at||'').slice(0,10);if(day&&day!==lastDay){add+='<div class="chat-day">'+esc(chatDayLabel(day))+'</div>';lastDay=day;lastKey='';}const mine=mineFn(m);const key=chatGroupKey(m,mine);const prev=msgs[i-1];let cont=false;if(prev&&key===lastKey){const dt=(new Date(m.created_at)-new Date(prev.created_at));if(dt>=0&&dt<4*60000)cont=true;}const next=msgs[i+1];let endRun=true;if(next){const nmine=mineFn(next);const nday=String(next.created_at||'').slice(0,10);const ndt=(new Date(next.created_at)-new Date(m.created_at));if(chatGroupKey(next,nmine)===key&&nday===day&&ndt>=0&&ndt<4*60000)endRun=false;}add+=chatBubble(m,mine,grp,cont,endRun);lastKey=key;}
     const tmp=document.createElement('div');tmp.innerHTML=add;const frag=document.createDocumentFragment();while(tmp.firstChild){const n=tmp.firstChild;if(n.nodeType===1&&n.classList&&n.classList.contains('chat-msg'))n.classList.add('fresh');frag.appendChild(n);}b.appendChild(frag);
     b._lastDay=lastDay;b._lastKey=lastKey;
   } else {
