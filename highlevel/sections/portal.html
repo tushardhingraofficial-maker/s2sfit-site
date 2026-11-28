@@ -4270,6 +4270,15 @@ body.chat-thread-open #chat-thread-view .chat-thread-head{padding-top:calc(12px 
 .sr-del{flex:none;color:var(--muted);display:flex}
 .sr-del svg.ic{width:16px;height:16px}
 .sr-empty{padding:26px 16px;text-align:center;color:var(--muted);font-size:13.5px;line-height:1.6}
+/* coach dock list → Everfit rows (right-edge red accent, flat) */
+#chat-dock .chat-thread{padding:11px 13px;border-bottom:1px solid var(--border);border-left:none!important;position:relative}
+#chat-dock .chat-thread.grp,#chat-dock .chat-thread.grp.active{border-left:none!important}
+#chat-dock .chat-thread:hover{background:rgba(127,127,127,.06)}
+#chat-dock .chat-thread.active{background:rgba(232,23,13,.055)}
+#chat-dock .chat-thread.active:after{content:"";position:absolute;right:0;top:9px;bottom:9px;width:3px;border-radius:3px;background:var(--red)}
+#chat-dock .chat-thread.active b{color:var(--red)}
+#chat-dock .ct-av{width:42px;height:42px;font-size:15px}
+#chat-dock .chat-thread .chat-badge{min-width:22px;height:22px;border-radius:12px;font-size:12px;line-height:22px;background:var(--red)!important;color:#fff!important}
 /* ═══ Reward earned pop-up (celebratory) ═══ */
 .rwpop-wrap{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);animation:rwpopfade .25s ease;padding:20px}
 .rwpop-wrap.out{animation:rwpopfadeout .4s ease forwards}
@@ -7969,7 +7978,7 @@ const ING_TAB   = 'Ingredients';
 const SUPP_TAB  = 'Supplementations';
 const DT_COLORS = ['#e8170d','#4aa8c0','#f5c842','#22c55e','#9b7ede','#c9885a','#d4537e','#8d9099'];
 const DT_COLOR_NAMES = ['Red','Teal','Gold','Green','Violet','Terracotta','Rose','Grey'];
-const APP_VERSION = '2026-08-04wk';   // bump this each time you re-paste, to confirm the live site updated
+const APP_VERSION = '2026-08-04wl';   // bump this each time you re-paste, to confirm the live site updated
 /* ── Google Maps key for the Gym Buddy gym/location search ──
    Paste your browser Google Maps JavaScript API key below (enable "Maps JavaScript API" + "Places API",
    and restrict the key to your website's domain under "HTTP referrers"). Leave '' to fall back to a
